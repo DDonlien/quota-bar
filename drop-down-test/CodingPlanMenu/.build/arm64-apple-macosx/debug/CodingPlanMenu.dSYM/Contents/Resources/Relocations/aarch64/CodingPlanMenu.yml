@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu'
+relocations:     []
+...

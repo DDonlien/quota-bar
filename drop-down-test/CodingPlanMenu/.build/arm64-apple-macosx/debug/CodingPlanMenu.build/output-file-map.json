@@ -1,0 +1,26 @@
+{
+  "": {
+    "swift-dependencies": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/primary.swiftdeps"
+  },
+  "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/CodingPlanMenuApp.swift": {
+    "dependencies": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CodingPlanMenuApp.d",
+    "object": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CodingPlanMenuApp.swift.o",
+    "swiftmodule": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CodingPlanMenuApp~partial.swiftmodule",
+    "swift-dependencies": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CodingPlanMenuApp.swiftdeps",
+    "diagnostics": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CodingPlanMenuApp.dia"
+  },
+  "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/MenuView.swift": {
+    "dependencies": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/MenuView.d",
+    "object": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/MenuView.swift.o",
+    "swiftmodule": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/MenuView~partial.swiftmodule",
+    "swift-dependencies": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/MenuView.swiftdeps",
+    "diagnostics": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/MenuView.dia"
+  },
+  "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/StatusBarController.swift": {
+    "dependencies": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/StatusBarController.d",
+    "object": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/StatusBarController.swift.o",
+    "swiftmodule": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/StatusBarController~partial.swiftmodule",
+    "swift-dependencies": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/StatusBarController.swiftdeps",
+    "diagnostics": "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/StatusBarController.dia"
+  }
+}
