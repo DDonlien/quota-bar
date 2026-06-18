@@ -28,3 +28,5 @@ DerivedData/
 
 # Agent 工作的中间产物（保持 agent-log/ 干净）
 .worktrees/
+reference/project/hidden/
+reference/project/Mos/
