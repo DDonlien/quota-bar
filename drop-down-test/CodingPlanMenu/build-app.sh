@@ -3,7 +3,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT="$SCRIPT_DIR"
-APP_NAME="CodingPlanMenu"
+APP_NAME="QuotaBar"
 APP_DIR="$PROJECT/${APP_NAME}.app"
 
 # 1. 编译
@@ -19,7 +19,7 @@ mkdir -p "$APP_DIR/Contents/MacOS"
 mkdir -p "$APP_DIR/Contents/Resources"
 
 # 4. 复制二进制
-cp ".build/debug/$APP_NAME" "$APP_DIR/Contents/MacOS/"
+cp ".build/debug/CodingPlanMenu" "$APP_DIR/Contents/MacOS/QuotaBar"
 
 # 5. 写入 Info.plist
 cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
@@ -28,13 +28,13 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>com.example.CodingPlanMenu</string>
+    <string>com.example.QuotaBar</string>
     <key>CFBundleName</key>
-    <string>CodingPlanMenu</string>
+    <string>QuotaBar</string>
     <key>CFBundleDisplayName</key>
     <string>Quota Bar</string>
     <key>CFBundleExecutable</key>
-    <string>CodingPlanMenu</string>
+    <string>QuotaBar</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

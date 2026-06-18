@@ -72,27 +72,27 @@ jobs:
       - name: Assemble .app bundle
         working-directory: drop-down-test/CodingPlanMenu
         env:
-          APP_NAME: CodingPlanMenu
+          APP_NAME: QuotaBar
           SHORT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           APP="$RUNNER_TEMP/${APP_NAME}.app"
           rm -rf "$APP"
           mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-          cp ".build/release/${APP_NAME}" "$APP/Contents/MacOS/"
+          cp ".build/release/CodingPlanMenu" "$APP/Contents/MacOS/QuotaBar"
           cat > "$APP/Contents/Info.plist" <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
               <key>CFBundleIdentifier</key>
-              <string>com.example.CodingPlanMenu</string>
+              <string>com.example.QuotaBar</string>
               <key>CFBundleName</key>
-              <string>CodingPlanMenu</string>
+              <string>QuotaBar</string>
               <key>CFBundleDisplayName</key>
               <string>Quota Bar</string>
               <key>CFBundleExecutable</key>
-              <string>CodingPlanMenu</string>
+              <string>QuotaBar</string>
               <key>CFBundlePackageType</key>
               <string>APPL</string>
               <key>CFBundleShortVersionString</key>
@@ -112,7 +112,7 @@ jobs:
 
       - name: Build .dmg
         env:
-          APP_NAME: CodingPlanMenu
+          APP_NAME: QuotaBar
           SHORT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
@@ -141,7 +141,7 @@ jobs:
 
             **Install**
 
-            1. Download `CodingPlanMenu-<short-sha>.dmg` below.
+            1. Download `QuotaBar-<short-sha>.dmg` below.
             2. Open it (double-click).
             3. Drag **Quota Bar** into **Applications** — or just double-click it inside the DMG window to run from there.
 
