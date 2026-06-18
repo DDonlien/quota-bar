@@ -56,6 +56,8 @@ enum MenuDashboardStyle {
     static let quotaFontSize: CGFloat = 11
     static let emptyStateTitleSize: CGFloat = 13
     static let emptyStateBodySize: CGFloat = 11
+    static let permissionBannerTitleSize: CGFloat = 12
+    static let permissionBannerBodySize: CGFloat = 11
 
     // 字重
     static let summaryWeight: Font.Weight = .medium
@@ -73,6 +75,8 @@ private enum Palette {
     static let trackFailed = Color.primary.opacity(0.05)
     static let blue = Color(hex: "#0A7CFF")
     static let muted = Color.primary.opacity(0.35)
+    static let warning = Color(hex: "#FF9F0A")
+    static let warningBackground = Color(hex: "#FF9F0A").opacity(0.12)
 }
 
 // MARK: - 入口视图
@@ -81,9 +85,25 @@ struct MenuView: View {
     let state: DashboardState
     let isRefreshing: Bool
     let lastUpdatedText: String
+    let needsFullDiskAccess: Bool
+
+    init(
+        state: DashboardState,
+        isRefreshing: Bool,
+        lastUpdatedText: String,
+        needsFullDiskAccess: Bool = !PrivacyAccessChecker.hasFullDiskAccess()
+    ) {
+        self.state = state
+        self.isRefreshing = isRefreshing
+        self.lastUpdatedText = lastUpdatedText
+        self.needsFullDiskAccess = needsFullDiskAccess
+    }
 
     var body: some View {
         VStack(spacing: 0) {
+            if needsFullDiskAccess {
+                PermissionBannerView()
+            }
             content
         }
         .padding(.top, MenuDashboardStyle.menuTopPadding)
@@ -104,6 +124,42 @@ struct MenuView: View {
         } else {
             ReadyStateView(state: state, isRefreshing: isRefreshing)
         }
+    }
+}
+
+// MARK: - 权限引导横幅
+
+private struct PermissionBannerView: View {
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "lock.fill")
+                .font(.system(size: 13))
+                .foregroundStyle(Palette.warning)
+                .frame(width: 16, alignment: .center)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("需要 Full Disk Access")
+                    .font(.system(size: MenuDashboardStyle.permissionBannerTitleSize, weight: .medium))
+                    .foregroundStyle(Palette.text)
+                Text("读取浏览器 Cookie 需要授权「完全磁盘访问权限」。")
+                    .font(.system(size: MenuDashboardStyle.permissionBannerBodySize, weight: .regular))
+                    .foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button {
+                    PrivacyAccessChecker.openFullDiskAccessSettings()
+                } label: {
+                    Text("打开系统设置")
+                        .font(.system(size: MenuDashboardStyle.permissionBannerBodySize, weight: .medium))
+                        .foregroundStyle(Palette.warning)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Palette.warningBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .padding(.bottom, 8)
     }
 }
 

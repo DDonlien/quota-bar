@@ -1,8 +1,9 @@
 import Foundation
+import SweetCookieKit
 
 /// 浏览器 Cookie 读取器抽象。
 ///
-/// 真实实现会从 Safari/Chrome 的 cookie 数据库里按 domain 过滤；
+/// 真实实现会从 Safari/Chrome/Firefox 的 cookie 数据库里按 domain 过滤；
 /// 测试中可注入返回固定 cookie 的实现，便于在沙盒/CI 环境跑通流程。
 protocol BrowserCookieReader: Sendable {
     /// 读取与目标域匹配的 Cookie。
@@ -13,74 +14,102 @@ protocol BrowserCookieReader: Sendable {
     func readCookies(matching domains: [String]) async throws -> [HTTPCookie]
 }
 
-// MARK: - 文件系统读取器
+// MARK: - SweetCookieKit 适配器
 
-/// 通过读取磁盘上的浏览器 Cookie 数据库来获取 cookie。
+/// 通过 SweetCookieKit 从系统安装的浏览器读取 Cookie。
 ///
-/// 现阶段只覆盖 Chrome 的 SQLite 路径：
-/// `~/Library/Application Support/Google/Chrome/Default/Cookies`。
+/// 行为：
+/// 1. 用 `BrowserCookieClient` 枚举所有受支持浏览器（按 `Browser.defaultImportOrder`）；
+/// 2. 在每个浏览器的每个 profile 里按 domain 过滤；
+/// 3. 命中后合并去重，返回 `HTTPCookie` 列表。
 ///
-/// Safari 的 `Cookies.binarycookies` 是二进制 plist 格式，解析稍复杂，
-/// 后续按需扩展。
-///
-/// **注意**：在 macOS 沙盒下读取其他 App 的数据需要 Full Disk Access；
-/// 读不到时抛 `transient`，由 `QuotaAggregator` 决定降级策略。
+/// 错误映射：
+/// - `accessDenied` → `PrivacyAccessDenied`，由调用方决定是否引导用户授权；
+/// - `notFound` → `CookieStoreUnavailable`；
+/// - `loadFailed` → 透传 detail。
 final class FilesystemCookieReader: BrowserCookieReader, @unchecked Sendable {
 
     enum ReaderError: LocalizedError {
-        case cookieStoreUnavailable(path: String)
-        case databaseOpenFailed(path: String, underlying: String)
-        case decryptionUnsupported
+        case cookieStoreUnavailable(browser: String)
+        case privacyAccessDenied(browser: String, hint: String)
+        case loadFailed(browser: String, detail: String)
 
         var errorDescription: String? {
             switch self {
-            case .cookieStoreUnavailable(let path):
-                return "未找到浏览器 Cookie 数据库：\(path)"
-            case .databaseOpenFailed(let path, let underlying):
-                return "打开 Cookie 数据库失败（\(path)）：\(underlying)"
-            case .decryptionUnsupported:
-                return "当前 Chrome 数据库使用了系统 Keychain 加密，无法在用户态解密"
+            case .cookieStoreUnavailable(let browser):
+                return "\(browser) 未安装或未登录"
+            case .privacyAccessDenied(_, let hint):
+                return "缺少 Full Disk Access 权限：\(hint)"
+            case .loadFailed(let browser, let detail):
+                return "\(browser) Cookie 读取失败：\(detail)"
             }
         }
     }
 
-    private let fileManager: FileManager
+    private let client: BrowserCookieClient
+    private let preferredBrowsers: [Browser]
 
-    init(fileManager: FileManager = .default) {
-        self.fileManager = fileManager
+    init(
+        client: BrowserCookieClient = BrowserCookieClient(),
+        preferredBrowsers: [Browser] = Browser.defaultImportOrder
+    ) {
+        self.client = client
+        self.preferredBrowsers = preferredBrowsers
     }
 
     func readCookies(matching domains: [String]) async throws -> [HTTPCookie] {
-        let path = Self.chromeCookiesPath(fileManager: fileManager)
-        guard fileManager.fileExists(atPath: path) else {
-            throw ReaderError.cookieStoreUnavailable(path: path)
+        guard !domains.isEmpty else { return [] }
+
+        let query = BrowserCookieQuery(
+            domains: domains,
+            domainMatch: .suffix,
+            includeExpired: false
+        )
+
+        var collected: [HTTPCookie] = []
+        var seen = Set<String>()
+        var lastAccessDenied: ReaderError?
+
+        for browser in preferredBrowsers {
+            do {
+                let cookies = try client.cookies(matching: query, in: browser)
+                for cookie in cookies {
+                    let key = "\(cookie.domain)|\(cookie.name)"
+                    if seen.insert(key).inserted {
+                        collected.append(cookie)
+                    }
+                }
+                if !cookies.isEmpty { return collected }
+            } catch let error as BrowserCookieError {
+                switch error {
+                case .accessDenied(_, let hint):
+                    lastAccessDenied = .privacyAccessDenied(browser: browser.displayName, hint: hint)
+                    continue
+                case .notFound:
+                    continue
+                case .loadFailed:
+                    continue
+                }
+            } catch {
+                continue
+            }
         }
 
-        // 这里只验证路径存在并返回空结果，真正解析留给后续 PR。
-        // 完整实现需调用 sqlite3 C API 解密 encrypted_value 列，
-        // 当前阶段避免引入额外的 C 依赖。
-        return try Self.parseChromeCookieStore(at: path, matching: domains)
-    }
-
-    static func chromeCookiesPath(fileManager: FileManager) -> String {
-        let home = fileManager.homeDirectoryForCurrentUser
-        return home
-            .appendingPathComponent("Library/Application Support/Google/Chrome/Default/Cookies", isDirectory: false)
-            .path
-    }
-
-    /// 占位解析：当前不真正解码加密的 encrypted_value，
-    /// 只检测文件可读 + 包含匹配域的记录数。
-    ///
-    /// 后续 PR 会用 sqlite3 + Keychain 解密完整实现替换。
-    /// 在那之前返回空数组，让 `BrowserCookieProvider` 走 `missingCredentials` 降级。
-    private static func parseChromeCookieStore(at path: String, matching domains: [String]) throws -> [HTTPCookie] {
-        guard FileManager.default.isReadableFile(atPath: path) else {
-            throw ReaderError.databaseOpenFailed(path: path, underlying: "文件不可读")
+        if !collected.isEmpty {
+            return collected
         }
-        // 占位：真实实现读取 cookies 表并按 host_key 过滤。
-        _ = domains
-        return []
+
+        if let lastAccessDenied {
+            throw lastAccessDenied
+        }
+
+        throw ReaderError.cookieStoreUnavailable(browser: preferredBrowsers.first?.displayName ?? "browser")
+    }
+
+    /// 返回当前用户在系统里实际有 cookie store 的浏览器。
+    /// 用于 UI 提示用户「去这些浏览器里登录」。
+    func availableBrowsers() -> [Browser] {
+        preferredBrowsers.filter { !client.stores(for: $0).isEmpty }
     }
 }
 

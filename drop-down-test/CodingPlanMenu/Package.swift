@@ -7,9 +7,15 @@ let package = Package(
     products: [
         .executable(name: "CodingPlanMenu", targets: ["CodingPlanMenu"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/steipete/SweetCookieKit.git", from: "0.4.0")
+    ],
     targets: [
         .executableTarget(
             name: "CodingPlanMenu",
+            dependencies: [
+                .product(name: "SweetCookieKit", package: "SweetCookieKit")
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]

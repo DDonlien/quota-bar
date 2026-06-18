@@ -4,14 +4,11 @@ import LocalAuthentication
 
 /// Keychain 数据源。
 ///
-/// 作用是检查 macOS Keychain 中是否存在对应 Provider 的 OAuth token / API key。
+/// 作用是检查 macOS Keychain 中是否存在对应 Provider 的 OAuth token / API key，
+/// 并把读到的 token 透出去给后续 dashboard 请求使用。
 ///
-/// 注意：Keychain **不存储额度数据**，所以本 Provider 只能确定
+/// **注意**：Keychain **不存储额度数据**，所以本 Provider 只能确定
 /// 「凭证是否可用」，额度本身仍需通过 BrowserCookie / CLI 日志等渠道获取。
-/// 这里返回 `.available` 并附带占位额度，便于 UI 区分：
-/// - `.available` + 占位额度 = 「有凭证，等首次拉取」
-/// - `.available` + 真实额度 = 「数据已就绪」
-/// - `.needsConfiguration` = 「缺凭证，引导用户登录」
 final class KeychainProvider: QuotaProvider, @unchecked Sendable {
 
     let id: String
@@ -36,27 +33,10 @@ final class KeychainProvider: QuotaProvider, @unchecked Sendable {
         self.dateProvider = dateProvider
     }
 
-    func fetchSnapshot(timeout: TimeInterval) async throws -> ProviderSnapshot {
-        let fetchedAt = dateProvider()
-        if hasCredential() {
-            return ProviderSnapshot(
-                kind: kind,
-                availability: .available,
-                quotas: [
-                    QuotaWindow(title: "5小时额度", remainingFraction: 1.0, refreshDescription: "等待首次刷新"),
-                    QuotaWindow(title: "周额度", remainingFraction: 1.0, refreshDescription: "等待首次刷新")
-                ],
-                monthlyPrice: kind.fallbackMonthlyPrice,
-                fetchedAt: fetchedAt
-            )
-        } else {
-            throw QuotaFetchError.missingCredentials(
-                detail: "无凭证"
-            )
-        }
-    }
-
-    private func hasCredential() -> Bool {
+    /// 读取 Keychain 中保存的 token。
+    ///
+    /// - Returns: token 字符串（OAuth bearer、API key 等），不存在时返回 `nil`。
+    func readToken() -> String? {
         let context = LAContext()
         context.interactionNotAllowed = true
 
@@ -64,13 +44,57 @@ final class KeychainProvider: QuotaProvider, @unchecked Sendable {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: account,
-            kSecReturnData as String: false,
+            kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
             kSecUseAuthenticationContext as String: context
         ]
 
-        let status = SecItemCopyMatching(query as CFDictionary, nil)
-        return status == errSecSuccess
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess else { return nil }
+
+        if let data = result as? Data, let token = String(data: data, encoding: .utf8) {
+            return token.isEmpty ? nil : token
+        }
+        if let token = result as? String {
+            return token.isEmpty ? nil : token
+        }
+        return nil
+    }
+
+    func fetchSnapshot(timeout: TimeInterval) async throws -> ProviderSnapshot {
+        let fetchedAt = dateProvider()
+        guard let token = readToken(), !token.isEmpty else {
+            throw QuotaFetchError.missingCredentials(detail: "Keychain 中无凭证")
+        }
+
+        // 仅返回「凭证可用」的占位快照；真实额度需要后续通过 token 调对应 dashboard。
+        return ProviderSnapshot(
+            kind: kind,
+            availability: .available,
+            quotas: [
+                QuotaWindow(title: "5小时额度", remainingFraction: 1.0, refreshDescription: "等待 dashboard 首次刷新"),
+                QuotaWindow(title: "周额度", remainingFraction: 1.0, refreshDescription: "等待 dashboard 首次刷新")
+            ],
+            monthlyPrice: kind.fallbackMonthlyPrice,
+            fetchedAt: fetchedAt
+        )
+    }
+
+    /// 仅探测 Keychain 中是否存在凭证，不读取具体内容。
+    /// 用于不希望触发 keychain 弹窗的快速路径。
+    static func hasToken(service: String, account: String) -> Bool {
+        let context = LAContext()
+        context.interactionNotAllowed = true
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: false,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecUseAuthenticationContext as String: context
+        ]
+        return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
     }
 }
 
@@ -80,6 +104,8 @@ extension ProviderKind {
         case .codex: return "ai.openai.codex"
         case .minimax: return "com.minimax.code"
         case .kimi: return "com.moonshot.kimi"
+        case .claude: return "com.anthropic.claude"
+        case .gemini: return "com.google.gemini"
         default: return "com.quotabar.\(rawValue)"
         }
     }
@@ -89,6 +115,8 @@ extension ProviderKind {
         case .codex: return "oauth-token"
         case .minimax: return "api-key"
         case .kimi: return "session"
+        case .claude: return "claude.ai-session"
+        case .gemini: return "gemini-session"
         default: return "default"
         }
     }
