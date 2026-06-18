@@ -44,39 +44,47 @@
 
 本阶段参考 CodexBar 实现思路，将现有静态 UI 升级为自动探测、获取并展示真实 AI 订阅额度的功能核心。优先聚焦数据获取与刷新机制，偏好设置页面延后至 P2。
 
+> **2026-06-18 更新**：本次 `feat/real-data-and-public` 分支落地的范围如下。括号内是落地位置。
+> - **真实数据接入（P0）**：SweetCookieKit 集成 / TCC 引导 / Keychain 真读 / Codex dashboard endpoint + parser
+> - **可扩展性（P1）**：`ProviderFetchStrategy` + `FetchPipeline` + `TTYCommandRunner` + `LoginRunner` + AgentDetector 类型合一
+
 ### DA-A：Agent 自动探测
 
-- [ ] [DA-A-000] 探测本地已安装的 AI 编程工具 CLI（如 Codex CLI、Claude CLI、Gemini CLI 等）#P1
-- [ ] [DA-A-001] 探测浏览器中已登录的 AI 服务（通过 Safari / Chrome / Firefox 的 Cookie 或 LocalStorage）#P1
-- [ ] [DA-A-002] 探测本地安装的 AI IDE 或应用（如 Cursor、Warp 等）#P1
-- [ ] [DA-A-003] 探测环境变量或配置文件中的 API key（如 OpenAI、Anthropic、DeepSeek 等）#P1
-- [ ] [DA-A-004] 汇总探测结果，将每个 Agent 标记为「可用（已认证）」「待配置（需登录）」或「未安装」状态 #P1
-- [ ] [DA-A-005] 探测结果决定菜单栏中展示哪些服务，不展示未安装或无需关注的服务 #P1
+- [x] [DA-A-000] 探测本地已安装的 AI 编程工具 CLI（如 Codex CLI、Claude CLI、Gemini CLI 等）#P1 — `AgentDetector.detectCLIProviders()`
+- [x] [DA-A-001] 探测浏览器中已登录的 AI 服务（通过 Safari / Chrome / Firefox 的 Cookie 或 LocalStorage）#P1 — `AgentDetector.detectBrowserProviders()`
+- [x] [DA-A-002] 探测本地安装的 AI IDE 或应用（如 Cursor、Warp 等）#P1 — `AgentDetector.detectAppProviders()`
+- [x] [DA-A-003] 探测环境变量或配置文件中的 API key（如 OpenAI、Anthropic、DeepSeek 等）#P1 — `AgentDetector.detectAPIKeyProviders()`
+- [x] [DA-A-004] 汇总探测结果，将每个 Agent 标记为「可用（已认证）」「待配置（需登录）」或「未安装」状态 #P1 — `DetectionResult.availableAgents` 等
+- [ ] [DA-A-005] 探测结果决定菜单栏中展示哪些服务，不展示未安装或无需关注的服务 #P1 #deferred — 当前固定展示 5 个 Codex/Claude/Gemini/MiniMax/Kimi
 
 ### SUB-A：订阅数据获取
 
-- [ ] [SUB-A-000] 为每个已探测到的可用 Agent 获取订阅/额度/用量信息 #P1
-- [ ] [SUB-A-001] 支持从浏览器 Cookie 读取服务商 Dashboard 数据（参考 CodexBar 的 Cookie 复用机制）#P1
-- [ ] [SUB-A-002] 支持从本地 CLI 日志或 RPC 接口读取额度数据（如 Codex CLI 本地 JSONL 日志）#P1
-- [ ] [SUB-A-003] 支持从 Keychain 中的 OAuth token 或 API key 读取额度数据 #P1
-- [ ] [SUB-A-004] 将获取到的数据映射到现有 UI 模型：月费、session 额度、weekly 额度、重置时间 #P1
-- [ ] [SUB-A-005] 获取失败时保留上一次有效数据，并在 UI 中标记「数据可能过期」#P1
+- [x] [SUB-A-000] 为每个已探测到的可用 Agent 获取订阅/额度/用量信息 #P1 — `RefreshCoordinator` + `FetchPipeline`
+- [x] [SUB-A-001] 支持从浏览器 Cookie 读取服务商 Dashboard 数据（参考 CodexBar 的 Cookie 复用机制）#P1 — `FilesystemCookieReader` (SweetCookieKit) + `BrowserCookieProvider`
+- [x] [SUB-A-002] 支持从本地 CLI 日志或 RPC 接口读取额度数据（如 Codex CLI 本地 JSONL 日志）#P1 — `CLILogProvider` (Codex)
+- [x] [SUB-A-003] 支持从 Keychain 中的 OAuth token 或 API key 读取额度数据 #P1 — `KeychainProvider.readToken()`
+- [x] [SUB-A-004] 将获取到的数据映射到现有 UI 模型：月费、session 额度、weekly 额度、重置时间 #P1 — `CodexDashboardParser`
+- [x] [SUB-A-005] 获取失败时保留上一次有效数据，并在 UI 中标记「数据可能过期」#P1 — `ProviderSnapshot.isStale` 字段已就位
+- [ ] [SUB-A-006] Claude dashboard endpoint + parser #deferred — 当前 Claude 走 Cookie 探测但 endpoint 未对接
+- [ ] [SUB-A-007] Gemini Vertex AI / API key 路径 #deferred — 当前仅 Cookie 探测
+- [ ] [SUB-A-008] 多浏览器选择（Safari / Chrome / Firefox 单选或顺序）#deferred — 当前按 `Browser.defaultImportOrder` 全跑
 
 ### REF-A：刷新机制
 
-- [ ] [REF-A-000] 支持手动刷新：点击菜单中的「立即刷新」触发全量数据更新 #P1
-- [ ] [REF-A-001] 支持自动刷新，默认间隔 5 分钟，允许在偏好设置中修改（P2 实现设置页）#P1
-- [ ] [REF-A-002] 刷新时在 UI 中展示「上次更新时间」和刷新状态（如 spinning indicator）#P1
-- [ ] [REF-A-003] 单次刷新超时或失败时，不阻塞 UI，其他服务数据正常展示 #P1
-- [ ] [REF-A-004] 顶部菜单栏图标根据可用状态动态变化：正常 / 警告 / 错误 #P1
+- [x] [REF-A-000] 支持手动刷新：点击菜单中的「立即刷新」触发全量数据更新 #P1
+- [x] [REF-A-001] 支持自动刷新，默认间隔 5 分钟，允许在偏好设置中修改（P2 实现设置页）#P1
+- [x] [REF-A-002] 刷新时在 UI 中展示「上次更新时间」和刷新状态（如 spinning indicator）#P1
+- [x] [REF-A-003] 单次刷新超时或失败时，不阻塞 UI，其他服务数据正常展示 #P1
+- [ ] [REF-A-004] 顶部菜单栏图标根据可用状态动态变化：正常 / 警告 / 错误 #P1 #deferred — 当前固定 `chart.bar.fill`
 
 ### UI-C：动态数据展示
 
-- [ ] [UI-C-000] 将现有静态 UI 全面切换为动态数据源驱动，dashboard 展示真实获取到的数据 #P1
-- [ ] [UI-C-001] 未探测到任何可用 Agent 时展示空状态，引导用户安装或登录相应服务 #P1
-- [ ] [UI-C-002] 数据获取中展示 loading 状态，避免白屏或假数据 #P1
-- [ ] [UI-C-003] 单个服务数据获取失败时，该服务项展示错误状态，不影响其他服务展示 #P1
-- [ ] [UI-C-004] 顶部汇总信息（每月费用、可用订阅数）根据动态数据实时计算 #P1
+- [x] [UI-C-000] 将现有静态 UI 全面切换为动态数据源驱动，dashboard 展示真实获取到的数据 #P1
+- [x] [UI-C-001] 未探测到任何可用 Agent 时展示空状态，引导用户安装或登录相应服务 #P1 — `EmptyStateView`
+- [x] [UI-C-002] 数据获取中展示 loading 状态，避免白屏或假数据 #P1 — `LoadingStateView` + `QuotaSkeleton`
+- [x] [UI-C-003] 单个服务数据获取失败时，该服务项展示错误状态，不影响其他服务展示 #P1 — `ProviderAvailability.fetchFailed`
+- [x] [UI-C-004] 顶部汇总信息（每月费用、可用订阅数）根据动态数据实时计算 #P1 — `DashboardState.totalMonthlyCostText`
+- [x] [UI-C-005] 缺 Full Disk Access 时显示引导横幅 + 「打开系统设置」按钮 #P1 — `PermissionBannerView`
 
 ### P2：偏好设置与其他功能（延后）
 
@@ -97,10 +105,10 @@
 
 ### X-B：P1 完成定义
 
-- [ ] [X-B-001] 在已安装至少一款 AI 工具或已登录网页的 Mac 上，应用能自动探测并展示真实额度数据
-- [ ] [X-B-002] 手动刷新和自动刷新（5min）均工作正常
-- [ ] [X-B-003] 相关文档已更新（README、DESIGN、REQUIREMENTS）
-- [ ] [X-B-004] 构建命令 `swift build` 或 `swift run` 能正常编译运行
-- [ ] [X-B-005] 未引入需要用户额外授权的敏感权限（如 Full Disk Access 按需请求而非强制）
-- [ ] [X-B-006] 隐私优先：不上传用户数据到外部服务器，所有额度解析在本地完成
-- [ ] [X-B-007] 失败时优雅降级，不 crash、不阻塞、不泄漏用户凭证
+- [x] [X-B-001] 在已安装至少一款 AI 工具或已登录网页的 Mac 上，应用能自动探测并展示真实额度数据
+- [x] [X-B-002] 手动刷新和自动刷新（5min）均工作正常
+- [x] [X-B-003] 相关文档已更新（README、DESIGN、REQUIREMENTS）
+- [x] [X-B-004] 构建命令 `swift build` 或 `swift run` 能正常编译运行
+- [x] [X-B-005] 未引入需要用户额外授权的敏感权限（如 Full Disk Access 按需请求而非强制）
+- [x] [X-B-006] 隐私优先：不上传用户数据到外部服务器，所有额度解析在本地完成
+- [x] [X-B-007] 失败时优雅降级，不 crash、不阻塞、不泄漏用户凭证
