@@ -1,11 +1,19 @@
 import Foundation
 import AppKit
 
+/// 预扫描：本机上「已安装/已登录」的 provider 检测器。
+///
+/// 设计：
+/// - **轻量探测**：每条 strategy 只跑「检查是否安装 + 是否登录」，不抓真实数据；
+/// - **结果驱动**：探测出的 AgentInfo 列表可注入到 UI（菜单/状态栏）做引导；
+/// - **不替代 FetchPipeline**：真实额度由 RefreshCoordinator + FetchPipeline 拉取。
+///
+/// 这里把历史上独立的 AgentProvider 折进了 ProviderKind（同一枚举），避免两套体系并存。
 struct AgentDetector {
-    // MARK: - 主探测入口
 
+    /// 主探测入口：并发跑 4 条路径（CLI / App / Browser / API Key），合并去重。
     static func detectAll() async -> DetectionResult {
-        var providerMap: [AgentProvider: AgentInfo] = [:]
+        var providerMap: [ProviderKind: AgentInfo] = [:]
 
         async let cliResults = detectCLIProviders()
         async let appResults = detectAppProviders()
@@ -29,7 +37,7 @@ struct AgentDetector {
         var allAgents = Array(providerMap.values)
 
         let detectedProviders = Set(allAgents.map(\.provider))
-        for provider in AgentProvider.allCases where !detectedProviders.contains(provider) {
+        for provider in ProviderKind.allCases where !detectedProviders.contains(provider) {
             allAgents.append(AgentInfo(
                 provider: provider,
                 status: .notInstalled,
@@ -52,7 +60,7 @@ struct AgentDetector {
     private static func detectCLIProviders() -> [AgentInfo] {
         var results: [AgentInfo] = []
 
-        for provider in AgentProvider.allCases {
+        for provider in ProviderKind.allCases {
             guard let command = provider.cliCommand else { continue }
 
             if let path = findCommandInPath(command) {
@@ -78,7 +86,7 @@ struct AgentDetector {
     private static func detectAppProviders() -> [AgentInfo] {
         var results: [AgentInfo] = []
 
-        for provider in AgentProvider.allCases {
+        for provider in ProviderKind.allCases {
             guard let bundleID = provider.bundleIdentifier else { continue }
 
             if let appPath = findApp(bundleID: bundleID) {
@@ -103,7 +111,7 @@ struct AgentDetector {
         var results: [AgentInfo] = []
         let home = NSHomeDirectory()
 
-        for provider in AgentProvider.allCases {
+        for provider in ProviderKind.allCases {
             let domains = provider.cookieDomains
             guard !domains.isEmpty else { continue }
 
@@ -155,7 +163,7 @@ struct AgentDetector {
     private static func detectAPIKeyProviders() -> [AgentInfo] {
         var results: [AgentInfo] = []
 
-        for provider in AgentProvider.allCases {
+        for provider in ProviderKind.allCases {
             let envVars = provider.envVarNames
             guard !envVars.isEmpty else { continue }
 
@@ -219,11 +227,10 @@ struct AgentDetector {
         return nil
     }
 
-    private static func checkCLIAuthenticated(provider: AgentProvider, path: String) -> Bool {
+    private static func checkCLIAuthenticated(provider: ProviderKind, path: String) -> Bool {
         switch provider {
         case .claude:
-            let configDir = "\(NSHomeDirectory())/.claude"
-            return fileExists(atPath: configDir)
+            return fileExists(atPath: "\(NSHomeDirectory())/.claude")
         case .codex:
             return fileExists(atPath: "\(NSHomeDirectory())/.config/openai")
         case .gemini:
@@ -283,7 +290,7 @@ struct AgentDetector {
         return false
     }
 
-    private static func findAPIKeyInShellConfig(provider: AgentProvider, envVars: [String]) -> String? {
+    private static func findAPIKeyInShellConfig(provider: ProviderKind, envVars: [String]) -> String? {
         let home = NSHomeDirectory()
         let configs = [
             "\(home)/.zshrc",

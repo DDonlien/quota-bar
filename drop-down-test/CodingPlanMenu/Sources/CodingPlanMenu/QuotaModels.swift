@@ -61,6 +61,72 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Sendable {
         case .warp: return Color(hex: "#5E6AD2")
         }
     }
+
+    /// SF Symbol 名，用于菜单里的小图标。
+    var iconSymbol: String {
+        switch self {
+        case .codex: return "terminal"
+        case .claude: return "message"
+        case .cursor: return "cursorarrow"
+        case .gemini: return "sparkles"
+        case .kimi: return "moon"
+        case .minimax: return "bolt"
+        case .openai: return "brain"
+        case .deepseek: return "magnifyingglass"
+        case .copilot: return "airplane"
+        case .openrouter: return "network"
+        case .perplexity: return "questionmark.circle"
+        case .warp: return "arrow.right.circle"
+        }
+    }
+
+    /// 本机可执行的 CLI 命令（如 `codex` / `claude` / `gemini`）。
+    var cliCommand: String? {
+        switch self {
+        case .codex: return "codex"
+        case .claude: return "claude"
+        case .gemini: return "gemini"
+        default: return nil
+        }
+    }
+
+    /// 已安装桌面 App 的 bundle id（用于探测 app bundle 安装）。
+    var bundleIdentifier: String? {
+        switch self {
+        case .cursor: return "com.todesktop.230313mzl4w4u92"
+        case .warp: return "dev.warp.Warp-Stable"
+        default: return nil
+        }
+    }
+
+    /// 用于探测 API Key 配置的环境变量名。
+    var envVarNames: [String] {
+        switch self {
+        case .openai: return ["OPENAI_API_KEY"]
+        case .claude: return ["ANTHROPIC_API_KEY"]
+        case .deepseek: return ["DEEPSEEK_API_KEY"]
+        case .openrouter: return ["OPENROUTER_API_KEY"]
+        case .copilot: return ["GITHUB_TOKEN", "GITHUB_COPILOT_TOKEN"]
+        default: return []
+        }
+    }
+
+    /// 用于在浏览器 cookie 里查找的域。
+    var cookieDomains: [String] {
+        switch self {
+        case .codex, .openai: return ["openai.com", "chat.openai.com", "platform.openai.com", "chatgpt.com"]
+        case .claude: return ["anthropic.com", "claude.ai"]
+        case .cursor: return ["cursor.com", "cursor.sh"]
+        case .gemini: return ["google.com", "gemini.google.com"]
+        case .kimi: return ["kimi.moonshot.cn", "moonshot.cn", "kimi.com"]
+        case .minimax: return ["minimax.chat", "minimax.com"]
+        case .deepseek: return ["deepseek.com", "chat.deepseek.com"]
+        case .copilot: return ["github.com", "copilot.github.com"]
+        case .openrouter: return ["openrouter.ai"]
+        case .perplexity: return ["perplexity.ai"]
+        case .warp: return []
+        }
+    }
 }
 
 // MARK: - 额度窗口
