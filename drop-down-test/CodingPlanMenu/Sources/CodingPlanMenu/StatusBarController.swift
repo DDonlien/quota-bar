@@ -1,119 +1,100 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 @MainActor
-class StatusBarController: NSObject {
-    private let dropdownSize = NSSize(width: 286, height: 462)
+class StatusBarController: NSObject, NSMenuDelegate {
+    private let menu = NSMenu()
 
     var statusItem: NSStatusItem
-    var dropdownWindow: NSWindow?
-    var clickMonitor: Any?
 
     override init() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
 
-        if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "creditcard.fill", accessibilityDescription: "Coding Plan")
-            button.action = #selector(toggleMenu)
-            button.target = self
-        }
+        configureStatusItem()
+        configureMenu()
     }
 
-    @objc func toggleMenu() {
-        if let window = dropdownWindow, window.isVisible {
-            closeWindow()
+    private func configureStatusItem() {
+        guard let button = statusItem.button else {
+            return
+        }
+
+        if let image = NSImage(systemSymbolName: "chart.bar.fill", accessibilityDescription: "Quota Bar") {
+            image.isTemplate = true
+            image.size = NSSize(width: 17, height: 17)
+            button.image = image
+            button.imagePosition = .imageOnly
+            button.imageScaling = .scaleProportionallyDown
         } else {
-            showWindow()
+            button.title = "QB"
         }
+
+        button.toolTip = "Quota Bar"
+        statusItem.menu = menu
     }
 
-    func showWindow() {
-        if let window = dropdownWindow {
-            window.setIsVisible(true)
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
+    private func configureMenu() {
+        menu.delegate = self
+        menu.autoenablesItems = false
+        rebuildMenu()
+    }
 
-        let window = NSWindow(
-            contentRect: NSRect(origin: .zero, size: dropdownSize),
-            styleMask: [.borderless],
-            backing: .buffered,
-            defer: false
+    func menuWillOpen(_ menu: NSMenu) {
+        rebuildMenu()
+    }
+
+    private func rebuildMenu() {
+        menu.removeAllItems()
+
+        let dashboardItem = NSMenuItem()
+        let dashboardView = NSHostingView(rootView: MenuView())
+        dashboardView.frame = NSRect(
+            x: 0,
+            y: 0,
+            width: MenuDashboardStyle.width,
+            height: MenuDashboardStyle.height
         )
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.hasShadow = true
-        window.level = .statusBar
-        window.isReleasedWhenClosed = false
-        window.isMovable = false
-        window.isMovableByWindowBackground = false
+        dashboardView.wantsLayer = true
+        dashboardView.layer?.backgroundColor = NSColor.clear.cgColor
+        dashboardItem.view = dashboardView
+        menu.addItem(dashboardItem)
 
-        let glass = NSGlassEffectView()
-        glass.cornerRadius = 14
-        glass.style = .regular
-        glass.clipsToBounds = true
-        glass.frame = NSRect(origin: .zero, size: dropdownSize)
-        glass.autoresizingMask = [.width, .height]
-
-        let menuView = MenuView(closeAction: { [weak self] in
-            self?.closeWindow()
-        })
-        let hostingController = NSHostingController(rootView: menuView)
-        hostingController.view.frame = glass.bounds
-        hostingController.view.autoresizingMask = [.width, .height]
-        glass.contentView = hostingController.view
-
-        window.contentView = glass
-        dropdownWindow = window
-
-        positionWindow(window)
-        NSApp.activate(ignoringOtherApps: true)
-        window.setIsVisible(true)
-        window.makeKeyAndOrderFront(nil)
-
-        clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            if let window = self?.dropdownWindow, window.isVisible {
-                let clickLocation = NSEvent.mouseLocation
-                if !NSPointInRect(clickLocation, window.frame) {
-                    self?.closeWindow()
-                }
-            }
-        }
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(makeMenuItem(title: "立即刷新", systemSymbolName: "arrow.clockwise", action: #selector(refreshNow)))
+        menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(makeMenuItem(title: "退出", systemSymbolName: "xmark.square", action: #selector(quit), keyEquivalent: "q"))
     }
 
-    func closeWindow() {
-        if let monitor = clickMonitor {
-            NSEvent.removeMonitor(monitor)
-            clickMonitor = nil
+    private func makeMenuItem(
+        title: String,
+        systemSymbolName: String,
+        action: Selector,
+        keyEquivalent: String = ""
+    ) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+        item.target = self
+        item.isEnabled = true
+
+        if let image = NSImage(systemSymbolName: systemSymbolName, accessibilityDescription: title) {
+            image.isTemplate = true
+            image.size = NSSize(width: 14, height: 14)
+            item.image = image
         }
-        dropdownWindow?.setIsVisible(false)
+
+        return item
     }
 
-    func positionWindow(_ window: NSWindow) {
-        guard let button = statusItem.button, let screen = button.window?.screen ?? NSScreen.main else {
-            if let mainScreen = NSScreen.main {
-                window.setFrameOrigin(NSPoint(x: mainScreen.frame.midX - 125, y: mainScreen.frame.midY - 222))
-            }
-            return
-        }
+    @objc private func refreshNow() {
+        // Static prototype: real refresh behavior will be defined with data sync.
+    }
 
-        let buttonFrameInWindow = button.convert(button.bounds, to: nil)
-        let buttonFrameOnScreen = button.window?.convertToScreen(buttonFrameInWindow) ?? buttonFrameInWindow
-        let screenFrame = screen.visibleFrame
+    @objc private func openPreferences() {
+        NSSound.beep()
+    }
 
-        let windowWidth = dropdownSize.width
-        let windowHeight = dropdownSize.height
-        let gap: CGFloat = 4
-
-        var originX = buttonFrameOnScreen.midX - windowWidth / 2
-        var originY = buttonFrameOnScreen.minY - windowHeight - gap
-
-        originX = max(screenFrame.minX + 8, min(originX, screenFrame.maxX - windowWidth - 8))
-        if originY < screenFrame.minY + 8 {
-            originY = buttonFrameOnScreen.maxY + gap
-        }
-
-        window.setFrameOrigin(NSPoint(x: originX, y: originY))
+    @objc private func quit() {
+        NSApplication.shared.terminate(nil)
     }
 }

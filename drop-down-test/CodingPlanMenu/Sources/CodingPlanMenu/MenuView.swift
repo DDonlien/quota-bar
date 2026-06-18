@@ -15,13 +15,44 @@ struct QuotaStatus: Identifiable {
     let value: Double
 }
 
-struct MenuView: View {
-    let closeAction: () -> Void
+enum MenuDashboardStyle {
+    static let width: CGFloat = 292
+    static let height: CGFloat = 320
 
+    static let horizontalPadding: CGFloat = 14
+    static let topPadding: CGFloat = 18
+    static let bottomPadding: CGFloat = 16
+
+    static let summarySpacing: CGFloat = 6
+    static let summaryDividerTop: CGFloat = 10
+    static let summaryDividerBottom: CGFloat = 8
+    static let sectionDividerTop: CGFloat = 8
+    static let sectionDividerBottom: CGFloat = 8
+    static let sectionSpacing: CGFloat = 6
+    static let quotaRowsSpacing: CGFloat = 5
+    static let quotaRowSpacing: CGFloat = 2
+
+    static let leadingGlyphColumn: CGFloat = 13
+    static let statusDotSize: CGFloat = 6
+    static let quotaTitleWidth: CGFloat = 56
+    static let percentWidth: CGFloat = 34
+    static let progressHeight: CGFloat = 6
+
+    static let summaryFontSize: CGFloat = 13
+    static let planNameFontSize: CGFloat = 14
+    static let planPriceFontSize: CGFloat = 13
+    static let quotaFontSize: CGFloat = 11
+
+    static let summaryWeight: Font.Weight = .medium
+    static let planNameWeight: Font.Weight = .regular
+    static let quotaTitleWeight: Font.Weight = .medium
+}
+
+struct MenuView: View {
     private let plans: [SubscriptionPlan] = [
         SubscriptionPlan(
             name: "Codex Plus",
-            price: "¥ 150/月",
+            price: "¥150/月",
             statusColor: .quotaGreen,
             quotas: [
                 QuotaStatus(title: "5小时额度", refreshText: "6月6日 0:14刷新", value: 1.0),
@@ -30,7 +61,7 @@ struct MenuView: View {
         ),
         SubscriptionPlan(
             name: "MiniMax Plus",
-            price: "¥ 150/月",
+            price: "¥150/月",
             statusColor: .quotaRed,
             quotas: [
                 QuotaStatus(title: "5小时额度", refreshText: "6月6日 0:14刷新", value: 0.0),
@@ -39,7 +70,7 @@ struct MenuView: View {
         ),
         SubscriptionPlan(
             name: "Kimi Plus",
-            price: "¥ 150/月",
+            price: "¥150/月",
             statusColor: .quotaOrange,
             quotas: [
                 QuotaStatus(title: "5小时额度", refreshText: "6月6日 0:14刷新", value: 0.28),
@@ -53,59 +84,52 @@ struct MenuView: View {
             SummaryView()
 
             DividerLine()
-                .padding(.top, 12)
-                .padding(.bottom, 8)
+                .padding(.top, MenuDashboardStyle.summaryDividerTop)
+                .padding(.bottom, MenuDashboardStyle.summaryDividerBottom)
 
             ForEach(Array(plans.enumerated()), id: \.element.id) { index, plan in
                 PlanSection(plan: plan)
 
                 if index < plans.count - 1 {
                     DividerLine()
-                        .padding(.top, 9)
-                        .padding(.bottom, 10)
+                        .padding(.top, MenuDashboardStyle.sectionDividerTop)
+                        .padding(.bottom, MenuDashboardStyle.sectionDividerBottom)
                 }
             }
-
-            Spacer(minLength: 0)
-
-            FooterView(closeAction: closeAction)
         }
-        .padding(.top, 16)
-        .padding(.horizontal, 16)
-        .padding(.bottom, 12)
-        .frame(width: 286, height: 462)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.quotaPanel)
-        )
+        .padding(.top, MenuDashboardStyle.topPadding)
+        .padding(.horizontal, MenuDashboardStyle.horizontalPadding)
+        .padding(.bottom, MenuDashboardStyle.bottomPadding)
+        .frame(width: MenuDashboardStyle.width, height: MenuDashboardStyle.height)
+        .background(Color.clear)
         .foregroundStyle(Color.quotaText)
     }
 }
 
 private struct SummaryView: View {
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: MenuDashboardStyle.summarySpacing) {
             HStack(alignment: .firstTextBaseline) {
                 Text("每月费用")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: MenuDashboardStyle.summaryFontSize, weight: MenuDashboardStyle.summaryWeight))
                     .foregroundStyle(Color.quotaText)
 
                 Spacer()
 
                 Text("¥150/月")
-                    .font(.system(size: 18, weight: .regular))
+                    .font(.system(size: MenuDashboardStyle.summaryFontSize, weight: .regular))
                     .foregroundStyle(Color.quotaSecondary)
             }
 
             HStack(alignment: .firstTextBaseline) {
                 Text("可用订阅")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: MenuDashboardStyle.summaryFontSize, weight: MenuDashboardStyle.summaryWeight))
                     .foregroundStyle(Color.quotaText)
 
                 Spacer()
 
                 Text("2/3")
-                    .font(.system(size: 18, weight: .regular))
+                    .font(.system(size: MenuDashboardStyle.summaryFontSize, weight: .regular))
                     .foregroundStyle(Color.quotaSecondary)
             }
         }
@@ -116,33 +140,33 @@ private struct PlanSection: View {
     let plan: SubscriptionPlan
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: MenuDashboardStyle.sectionSpacing) {
+            HStack(spacing: 0) {
                 Circle()
                     .fill(plan.statusColor)
-                    .frame(width: 7, height: 7)
-                    .frame(width: 18, alignment: .leading)
+                    .frame(width: MenuDashboardStyle.statusDotSize, height: MenuDashboardStyle.statusDotSize)
+                    .frame(width: MenuDashboardStyle.leadingGlyphColumn, alignment: .center)
 
                 Text(plan.name)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: MenuDashboardStyle.planNameFontSize, weight: MenuDashboardStyle.planNameWeight))
                     .foregroundStyle(Color.quotaText)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.82)
+                    .minimumScaleFactor(0.9)
 
                 Spacer()
 
                 Text(plan.price)
-                    .font(.system(size: 18, weight: .regular))
+                    .font(.system(size: MenuDashboardStyle.planPriceFontSize, weight: .regular))
                     .foregroundStyle(Color.quotaSecondary)
                     .lineLimit(1)
             }
 
-            VStack(spacing: 6) {
+            VStack(spacing: MenuDashboardStyle.quotaRowsSpacing) {
                 ForEach(plan.quotas) { quota in
                     QuotaRow(quota: quota)
                 }
             }
-            .padding(.leading, 26)
+            .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
         }
     }
 }
@@ -155,28 +179,28 @@ private struct QuotaRow: View {
     }
 
     var body: some View {
-        VStack(spacing: 3) {
+        VStack(spacing: MenuDashboardStyle.quotaRowSpacing) {
             HStack(alignment: .firstTextBaseline) {
                 Text(quota.title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: MenuDashboardStyle.quotaTitleWeight))
                     .foregroundStyle(Color.quotaText)
                     .lineLimit(1)
-                    .frame(width: 58, alignment: .leading)
+                    .frame(width: MenuDashboardStyle.quotaTitleWidth, alignment: .leading)
 
                 Spacer(minLength: 6)
 
                 Text(quota.refreshText)
-                    .font(.system(size: 12, weight: .regular))
+                    .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
                     .foregroundStyle(Color.quotaSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.86)
 
                 Text(percentText)
-                    .font(.system(size: 13, weight: .regular))
+                    .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
                     .foregroundStyle(Color.quotaSecondary)
                     .lineLimit(1)
                     .monospacedDigit()
-                    .frame(width: 34, alignment: .trailing)
+                    .frame(width: MenuDashboardStyle.percentWidth, alignment: .trailing)
             }
 
             ProgressPill(value: quota.value)
@@ -199,11 +223,10 @@ private struct ProgressPill: View {
 
                 Capsule()
                     .fill(Color.quotaBlue)
-                    .frame(width: max(10, proxy.size.width * clampedValue))
-                    .opacity(clampedValue == 0 ? 0.95 : 1)
+                    .frame(width: proxy.size.width * clampedValue)
             }
         }
-        .frame(height: 10)
+        .frame(height: MenuDashboardStyle.progressHeight)
     }
 }
 
@@ -215,38 +238,11 @@ private struct DividerLine: View {
     }
 }
 
-private struct FooterView: View {
-    let closeAction: () -> Void
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text("自动刷新 每5分钟 · 上次 07:10:44")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Color.quotaSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.9)
-
-            Spacer(minLength: 8)
-
-            Button {
-                closeAction()
-                NSApplication.shared.terminate(nil)
-            } label: {
-                Text("退出")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Color.quotaSecondary)
-            }
-            .buttonStyle(.plain)
-        }
-    }
-}
-
 private extension Color {
-    static let quotaPanel = Color(hex: "#BDBDBD").opacity(0.86)
-    static let quotaText = Color(hex: "#111111")
-    static let quotaSecondary = Color(hex: "#777777")
-    static let quotaDivider = Color.black.opacity(0.18)
-    static let quotaTrack = Color.black.opacity(0.08)
+    static let quotaText = Color.primary
+    static let quotaSecondary = Color.secondary
+    static let quotaDivider = Color.primary.opacity(0.12)
+    static let quotaTrack = Color.primary.opacity(0.08)
     static let quotaBlue = Color(hex: "#0A7CFF")
     static let quotaGreen = Color(hex: "#35C85A")
     static let quotaRed = Color(hex: "#FF453A")
