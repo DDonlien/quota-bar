@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+
+# 构建产物
+*.dSYM/
+*.app
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 临时文件
+*.log
+/tmp/
+
+# Agent 工作的中间产物（保持 agent-log/ 干净）
+.worktrees/
