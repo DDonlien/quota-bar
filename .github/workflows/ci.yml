@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: swift build (macOS ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache SwiftPM artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            drop-down-test/CodingPlanMenu/.build
+            drop-down-test/CodingPlanMenu/.swiftpm
+          key: ${{ runner.os }}-spm-${{ matrix.os }}-${{ hashFiles('drop-down-test/CodingPlanMenu/Package.swift', 'drop-down-test/CodingPlanMenu/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-${{ matrix.os }}-
+
+      - name: Show Swift toolchain
+        working-directory: drop-down-test/CodingPlanMenu
+        run: swift --version
+
+      - name: Resolve dependencies
+        working-directory: drop-down-test/CodingPlanMenu
+        run: swift package resolve
+
+      - name: Build (debug)
+        working-directory: drop-down-test/CodingPlanMenu
+        run: swift build
+
+      - name: Build (release)
+        working-directory: drop-down-test/CodingPlanMenu
+        run: swift build -c release

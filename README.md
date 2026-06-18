@@ -1,56 +1,211 @@
 # Quota Bar
 
-Quota Bar 是一个 macOS 菜单栏下拉应用原型，用于集中展示 AI 服务订阅费用与额度状态。当前仓库处于界面和产品方向探索阶段，实际数据同步、订阅管理和额度计算逻辑尚未实现。
+> macOS 菜单栏下拉应用，集中查看多项 AI 服务的订阅费用与额度状态。
 
-## 当前能力
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Platform: macOS 26](https://img.shields.io/badge/Platform-macOS%2026-blueviolet)](#requirements)
+[![Swift: 6](https://img.shields.io/badge/Swift-6.2-orange)](#requirements)
 
-- 在 macOS 菜单栏显示一个状态图标。
-- 启动后显示菜单栏状态图标，点击图标展示传统 macOS 原生 dropdown 菜单。
-- 菜单中以静态数据展示每月费用、可用订阅数量、各订阅服务与 5 小时/周额度进度。
-- 支持通过菜单底部“退出”结束应用。
+Quota Bar 把 Codex、Claude、Gemini、MiniMax、Kimi 等多家 AI 服务的剩余额度、刷新时间、订阅费用集中到一个紧凑的菜单栏下拉面板里，不需要切浏览器、查收件箱、记 cycle 时间。
+
+> ⚠️ **本项目处于功能核心阶段**：界面骨架与「真实数据接入」已落地（P0 + P1 完成），但每个 provider 的数据源还在持续扩展。
+
+---
+
+## 功能
+
+- **真实额度读取**（P0）：
+  - 通过 [SweetCookieKit](https://github.com/steipete/SweetCookieKit) 从 Safari / Chrome / Brave / Edge / Arc / Firefox 等浏览器里读 cookie
+  - 通过 `kSecReturnData: true` 真正读 Keychain 里的 OAuth token / API key
+  - Codex / OpenAI 走 `https://chatgpt.com/backend-api/wham/usage` 拿主/周额度
+- **可扩展的策略链**（P1）：
+  - 每个 provider 暴露一组有序 `ProviderFetchStrategy`：Cookie → CLI 日志 → Keychain
+  - `FetchPipeline` 支持串行 fallback 和并发合并两种模式
+  - `TTYCommandRunner` 给交互式 CLI（codex /status、claude /login）提供 PTY
+  - `LoginRunner` 一键跳到 Terminal.app 跑 `codex login`
+- **TCC 引导**：
+  - 检测 Full Disk Access 缺失，在状态栏菜单顶部显示引导横幅 + 「打开系统设置」按钮
+  - SweetCookieKit 的 Keychain 弹框前置提示，告诉用户「Quota Bar 需要授权 Chrome Safe Storage」
+- **菜单栏下拉 UI**：
+  - 总费用、可用订阅计数、各服务 5 小时 / 周额度条
+  - 自动 5 分钟刷新 + 手动「立即刷新」
+  - 状态色彩：可用 = 品牌色，待配置 = 灰色，刷新失败 = 橙色
+
+---
+
+## 支持的 Provider
+
+| Provider | Cookie 读取 | Dashboard 接入 | CLI 路径 | Login 引导 |
+|---|---|---|---|---|
+| Codex / OpenAI | ✅ chatgpt.com | ✅ wham/usage | ✅ ~/.codex/sessions | ✅ codex login |
+| Claude | ✅ claude.ai | 🚧 endpoint 在路上 | ✅ ~/.claude | ✅ claude /login |
+| Gemini | ✅ gemini.google.com | 🚧 需要 Vertex AI | ✅ ~/.gemini | ✅ gemini auth login |
+| MiniMax | ✅ minimax.chat | 🚧 | — | — |
+| Kimi | ✅ kimi.moonshot.cn | 🚧 | — | — |
+
+更多 provider（Cursor / Warp / DeepSeek / Copilot / OpenRouter / Perplexity）仅做 Cookie 探测，dashboard 端点尚未对接，欢迎提 PR。
+
+---
+
+## 要求
+
+- macOS 26 (Tahoe) 或更新
+- Swift 6.2 / Xcode 26+
+- Full Disk Access（首次启动会提示授权，用于读浏览器 Cookie）
+
+---
 
 ## 快速开始
 
+### 跑起来
+
 ```bash
-cd drop-down-test/CodingPlanMenu
+git clone https://github.com/yourname/quota-bar.git
+cd quota-bar/drop-down-test/CodingPlanMenu
 swift run
 ```
 
-## 构建
+启动后：
+
+1. 状态栏右上角出现「QB」图标（macOS 26）或 `chart.bar.fill` SF Symbol
+2. 点开 → 顶部若有橙色横幅 → 点「打开系统设置」授权 Full Disk Access
+3. 重启 quota-bar → 在任一支持的浏览器里登录过 Codex / Claude / Gemini 后，菜单里会出现真实额度
+
+### 打包成 .app
 
 ```bash
 cd drop-down-test/CodingPlanMenu
-swift build
 ./build-app.sh
 ```
 
-## 目录结构
+产物在 `drop-down-test/CodingPlanMenu/build/CodingPlanMenu.app`，可以拖到 Applications。
+
+> 注意：未签名 + 未公证的 .app 第一次启动需要右键 → 打开。
+
+---
+
+## 开发
+
+### 目录结构
 
 ```text
 .
-├── AGENTS.md
-├── README.md
-├── REQUIREMENTS.md
-├── DESIGN.md
-├── agent-log/
-├── agent-template/
 ├── drop-down-test/
-│   └── CodingPlanMenu/
-└── reference/
-    └── project/
-        ├── Mos/
-        └── hidden/
+│   └── CodingPlanMenu/        # 实际 SwiftPM 包
+│       ├── Package.swift       # SPM 入口（依赖 SweetCookieKit）
+│       ├── Sources/CodingPlanMenu/
+│       │   ├── QuotaModels.swift           # 领域模型：ProviderKind / QuotaWindow / Snapshot
+│       │   ├── QuotaProvider.swift         # 数据源协议
+│       │   ├── ProviderFetchStrategy.swift # ★ 策略 + Pipeline
+│       │   ├── Strategies.swift            # ★ 已知 provider 的 pipeline 工厂
+│       │   ├── BrowserCookieReader.swift   # SweetCookieKit 适配器
+│       │   ├── BrowserCookieProvider.swift # Cookie 数据源
+│       │   ├── DashboardEndpoints.swift    # 真实 endpoint + parser
+│       │   ├── KeychainProvider.swift      # Keychain 数据源
+│       │   ├── CLILogProvider.swift        # ~/.codex/sessions 估算
+│       │   ├── TTYCommandRunner.swift      # ★ PTY 命令执行器
+│       │   ├── LoginRunner.swift           # ★ 登录引导
+│       │   ├── PrivacyAccessChecker.swift  # FDA 检测
+│       │   ├── RefreshCoordinator.swift    # 主循环
+│       │   ├── MenuView.swift              # SwiftUI 菜单内容
+│       │   ├── StatusBarController.swift   # AppKit 宿主
+│       │   └── ...
+│       └── build-app.sh
+├── AGENTS.md                  # Agent 协作规范
+├── REQUIREMENTS.md            # 需求追踪
+├── DESIGN.md                  # 视觉规范
+├── agent-log/                 # 任务执行日志
+├── reference/                 # 参考资料（不计入项目代码）
+└── LICENSE                    # MIT
 ```
 
-## 文档入口
+### 构建 & 运行测试
 
-- Agent 协作规范：`AGENTS.md`
-- 需求与验收追踪：`REQUIREMENTS.md`
-- 视觉规范：`DESIGN.md`
-- 执行日志：`agent-log/`
+```bash
+cd drop-down-test/CodingPlanMenu
+swift build          # debug 构建
+swift run            # 启动菜单栏 App
+swift build -c release
+```
 
-## 边界与限制
+### 加一个新的 Provider
 
-- 当前不包含真实订阅数据接入。
-- 当前不包含额度刷新、通知、配置、登录或持久化功能。
-- 当前 UI 数据为静态占位，用于等待后续实际功能定义。
+1. 在 `QuotaModels.swift` 的 `ProviderKind` 里加 case + 在所有 switch 里补全
+2. 在 `DashboardEndpoints.swift` 里注册 endpoint + parser
+3. 在 `Strategies.swift` 的 `ProviderPipelines.makePipelines()` 里加一行
+4. 提交 PR
+
+更复杂的 provider（如需要 OAuth in-app 流程）可以参考 CodexBar 的 ProviderImplementation 模式。
+
+---
+
+## 工作原理
+
+### 数据流
+
+```
+RefreshCoordinator (5min 自动 + 手动)
+        ↓
+FetchPipeline (per ProviderKind)
+        ↓
+[Strategy 1] [Strategy 2] [Strategy 3]    ← 并发跑
+        ↓
+Merge by priority (available > needsConfig > notInstalled > fetchFailed)
+        ↓
+DashboardState → MenuView → 状态栏下拉
+```
+
+### TCC / Full Disk Access
+
+macOS 把浏览器 Cookie 数据库划在 TCC 的「Full Disk Access」之后，没有公开 API 可以查询授权状态。Quota Bar 用以下两种方式探测：
+
+- **同步探测**：`PrivacyAccessChecker.hasFullDiskAccess()` 尝试打开 `~/Library/Cookies/Cookies.binarycookies`，失败则视为未授权。
+- **运行时探测**：SweetCookieKit 在尝试解密 Chrome Cookie 时抛 `BrowserCookieError.accessDenied` → 转成 `ProviderAvailability.fetchFailed` → UI 显示横幅。
+
+授权流程：点「打开系统设置」→ 系统设置 → 隐私与安全性 → 完全磁盘访问权限 → 勾选 Quota Bar → 重启。
+
+### PTY 与登录引导
+
+Codex / Claude 的 TUI 在无 TTY 时会拒绝交互。`TTYCommandRunner` 通过 `/usr/bin/script -q /dev/null` 借一个伪终端。`LoginRunner` 把 `codex login` / `claude /login` 等命令塞进 Terminal.app。
+
+---
+
+## 路线图
+
+- [ ] Claude dashboard endpoint（org 发现 + `/usage` 解析）
+- [ ] Gemini Vertex AI 接入
+- [ ] In-app OAuth（避免跳出 Terminal）
+- [ ] 历史曲线 + 用量预测
+- [ ] 通知：额度低于阈值时提醒
+- [ ] 多账号切换
+
+完整需求追踪见 [`REQUIREMENTS.md`](./REQUIREMENTS.md)。
+
+---
+
+## 贡献
+
+欢迎 PR：
+
+1. Fork → 新建分支 → 改代码
+2. `swift build` 通过 + 在本地跑一遍
+3. 提交 PR，描述清楚：
+   - 对应哪个 ProviderKind
+   - 引用的 dashboard endpoint + JSON 字段
+   - 是否引入新依赖
+
+需要避开的方向：
+
+- 不要 `rm -rf` 任何浏览器 cookie 数据库（只读！）
+- 不要把 token / cookie 值 log 到控制台
+
+---
+
+## License
+
+[MIT](./LICENSE) — Tao Be, 2026.
+
+### 致谢
+
+- [SweetCookieKit](https://github.com/steipete/SweetCookieKit) by Peter Steinberger — 浏览器 Cookie 提取
+- [CodexBar](https://github.com/steipete/CodexBar) by Peter Steinberger — 设计参考（strategy / pipeline / PTY 模式）
