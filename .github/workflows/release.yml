@@ -1,0 +1,152 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Swift build
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache SwiftPM artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            drop-down-test/CodingPlanMenu/.build
+            drop-down-test/CodingPlanMenu/.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('drop-down-test/CodingPlanMenu/Package.swift', 'drop-down-test/CodingPlanMenu/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Show Swift toolchain
+        working-directory: drop-down-test/CodingPlanMenu
+        run: swift --version
+
+      - name: Resolve dependencies
+        working-directory: drop-down-test/CodingPlanMenu
+        run: swift package resolve
+
+      - name: Build (debug)
+        working-directory: drop-down-test/CodingPlanMenu
+        run: swift build
+
+      - name: Build (release)
+        working-directory: drop-down-test/CodingPlanMenu
+        run: swift build -c release
+
+  release:
+    name: Package .dmg + GitHub Release
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache SwiftPM artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            drop-down-test/CodingPlanMenu/.build
+            drop-down-test/CodingPlanMenu/.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('drop-down-test/CodingPlanMenu/Package.swift', 'drop-down-test/CodingPlanMenu/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Build (release)
+        working-directory: drop-down-test/CodingPlanMenu
+        run: swift build -c release
+
+      - name: Assemble .app bundle
+        working-directory: drop-down-test/CodingPlanMenu
+        env:
+          APP_NAME: CodingPlanMenu
+          SHORT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/${APP_NAME}.app"
+          rm -rf "$APP"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp ".build/release/${APP_NAME}" "$APP/Contents/MacOS/"
+          cat > "$APP/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleIdentifier</key>
+              <string>com.example.CodingPlanMenu</string>
+              <key>CFBundleName</key>
+              <string>CodingPlanMenu</string>
+              <key>CFBundleDisplayName</key>
+              <string>Quota Bar</string>
+              <key>CFBundleExecutable</key>
+              <string>CodingPlanMenu</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>26.0</string>
+              <key>LSUIElement</key>
+              <true/>
+          </dict>
+          </plist>
+          PLIST
+          echo "Built app: $APP"
+          ls -la "$APP/Contents/MacOS"
+          defaults read "$APP/Contents/Info.plist" CFBundleDisplayName
+
+      - name: Build .dmg
+        env:
+          APP_NAME: CodingPlanMenu
+          SHORT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          STAGE="$RUNNER_TEMP/dmg-stage"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+          cp -R "$RUNNER_TEMP/${APP_NAME}.app" "$STAGE/"
+          ln -s /Applications "$STAGE/Applications"
+          DMG="$RUNNER_TEMP/${APP_NAME}-${SHORT_SHA::7}.dmg"
+          hdiutil create \
+            -volname "Quota Bar" \
+            -srcfolder "$STAGE" \
+            -ov \
+            -format UDZO \
+            "$DMG"
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
+          ls -lh "$DMG"
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly-${{ github.sha }}
+          name: Nightly · ${{ github.event.head_commit.message }}
+          body: |
+            Automated nightly build from `${{ github.sha }}`.
+
+            **Install**
+
+            1. Download `CodingPlanMenu-<short-sha>.dmg` below.
+            2. Open it (double-click).
+            3. Drag **Quota Bar** into **Applications** — or just double-click it inside the DMG window to run from there.
+
+            > First launch requires right-click → Open. The binary is unsigned and not notarized.
+          draft: false
+          prerelease: true
+          fail_on_unmatched_files: true
+          files: ${{ env.DMG }}

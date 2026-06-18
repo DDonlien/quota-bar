@@ -1,0 +1,15 @@
+编号,元素,上padding,自身,下padding,排布规则,备注
+1,header spacing,0,0,0,系统+自定义,"MenuView.topPadding(0)，系统不额外加边距"
+2,每月费用,8,fit(13),6,fit,"自身高度约13pt（系统菜单字号），顶部8pt由本月费用承担"
+3,可用订阅,0,fit(13),8,fit,"距下方Divider 8pt（自身下padding）"
+4,Divider,0,fix(1),8,fix,"1pt灰色线，下方留白8pt（Divider.bottom padding）"
+5,Agent 名称,0,fit(13),0,fit,"例如 Codex Plus（统一字号13pt），下padding 0"
+6,额度名称,6,fit(11),2,fit,"例如 5小时额度（细体11pt，可重复），上padding 6pt"
+7,进度条,0,fix(5),0,fit,"蓝色条，高5pt（可重复），下padding 0"
+8,Divider,8,fix(1),8,fix,"plan间Divider，上padding 8pt"
+9,立即刷新,0,fit(13),3,fit,系统原生菜单项
+10,刷新时间,0,fit(11),3,fit,灰色小字
+11,偏好设置,0,fit(13),3,fit,系统原生菜单项
+12,Divider,0,fix(1),3,fix,系统原生分割线
+13,退出,0,fit(13),4,fit,"系统原生菜单项，底部留白由系统控制"
+14,Bottom Spacing,0,0,0,系统,"已包含在退出下padding(4)中，系统默认"

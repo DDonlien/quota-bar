@@ -24,7 +24,43 @@
       "inputs" : [
         {
           "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentDetector.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/BrowserCookieProvider.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/BrowserCookieReader.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/CLILogProvider.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/CodingPlanMenuApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/DashboardEndpoints.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/KeychainProvider.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/LoginRunner.swift"
         },
         {
           "kind" : "file",
@@ -32,11 +68,47 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/PlaceholderProviders.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/PrivacyAccessChecker.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/ProviderFactory.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/ProviderFetchStrategy.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/QuotaModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/RefreshCoordinator.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/StatusBarController.swift"
         },
         {
           "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/Strategies.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/TTYCommandRunner.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/Modules/SweetCookieKit.swiftmodule"
         },
         {
           "kind" : "file",
@@ -47,9 +119,26 @@
       "moduleName" : "CodingPlanMenu",
       "moduleOutputPath" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/Modules/CodingPlanMenu.swiftmodule",
       "objects" : [
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/AgentDetector.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/AgentModel.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/AgentStore.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/BrowserCookieProvider.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/BrowserCookieReader.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CLILogProvider.swift.o",
         "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CodingPlanMenuApp.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/DashboardEndpoints.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/KeychainProvider.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/LoginRunner.swift.o",
         "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/MenuView.swift.o",
-        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/StatusBarController.swift.o"
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/PlaceholderProviders.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/PrivacyAccessChecker.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/ProviderFactory.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/ProviderFetchStrategy.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/QuotaModels.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/RefreshCoordinator.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/StatusBarController.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/Strategies.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/TTYCommandRunner.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -72,6 +161,7 @@
         "-entry-point-function-name",
         "-Xfrontend",
         "CodingPlanMenu_main",
+        "-color-diagnostics",
         "-swift-version",
         "6",
         "-plugin-path",
@@ -104,7 +194,43 @@
       "outputs" : [
         {
           "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/AgentDetector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/AgentModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/AgentStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/BrowserCookieProvider.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/BrowserCookieReader.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CLILogProvider.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CodingPlanMenuApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/DashboardEndpoints.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/KeychainProvider.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/LoginRunner.swift.o"
         },
         {
           "kind" : "file",
@@ -112,7 +238,39 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/PlaceholderProviders.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/PrivacyAccessChecker.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/ProviderFactory.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/ProviderFetchStrategy.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/QuotaModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/RefreshCoordinator.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/StatusBarController.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/Strategies.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/TTYCommandRunner.swift.o"
         },
         {
           "kind" : "file",
@@ -121,11 +279,225 @@
       ],
       "prepareForIndexing" : false,
       "sources" : [
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentDetector.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentModel.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentStore.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/BrowserCookieProvider.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/BrowserCookieReader.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/CLILogProvider.swift",
         "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/CodingPlanMenuApp.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/DashboardEndpoints.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/KeychainProvider.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/LoginRunner.swift",
         "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/MenuView.swift",
-        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/StatusBarController.swift"
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/PlaceholderProviders.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/PrivacyAccessChecker.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/ProviderFactory.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/ProviderFetchStrategy.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/QuotaModels.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/RefreshCoordinator.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/StatusBarController.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/Strategies.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/TTYCommandRunner.swift"
       ],
       "tempsPath" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.SweetCookieKit-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/sources",
+      "importPath" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCatalog.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieImporter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieKeychainAccessGate.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromeCookieImporter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLevelDBReader.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLocalStorageReader+LevelDB.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLocalStorageReader.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/GeckoCookieImporter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/SafariCookieImporter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/SnappyDecoder.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "SweetCookieKit",
+      "moduleOutputPath" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/Modules/SweetCookieKit.swiftmodule",
+      "objects" : [
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCatalog.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCookieImporter.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCookieKeychainAccessGate.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCookieModels.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromeCookieImporter.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromiumLevelDBReader.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromiumLocalStorageReader+LevelDB.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromiumLocalStorageReader.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/GeckoCookieImporter.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/SafariCookieImporter.swift.o",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/SnappyDecoder.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j18",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/include/SweetCookieKit-Swift.h",
+        "-color-diagnostics",
+        "-swift-version",
+        "6",
+        "-enable-upcoming-feature",
+        "StrictConcurrency",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-suppress-warnings",
+        "-user-module-version",
+        "0.4.1",
+        "-package-name",
+        "sweetcookiekit"
+      ],
+      "outputFileMapPath" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCatalog.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCookieImporter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCookieKeychainAccessGate.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCookieModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromeCookieImporter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromiumLevelDBReader.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromiumLocalStorageReader+LevelDB.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromiumLocalStorageReader.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/GeckoCookieImporter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/SafariCookieImporter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/SnappyDecoder.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/Modules/SweetCookieKit.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCatalog.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieImporter.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieKeychainAccessGate.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieModels.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromeCookieImporter.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLevelDBReader.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLocalStorageReader+LevelDB.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLocalStorageReader.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/GeckoCookieImporter.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/SafariCookieImporter.swift",
+        "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/SnappyDecoder.swift"
+      ],
+      "tempsPath" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build",
       "wholeModuleOptimization" : false
     }
   },
@@ -140,9 +512,26 @@
       "-package-name",
       "codingplanmenu",
       "-c",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentDetector.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentModel.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentStore.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/BrowserCookieProvider.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/BrowserCookieReader.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/CLILogProvider.swift",
       "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/CodingPlanMenuApp.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/DashboardEndpoints.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/KeychainProvider.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/LoginRunner.swift",
       "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/MenuView.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/PlaceholderProviders.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/PrivacyAccessChecker.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/ProviderFactory.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/ProviderFetchStrategy.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/QuotaModels.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/RefreshCoordinator.swift",
       "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/StatusBarController.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/Strategies.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/TTYCommandRunner.swift",
       "-I",
       "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -165,6 +554,7 @@
       "-entry-point-function-name",
       "-Xfrontend",
       "CodingPlanMenu_main",
+      "-color-diagnostics",
       "-swift-version",
       "6",
       "-plugin-path",
@@ -194,10 +584,89 @@
       "codingplanmenu",
       "-driver-use-frontend-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "SweetCookieKit" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "SweetCookieKit",
+      "-package-name",
+      "sweetcookiekit",
+      "-c",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCatalog.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieImporter.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieKeychainAccessGate.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieModels.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromeCookieImporter.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLevelDBReader.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLocalStorageReader+LevelDB.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLocalStorageReader.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/GeckoCookieImporter.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/SafariCookieImporter.swift",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/SnappyDecoder.swift",
+      "-I",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j18",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/include/SweetCookieKit-Swift.h",
+      "-color-diagnostics",
+      "-swift-version",
+      "6",
+      "-enable-upcoming-feature",
+      "StrictConcurrency",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-suppress-warnings",
+      "-user-module-version",
+      "0.4.1",
+      "-package-name",
+      "sweetcookiekit",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
     ]
   },
   "targetDependencyMap" : {
     "CodingPlanMenu" : [
+      "SweetCookieKit"
+    ],
+    "SweetCookieKit" : [
 
     ]
   },
@@ -236,7 +705,43 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentDetector.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/AgentStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/BrowserCookieProvider.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/BrowserCookieReader.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/CLILogProvider.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/CodingPlanMenuApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/DashboardEndpoints.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/KeychainProvider.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/LoginRunner.swift"
         },
         {
           "kind" : "file",
@@ -244,7 +749,39 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/PlaceholderProviders.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/PrivacyAccessChecker.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/ProviderFactory.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/ProviderFetchStrategy.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/QuotaModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/RefreshCoordinator.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/StatusBarController.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/Strategies.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/TTYCommandRunner.swift"
         }
       ],
       "outputFilePath" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/sources"
@@ -258,7 +795,43 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/AgentDetector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/AgentModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/AgentStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/BrowserCookieProvider.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/BrowserCookieReader.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CLILogProvider.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/CodingPlanMenuApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/DashboardEndpoints.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/KeychainProvider.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/LoginRunner.swift.o"
         },
         {
           "kind" : "file",
@@ -266,10 +839,140 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/PlaceholderProviders.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/PrivacyAccessChecker.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/ProviderFactory.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/ProviderFetchStrategy.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/QuotaModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/RefreshCoordinator.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/StatusBarController.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/Strategies.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.build/TTYCommandRunner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCatalog.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCookieImporter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCookieKeychainAccessGate.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/BrowserCookieModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromeCookieImporter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromiumLevelDBReader.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromiumLocalStorageReader+LevelDB.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/ChromiumLocalStorageReader.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/GeckoCookieImporter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/SafariCookieImporter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/SnappyDecoder.swift.o"
         }
       ],
       "outputFilePath" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/CodingPlanMenu.product/Objects.LinkFileList"
+    },
+    "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCatalog.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieImporter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieKeychainAccessGate.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/BrowserCookieModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromeCookieImporter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLevelDBReader.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLocalStorageReader+LevelDB.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/ChromiumLocalStorageReader.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/GeckoCookieImporter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/SafariCookieImporter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/checkouts/SweetCookieKit/Sources/SweetCookieKit/SnappyDecoder.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/SweetCookieKit.build/sources"
     },
     "/Users/taobe/Projects/GitHub/Personal/quota-bar/drop-down-test/CodingPlanMenu/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
       "alwaysOutOfDate" : true,

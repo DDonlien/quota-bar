@@ -57,6 +57,14 @@ Quota Bar 把 Codex、Claude、Gemini、MiniMax、Kimi 等多家 AI 服务的剩
 
 ## 快速开始
 
+### 安装（推荐）
+
+从 [Releases](../../releases) 页面下载最新的 `CodingPlanMenu-<sha>.dmg`，打开后把 **Quota Bar** 拖进 **Applications**，或在 DMG 窗口里直接双击运行。
+
+> 每个 push 到 `main` 都会自动构建一个新的 pre-release；CI 配置见 [`.github/workflows/release.yml`](./.github/workflows/release.yml)。
+>
+> 首次启动需要右键 → 打开（未签名 + 未公证）。
+
 ### 跑起来
 
 ```bash

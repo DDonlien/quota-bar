@@ -11,7 +11,7 @@ enum MenuDashboardStyle {
     static let horizontalPadding: CGFloat = 14
 
     // 顶部汇总（每月费用 / 可用订阅），三种 padding 各自独立
-    static let summaryFirstRowTopPadding: CGFloat = 4    // 2 上 padding
+    static let summaryFirstRowTopPadding: CGFloat = 8    // 2 上 padding
     static let summaryRowSpacing: CGFloat = 6            // 2 下 padding
     static let summaryLastRowBottomPadding: CGFloat = 8  // 3 下 padding
     /// 汇总内两行之间的纵向间距（兼容既有代码引用）。

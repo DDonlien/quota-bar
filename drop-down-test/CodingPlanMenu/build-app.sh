@@ -32,7 +32,7 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
     <key>CFBundleName</key>
     <string>CodingPlanMenu</string>
     <key>CFBundleDisplayName</key>
-    <string>CodingPlanMenu</string>
+    <string>Quota Bar</string>
     <key>CFBundleExecutable</key>
     <string>CodingPlanMenu</string>
     <key>CFBundlePackageType</key>

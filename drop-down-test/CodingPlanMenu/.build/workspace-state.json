@@ -4,7 +4,23 @@
 
     ],
     "dependencies" : [
-
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "sweetcookiekit",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/steipete/SweetCookieKit.git",
+          "name" : "SweetCookieKit"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "21bedea672a3e63ccad24d744051e76cdf0462dd",
+            "version" : "0.4.1"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "SweetCookieKit"
+      }
     ],
     "prebuilts" : [
 
