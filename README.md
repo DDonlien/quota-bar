@@ -15,21 +15,25 @@ Quota Bar 把 Codex、Claude、Gemini、MiniMax、Kimi 等多家 AI 服务的剩
 ## 功能
 
 - **真实额度读取**（P0）：
+  - Codex 优先读取 `~/.codex/auth.json`，用 OAuth Bearer 调 `wham/usage`，不依赖 Full Disk Access
   - 通过 [SweetCookieKit](https://github.com/steipete/SweetCookieKit) 从 Safari / Chrome / Brave / Edge / Arc / Firefox 等浏览器里读 cookie
   - 通过 `kSecReturnData: true` 真正读 Keychain 里的 OAuth token / API key
   - Codex / OpenAI 走 `https://chatgpt.com/backend-api/wham/usage` 拿主/周额度
+  - 只有拿到真实 dashboard/usage 响应的服务才展示订阅档位和价格；未接入 provider 不显示占位 Plus/Pro
 - **可扩展的策略链**（P1）：
-  - 每个 provider 暴露一组有序 `ProviderFetchStrategy`：Cookie → CLI 日志 → Keychain
+  - 每个 provider 暴露一组有序 `ProviderFetchStrategy`；Codex 顺序为 OAuth → Cookie → CLI 日志 → Keychain
   - `FetchPipeline` 支持串行 fallback 和并发合并两种模式
   - `TTYCommandRunner` 给交互式 CLI（codex /status、claude /login）提供 PTY
   - `LoginRunner` 一键跳到 Terminal.app 跑 `codex login`
 - **TCC 引导**：
-  - 检测 Full Disk Access 缺失，在状态栏菜单顶部显示引导横幅 + 「打开系统设置」按钮
+  - 仅当浏览器 Cookie 数据源实际需要 Full Disk Access 时，在状态栏菜单顶部显示引导横幅 + 「打开系统设置」按钮
   - SweetCookieKit 的 Keychain 弹框前置提示，告诉用户「Quota Bar 需要授权 Chrome Safe Storage」
 - **菜单栏下拉 UI**：
   - 总费用、可用订阅计数、各服务 5 小时 / 周额度条
-  - 自动 5 分钟刷新 + 手动「立即刷新」
+  - 自动 5 分钟刷新 + 手动「立即刷新」，手动刷新不会关闭 dropdown
   - 状态色彩：可用 = 品牌色，待配置 = 灰色，刷新失败 = 橙色
+  - 刷新时间短期显示「4 小时后 / 明天 / 后天」，更远日期显示具体日期
+  - 价格按系统语言/地区选择显示货币；简体中文或中国区默认将 USD 订阅价按实时汇率换算成人民币
 
 ---
 

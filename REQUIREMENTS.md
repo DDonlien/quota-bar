@@ -55,7 +55,7 @@
 - [x] [DA-A-002] 探测本地安装的 AI IDE 或应用（如 Cursor、Warp 等）#P1 — `AgentDetector.detectAppProviders()`
 - [x] [DA-A-003] 探测环境变量或配置文件中的 API key（如 OpenAI、Anthropic、DeepSeek 等）#P1 — `AgentDetector.detectAPIKeyProviders()`
 - [x] [DA-A-004] 汇总探测结果，将每个 Agent 标记为「可用（已认证）」「待配置（需登录）」或「未安装」状态 #P1 — `DetectionResult.availableAgents` 等
-- [ ] [DA-A-005] 探测结果决定菜单栏中展示哪些服务，不展示未安装或无需关注的服务 #P1 #deferred — 当前固定展示 5 个 Codex/Claude/Gemini/MiniMax/Kimi
+- [x] [DA-A-005] 探测结果决定菜单栏中展示哪些服务，不展示未安装或无需关注的服务 #P1 — `RefreshCoordinator` 过滤 `.notInstalled` snapshot
 
 ### SUB-A：订阅数据获取
 
@@ -65,17 +65,26 @@
 - [x] [SUB-A-003] 支持从 Keychain 中的 OAuth token 或 API key 读取额度数据 #P1 — `KeychainProvider.readToken()`
 - [x] [SUB-A-004] 将获取到的数据映射到现有 UI 模型：月费、session 额度、weekly 额度、重置时间 #P1 — `CodexDashboardParser`
 - [x] [SUB-A-005] 获取失败时保留上一次有效数据，并在 UI 中标记「数据可能过期」#P1 — `ProviderSnapshot.isStale` 字段已就位
+- [x] [SUB-A-009] 未拿到真实 dashboard/usage 响应时不生成 Plus/Pro、价格或 100% 额度占位 #P1
+- [x] [SUB-A-010] 订阅价格只在真实返回 plan/tier 后按官方价目映射；未知服务或未知档位显示 `—` #P1
+- [x] [SUB-A-011] 按系统语言/地区选择展示货币，简体中文或中国区默认将 USD 订阅价按实时汇率换算为人民币 #P1
+- [x] [SUB-A-012] 支持 Kimi 从 `~/.kimi-code/credentials/kimi-code.json` 读 OAuth token 调 `/apiv2/.../GetUsages` #P1 — `KimiAuthProvider`
+- [x] [SUB-A-013] App Bundle 探测：服务只有桌面 App 没有 dashboard 时（如 Trae、Antigravity），识别后展示为「已安装，dashboard 待接入」 #P1 — `AppBundleProvider`
 - [ ] [SUB-A-006] Claude dashboard endpoint + parser #deferred — 当前 Claude 走 Cookie 探测但 endpoint 未对接
 - [ ] [SUB-A-007] Gemini Vertex AI / API key 路径 #deferred — 当前仅 Cookie 探测
 - [ ] [SUB-A-008] 多浏览器选择（Safari / Chrome / Firefox 单选或顺序）#deferred — 当前按 `Browser.defaultImportOrder` 全跑
+- [ ] [SUB-A-014] Kimi Web 端点 Cookie 模式（`kimi-auth` cookie → GetUsages）— 当前 `BrowserCookieProvider` 已读 `kimi.com` cookie，但 endpoint parser 未实现，目前 Cookie 路径只起到「发现已登录」作用 #deferred
+- [ ] [SUB-A-015] MiniMax Web 端点 Cookie 模式（`minimax.chat` cookie → coding_plan/remains）— 同上 #deferred
+- [ ] [SUB-A-016] Antigravity dashboard 端点（Antigravity 用 localhost probe，需本地运行） #deferred
+- [ ] [SUB-A-017] 同一服务多身份合并/拆分（如 Kimi 同时登录 work + personal 账号）#P2 #deferred — 当前架构每个 ProviderKind 只返一条 snapshot
 
 ### REF-A：刷新机制
 
-- [x] [REF-A-000] 支持手动刷新：点击菜单中的「立即刷新」触发全量数据更新 #P1
+- [x] [REF-A-000] 支持手动刷新：点击菜单中的「立即刷新」触发全量数据更新，且 dropdown 保持打开 #P1
 - [x] [REF-A-001] 支持自动刷新，默认间隔 5 分钟，允许在偏好设置中修改（P2 实现设置页）#P1
 - [x] [REF-A-002] 刷新时在 UI 中展示「上次更新时间」和刷新状态（如 spinning indicator）#P1
 - [x] [REF-A-003] 单次刷新超时或失败时，不阻塞 UI，其他服务数据正常展示 #P1
-- [ ] [REF-A-004] 顶部菜单栏图标根据可用状态动态变化：正常 / 警告 / 错误 #P1 #deferred — 当前固定 `chart.bar.fill`
+- [x] [REF-A-004] 顶部菜单栏图标根据可用状态动态变化：正常 / 警告 / 错误 #P1 — 4 态（normal / refreshing / warning / error）+ 最低 remaining% 数字徽标，`StatusBarController.refreshStatusItemAppearance()`
 
 ### UI-C：动态数据展示
 
@@ -84,7 +93,8 @@
 - [x] [UI-C-002] 数据获取中展示 loading 状态，避免白屏或假数据 #P1 — `LoadingStateView` + `QuotaSkeleton`
 - [x] [UI-C-003] 单个服务数据获取失败时，该服务项展示错误状态，不影响其他服务展示 #P1 — `ProviderAvailability.fetchFailed`
 - [x] [UI-C-004] 顶部汇总信息（每月费用、可用订阅数）根据动态数据实时计算 #P1 — `DashboardState.totalMonthlyCostText`
-- [x] [UI-C-005] 缺 Full Disk Access 时显示引导横幅 + 「打开系统设置」按钮 #P1 — `PermissionBannerView`
+- [x] [UI-C-005] 浏览器 Cookie 数据源缺 Full Disk Access 时按需显示引导横幅 + 「打开系统设置」按钮 #P1 — `PermissionBannerView`
+- [x] [UI-C-006] 距离刷新较远时显示具体日期；明天/后天使用自然语言，避免"6天后"难以反应 #P1
 
 ### P2：偏好设置与其他功能（延后）
 
