@@ -31,6 +31,15 @@ enum DashboardEndpoints {
                 url: URL(string: "https://claude.ai/api/organizations")!,
                 parser: ClaudeDashboardParser()
             )
+        case .minimax:
+            // MiniMax Coding Plan dashboard（与 MiniMaxConfigProvider 调同一个 endpoint，
+            // 但用浏览器 cookie 替代 API key）。当用户在浏览器已登录 minimax.chat 时，
+            // 此路径无需 API key 即可拿数据。注意：Cloudflare 可能拦截简单 curl 调用，
+            // 真实成功率依赖浏览器 cookie 是否包含正确的 cf_clearance / session。
+            return Endpoint(
+                url: URL(string: "https://api.minimaxi.com/v1/coding_plan/remains")!,
+                parser: MiniMaxDashboardParser()
+            )
         case .gemini:
             return nil
         default:
@@ -151,5 +160,72 @@ struct ClaudeDashboardParser: DashboardParser {
     func parse(data: Data) -> [QuotaWindow]? {
         // 第一步只验证账号存在即可；quota 数据需要二次请求，所以这里返回 nil。
         return nil
+    }
+}
+
+// MARK: - MiniMax Coding Plan 解析
+
+/// 解析 `https://api.minimaxi.com/v1/coding_plan/remains` 响应：
+/// ```json
+/// {
+///   "model_remains": [{"model_name": "MiniMax-M2", "remains": 500}, ...],
+///   "current_package_name": "Plus",
+///   "current_package_id": 1,
+///   "remains": ["unlimited" | 500],
+///   "tool_remains": [...],
+///   "base_resp": {"status_code": 0, "status_msg": "success"}
+/// }
+/// ```
+///
+/// 注意：MiniMax 响应里**没有传统意义的 5h/周额度**，而是按 model 维度给出剩余
+/// 调用次数。`remains` 数组（顶层）通常对应单一主套餐剩余；`model_remains[]`
+/// 是各 model 的剩余配额。我们把每个 model 渲染成 1 个 QuotaWindow。
+struct MiniMaxDashboardParser: DashboardParser {
+    func parse(data: Data) -> [QuotaWindow]? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+
+        // status_code != 0 → API 失败（cloudflare 拦截 / cookie 过期等）
+        if let baseResp = json["base_resp"] as? [String: Any],
+           let statusCode = (baseResp["status_code"] as? NSNumber)?.intValue,
+           statusCode != 0
+        {
+            return nil
+        }
+
+        var windows: [QuotaWindow] = []
+
+        // 1. current_package_name 作为顶层"主套餐"剩余（如果有数字）
+        if let mainRemains = json["remains"] as? [Any],
+           let numeric = mainRemains.compactMap({ $0 as? NSNumber }).first
+        {
+            let fraction = max(0, min(1, numeric.doubleValue / 1000.0))  // 经验值
+            windows.append(QuotaWindow(
+                title: json["current_package_name"] as? String ?? "Coding Plan",
+                remainingFraction: fraction,
+                refreshDescription: "Coding Plan 主套餐",
+                periodSeconds: 30 * 86400  // 月度
+            ))
+        }
+
+        // 2. model_remains[] 每个 model 一个 QuotaWindow
+        if let modelRemains = json["model_remains"] as? [[String: Any]] {
+            for entry in modelRemains {
+                guard let name = entry["model_name"] as? String,
+                      let remains = (entry["remains"] as? NSNumber)?.doubleValue
+                else { continue }
+                // 经验阈值：每 model 单月可用 1000 次，超过 1.0 上限按 1.0 显示
+                let fraction = max(0, min(1, remains / 1000.0))
+                windows.append(QuotaWindow(
+                    title: name,
+                    remainingFraction: fraction,
+                    refreshDescription: "Coding Plan",
+                    periodSeconds: 30 * 86400
+                ))
+            }
+        }
+
+        return windows.isEmpty ? nil : windows
     }
 }
