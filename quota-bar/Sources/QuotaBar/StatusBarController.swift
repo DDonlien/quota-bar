@@ -34,77 +34,161 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private func configureStatusItem() {
         guard let button = statusItem.button else { return }
 
-        if let image = NSImage(systemSymbolName: "chart.bar.fill", accessibilityDescription: "Quota Bar") {
-            image.isTemplate = true
-            image.size = NSSize(width: 17, height: 17)
-            button.image = image
-            button.imagePosition = .imageLeft
-            button.imageScaling = .scaleProportionallyDown
-        } else {
-            button.title = "QB"
-        }
-
+        button.imagePosition = .imageOnly
+        button.imageScaling = .scaleProportionallyDown
         button.toolTip = "Quota Bar"
         statusItem.menu = menu
         refreshStatusItemAppearance()
     }
 
-    /// 根据 coordinator.state 里所有 snapshot 的 overallAvailability 切换状态栏图标 + tooltip + 数字徽标。
-    /// 三态：
-    /// - **normal**：至少一个 available，且没有 fetchFailed → `chart.bar.fill` + 显示最低 remaining% 数字
-    /// - **refreshing**：正在刷 → `arrow.triangle.2.circlepath` + 标题 "刷新中"
-    /// - **warning**：有 needsConfiguration 或全 needsConfiguration → `chart.bar` 空徽标
-    /// - **error**：有任何 fetchFailed，或全 fetchFailed → `exclamationmark.triangle.fill` + 标题 "!"
+    /// 根据 coordinator.state 切换状态栏图标 + tooltip。
+    ///
+    /// **状态栏设计**（Liquid Glass 风格）：
+    /// - **正常**：画 N 个垂直 bar，每个对应一个 `.available` 订阅；
+    ///   - bar 数量 = 已配置订阅数（needsConfiguration / notInstalled / fetchFailed 不显示）
+    ///   - bar 颜色 = 该订阅的 brand color
+    ///   - bar 高度 = 该订阅所有 quota 窗口里最低 `remainingFraction`（用最低值对齐"最紧迫的额度"感知）
+    ///   - bar 顺序 = dashboard 里的 snapshot 顺序（按 `kind.rawValue` 字母升序）
+    ///   - 用完的（0%）仍然画最小 bar（2pt），让用户知道订阅存在
+    /// - **刷新中**：单 SF Symbol `arrow.triangle.2.circlepath`（spinner）
+    /// - **零订阅**：单 SF Symbol `questionmark.circle`
+    /// - **有 fetchFailed**：fetchFailed 的订阅不画 bar，但其他正常订阅的 bar 仍画
+    ///
+    /// tooltip 显示每个 bar 对应订阅的剩余百分比，方便在 menu bar 悬停查看。
     private func refreshStatusItemAppearance() {
         guard let button = statusItem.button else { return }
 
         let snapshots = coordinator.state.snapshots
         let isRefreshing = coordinator.isRefreshing
-        let overall = Self.overallAvailability(of: snapshots)
-
-        let symbolName: String
-        let tooltipSuffix: String
-        let titleSuffix: String?
+        let available = snapshots.filter { $0.availability == .available }
 
         if isRefreshing {
-            symbolName = "arrow.triangle.2.circlepath"
-            tooltipSuffix = "（正在刷新）"
-            titleSuffix = "刷新中"
+            // 刷新中：spinner SF Symbol
+            if let image = NSImage(
+                systemSymbolName: "arrow.triangle.2.circlepath",
+                accessibilityDescription: "Quota Bar 刷新中"
+            ) {
+                image.isTemplate = true
+                image.size = NSSize(width: 16, height: 16)
+                button.image = image
+            }
+            button.title = ""
+            button.toolTip = "Quota Bar · 正在刷新…"
+            return
+        }
+
+        // 正常 / 部分失败状态：画 bars image（available 数量从 0 到 N）
+        let image = Self.makeBarsImage(from: available)
+        button.image = image
+        button.title = ""
+
+        // tooltip：每个订阅的剩余%
+        if available.isEmpty {
+            let needsConfigCount = snapshots.filter {
+                if case .needsConfiguration = $0.availability { return true }
+                return false
+            }.count
+            if needsConfigCount > 0 {
+                button.toolTip = "Quota Bar · \(needsConfigCount) 个服务待配置"
+            } else {
+                button.toolTip = "Quota Bar · 暂无已配置订阅"
+            }
         } else {
-            switch overall {
-            case .normal:
-                symbolName = "chart.bar.fill"
-                tooltipSuffix = "（运行中）"
-                titleSuffix = Self.minimumRemainingText(of: snapshots)
-            case .warning:
-                symbolName = "chart.bar"
-                tooltipSuffix = "（部分服务待配置）"
-                titleSuffix = nil
-            case .error:
-                symbolName = "exclamationmark.triangle.fill"
-                tooltipSuffix = "（数据获取失败）"
-                titleSuffix = "!"
+            let summary = available.map { snap -> String in
+                let pct = snap.quotas.isEmpty
+                    ? 100
+                    : Int((snap.quotas.map { $0.remainingFraction }.min()! * 100).rounded())
+                return "\(snap.kind.displayName) \(pct)%"
+            }.joined(separator: " · ")
+            button.toolTip = "Quota Bar · \(summary)"
+        }
+    }
+
+    /// 画 N 个垂直 bar 的 NSImage。
+    ///
+    /// 每个订阅 1 个 bar：
+    /// - 宽 3.5pt，高 = `max(2pt, remainingFraction × 14pt)`
+    /// - 间距 1.5pt
+    /// - 颜色 = kind 的 brand color（95% 不透明度，让 menu bar 背景轻微透出，模拟 liquid glass 透光感）
+    /// - 圆角 1pt（接近 SF Symbol 的圆角感）
+    ///
+    /// Image 总高 16pt（适配 NSStatusBar 默认 ~22pt 高度 + 上下 padding）。
+    private static func makeBarsImage(from snapshots: [ProviderSnapshot]) -> NSImage {
+        let barWidth: CGFloat = 3.5
+        let barGap: CGFloat = 1.5
+        let imageHeight: CGFloat = 16
+        let topPadding: CGFloat = 2
+        let bottomPadding: CGFloat = 2
+        let maxBarHeight = imageHeight - topPadding - bottomPadding  // 12pt
+        let minBarHeight: CGFloat = 2  // 用完也画最小 bar，让用户知情
+        let count = snapshots.count
+
+        // 兜底：零订阅 → ? 图标
+        if count == 0 {
+            if let fallback = NSImage(
+                systemSymbolName: "questionmark.circle",
+                accessibilityDescription: "Quota Bar 暂无订阅"
+            ) {
+                fallback.isTemplate = true
+                fallback.size = NSSize(width: 16, height: 16)
+                return fallback
             }
         }
 
-        if let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Quota Bar") {
-            image.isTemplate = true
-            image.size = NSSize(width: 17, height: 17)
-            button.image = image
+        let totalWidth = CGFloat(count) * barWidth + CGFloat(max(0, count - 1)) * barGap
+        let image = NSImage(size: NSSize(width: max(totalWidth, 8), height: imageHeight))
+        image.lockFocus()
+
+        // Liquid glass 容器：极淡灰半透明圆角矩形，模拟 menu bar widget 的玻璃底
+        let containerRect = NSRect(x: 0, y: 0, width: totalWidth, height: imageHeight)
+        let containerPath = NSBezierPath(
+            roundedRect: containerRect.insetBy(dx: -1, dy: -1),
+            xRadius: 3.5,
+            yRadius: 3.5
+        )
+        NSColor(white: 0, alpha: 0.04).setFill()
+        containerPath.fill()
+
+        for (i, snap) in snapshots.enumerated() {
+            // bar 高度 = 该订阅所有 quota 窗口里最低 remainingFraction（对齐"最紧迫"）
+            let remaining = snap.quotas.isEmpty
+                ? 1.0
+                : snap.quotas.map { $0.remainingFraction }.min() ?? 1.0
+            let barHeight = max(minBarHeight, CGFloat(remaining) * maxBarHeight)
+            let x = CGFloat(i) * (barWidth + barGap)
+            let y = bottomPadding + (maxBarHeight - barHeight) / 2
+
+            let rect = NSRect(x: x, y: y, width: barWidth, height: barHeight)
+            let path = NSBezierPath(roundedRect: rect, xRadius: 1.0, yRadius: 1.0)
+
+            let color = brandNSColor(for: snap.kind)
+            // 95% 不透明度让 menu bar 背景轻微透出，模拟 liquid glass 透光
+            color.withAlphaComponent(0.95).setFill()
+            path.fill()
         }
-        button.title = titleSuffix ?? ""
-        button.toolTip = "Quota Bar \(tooltipSuffix)"
+
+        image.unlockFocus()
+        image.isTemplate = false  // 用品牌色，不用 template
+        return image
     }
 
-    /// 所有 available snapshot 里所有 quota 窗口的最低 remaining%。
-    /// 用最低值能更早提醒用户某条额度即将耗尽 —— 跟用户感知"最紧迫的额度"对齐。
-    private static func minimumRemainingText(of snapshots: [ProviderSnapshot]) -> String? {
-        let allQuotas = snapshots
-            .filter { $0.availability == .available }
-            .flatMap { $0.quotas }
-        guard !allQuotas.isEmpty else { return nil }
-        let minPercent = allQuotas.map { Int(($0.remainingFraction * 100).rounded()) }.min() ?? 0
-        return "\(minPercent)%"
+    private static func brandNSColor(for kind: ProviderKind) -> NSColor {
+        switch kind {
+        case .codex: return NSColor(srgbRed: 0x35/255, green: 0xC8/255, blue: 0x5A/255, alpha: 1)
+        case .minimax: return NSColor(srgbRed: 0xFF/255, green: 0x45/255, blue: 0x3A/255, alpha: 1)
+        case .kimi: return NSColor(srgbRed: 0xFF/255, green: 0x9F/255, blue: 0x0A/255, alpha: 1)
+        case .claude: return NSColor(srgbRed: 0xD4/255, green: 0xA5/255, blue: 0x74/255, alpha: 1)
+        case .cursor: return NSColor(srgbRed: 0x5E/255, green: 0x6A/255, blue: 0xD2/255, alpha: 1)
+        case .gemini: return NSColor(srgbRed: 0x42/255, green: 0x85/255, blue: 0xF4/255, alpha: 1)
+        case .openai: return NSColor(srgbRed: 0x10/255, green: 0xA3/255, blue: 0x7F/255, alpha: 1)
+        case .deepseek: return NSColor(srgbRed: 0x4D/255, green: 0x6B/255, blue: 0xFA/255, alpha: 1)
+        case .copilot: return NSColor(srgbRed: 0x6E/255, green: 0x76/255, blue: 0x81/255, alpha: 1)
+        case .openrouter: return NSColor(srgbRed: 0xF5/255, green: 0x9E/255, blue: 0x0B/255, alpha: 1)
+        case .perplexity: return NSColor(srgbRed: 0x1F/255, green: 0xB8/255, blue: 0xCD/255, alpha: 1)
+        case .warp: return NSColor(srgbRed: 0x5E/255, green: 0x6A/255, blue: 0xD2/255, alpha: 1)
+        case .trae: return NSColor(srgbRed: 0x3D/255, green: 0x7C/255, blue: 0xFF/255, alpha: 1)
+        case .antigravity: return NSColor(srgbRed: 0x1A/255, green: 0x73/255, blue: 0xE8/255, alpha: 1)
+        }
     }
 
     enum OverallAvailability {
