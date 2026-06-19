@@ -19,7 +19,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         installDetectors: ProviderFactory.createInstallDetectors()
     )) {
         self.coordinator = coordinator
-        self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        // 用固定 length 避免 macOS 26 NSStatusBar 把 item 放到虚拟屏外
+        // （variableLength 在新菜单栏 widget 系统里会落到不可见区域，AppleScript 报 x=-719）
+        self.statusItem = NSStatusBar.system.statusItem(withLength: 80)
         super.init()
 
         configureStatusItem()
@@ -104,27 +106,30 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
     }
 
-    /// 画 N 个垂直 bar 的 NSImage。
+    /// 画 N 个垂直 bar 的 NSImage（macOS 26 Liquid Glass menu bar widget 规范）。
     ///
-    /// 每个订阅 1 个 bar：
-    /// - 宽 3.5pt，高 = `max(2pt, remainingFraction × 14pt)`
-    /// - 间距 1.5pt
-    /// - 颜色 = kind 的 brand color（95% 不透明度，让 menu bar 背景轻微透出，模拟 liquid glass 透光感）
-    /// - 圆角 1pt（接近 SF Symbol 的圆角感）
+    /// 容器：
+    /// - 1px white 30% 透明边框，6pt 圆角
+    /// - 内框 20×20pt，padding 2pt → 内容区 16×16pt
     ///
-    /// Image 总高 16pt（适配 NSStatusBar 默认 ~22pt 高度 + 上下 padding）。
+    /// Bars：
+    /// - 颜色 = 纯白 `#FFFFFF`（不染色，让 liquid glass 容器区分订阅）
+    /// - 高度 = `max(2pt, remainingFraction × 16pt)`
+    /// - 居底对齐（bar bottom = container bottom）
+    /// - 宽度按订阅数动态：N=1 → 16pt；N=2 → 7.5pt；N≥3 → 4.67pt（最小宽度）
+    /// - gap = 1pt
+    /// - 圆角 4pt（除非 bar 太窄，自动降为宽度一半）
+    ///
+    /// 总尺寸：
+    /// - 高度固定 24pt（容器 20pt + 上下 padding 2pt×2）
+    /// - 宽度 = 内容总宽 + 边框 2pt
+    ///   - N=1 → 22pt
+    ///   - N=2 → 22pt
+    ///   - N=3 → 22pt
+    ///   - N=4 → 29.67pt（容器变宽以容纳更多 bar）
     private static func makeBarsImage(from snapshots: [ProviderSnapshot]) -> NSImage {
-        let barWidth: CGFloat = 3.5
-        let barGap: CGFloat = 1.5
-        let imageHeight: CGFloat = 16
-        let topPadding: CGFloat = 2
-        let bottomPadding: CGFloat = 2
-        let maxBarHeight = imageHeight - topPadding - bottomPadding  // 12pt
-        let minBarHeight: CGFloat = 2  // 用完也画最小 bar，让用户知情
-        let count = snapshots.count
-
         // 兜底：零订阅 → ? 图标
-        if count == 0 {
+        if snapshots.isEmpty {
             if let fallback = NSImage(
                 systemSymbolName: "questionmark.circle",
                 accessibilityDescription: "Quota Bar 暂无订阅"
@@ -135,40 +140,78 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             }
         }
 
-        let totalWidth = CGFloat(count) * barWidth + CGFloat(max(0, count - 1)) * barGap
-        let image = NSImage(size: NSSize(width: max(totalWidth, 8), height: imageHeight))
+        let count = snapshots.count
+        let containerHeight: CGFloat = 20
+        let borderRadius: CGFloat = 6
+        let contentSize: CGFloat = 16  // 20 - 2×2 padding
+        let gap: CGFloat = 1
+        let minBarWidth: CGFloat = 4.67
+
+        // 动态 bar 宽度：理想 (content - (N-1) × gap) / N，但不低于 minBarWidth
+        let barWidth: CGFloat = {
+            if count <= 1 { return contentSize }
+            let totalGap = CGFloat(count - 1) * gap
+            let ideal = (contentSize - totalGap) / CGFloat(count)
+            return max(ideal, minBarWidth)
+        }()
+
+        // 内容总宽 = N × barWidth + (N-1) × gap
+        let contentWidth = CGFloat(count) * barWidth + CGFloat(max(0, count - 1)) * gap
+        // 外框宽度（含 2px padding）
+        let containerWidth = contentWidth + 4
+
+        // 画布尺寸：外框 + 上下 2pt margin（让 image 比 NSStatusItem 默认高度略小）
+        let imageHeight: CGFloat = 24
+        let imageWidth: CGFloat = containerWidth + 4  // 左右各 2pt margin
+
+        let image = NSImage(size: NSSize(width: imageWidth, height: imageHeight))
         image.lockFocus()
 
-        // Liquid glass 容器：极淡灰半透明圆角矩形，模拟 menu bar widget 的玻璃底
-        let containerRect = NSRect(x: 0, y: 0, width: totalWidth, height: imageHeight)
-        let containerPath = NSBezierPath(
-            roundedRect: containerRect.insetBy(dx: -1, dy: -1),
-            xRadius: 3.5,
-            yRadius: 3.5
+        // 计算容器在画布上的位置（居中）
+        let containerX = (imageWidth - containerWidth) / 2
+        let containerY: CGFloat = 2
+
+        // 1. Liquid glass 容器背景（白 30% 边框 + 透明填充，模拟 glass 容器）
+        let containerRect = NSRect(
+            x: containerX,
+            y: containerY,
+            width: containerWidth,
+            height: containerHeight
         )
-        NSColor(white: 0, alpha: 0.04).setFill()
+        let containerPath = NSBezierPath(roundedRect: containerRect, xRadius: borderRadius, yRadius: borderRadius)
+        // 透明填充 + 1px 白 30% 边框
+        NSColor.clear.setFill()
         containerPath.fill()
+        NSColor(white: 1.0, alpha: 0.3).setStroke()
+        containerPath.lineWidth = 1.0
+        containerPath.stroke()
+
+        // 2. Bars（白色，居底对齐）
+        let contentOriginX = containerX + 2  // 容器内 padding 2pt
+        let contentOriginY = containerY + 2  // 容器内 padding 2pt (bottom)
+        let minBarHeight: CGFloat = 2  // 用完也画最小 bar
+        let maxBarHeight = contentSize  // 16pt
 
         for (i, snap) in snapshots.enumerated() {
-            // bar 高度 = 该订阅所有 quota 窗口里最低 remainingFraction（对齐"最紧迫"）
+            // bar 高度 = 该订阅所有 quota 窗口里最低 remainingFraction
             let remaining = snap.quotas.isEmpty
                 ? 1.0
                 : snap.quotas.map { $0.remainingFraction }.min() ?? 1.0
             let barHeight = max(minBarHeight, CGFloat(remaining) * maxBarHeight)
-            let x = CGFloat(i) * (barWidth + barGap)
-            let y = bottomPadding + (maxBarHeight - barHeight) / 2
+            let barX = contentOriginX + CGFloat(i) * (barWidth + gap)
+            // 居底对齐：bar bottom = contentOriginY（容器内 bottom）
+            let barY = contentOriginY
 
-            let rect = NSRect(x: x, y: y, width: barWidth, height: barHeight)
-            let path = NSBezierPath(roundedRect: rect, xRadius: 1.0, yRadius: 1.0)
-
-            let color = brandNSColor(for: snap.kind)
-            // 95% 不透明度让 menu bar 背景轻微透出，模拟 liquid glass 透光
-            color.withAlphaComponent(0.95).setFill()
+            let rect = NSRect(x: barX, y: barY, width: barWidth, height: barHeight)
+            // 圆角不超过 bar 宽度一半（避免窄 bar 圆角重叠）
+            let cornerRadius = min(4.0, barWidth / 2.0)
+            let path = NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius)
+            NSColor.white.setFill()
             path.fill()
         }
 
         image.unlockFocus()
-        image.isTemplate = false  // 用品牌色，不用 template
+        image.isTemplate = false
         return image
     }
 
@@ -237,7 +280,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             state: state,
             isRefreshing: coordinator.isRefreshing,
             lastUpdatedText: coordinator.lastUpdatedText,
-            needsFullDiskAccess: coordinator.needsFullDiskAccess
+            needsFullDiskAccess: coordinator.needsFullDiskAccess,
+            onSaveKey: { [weak self] kind, _ in
+                // 用户保存了某个 provider 的 API key → 触发刷新
+                self?.coordinator.refreshNow()
+            }
         )
         let dashboardView = NSHostingView(rootView: menuView)
         dashboardView.frame = NSRect(x: 0, y: 0, width: MenuDashboardStyle.width, height: 1)

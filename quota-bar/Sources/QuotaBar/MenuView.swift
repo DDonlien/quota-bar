@@ -87,17 +87,20 @@ struct MenuView: View {
     let isRefreshing: Bool
     let lastUpdatedText: String
     let needsFullDiskAccess: Bool
+    let onSaveKey: ((ProviderKind, String) -> Void)?
 
     init(
         state: DashboardState,
         isRefreshing: Bool,
         lastUpdatedText: String,
-        needsFullDiskAccess: Bool = false
+        needsFullDiskAccess: Bool = false,
+        onSaveKey: ((ProviderKind, String) -> Void)? = nil
     ) {
         self.state = state
         self.isRefreshing = isRefreshing
         self.lastUpdatedText = lastUpdatedText
         self.needsFullDiskAccess = needsFullDiskAccess
+        self.onSaveKey = onSaveKey
     }
 
     var body: some View {
@@ -121,9 +124,9 @@ struct MenuView: View {
         if state.isEmpty {
             EmptyStateView()
         } else if state.isInitialLoading {
-            LoadingStateView(state: state)
+            LoadingStateView(state: state, onSaveKey: onSaveKey)
         } else {
-            ReadyStateView(state: state, isRefreshing: isRefreshing)
+            ReadyStateView(state: state, isRefreshing: isRefreshing, onSaveKey: onSaveKey)
         }
     }
 }
@@ -188,6 +191,7 @@ private struct EmptyStateView: View {
 
 private struct LoadingStateView: View {
     let state: DashboardState
+    let onSaveKey: ((ProviderKind, String) -> Void)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -202,7 +206,7 @@ private struct LoadingStateView: View {
                 .padding(.bottom, MenuDashboardStyle.summaryDividerBottom)
 
             ForEach(Array(state.snapshots.enumerated()), id: \.element.id) { index, snapshot in
-                PlanSection(snapshot: snapshot, isLoading: true)
+                PlanSection(snapshot: snapshot, isLoading: true, onSaveKey: onSaveKey)
 
                 if index < state.snapshots.count - 1 {
                     DividerLine()
@@ -225,6 +229,7 @@ private struct LoadingStateView: View {
 private struct ReadyStateView: View {
     let state: DashboardState
     let isRefreshing: Bool
+    let onSaveKey: ((ProviderKind, String) -> Void)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -239,7 +244,7 @@ private struct ReadyStateView: View {
                 .padding(.bottom, MenuDashboardStyle.summaryDividerBottom)
 
             ForEach(Array(state.snapshots.enumerated()), id: \.element.id) { index, snapshot in
-                PlanSection(snapshot: snapshot, isLoading: false)
+                PlanSection(snapshot: snapshot, isLoading: false, onSaveKey: onSaveKey)
 
                 if index < state.snapshots.count - 1 {
                     DividerLine()
@@ -316,6 +321,7 @@ private struct SummaryView: View {
 private struct PlanSection: View {
     let snapshot: ProviderSnapshot
     let isLoading: Bool
+    let onSaveKey: ((ProviderKind, String) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: MenuDashboardStyle.planSectionSpacing) {
@@ -329,7 +335,14 @@ private struct PlanSection: View {
                     QuotaRows(snapshot: snapshot)
                 }
             case .needsConfiguration(let reason):
-                StatusRow(text: "待配置 · \(reason)")
+                if snapshot.kind == .minimax, let onSaveKey {
+                    MiniMaxKeyInputField(
+                        reason: reason,
+                        onSave: { key in onSaveKey(snapshot.kind, key) }
+                    )
+                } else {
+                    StatusRow(text: "待配置 · \(reason)")
+                }
             case .notInstalled:
                 StatusRow(text: "未安装")
             case .fetchFailed(let reason):
@@ -337,6 +350,85 @@ private struct PlanSection: View {
             }
         }
         .opacity(snapshot.isStale ? 0.7 : 1.0)
+    }
+}
+
+// MARK: - MiniMax Key 输入字段
+
+/// 在 dropdown 里直接输入 MiniMax API Key。状态分三种：
+/// - missing：完全没有 apiKey 字段 → 「待输入 Key」
+/// - placeholder：填了但仍是 sk-xxx 等占位符 → 「待替换占位符」
+/// - configured：真实 key（掩码显示）→ 「Key 已配置（如需更新请重新输入）」
+///
+/// 保存成功后回调 onSave，StatusBarController 会触发 refresh coordinator。
+private struct MiniMaxKeyInputField: View {
+    let reason: String
+    let onSave: (String) -> Void
+
+    @State private var keyInput: String = ""
+    @State private var savedKeyState: MiniMaxConfigProvider.KeyInputState =
+        MiniMaxConfigProvider.currentKeyState()
+    @State private var lastError: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            switch savedKeyState {
+            case .missing:
+                Text("待输入 Key · \(reason)")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            case .placeholder(let current):
+                Text("待替换占位符 · 当前 `\(current)`")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(Palette.warning)
+                    .fixedSize(horizontal: false, vertical: true)
+            case .configured(let masked):
+                Text("Key 已配置 · \(masked)（重新输入会覆盖）")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            HStack(spacing: 6) {
+                TextField(
+                    "粘贴或输入 MiniMax API Key",
+                    text: $keyInput
+                )
+                .textFieldStyle(.roundedBorder)
+                .controlSize(.small)
+                .font(.system(size: 11, design: .monospaced))
+                .onSubmit { save() }
+
+                Button(action: save) {
+                    Text("保存")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .controlSize(.small)
+                .disabled(keyInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+
+            if let lastError {
+                Text(lastError)
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color(hex: "#FF453A"))
+            }
+        }
+        .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
+    }
+
+    private func save() {
+        let trimmed = keyInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        do {
+            try MiniMaxConfigProvider.save(apiKey: trimmed)
+            keyInput = ""
+            savedKeyState = MiniMaxConfigProvider.currentKeyState()
+            lastError = nil
+            onSave(trimmed)
+        } catch {
+            lastError = error.localizedDescription
+        }
     }
 }
 
