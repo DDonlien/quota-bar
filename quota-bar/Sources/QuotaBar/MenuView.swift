@@ -392,11 +392,11 @@ private struct QuotaRows: View {
         .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
     }
 
-    /// 仅当该 provider 同时存在多个 scope 时显示 scope 标签，
-    /// 否则隐藏避免视觉噪声。
+    /// 始终显示 scope（如果有），让用户清楚每个额度窗口属于哪个 scope
+    /// （如 Kimi 的 `FEATURE_CODING` vs `FEATURE_WORK`）。即使只有一个 scope，
+    /// 也展示出来，因为 scope 名本身是有信息量的（区分不同 API token）。
     private var hasMultipleScopes: Bool {
-        let scopes = Set(snapshot.quotas.compactMap { $0.scope })
-        return scopes.count > 1
+        snapshot.quotas.contains { $0.scope?.isEmpty == false }
     }
 }
 

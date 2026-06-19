@@ -364,18 +364,27 @@ enum KimiUsageParser {
         return ParsedUsage(tier: tier, windows: windows)
     }
 
-    /// 订阅名处理：subType 优先于 level。
+    /// 订阅名处理：subType 优先于 level，但保留 level 信息（subType=TYPE_PURCHASE +
+    /// level=LEVEL_TRIAL 时显示「Trial（已购）」，让用户知道是 trial 期内付费的）。
     ///
-    /// - `subType=TYPE_PURCHASE` → "付费"（覆盖 level，因为真实计费档位 API 不暴露）
+    /// - `subType=TYPE_PURCHASE` + `level=LEVEL_TRIAL` → "Trial（已购）"
+    /// - `subType=TYPE_PURCHASE` + 其他 level → "Paid"（已购买）
     /// - `subType=TYPE_FREE` → 用 level（"Trial" / "Free" / "Paid"）
     /// - API 不暴露 SKU 名（Andante / Moderato / Allegro），不要硬猜
     private static func parseTier(_ user: [String: Any]?, subType: String?) -> String? {
+        let membership = user?["membership"] as? [String: Any]
+        let level = membership?["level"] as? String
+
         if subType == "TYPE_PURCHASE" {
-            return "付费"
+            // 已购买 — 但如果 level 还说 TRIAL，说明是 trial 期付费（套餐升级未生效），
+            // 给用户更准确的提示，避免误以为已升级到正式付费档。
+            if level == "LEVEL_TRIAL" {
+                return "Trial（已购）"
+            }
+            return "Paid"
         }
-        guard let membership = user?["membership"] as? [String: Any],
-              let level = membership["level"] as? String
-        else { return nil }
+
+        guard let level else { return nil }
         switch level {
         case "LEVEL_TRIAL": return "Trial"
         case "LEVEL_FREE": return "Free"
