@@ -25,26 +25,26 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            drop-down-test/CodingPlanMenu/.build
-            drop-down-test/CodingPlanMenu/.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('drop-down-test/CodingPlanMenu/Package.swift', 'drop-down-test/CodingPlanMenu/Package.resolved') }}
+            quota-bar/.build
+            quota-bar/.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('quota-bar/Package.swift', 'quota-bar/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-
 
       - name: Show Swift toolchain
-        working-directory: drop-down-test/CodingPlanMenu
+        working-directory: quota-bar
         run: swift --version
 
       - name: Resolve dependencies
-        working-directory: drop-down-test/CodingPlanMenu
+        working-directory: quota-bar
         run: swift package resolve
 
       - name: Build (debug)
-        working-directory: drop-down-test/CodingPlanMenu
+        working-directory: quota-bar
         run: swift build
 
       - name: Build (release)
-        working-directory: drop-down-test/CodingPlanMenu
+        working-directory: quota-bar
         run: swift build -c release
 
   release:
@@ -59,18 +59,18 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            drop-down-test/CodingPlanMenu/.build
-            drop-down-test/CodingPlanMenu/.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('drop-down-test/CodingPlanMenu/Package.swift', 'drop-down-test/CodingPlanMenu/Package.resolved') }}
+            quota-bar/.build
+            quota-bar/.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('quota-bar/Package.swift', 'quota-bar/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-
 
       - name: Build (release)
-        working-directory: drop-down-test/CodingPlanMenu
+        working-directory: quota-bar
         run: swift build -c release
 
       - name: Assemble .app bundle
-        working-directory: drop-down-test/CodingPlanMenu
+        working-directory: quota-bar
         env:
           APP_NAME: QuotaBar
           SHORT_SHA: ${{ github.sha }}
@@ -79,7 +79,7 @@ jobs:
           APP="$RUNNER_TEMP/${APP_NAME}.app"
           rm -rf "$APP"
           mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-          cp ".build/release/CodingPlanMenu" "$APP/Contents/MacOS/QuotaBar"
+          cp ".build/release/QuotaBar" "$APP/Contents/MacOS/QuotaBar"
           cat > "$APP/Contents/Info.plist" <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

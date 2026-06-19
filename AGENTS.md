@@ -86,10 +86,10 @@
 ### 技术栈与命令
 
 - 技术栈：Swift Package Manager、SwiftUI、AppKit、macOS 26。
-- 开发命令：`cd drop-down-test/CodingPlanMenu && swift run`
+- 开发命令：`cd quota-bar && swift run`
 - 测试命令：当前暂无自动化测试。
-- 构建命令：`cd drop-down-test/CodingPlanMenu && swift build`
-- 应用打包：`cd drop-down-test/CodingPlanMenu && ./build-app.sh`
+- 构建命令：`cd quota-bar && swift build`
+- 应用打包：`cd quota-bar && ./scripts/build-app.sh`
 
 ### 文档入口
 
@@ -100,7 +100,7 @@
 
 ### 目录索引
 
-- `drop-down-test/CodingPlanMenu/`：当前 macOS 菜单栏应用原型。
+- `quota-bar/`：当前 macOS 菜单栏应用原型（SwiftPM 包，Package.swift 与 Sources/QuotaBar 目录遵循 PascalCase 硬约束）。
 - `agent-template/`：Agent 协作文档模板。
 - `reference/`：参考资料，不默认视为项目代码。
 

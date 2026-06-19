@@ -59,7 +59,7 @@ Quota Bar 把 Codex、Claude、Gemini、MiniMax、Kimi 等多家 AI 服务的剩
 
 ### 安装（推荐）
 
-从 [Releases](../../releases) 页面下载最新的 `CodingPlanMenu-<sha>.dmg`，打开后把 **Quota Bar** 拖进 **Applications**，或在 DMG 窗口里直接双击运行。
+从 [Releases](../../releases) 页面下载最新的 `QuotaBar-<sha>.dmg`，打开后把 **Quota Bar** 拖进 **Applications**，或在 DMG 窗口里直接双击运行。
 
 > 每个 push 到 `main` 都会自动构建一个新的 pre-release；CI 配置见 [`.github/workflows/release.yml`](./.github/workflows/release.yml)。
 >
@@ -69,7 +69,7 @@ Quota Bar 把 Codex、Claude、Gemini、MiniMax、Kimi 等多家 AI 服务的剩
 
 ```bash
 git clone https://github.com/yourname/quota-bar.git
-cd quota-bar/drop-down-test/CodingPlanMenu
+cd quota-bar/quota-bar
 swift run
 ```
 
@@ -82,11 +82,11 @@ swift run
 ### 打包成 .app
 
 ```bash
-cd drop-down-test/CodingPlanMenu
-./build-app.sh
+cd quota-bar
+./scripts/build-app.sh
 ```
 
-产物在 `drop-down-test/CodingPlanMenu/build/CodingPlanMenu.app`，可以拖到 Applications。
+产物在 `quota-bar/build/QuotaBar.app`，可以拖到 Applications。
 
 > 注意：未签名 + 未公证的 .app 第一次启动需要右键 → 打开。
 
@@ -98,31 +98,34 @@ cd drop-down-test/CodingPlanMenu
 
 ```text
 .
-├── drop-down-test/
-│   └── CodingPlanMenu/        # 实际 SwiftPM 包
-│       ├── Package.swift       # SPM 入口（依赖 SweetCookieKit）
-│       ├── Sources/CodingPlanMenu/
-│       │   ├── QuotaModels.swift           # 领域模型：ProviderKind / QuotaWindow / Snapshot
-│       │   ├── QuotaProvider.swift         # 数据源协议
-│       │   ├── ProviderFetchStrategy.swift # ★ 策略 + Pipeline
-│       │   ├── Strategies.swift            # ★ 已知 provider 的 pipeline 工厂
-│       │   ├── BrowserCookieReader.swift   # SweetCookieKit 适配器
-│       │   ├── BrowserCookieProvider.swift # Cookie 数据源
-│       │   ├── DashboardEndpoints.swift    # 真实 endpoint + parser
-│       │   ├── KeychainProvider.swift      # Keychain 数据源
-│       │   ├── CLILogProvider.swift        # ~/.codex/sessions 估算
-│       │   ├── TTYCommandRunner.swift      # ★ PTY 命令执行器
-│       │   ├── LoginRunner.swift           # ★ 登录引导
-│       │   ├── PrivacyAccessChecker.swift  # FDA 检测
-│       │   ├── RefreshCoordinator.swift    # 主循环
-│       │   ├── MenuView.swift              # SwiftUI 菜单内容
-│       │   ├── StatusBarController.swift   # AppKit 宿主
-│       │   └── ...
-│       └── build-app.sh
+├── quota-bar/                 # 实际 SwiftPM 包（PascalCase 标识符是 SPM 硬约束）
+│   ├── Package.swift          # SPM 入口（依赖 SweetCookieKit）
+│   ├── Sources/QuotaBar/
+│   │   ├── QuotaModels.swift           # 领域模型：ProviderKind / QuotaWindow / Snapshot
+│   │   ├── QuotaProvider.swift         # 数据源协议
+│   │   ├── ProviderFetchStrategy.swift # ★ 策略 + Pipeline
+│   │   ├── Strategies.swift            # ★ 已知 provider 的 pipeline 工厂
+│   │   ├── BrowserCookieReader.swift   # SweetCookieKit 适配器
+│   │   ├── BrowserCookieProvider.swift # Cookie 数据源
+│   │   ├── DashboardEndpoints.swift    # 真实 endpoint + parser
+│   │   ├── KeychainProvider.swift      # Keychain 数据源
+│   │   ├── CLILogProvider.swift        # ~/.codex/sessions 估算
+│   │   ├── TTYCommandRunner.swift      # ★ PTY 命令执行器
+│   │   ├── LoginRunner.swift           # ★ 登录引导
+│   │   ├── PrivacyAccessChecker.swift  # FDA 检测
+│   │   ├── RefreshCoordinator.swift    # 主循环
+│   │   ├── MenuView.swift              # SwiftUI 菜单内容
+│   │   ├── StatusBarController.swift   # AppKit 宿主
+│   │   └── ...
+│   ├── scripts/build-app.sh   # 本地打包脚本
+│   └── build/                 # 手工 build 产物（gitignored）
+├── .github/workflows/         # CI / Release
 ├── AGENTS.md                  # Agent 协作规范
 ├── REQUIREMENTS.md            # 需求追踪
 ├── DESIGN.md                  # 视觉规范
 ├── agent-log/                 # 任务执行日志
+├── agent-template/            # Agent 协作文档模板
+├── research/                  # 调研文档
 ├── reference/                 # 参考资料（不计入项目代码）
 └── LICENSE                    # MIT
 ```
@@ -130,7 +133,7 @@ cd drop-down-test/CodingPlanMenu
 ### 构建 & 运行测试
 
 ```bash
-cd drop-down-test/CodingPlanMenu
+cd quota-bar
 swift build          # debug 构建
 swift run            # 启动菜单栏 App
 swift build -c release
