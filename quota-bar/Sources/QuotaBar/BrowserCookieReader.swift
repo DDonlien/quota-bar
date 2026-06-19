@@ -70,9 +70,18 @@ final class FilesystemCookieReader: BrowserCookieReader, @unchecked Sendable {
         var seen = Set<String>()
         var lastAccessDenied: ReaderError?
 
+        // SweetCookieKit 的 `client.cookies(...)` 是同步文件 I/O，
+        // 在 Codex.app / Edge.app 等 Chromium-based 浏览器上偶尔会 hang。
+        // 用 DispatchQueue 异步包装（让同步调用在 background queue 执行），
+        // 主线程用 continuation 等待 + withCheckedContinuation + race timeout。
         for browser in preferredBrowsers {
+            let perBrowserTimeout: TimeInterval = 2
             do {
-                let cookies = try client.cookies(matching: query, in: browser)
+                let cookies = try await readCookiesForBrowser(
+                    browser: browser,
+                    query: query,
+                    timeout: perBrowserTimeout
+                )
                 for cookie in cookies {
                     let key = "\(cookie.domain)|\(cookie.name)"
                     if seen.insert(key).inserted {
@@ -91,6 +100,7 @@ final class FilesystemCookieReader: BrowserCookieReader, @unchecked Sendable {
                     continue
                 }
             } catch {
+                // 超时 / 其他 → 跳过这个浏览器
                 continue
             }
         }
@@ -104,6 +114,42 @@ final class FilesystemCookieReader: BrowserCookieReader, @unchecked Sendable {
         }
 
         throw ReaderError.cookieStoreUnavailable(browser: preferredBrowsers.first?.displayName ?? "browser")
+    }
+
+    /// 单个浏览器的 cookie 读取（带 timeout 兜底）。
+    /// 把同步 SweetCookieKit 调用丢到 DispatchQueue.global，让 timeout 能在主线程真正生效。
+    private func readCookiesForBrowser(
+        browser: Browser,
+        query: BrowserCookieQuery,
+        timeout: TimeInterval
+    ) async throws -> [HTTPCookie] {
+        try await withThrowingTaskGroup(of: [HTTPCookie]?.self) { group in
+            // 后台 queue 跑同步 cookies 调用
+            group.addTask {
+                try await withCheckedThrowingContinuation { (cont: CheckedContinuation<[HTTPCookie], Error>) in
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        do {
+                            let cookies = try self.client.cookies(matching: query, in: browser)
+                            cont.resume(returning: cookies)
+                        } catch {
+                            cont.resume(throwing: error)
+                        }
+                    }
+                }
+            }
+            // timeout task
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                throw ReaderError.loadFailed(
+                    browser: browser.displayName,
+                    detail: "读取超时（\(Int(timeout))s）"
+                )
+            }
+            // 第一个完成的胜出
+            guard let first = try await group.next() else { return [] }
+            group.cancelAll()
+            return first ?? []
+        }
     }
 
     /// 返回当前用户在系统里实际有 cookie store 的浏览器。

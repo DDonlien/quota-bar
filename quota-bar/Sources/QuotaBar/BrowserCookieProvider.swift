@@ -42,10 +42,30 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
 
     func fetchSnapshot(timeout: TimeInterval) async throws -> ProviderSnapshot {
         let fetchedAt = dateProvider()
+
+        // 提前检查 endpoint：没接入 dashboard 的 provider 直接跳过 cookies 读取
+        // （避免 SwiftCookieKit 同步阻塞导致 refresh hang）。
+        guard let endpoint else {
+            throw QuotaFetchError.sourceUnavailable(detail: "未接入 dashboard")
+        }
+
         let domains = kind.dashboardCookieDomains
         let cookies: [HTTPCookie]
         do {
-            cookies = try await cookieReader.readCookies(matching: domains)
+            // 整个 cookie 读取包 4s 硬超时，避免某些浏览器的 cookie 文件锁住 SweetCookieKit
+            cookies = try await withThrowingTaskGroup(of: [HTTPCookie].self) { group in
+                let hardTimeout: TimeInterval = min(4, timeout)
+                group.addTask { [cookieReader, domains] in
+                    try await cookieReader.readCookies(matching: domains)
+                }
+                group.addTask {
+                    try await Task.sleep(nanoseconds: UInt64(hardTimeout * 1_000_000_000))
+                    throw QuotaFetchError.transient(detail: "浏览器 Cookie 读取超时（\(Int(hardTimeout))s）")
+                }
+                guard let first = try await group.next() else { return [] }
+                group.cancelAll()
+                return first
+            }
         } catch let error as FilesystemCookieReader.ReaderError {
             switch error {
             case .privacyAccessDenied:
@@ -59,10 +79,6 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
 
         guard !cookies.isEmpty else {
             throw QuotaFetchError.missingCredentials(detail: "未登录")
-        }
-
-        guard let endpoint else {
-            throw QuotaFetchError.sourceUnavailable(detail: "未接入 dashboard")
         }
 
         let data = try await performRequest(with: cookies, endpoint: endpoint.url)

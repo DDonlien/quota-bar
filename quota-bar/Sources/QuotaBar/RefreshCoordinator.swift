@@ -100,17 +100,22 @@ final class RefreshCoordinator: ObservableObject {
         // 1. 前置检测：哪些 service 真的装了 App/CLI/凭证？
         //    没装的 kind 直接跳过 pipeline，UI 不会显示。
         let installReasons = await detectInstallReasons()
+        NSLog("QuotaBar: installReasons = \(installReasons.keys.sorted { $0.rawValue < $1.rawValue })")
 
         // 2. 跑 installed kind 的 pipeline（并发）
         let activeProviders = providers.filter { installReasons[$0.kind] != nil }
+        NSLog("QuotaBar: activeProviders = \(activeProviders.map { $0.kind.rawValue })")
         let results = await withTaskGroup(of: (ProviderSnapshot?, Error?, ProviderKind).self) { group in
             for provider in activeProviders {
                 let kind = provider.kind
                 group.addTask {
+                    NSLog("QuotaBar: ▶️ start pipeline for \(kind.rawValue)")
                     do {
                         let snapshot = try await provider.fetchSnapshot(timeout: self.providerTimeout)
+                        NSLog("QuotaBar: ✅ \(kind.rawValue) done, avail=\(snapshot.availability)")
                         return (snapshot, nil, kind)
                     } catch {
+                        NSLog("QuotaBar: ❌ \(kind.rawValue) failed: \(error)")
                         return (nil, error, kind)
                     }
                 }
@@ -120,6 +125,7 @@ final class RefreshCoordinator: ObservableObject {
             for await result in group {
                 collected.append(result)
             }
+            NSLog("QuotaBar: all pipelines done, \(collected.count) results")
             return collected
         }
 
