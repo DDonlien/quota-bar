@@ -165,6 +165,10 @@ enum ProviderPipelines {
         FetchPipeline(
             kind: .antigravity,
             strategies: [
+                // 首选：Antigravity IDE 本地 language_server gRPC-Web endpoint
+                // （需要 IDE 在跑且 workspace 已激活；未激活时 fallback）
+                QuotaProviderStrategy(AntigravityDashboardProvider()),
+                // 兜底：Keychain 里的 OAuth token（如果 Antigravity CLI 装过）
                 QuotaProviderStrategy(KeychainProvider(id: "antigravity-keychain", kind: .antigravity)),
             ],
             runMode: .sequential

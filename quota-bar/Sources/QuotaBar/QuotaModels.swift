@@ -408,6 +408,12 @@ enum ProviderPricing {
             return 20
         case (.codex, "pro"), (.openai, "pro"):
             return 200
+        case (.antigravity, "pro"), (.gemini, "pro"):
+            return 20  // Google AI Pro（Antigravity / Gemini 共享底座）
+        case (.antigravity, "ultra"), (.gemini, "ultra"):
+            // Antigravity 2.0 文档：Ultra $100（5x Pro）和 Ultra $200（20x Pro）
+            // API 不区分，按低价档默认展示，避免把实际 $100 显示成 $200。
+            return 100
         default:
             return nil
         }
