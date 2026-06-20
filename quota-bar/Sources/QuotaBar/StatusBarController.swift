@@ -52,34 +52,18 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     ///   - bar 高度 = 该订阅所有 quota 窗口里最低 `remainingFraction`（用最低值对齐"最紧迫的额度"感知）
     ///   - bar 顺序 = dashboard 里的 snapshot 顺序（按 `kind.rawValue` 字母升序）
     ///   - 用完的（0%）仍然画最小 bar（2pt），让用户知道订阅存在
-    /// - **刷新中**：单 SF Symbol `arrow.triangle.2.circlepath`（spinner）
     /// - **零订阅**：单 SF Symbol `questionmark.circle`
     /// - **有 fetchFailed**：fetchFailed 的订阅不画 bar，但其他正常订阅的 bar 仍画
     ///
-    /// tooltip 显示每个 bar 对应订阅的剩余百分比，方便在 menu bar 悬停查看。
+    /// **刷新中不切换图标**——保持 bars 不变，避免菜单栏出现 spinner 闪烁。
+    /// tooltip 也不带"正在刷新"字样，只展示订阅剩余百分比。
     private func refreshStatusItemAppearance() {
         guard let button = statusItem.button else { return }
 
         let snapshots = coordinator.state.snapshots
-        let isRefreshing = coordinator.isRefreshing
         let available = snapshots.filter { $0.availability == .available }
 
-        if isRefreshing {
-            // 刷新中：spinner SF Symbol
-            if let image = NSImage(
-                systemSymbolName: "arrow.triangle.2.circlepath",
-                accessibilityDescription: "Quota Bar 刷新中"
-            ) {
-                image.isTemplate = true
-                image.size = NSSize(width: 16, height: 16)
-                button.image = image
-            }
-            button.title = ""
-            button.toolTip = "Quota Bar · 正在刷新…"
-            return
-        }
-
-        // 正常 / 部分失败状态：画 bars image（available 数量从 0 到 N）
+        // 无论是否刷新中，都画 bars image（保持菜单栏稳定，不闪 spinner）
         let image = Self.makeBarsImage(from: available)
         button.image = image
         button.title = ""

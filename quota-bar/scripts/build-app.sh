@@ -2,9 +2,9 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT="$SCRIPT_DIR"
+PROJECT="$(cd "$SCRIPT_DIR/.." && pwd)"
 APP_NAME="QuotaBar"
-APP_DIR="$PROJECT/${APP_NAME}.app"
+APP_DIR="$PROJECT/build/${APP_NAME}.app"
 
 # 1. 编译
 echo "Building..."
@@ -18,8 +18,16 @@ rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS"
 mkdir -p "$APP_DIR/Contents/Resources"
 
-# 4. 复制二进制
-cp ".build/debug/QuotaBar" "$APP_DIR/Contents/MacOS/QuotaBar"
+# 4. 复制二进制（SwiftPM 6 输出到 arch-specific 路径，用 --show-bin-path 动态拿）
+BIN_PATH="$(swift build --show-bin-path)/QuotaBar"
+cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/QuotaBar"
+
+# 4.5 用稳定 identifier 重签名
+# Swift toolchain 默认的 ad-hoc 签名 identifier 是 CodingPlanMenu-<hash>，
+# 每次 build hash 都会变，导致 macOS keychain 的"始终允许"失效（被当成另一个 app）。
+# 用固定的 identifier 重签一次，让 macOS 始终认它是同一个 app。
+echo "Signing with stable identifier..."
+codesign --force --deep --sign - --identifier com.taobe.quotabar "$APP_DIR"
 
 # 5. 写入 Info.plist
 cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
