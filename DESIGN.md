@@ -40,6 +40,8 @@
 
 - 菜单内容宽度：custom dashboard 约 292 pt，原生菜单根据最宽内容自动确定整体宽度。
 - 菜单内容高度：custom dashboard 约 300 pt，下方操作项由 `NSMenu` 默认行高决定；顶部需保留足够空间避免 `NSMenuItem.view` 裁切文字。
+- 菜单栏 status item 不使用固定 80 pt 宽度；长度随当前多 bar image 宽度增加，最小保持系统方形点击区域。
+- 菜单栏多 bar 图标中，每个可用订阅对应 1 个垂直矩形 bar；bar 本体无圆角，bar 之间不出现圆角缝隙。
 - 面板圆角、阴影和边缘：由 `NSMenu` 系统绘制。
 - dashboard 内边距：水平 14 pt，顶部 16 pt，底部 10 pt。
 - 分组之间使用 1 pt 分隔线。

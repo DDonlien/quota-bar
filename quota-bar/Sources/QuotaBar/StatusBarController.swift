@@ -19,9 +19,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         installDetectors: ProviderFactory.createInstallDetectors()
     )) {
         self.coordinator = coordinator
-        // 用固定 length 避免 macOS 26 NSStatusBar 把 item 放到虚拟屏外
-        // （variableLength 在新菜单栏 widget 系统里会落到不可见区域，AppleScript 报 x=-719）
-        self.statusItem = NSStatusBar.system.statusItem(withLength: 80)
+        // 不使用 variableLength，避免 macOS 26 新菜单栏 widget 系统把 item 放到虚拟屏外；
+        // 后续按实际绘制 image 宽度手动更新 length，避免窄图标占 80pt。
+        self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
 
         configureStatusItem()
@@ -67,6 +67,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let image = Self.makeBarsImage(from: available)
         button.image = image
         button.title = ""
+        statusItem.length = Self.statusItemLength(for: image)
 
         // tooltip：每个订阅的剩余%
         if available.isEmpty {
@@ -97,12 +98,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     /// - 内框 20×20pt，padding 2pt → 内容区 16×16pt
     ///
     /// Bars：
-    /// - 颜色 = 纯白 `#FFFFFF`（不染色，让 liquid glass 容器区分订阅）
+    /// - 颜色 = provider brand color
     /// - 高度 = `max(2pt, remainingFraction × 16pt)`
     /// - 居底对齐（bar bottom = container bottom）
     /// - 宽度按订阅数动态：N=1 → 16pt；N=2 → 7.5pt；N≥3 → 4.67pt（最小宽度）
     /// - gap = 1pt
-    /// - 圆角 4pt（除非 bar 太窄，自动降为宽度一半）
+    /// - bar 本身无圆角，避免相邻 bar 之间出现圆角缝隙
     ///
     /// 总尺寸：
     /// - 高度固定 24pt（容器 20pt + 上下 padding 2pt×2）
@@ -170,7 +171,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         containerPath.lineWidth = 1.0
         containerPath.stroke()
 
-        // 2. Bars（白色，居底对齐）
+        // 2. Bars（provider brand color，居底对齐）
         let contentOriginX = containerX + 2  // 容器内 padding 2pt
         let contentOriginY = containerY + 2  // 容器内 padding 2pt (bottom)
         let minBarHeight: CGFloat = 2  // 用完也画最小 bar
@@ -187,16 +188,18 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             let barY = contentOriginY
 
             let rect = NSRect(x: barX, y: barY, width: barWidth, height: barHeight)
-            // 圆角不超过 bar 宽度一半（避免窄 bar 圆角重叠）
-            let cornerRadius = min(4.0, barWidth / 2.0)
-            let path = NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius)
-            NSColor.white.setFill()
-            path.fill()
+            Self.brandNSColor(for: snap.kind).setFill()
+            rect.fill()
         }
 
         image.unlockFocus()
         image.isTemplate = false
         return image
+    }
+
+    private static func statusItemLength(for image: NSImage) -> CGFloat {
+        // NSStatusItem 的 length 包含按钮内边距；给 image 两侧留一点系统点击区域。
+        max(NSStatusItem.squareLength, ceil(image.size.width + 8))
     }
 
     private static func brandNSColor(for kind: ProviderKind) -> NSColor {

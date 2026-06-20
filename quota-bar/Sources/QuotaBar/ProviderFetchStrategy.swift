@@ -71,13 +71,6 @@ final class FetchPipeline {
             } catch let error as QuotaFetchError {
                 lastErrors[strategy.id] = error
 
-                // missingCredentials 立即终止 pipeline —— 后续策略（cookie / keychain）
-                // 都不能让用户填 API key，让 RefreshCoordinator 直接展示「待输入 Key」
-                // UI 而不是浪费更多时间去 hang 在 cookie reader。
-                if case .missingCredentials = error {
-                    throw error
-                }
-
                 fallbackError = preferredFallbackError(current: fallbackError, new: error)
             } catch {
                 let transient = QuotaFetchError.transient(detail: error.localizedDescription)

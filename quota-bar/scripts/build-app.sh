@@ -4,25 +4,28 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT="$(cd "$SCRIPT_DIR/.." && pwd)"
 APP_NAME="QuotaBar"
-APP_DIR="$PROJECT/build/${APP_NAME}.app"
+
+# 每次构建生成以时间命名的子文件夹，保留历史版本便于验证
+TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
+BUILD_DIR="$PROJECT/build/$TIMESTAMP"
+APP_DIR="$BUILD_DIR/${APP_NAME}.app"
+LATEST_LINK="$PROJECT/build/latest"
+
+echo "Building $APP_NAME into $BUILD_DIR..."
 
 # 1. 编译
-echo "Building..."
 cd "$PROJECT"
 swift build
 
-# 2. 清理旧的 .app
-rm -rf "$APP_DIR"
-
-# 3. 创建 .app 结构
+# 2. 创建本次构建目录
 mkdir -p "$APP_DIR/Contents/MacOS"
 mkdir -p "$APP_DIR/Contents/Resources"
 
-# 4. 复制二进制（SwiftPM 6 输出到 arch-specific 路径，用 --show-bin-path 动态拿）
+# 3. 复制二进制（SwiftPM 6 输出到 arch-specific 路径，用 --show-bin-path 动态拿）
 BIN_PATH="$(swift build --show-bin-path)/QuotaBar"
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/QuotaBar"
 
-# 4.5 用稳定 identifier 重签名
+# 4. 用稳定 identifier 重签名
 # Swift toolchain 默认的 ad-hoc 签名 identifier 是 CodingPlanMenu-<hash>，
 # 每次 build hash 都会变，导致 macOS keychain 的"始终允许"失效（被当成另一个 app）。
 # 用固定的 identifier 重签一次，让 macOS 始终认它是同一个 app。
@@ -48,7 +51,7 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>1</key>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
     <key>LSUIElement</key>
@@ -57,9 +60,16 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
 </plist>
 PLIST
 
+# 6. 更新 latest 软链到本次构建
+rm -f "$LATEST_LINK"
+ln -s "$BUILD_DIR" "$LATEST_LINK"
+
 echo ""
-echo "Done: $APP_DIR"
+echo "✅ Build complete: $APP_DIR"
 echo ""
 echo "Usage:"
 echo "  直接双击运行，或者拖到 /Applications"
+echo "  最新版本快捷入口: $LATEST_LINK/${APP_NAME}.app"
 echo "  退出时按 Cmd+Q 或点菜单中的「退出」"
+echo ""
+echo "History builds are kept under: $PROJECT/build/"

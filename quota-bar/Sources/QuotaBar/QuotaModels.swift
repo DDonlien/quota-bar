@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - Provider 种类
 
-enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Sendable {
+enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendable {
     case codex
     case minimax
     case kimi

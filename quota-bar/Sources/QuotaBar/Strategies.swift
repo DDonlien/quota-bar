@@ -75,7 +75,6 @@ enum ProviderPipelines {
         [
             codexPipeline(cookieReader: cookieReader),
             claudePipeline(cookieReader: cookieReader),
-            geminiPipeline(cookieReader: cookieReader),
             minimaxPipeline(cookieReader: cookieReader),
             kimiPipeline(cookieReader: cookieReader),
             traePipeline(),
@@ -104,18 +103,6 @@ enum ProviderPipelines {
             strategies: [
                 QuotaProviderStrategy(BrowserCookieProvider(id: "claude-cookie", kind: .claude, cookieReader: cookieReader)),
                 QuotaProviderStrategy(KeychainProvider(id: "claude-keychain", kind: .claude)),
-            ],
-            runMode: .sequential
-        )
-    }
-
-    @MainActor
-    private static func geminiPipeline(cookieReader: BrowserCookieReader) -> FetchPipeline {
-        FetchPipeline(
-            kind: .gemini,
-            strategies: [
-                QuotaProviderStrategy(BrowserCookieProvider(id: "gemini-cookie", kind: .gemini, cookieReader: cookieReader)),
-                QuotaProviderStrategy(KeychainProvider(id: "gemini-keychain", kind: .gemini)),
             ],
             runMode: .sequential
         )

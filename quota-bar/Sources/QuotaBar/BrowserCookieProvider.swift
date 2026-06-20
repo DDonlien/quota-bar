@@ -81,15 +81,29 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
             throw QuotaFetchError.missingCredentials(detail: "未登录")
         }
 
-        let data = try await performRequest(with: cookies, endpoint: endpoint.url)
+        let initialData = try await performRequest(with: cookies, endpoint: endpoint)
+        let data: Data
+        if let followUpURL = endpoint.followUpURL?(initialData) {
+            let followUp = DashboardEndpoints.Endpoint(url: followUpURL, parser: endpoint.parser)
+            data = try await performRequest(with: cookies, endpoint: followUp)
+        } else {
+            data = initialData
+        }
+
         if let windows = endpoint.parser.parse(data: data) {
-            let tier = parsePlanType(from: data)
+            let tier = endpoint.parser.parseTier(data: data) ?? parsePlanType(from: data)
+            let monthlyPrice: String?
+            if let parsedPrice = endpoint.parser.parseMonthlyPrice(data: data) {
+                monthlyPrice = parsedPrice
+            } else {
+                monthlyPrice = await ProviderPricing.localizedMonthlyPrice(kind: kind, tier: tier)
+            }
             return ProviderSnapshot(
                 kind: kind,
                 subscriptionTier: ProviderPricing.normalizedTier(tier),
                 availability: .available,
                 quotas: windows,
-                monthlyPrice: await ProviderPricing.localizedMonthlyPrice(kind: kind, tier: tier),
+                monthlyPrice: monthlyPrice,
                 fetchedAt: fetchedAt
             )
         }
@@ -103,20 +117,24 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
         return json["plan_type"] as? String
     }
 
-    private func performRequest(with cookies: [HTTPCookie], endpoint url: URL) async throws -> Data {
+    private func performRequest(with cookies: [HTTPCookie], endpoint: DashboardEndpoints.Endpoint) async throws -> Data {
         // 把 cookie 拼成 `Cookie:` 请求头，比塞 HTTPCookieStorage 更可控。
         let cookieHeader = cookies
             .map { "\($0.name)=\($0.value)" }
             .joined(separator: "; ")
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
+        var request = URLRequest(url: endpoint.url)
+        request.httpMethod = endpoint.method
         request.setValue(
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 QuotaBar/1.0",
             forHTTPHeaderField: "User-Agent"
         )
         request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        for (key, value) in endpoint.headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        request.httpBody = endpoint.body
         request.timeoutInterval = 10
 
         let (data, response) = try await session.data(for: request)

@@ -6,7 +6,7 @@
 [![Platform: macOS 26](https://img.shields.io/badge/Platform-macOS%2026-blueviolet)](#requirements)
 [![Swift: 6](https://img.shields.io/badge/Swift-6.2-orange)](#requirements)
 
-Quota Bar 把 Codex、Claude、Gemini、MiniMax、Kimi 等多家 AI 服务的剩余额度、刷新时间、订阅费用集中到一个紧凑的菜单栏下拉面板里，不需要切浏览器、查收件箱、记 cycle 时间。
+Quota Bar 把 Codex、Claude、Antigravity、MiniMax、Kimi 等多家 AI 服务的剩余额度、刷新时间、订阅费用集中到一个紧凑的菜单栏下拉面板里，不需要切浏览器、查收件箱、记 cycle 时间。
 
 > ⚠️ **本项目处于功能核心阶段**：界面骨架与「真实数据接入」已落地（P0 + P1 完成），但每个 provider 的数据源还在持续扩展。
 
@@ -42,12 +42,12 @@ Quota Bar 把 Codex、Claude、Gemini、MiniMax、Kimi 等多家 AI 服务的剩
 | Provider | Cookie 读取 | Dashboard 接入 | CLI 路径 | Login 引导 |
 |---|---|---|---|---|
 | Codex / OpenAI | ✅ chatgpt.com | ✅ wham/usage | ✅ ~/.codex/sessions | ✅ codex login |
-| Claude | ✅ claude.ai | 🚧 endpoint 在路上 | ✅ ~/.claude | ✅ claude /login |
-| Gemini | ✅ gemini.google.com | 🚧 需要 Vertex AI | ✅ ~/.gemini | ✅ gemini auth login |
-| MiniMax | ✅ minimax.chat | 🚧 | — | — |
-| Kimi | ✅ kimi.moonshot.cn | 🚧 | — | — |
+| Claude | ✅ claude.ai | ✅ organizations → usage | ✅ ~/.claude | ✅ claude /login |
+| MiniMax | ✅ minimax.chat | ✅ coding_plan/remains（可能受 Cloudflare 限制） | ✅ ~/.mavis/config.yaml | — |
+| Kimi | ✅ kimi.moonshot.cn / kimi.com | ✅ OAuth usage / Web GetUsages | ✅ ~/.kimi-code | — |
+| Antigravity | — | ✅ 本地 language_server GetUserStatus | ✅ antigravity | — |
 
-更多 provider（Cursor / Warp / DeepSeek / Copilot / OpenRouter / Perplexity）仅做 Cookie 探测，dashboard 端点尚未对接，欢迎提 PR。
+Gemini 已从主动展示路径移除，Google 系配额优先通过 Antigravity 获取。更多 provider（Cursor / Warp / DeepSeek / Copilot / OpenRouter / Perplexity）仅做 Cookie 探测，dashboard 端点尚未对接，欢迎提 PR。
 
 ---
 
@@ -81,7 +81,7 @@ swift run
 
 1. 状态栏右上角出现「QB」图标（macOS 26）或 `chart.bar.fill` SF Symbol
 2. 点开 → 顶部若有橙色横幅 → 点「打开系统设置」授权 Full Disk Access
-3. 重启 quota-bar → 在任一支持的浏览器里登录过 Codex / Claude / Gemini 后，菜单里会出现真实额度
+3. 重启 quota-bar → 在任一支持的浏览器里登录过 Codex / Claude / Kimi / MiniMax，或运行过 Antigravity 后，菜单里会出现真实额度
 
 ### 打包成 .app
 
@@ -90,7 +90,19 @@ cd quota-bar
 ./scripts/build-app.sh
 ```
 
-产物在 `quota-bar/build/QuotaBar.app`，可以拖到 Applications。
+每次运行都会在 `quota-bar/build/` 下生成一个以当前时间命名的子文件夹：
+
+```text
+quota-bar/build/
+├── 20260620-193559/
+│   └── QuotaBar.app
+├── latest -> 20260620-193559/
+└── ...
+```
+
+- 历史版本按时间保留，方便回滚对比
+- `build/latest/QuotaBar.app` 始终指向最近一次构建，适合固定验证入口
+- 可以拖到 Applications，或直接从 Finder 双击打开
 
 > 注意：未签名 + 未公证的 .app 第一次启动需要右键 → 打开。
 
@@ -188,7 +200,7 @@ Codex / Claude 的 TUI 在无 TTY 时会拒绝交互。`TTYCommandRunner` 通过
 ## 路线图
 
 - [ ] Claude dashboard endpoint（org 发现 + `/usage` 解析）
-- [ ] Gemini Vertex AI 接入
+- [ ] Trae Work 独立额度接入调研
 - [ ] In-app OAuth（避免跳出 Terminal）
 - [ ] 历史曲线 + 用量预测
 - [ ] 通知：额度低于阈值时提醒

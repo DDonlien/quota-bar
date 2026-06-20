@@ -14,6 +14,10 @@ enum DashboardEndpoints {
 
     struct Endpoint {
         let url: URL
+        var method: String = "GET"
+        var body: Data?
+        var headers: [String: String] = [:]
+        var followUpURL: (@Sendable (Data) -> URL?)?
         let parser: DashboardParser
     }
 
@@ -25,20 +29,29 @@ enum DashboardEndpoints {
                 parser: CodexDashboardParser()
             )
         case .claude:
-            // Claude dashboard 需要先拿 org_id；fallback 走 `/api/organizations`，
-            // 由 ClaudeDashboardParser 内部再 GET `/api/organizations/{id}/usage`。
             return Endpoint(
                 url: URL(string: "https://claude.ai/api/organizations")!,
+                followUpURL: ClaudeDashboardParser.usageURL(from:),
                 parser: ClaudeDashboardParser()
             )
         case .minimax:
-            // MiniMax Coding Plan dashboard（与 MiniMaxConfigProvider 调同一个 endpoint，
-            // 但用浏览器 cookie 替代 API key）。当用户在浏览器已登录 minimax.chat 时，
-            // 此路径无需 API key 即可拿数据。注意：Cloudflare 可能拦截简单 curl 调用，
-            // 真实成功率依赖浏览器 cookie 是否包含正确的 cf_clearance / session。
+            // MiniMax Web Coding Plan dashboard，用 minimax.chat 登录态 cookie。
+            // 该路径可能仍受 Cloudflare / 签名策略影响，失败时 pipeline 会安全降级。
             return Endpoint(
-                url: URL(string: "https://api.minimaxi.com/v1/coding_plan/remains")!,
+                url: URL(string: "https://api.minimax.chat/v1/api/openplatform/coding_plan/remains")!,
                 parser: MiniMaxDashboardParser()
+            )
+        case .kimi:
+            return Endpoint(
+                url: URL(string: "https://www.kimi.com/apiv2/kimi.gateway.billing.v1.BillingService/GetUsages")!,
+                method: "POST",
+                body: Data("{}".utf8),
+                headers: [
+                    "Content-Type": "application/json",
+                    "Origin": "https://www.kimi.com",
+                    "Referer": "https://www.kimi.com/"
+                ],
+                parser: KimiDashboardParser()
             )
         case .gemini:
             return nil
@@ -53,6 +66,15 @@ enum DashboardEndpoints {
 protocol DashboardParser: Sendable {
     /// 从响应数据解析出 quota 窗口；解析失败返回 nil（让上层降级）。
     func parse(data: Data) -> [QuotaWindow]?
+    /// 从响应数据提取订阅档位；默认 nil，由 ProviderPricing 或 UI 安全降级。
+    func parseTier(data: Data) -> String?
+    /// 从响应数据提取已知订阅价格；默认 nil，避免无依据地猜价格。
+    func parseMonthlyPrice(data: Data) -> String?
+}
+
+extension DashboardParser {
+    func parseTier(data: Data) -> String? { nil }
+    func parseMonthlyPrice(data: Data) -> String? { nil }
 }
 
 // MARK: - Codex / OpenAI Wham Usage 解析
@@ -145,20 +167,144 @@ struct CodexDashboardParser: DashboardParser {
     }
 }
 
-// MARK: - Claude Dashboard 解析（两步式，目前仅第一步）
+// MARK: - Claude Dashboard 解析
 
 /// Claude dashboard 需要两个步骤：
 /// 1. `GET /api/organizations` → `[{uuid, name, capabilities, ...}]`
 /// 2. `GET /api/organizations/{uuid}/usage` → `[{utilization, resets_at}, ...]`
-///
-/// 第一步确认账号已登录；第二步拿真实 quota 数据。
-///
-/// 当前实现：第一步 parser 检测到账号 → 返回 nil 让上层 fallback；
-/// 真实两步调度需要 BrowserCookieProvider 支持双 endpoint，等下次迭代。
-/// 现在 Claude 的状态会显示「已检测到 Claude 账号，dashboard 待接入」。
 struct ClaudeDashboardParser: DashboardParser {
+    static func usageURL(from data: Data) -> URL? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) else { return nil }
+        let organizations: [[String: Any]]
+        if let array = json as? [[String: Any]] {
+            organizations = array
+        } else if let dict = json as? [String: Any],
+                  let array = dict["organizations"] as? [[String: Any]] {
+            organizations = array
+        } else {
+            return nil
+        }
+
+        for org in organizations {
+            let id = org["uuid"] as? String
+                ?? org["id"] as? String
+                ?? org["organization_uuid"] as? String
+            if let id, !id.isEmpty {
+                return URL(string: "https://claude.ai/api/organizations/\(id)/usage")
+            }
+        }
+        return nil
+    }
+
     func parse(data: Data) -> [QuotaWindow]? {
-        // 第一步只验证账号存在即可；quota 数据需要二次请求，所以这里返回 nil。
+        guard let payload = try? JSONSerialization.jsonObject(with: data) else { return nil }
+        let candidates = Self.flattenUsageCandidates(payload)
+        let windows = candidates.compactMap(Self.makeWindow(from:))
+        return windows.isEmpty ? nil : windows.sorted {
+            ($0.periodSeconds ?? .greatestFiniteMagnitude) < ($1.periodSeconds ?? .greatestFiniteMagnitude)
+        }
+    }
+
+    private static func flattenUsageCandidates(_ payload: Any) -> [[String: Any]] {
+        if let array = payload as? [[String: Any]] { return array }
+        guard let dict = payload as? [String: Any] else { return [] }
+        for key in ["usage", "usages", "limits", "rate_limits", "quota", "quotas"] {
+            if let array = dict[key] as? [[String: Any]] { return array }
+            if let nested = dict[key] as? [String: Any] { return flattenUsageCandidates(nested) }
+        }
+        return dict.values.flatMap { flattenUsageCandidates($0) }
+    }
+
+    private static func makeWindow(from dict: [String: Any]) -> QuotaWindow? {
+        let title = dict["name"] as? String
+            ?? dict["model"] as? String
+            ?? dict["type"] as? String
+            ?? dict["window"] as? String
+            ?? "Claude 额度"
+
+        let remainingFraction: Double?
+        if let utilization = number(dict["utilization"]) ?? number(dict["usage_percent"]) {
+            remainingFraction = 1 - utilization / (utilization > 1 ? 100 : 1)
+        } else if let used = number(dict["used"]),
+                  let limit = number(dict["limit"]),
+                  limit > 0 {
+            remainingFraction = 1 - used / limit
+        } else if let remaining = number(dict["remaining"]),
+                  let limit = number(dict["limit"]),
+                  limit > 0 {
+            remainingFraction = remaining / limit
+        } else {
+            remainingFraction = number(dict["remaining_fraction"])
+                ?? number(dict["remainingFraction"])
+        }
+        guard let remainingFraction else { return nil }
+
+        let resetsAt = date(dict["resets_at"])
+            ?? date(dict["reset_at"])
+            ?? date(dict["resetTime"])
+        let periodSeconds = number(dict["window_seconds"])
+            ?? number(dict["limit_window_seconds"])
+        let refreshText = resetsAt.map { QuotaResetText.description(for: $0) } ?? "重置时间未知"
+
+        return QuotaWindow(
+            title: title,
+            remainingFraction: remainingFraction,
+            refreshDescription: refreshText,
+            resetsAt: resetsAt,
+            periodSeconds: periodSeconds
+        )
+    }
+
+    private static func number(_ raw: Any?) -> Double? {
+        if let n = raw as? NSNumber { return n.doubleValue }
+        if let s = raw as? String { return Double(s) }
+        return raw as? Double
+    }
+
+    private static func date(_ raw: Any?) -> Date? {
+        if let n = raw as? NSNumber { return Date(timeIntervalSince1970: n.doubleValue) }
+        guard let s = raw as? String else { return nil }
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = withFraction.date(from: s) { return d }
+        return ISO8601DateFormatter().date(from: s)
+    }
+}
+
+// MARK: - Kimi Web GetUsages 解析
+
+struct KimiDashboardParser: DashboardParser {
+    func parse(data: Data) -> [QuotaWindow]? {
+        if let parsed = try? KimiUsageParser.parse(data: data, fetchedAt: Date()) {
+            return parsed.windows
+        }
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        for key in ["data", "result", "usage", "payload"] {
+            guard let nested = json[key] else { continue }
+            if let data = try? JSONSerialization.data(withJSONObject: nested),
+               let parsed = try? KimiUsageParser.parse(data: data, fetchedAt: Date()) {
+                return parsed.windows
+            }
+        }
+        return nil
+    }
+
+    func parseTier(data: Data) -> String? {
+        if let parsed = try? KimiUsageParser.parse(data: data, fetchedAt: Date()) {
+            return parsed.tier
+        }
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        for key in ["data", "result", "usage", "payload"] {
+            guard let nested = json[key],
+                  let nestedData = try? JSONSerialization.data(withJSONObject: nested),
+                  let parsed = try? KimiUsageParser.parse(data: nestedData, fetchedAt: Date())
+            else { continue }
+            return parsed.tier
+        }
         return nil
     }
 }
@@ -227,5 +373,38 @@ struct MiniMaxDashboardParser: DashboardParser {
         }
 
         return windows.isEmpty ? nil : windows
+    }
+
+    func parseTier(data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let packageName = json["current_package_name"] as? String,
+              !packageName.isEmpty
+        else { return nil }
+        return ProviderPricing.normalizedTier(packageName) ?? packageName
+    }
+
+    func parseMonthlyPrice(data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        let packageName = json["current_package_name"] as? String
+        return Self.mapMonthlyPrice(packageName: packageName)
+    }
+
+    private static func mapMonthlyPrice(packageName: String?) -> String? {
+        let name = packageName?.lowercased() ?? ""
+        let priceUSD: Double?
+        switch name {
+        case "starter": priceUSD = 29
+        case "plus": priceUSD = 49
+        case "max": priceUSD = 119
+        case "plus-highspeed", "plus_highspeed": priceUSD = 98
+        case "max-highspeed", "max_highspeed": priceUSD = 199
+        case "ultra-highspeed", "ultra_highspeed": priceUSD = 899
+        default: priceUSD = nil
+        }
+        guard let priceUSD else { return nil }
+        let cny = priceUSD * 7.25
+        return String(format: "¥%.0f/月", cny)
     }
 }
