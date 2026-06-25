@@ -54,6 +54,11 @@ enum MenuDashboardStyle {
     static let summaryFontSize: CGFloat = 13
     static let planNameFontSize: CGFloat = 13
     static let planPriceFontSize: CGFloat = 13
+    /// 计划头部「订阅/数据最后有效日期」标签的字号。
+    /// 比价格小 2pt，让价格仍是右侧视觉锚点。
+    static let planExpiresAtFontSize: CGFloat = 11
+    /// 价格与左侧 expiresAt 标签之间的间距。
+    static let planPriceTrailingGap: CGFloat = 6
     static let quotaFontSize: CGFloat = 11
     static let emptyStateTitleSize: CGFloat = 13
     static let emptyStateBodySize: CGFloat = 11
@@ -861,6 +866,25 @@ private struct PlanHeader: View {
     let snapshot: ProviderSnapshot
     let onHide: (() -> Void)?
 
+    /// 订阅/数据最后有效日期展示文案：`YYYY/M/D`（无前导零，例如 "2026/6/25"）。
+    /// 语义见 `ProviderSnapshot.subscriptionExpiresAt`。
+    private var expiresAtText: String? {
+        guard let date = snapshot.subscriptionExpiresAt,
+              snapshot.monthlyPrice != nil,
+              snapshot.availability == .available else {
+            return nil
+        }
+        return Self.expiresAtFormatter.string(from: date)
+    }
+
+    private static let expiresAtFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone.current
+        f.dateFormat = "yyyy/M/d"
+        return f
+    }()
+
     var body: some View {
         HStack(spacing: 0) {
             Circle()
@@ -884,10 +908,21 @@ private struct PlanHeader: View {
                 .frame(width: 16, height: 16)
                 .help("隐藏此订阅")
             default:
-                Text(snapshot.monthlyPrice ?? "—")
-                    .font(.system(size: MenuDashboardStyle.planPriceFontSize, weight: .regular))
-                    .foregroundStyle(Palette.secondary)
-                    .lineLimit(1)
+                HStack(spacing: MenuDashboardStyle.planPriceTrailingGap) {
+                    if let expiresAtText {
+                        // 订阅/数据最后有效日期；灰色 11pt 视觉上比 13pt 价格次要，
+                        // 与右侧价格共享 secondary 灰系，让「日期 + 价格」形成一组信息。
+                        Text(expiresAtText)
+                            .font(.system(size: MenuDashboardStyle.planExpiresAtFontSize, weight: .regular))
+                            .foregroundStyle(Palette.secondary)
+                            .lineLimit(1)
+                            .monospacedDigit()
+                    }
+                    Text(snapshot.monthlyPrice ?? "—")
+                        .font(.system(size: MenuDashboardStyle.planPriceFontSize, weight: .regular))
+                        .foregroundStyle(Palette.secondary)
+                        .lineLimit(1)
+                }
             }
         }
     }

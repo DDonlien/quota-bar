@@ -296,6 +296,16 @@ struct ProviderSnapshot: Identifiable, Hashable {
     let availability: ProviderAvailability
     let quotas: [QuotaWindow]
     let monthlyPrice: String?
+    /// 订阅/数据最后有效日期：用于 dropdown 在价格左侧展示「YYYY/M/D」灰色标签。
+    ///
+    /// 语义上等价于「该 provider 当前显示的所有额度里，最晚一次重置的时间」——
+    /// 用户当前看到的剩余额度过期日。例如 Codex 5h + 周额度 → `max(resetsAt)` 会是
+    /// 周额度的 resetsAt（5h 窗口比 7 天更早）。
+    ///
+    /// - `nil` → 暂无 resetsAt 数据，UI 不展示日期（只展示价格）。
+    /// - 显式传入时优先使用传入值（provider 可用自己的「订阅账单日」覆盖 max 推断）。
+    /// - 默认值由 `init` 在没显式传入时从 `quotas.map(\.resetsAt).max()` 计算。
+    let subscriptionExpiresAt: Date?
     let fetchedAt: Date
     let isStale: Bool
 
@@ -306,6 +316,7 @@ struct ProviderSnapshot: Identifiable, Hashable {
         availability: ProviderAvailability,
         quotas: [QuotaWindow],
         monthlyPrice: String?,
+        subscriptionExpiresAt: Date? = nil,
         fetchedAt: Date,
         isStale: Bool = false
     ) {
@@ -315,6 +326,13 @@ struct ProviderSnapshot: Identifiable, Hashable {
         self.availability = availability
         self.quotas = quotas
         self.monthlyPrice = monthlyPrice
+        // 默认值：取所有 quota 窗口中最晚的 resetsAt，作为「该订阅/数据最后有效日期」。
+        // provider 显式传入 subscriptionExpiresAt 时用传入值（如服务端返回的账单日）。
+        if let subscriptionExpiresAt {
+            self.subscriptionExpiresAt = subscriptionExpiresAt
+        } else {
+            self.subscriptionExpiresAt = quotas.compactMap(\.resetsAt).max()
+        }
         self.fetchedAt = fetchedAt
         self.isStale = isStale
     }
@@ -335,6 +353,7 @@ struct ProviderSnapshot: Identifiable, Hashable {
             availability: .loading,
             quotas: [],
             monthlyPrice: nil,
+            subscriptionExpiresAt: nil,
             fetchedAt: fetchedAt,
             isStale: false
         )
