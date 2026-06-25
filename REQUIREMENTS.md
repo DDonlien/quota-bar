@@ -227,3 +227,58 @@
 
 - [x] [0.4.0-UI-B-000] `DashboardState.availableCount` 改为只统计 `.available` 且 top subscription group worst quota `remainingFraction > 0` 的 snapshot；与 `ProviderSnapshot.statusColor(itemOrder:)` 的红灯判定走完全相同的逻辑（避免出现"灯红但 N/M 不动"的割裂）#bugfix — `QuotaModels.swift:availableCount`
 - [x] [0.4.0-UI-B-001] `DashboardState.availabilityText` 同步标记 `@MainActor`（因 `availableCount` 需要读 `PreferencesStore.shared`，后者是 MainActor 隔离）#bugfix — `QuotaModels.swift:availabilityText`
+
+## Phase - v0.5.0 - 工程卫生与 CI
+
+> v0.5.0 不引入新功能，专注让项目"可被下一个开发者 / 下一个 agent 接手"：
+> 补测试、收警告、加 CI、固化约定。这一阶段全部为 P1/P2 卫生任务，可任意顺序执行。
+>
+> **注**：本 phase 是在合并 `feat/price-update-date` 时由 agent 主动识别并登记的工程债务，
+> 任务是登记而非执行；执行时再单独开 worktree / 分支。
+
+### QA-A：单元测试基础设施
+
+- [ ] [0.5.0-QA-A-000] 给 `quota-bar` 加 Swift Testing 或 XCTest target（`Tests/QuotaBarTests/`），接入 `Package.swift` 的 test target 配置 #P1
+- [ ] [0.5.0-QA-A-001] `QuotaWindow` 测试：`periodLabel` 标准周期推断（5h / 周 / 月 / 日）+ `displayTitle` 拼接 + `remainingFraction` 钳位 #P1
+- [ ] [0.5.0-QA-A-002] `ProviderSnapshot` 测试：`subscriptionExpiresAt` 默认从 `quotas.map(\.resetsAt).max()` 推断；显式传入时优先用传入值；`.loading` 工厂返回的 expiresAt 为 nil #P1
+- [ ] [0.5.0-QA-A-003] `ProviderSnapshot` 测试：`subscriptionGroups(customOrder:)` 的排序与 groupKey 归一（Kimi Work/Code 强制归为 `kimi` 单组）；`primarySubscriptionGroupWorstQuota` 取排序后第一组的最差 quota #P1
+- [ ] [0.5.0-QA-A-004] `ProviderSnapshot.statusColor` 测试：4 种 availability + top group worst quota 4 个分数档（>0.3 / 0.01-0.3 / 0 / nil）组合的颜色映射 #P1
+- [ ] [0.5.0-QA-A-005] `DashboardState` 测试：`availableCount` 与 `isEffectivelyAvailable` 走完全相同的判定逻辑（避免 N/M 与状态灯割裂）#P1
+- [ ] [0.5.0-QA-A-006] `ProviderPricing.localizedMonthlyPrice` 测试：USD / CNY 货币切换 + 已知 tier 映射（codex plus/pro、kimi andante/moderato/allegretto/allegro、antigravity plus/pro/ultra、minimax starter/plus/max）#P2
+- [ ] [0.5.0-QA-A-007] `QuotaResetText.description` 测试：days/hours/minutes/seconds 4 档的 `4d3h` / `4h3m` / `3m20s` / `0mXs` 紧凑格式 #P2
+
+### CI-A：持续集成
+
+- [ ] [0.5.0-CI-A-000] 新增 `.github/workflows/pr-check.yml`：PR 触发时跑 `swift build` + `swift test`（基于 macOS 14 runner + Swift 6.2 toolchain）#P1
+- [ ] [0.5.0-CI-A-001] 已有 `.github/workflows/release.yml` 的 main push 触发逻辑加一个 `swift test` 步骤，确保发版前测试通过 #P1
+- [ ] [0.5.0-CI-A-002] PR check 加 build-app.sh 烟测（macOS runner 上跑一遍 `./quota-bar/scripts/build-app.sh`，验证 .app 能产出）#P2
+- [ ] [0.5.0-CI-A-003] PR check 加 `web/` 子项目烟测：`npm ci && npm run build` 验证 Astro 站点能正常产出 `dist/` #P2
+
+### TOOL-A：构建 / 警告卫生
+
+- [ ] [0.5.0-TOOL-A-000] 清掉 `MiniMaxConfigProvider.swift:346` 的未使用 `prefix` 变量警告（删除或改用 `_ =`）#P1
+- [ ] [0.5.0-TOOL-A-001] 清掉 `EdgeCookieReader.swift` 的未使用 `placeholders` 变量警告 #P1
+- [ ] [0.5.0-TOOL-A-002] 在 `Package.swift` 引入 `.enableUpcomingFeature("BareSlashRegexLiterals")` 等 Swift 6 默认未来特性的明确清单（当前是默认全开，可考虑按需开关）#P3 #deferred
+- [ ] [0.5.0-TOOL-A-003] 加 `make` / `Makefile`（或 `scripts/dev.sh`）封装 `swift build` / `swift run` / `swift test` / `./scripts/build-app.sh` / `web npm ci && npm run build`，README 里只引用这个入口 #P2
+
+### DOC-A：项目约定文档
+
+- [ ] [0.5.0-DOC-A-000] `AGENTS.md` 增补 worktree 约定：所有 feature/bugfix 在 `git worktree add -b <branch> .worktrees/<name>` 下进行，merge 走 fast-forward；agent 不主动切换 main #P1
+- [ ] [0.5.0-DOC-A-001] 评估 `agent-template/` 是否还需要保留：项目自身的 `AGENTS.md` 已自包含，模板可移除或挪到 `.harness/` 之类非默认路径 #P2
+- [ ] [0.5.0-DOC-A-002] 评估 `reference/`（Hidden Bar / Mos 等参考项目）保留策略：当前是 git submodule 风格嵌入但不走 submodule 协议，文件大且不会编译；可挪到独立仓库或 `reference/<name>/.gitignore` 屏蔽 #P2
+- [ ] [0.5.0-DOC-A-003] 新增 `CONTRIBUTING.md`：PR 流程、commit message 规范（conventional commits）、不允许 rm cookie db / log token 的硬性约束 #P3
+- [ ] [0.5.0-DOC-A-004] `README.md` 的「快速开始」增补 web 子项目（`cd web && npm install && npm run dev`）的独立段落；当前 README 只在「目录结构」里提到 web/ #P2
+
+### ARCH-A：仓库结构与 .gitignore 卫生
+
+- [ ] [0.5.0-ARCH-A-000] 根 `.gitignore` 增补 `web/node_modules/` / `web/dist/` / `web/.astro/`（当前靠 `web/.gitignore` 排除，但根 ignore 双保险更稳；上次 rsync 误把这些拷贝到了 worktree）#P1
+- [ ] [0.5.0-ARCH-A-001] 评估 `quota-bar/build/` 当前 symlink 策略（`latest -> 20260625-141144/`）是否要纳入 git / 是否要写进 README「打包」段落 #P3
+- [ ] [0.5.0-ARCH-A-002] 评估 `web/` 是否要拆为独立 repo（部署在 `quotabar.ddonlien.com`），与主仓解耦；当前主仓的 release 流程不打包 web #P2
+- [ ] [0.5.0-ARCH-A-003] 给 `quota-bar/Sources/QuotaBar/` 加 `Tests/QuotaBarTests/` 目录骨架 + `.gitignore`（避免测试 fixture 里的 snapshot 文件被误 commit）#P2
+
+### QA-A：v0.5.0 完成定义
+
+- [ ] [0.5.0-QA-A-100] `swift build` / `swift test` 在 macOS 14+ / Swift 6.2 上零警告通过 #P1
+- [ ] [0.5.0-QA-A-101] PR check workflow 触发后 `swift test` 跑过 #P1
+- [ ] [0.5.0-QA-A-102] 根 .gitignore 双保险（`web/node_modules/` / `web/dist/`）已生效，main worktree 不再因 `git status` 看到这些目录 #P2
+- [ ] [0.5.0-QA-A-103] `AGENTS.md` / `README.md` / `CONTRIBUTING.md` 反映出当前的 worktree + 提交 + 测试约定 #P2
