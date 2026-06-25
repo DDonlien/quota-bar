@@ -38,8 +38,8 @@ struct EdgeCookieReader: BrowserCookieReader {
         defer { sqlite3_close(database) }
 
         // 查询匹配的 cookie
-        let domainPatterns = domains.map { "%\($0)" }
-        let placeholders = String(repeating: "?,", count: domainPatterns.count).dropLast()
+        // 注：当前 SQL 用 LIKE '%' 软匹配全部 host_key，域名硬过滤在下方结果循环里做；
+        // 若将来要回到 SQL 层 IN (...) 过滤再补回 `domainPatterns` / `placeholders`。
         let query = "SELECT name, value, host_key, path, expires_utc, is_secure FROM cookies WHERE host_key LIKE ?"
 
         var cookies: [HTTPCookie] = []

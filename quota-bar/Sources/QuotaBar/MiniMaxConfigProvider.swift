@@ -337,17 +337,12 @@ final class MiniMaxConfigProvider: QuotaProvider, @unchecked Sendable {
             // 没找到 provider.minimax.options 段 → 说明 YAML 结构不完整
             throw PersistError.formatInvalid
         }
-        guard
-            let fullRange = Range(match.range, in: original),
-            let prefixRange = Range(match.range(at: 1), in: original)
-        else {
+        guard let fullRange = Range(match.range, in: original) else {
             throw PersistError.formatInvalid
         }
-        let prefix = String(original[prefixRange])
         // 引号化 key（防 YAML 特殊字符）
         let escapedKey = trimmed.replacingOccurrences(of: "\"", with: "\\\"")
         let newLine = "  apiKey: \"\(escapedKey)\""
-        // 用 prefix + newLine 重建整段
         let matchedSection = String(original[fullRange])
         // 在 matchedSection 里找最后一行 apiKey: ... 并替换
         let lines = matchedSection.components(separatedBy: "\n")
@@ -366,9 +361,6 @@ final class MiniMaxConfigProvider: QuotaProvider, @unchecked Sendable {
             newLines.append(newLine)
         }
         let updatedSection = newLines.joined(separator: "\n")
-
-        // 把 original 里 [fullRange] 替换成 prefix + updatedSection（去掉 prefix 重复）
-        // 实际 prefix 已经是 updatedSection 的前缀，所以直接用 updatedSection 替换即可
         let finalText = String(original).replacingOccurrences(of: matchedSection, with: updatedSection)
 
         do {

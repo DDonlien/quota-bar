@@ -16,6 +16,13 @@ DerivedData/
 *.dSYM/
 *.app
 
+# web 子项目（双保险：web/.gitignore 也已排除，根 ignore 兜底）
+web/node_modules/
+web/dist/
+web/.astro/
+web/.output/
+web/.vercel/
+
 # 编辑器
 .vscode/
 .idea/

@@ -1,0 +1,3 @@
+# Tests 目录的 .gitignore：避免测试 fixture 里的 snapshot / 临时文件被误 commit
+*.xcresult/
+.swiftpm/

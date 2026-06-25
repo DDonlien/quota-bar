@@ -47,6 +47,14 @@ jobs:
         working-directory: quota-bar
         run: swift build -c release
 
+      - name: Build web subproject (Astro)
+        working-directory: web
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+            npm run build
+          fi
+
   release:
     name: Package .dmg + GitHub Release
     needs: build
@@ -65,50 +73,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-
 
-      - name: Build (release)
-        working-directory: quota-bar
-        run: swift build -c release
-
-      - name: Assemble .app bundle
+      - name: Build .app via build-app.sh
         working-directory: quota-bar
         env:
           APP_NAME: QuotaBar
           SHORT_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          APP="$RUNNER_TEMP/${APP_NAME}.app"
-          rm -rf "$APP"
-          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-          cp ".build/release/QuotaBar" "$APP/Contents/MacOS/QuotaBar"
-          cat > "$APP/Contents/Info.plist" <<'PLIST'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleIdentifier</key>
-              <string>com.example.QuotaBar</string>
-              <key>CFBundleName</key>
-              <string>QuotaBar</string>
-              <key>CFBundleDisplayName</key>
-              <string>Quota Bar</string>
-              <key>CFBundleExecutable</key>
-              <string>QuotaBar</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              <key>CFBundleShortVersionString</key>
-              <string>1.0</string>
-              <key>CFBundleVersion</key>
-              <string>1</string>
-              <key>LSMinimumSystemVersion</key>
-              <string>26.0</string>
-              <key>LSUIElement</key>
-              <true/>
-          </dict>
-          </plist>
-          PLIST
-          echo "Built app: $APP"
-          ls -la "$APP/Contents/MacOS"
-          defaults read "$APP/Contents/Info.plist" CFBundleDisplayName
+        run: ./scripts/build-app.sh
 
       - name: Build .dmg
         env:
@@ -116,10 +86,12 @@ jobs:
           SHORT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
+          APP="$GITHUB_WORKSPACE/quota-bar/build/latest/${APP_NAME}.app"
+          test -d "$APP" || { echo "build-app.sh did not produce $APP"; exit 1; }
           STAGE="$RUNNER_TEMP/dmg-stage"
           rm -rf "$STAGE"
           mkdir -p "$STAGE"
-          cp -R "$RUNNER_TEMP/${APP_NAME}.app" "$STAGE/"
+          cp -R "$APP" "$STAGE/"
           ln -s /Applications "$STAGE/Applications"
           DMG="$RUNNER_TEMP/${APP_NAME}-${SHORT_SHA::7}.dmg"
           hdiutil create \

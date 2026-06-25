@@ -83,6 +83,19 @@ swift run
 2. 点开 → 顶部若有橙色横幅 → 点「打开系统设置」授权 Full Disk Access
 3. 重启 quota-bar → 在任一支持的浏览器里登录过 Codex / Claude / Kimi / MiniMax，或运行过 Antigravity 后，菜单里会出现真实额度
 
+### 跑 web 主页（[quotabar.ddonlien.com](https://quotabar.ddonlien.com) 的本地版）
+
+营销主页是独立 Astro 静态站，部署在 `web/` 子项目里。日常不需启动，但 PR 改到主页或新增 provider 卡片时本地预览用：
+
+```bash
+cd web
+npm install
+npm run dev      # 本地预览 http://localhost:4321
+npm run build    # 构建到 web/dist/，CI 会把 dist/ 部署到 quotabar.ddonlien.com
+```
+
+依赖 `node 20+`（GitHub Actions 用 ubuntu-latest + setup-node@v4 也是 20）。
+
 ### 打包成 .app
 
 ```bash
