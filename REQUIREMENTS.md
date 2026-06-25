@@ -255,9 +255,3 @@
 - [ ] [0.5.0-DOC-A-000] `AGENTS.md` 增补 worktree 约定：所有 feature/bugfix 在 `git worktree add -b <branch> .worktrees/<name>` 下进行，merge 走 fast-forward；agent 不主动切换 main；用户/贡献者间接感知：未来开发流程更稳，少出现"在 main 改坏又回滚" #P1
 - [ ] [0.5.0-DOC-A-001] 新增 `CONTRIBUTING.md`：PR 流程、commit message 规范（conventional commits）、不允许 rm cookie db / log token 的硬性约束；用户间接感知：项目欢迎贡献、隐私底线公开 #P2
 - [ ] [0.5.0-DOC-A-002] `README.md` 的「快速开始」增补 web 子项目（`cd web && npm install && npm run dev`）的独立段落；当前 README 只在「目录结构」里提到 web/；用户可感知：能直接看到怎么本地跑 web 主页 #P2
-
-### QA-A：v0.5.0 完成定义
-
-- [ ] [0.5.0-QA-A-100] `swift build` / `swift test` 在 macOS 14+ / Swift 6.2 上零警告通过 #P1
-- [ ] [0.5.0-QA-A-101] PR check workflow 触发后 `swift test` 跑过；用户可感知：PR 自动验证上线 #P1
-- [ ] [0.5.0-QA-A-102] `AGENTS.md` / `README.md` / `CONTRIBUTING.md` 反映出当前的 worktree + 提交约定 #P2
