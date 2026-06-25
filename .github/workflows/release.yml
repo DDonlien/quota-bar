@@ -47,7 +47,10 @@ jobs:
         working-directory: quota-bar
         run: swift build -c release
 
-      - name: Build web subproject (Astro)
+      - name: Build web subproject (Astro, smoke test)
+        # 真正的部署走 Vercel 的 GitHub integration（Vercel dashboard 里把项目 link 到这个 repo，
+        # push main 时 Vercel 自己会 build + deploy + 绑 quotabar.ddonlien.com）。这里的 npm run
+        # build 只是提前抓 web/ 的构建错误（marketing 主页破图不能等到 Vercel 才暴露）。
         working-directory: web
         run: |
           if [ -f package.json ]; then
