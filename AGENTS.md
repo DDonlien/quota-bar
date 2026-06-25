@@ -78,6 +78,7 @@
 - 如果任务改变范围、状态、验收标准、优先级或阻塞条件，必须同步更新 `REQUIREMENTS.md`。
 - 具体需求、验收标准、任务拆分、优先级、阻塞状态和完成状态只写入 `REQUIREMENTS.md`，不要写入 `README.md` 或 `DESIGN.md`。
 - **`REQUIREMENTS.md` 只收录用户能直接/间接感知的需求**：功能、UI、可观察行为、面向用户的文档与质量门槛（如 CI 防回退、README 入门指南）。**不收录**纯内部工程债务——清 warning、`.gitignore` 调整、内部重构、模板清理、目录整理这类"工程上必须做但不直接被用户感知"的事，由具体功能任务的"完成定义"或单独的 cleanup PR 处理，不进 REQUIREMENTS。
+- **工程卫生基础设施（CI、linter、formatter、dev 入口、测试基建等）属于用户可间接感知**——这些是"持续提升代码质量"的能力，不是 one-time cleanup。归到 `### CI-A` / `### ENG-A` 顶层 block 里登记（例：PR check CI、Make / dev 入口、Package.swift test target 配置）；但**具体测试用例**仍然是所属功能任务的子任务（见下一条）。
 - **测试任务不放在顶层 phase block**。测试是所属功能任务的**子任务**，ID 形式为 `<parent>-test`（例：`[0.4.0-DATA-A-001-test]`）。完整验收由"功能任务 + 测试子任务 + 完成定义"三者共同组成。Phase 顶层只放"用户能直接看到的测试入口"（如「PR check 触发后 `swift test` 跑过」），不列具体测试用例。
 - **不要 QA / 完成定义 / 验证 类的顶层 phase block**。`### QA-A：xxx` / `### v0.x.x 完成定义` 这种"phase 是否完成"性质的区块不进 REQUIREMENTS——`swift build` 通过、`swift test` 跑过、零警告、文档反映当前约定等都是 verification 任务，属"工程上必须做但不直接被用户感知"，由功能任务自带的完成状态 + 测试子任务覆盖。Phase 顶层的最后一个 block 只放"用户能直接看到的能力"（功能 / UI / 文档），不放 meta-check。
 - 当用户通过对话反馈或新增需求，且该需求需要进入核心实现（例如应用代码、业务逻辑、数据结构或界面流程）时，应先将其整理为一条 requirement，再开始执行。新增 requirement 应优先归入现有 Phase；如果适合挂在已有任务下，应作为其子任务记录。若需要新建 Phase 或新增三级任务区块，先征询用户确认，再继续执行。

@@ -228,30 +228,37 @@
 - [x] [0.4.0-UI-B-000] `DashboardState.availableCount` 改为只统计 `.available` 且 top subscription group worst quota `remainingFraction > 0` 的 snapshot；与 `ProviderSnapshot.statusColor(itemOrder:)` 的红灯判定走完全相同的逻辑（避免出现"灯红但 N/M 不动"的割裂）#bugfix — `QuotaModels.swift:availableCount`
 - [x] [0.4.0-UI-B-001] `DashboardState.availabilityText` 同步标记 `@MainActor`（因 `availableCount` 需要读 `PreferencesStore.shared`，后者是 MainActor 隔离）#bugfix — `QuotaModels.swift:availabilityText`
 
-## Phase - v0.5.0 - 用户可感知的质量与文档
+## Phase - v0.5.0 - 发布自动化与工程卫生
 
-> v0.5.0 不引入新功能，专注**用户能间接感知**的"质量护栏 + 文档"：
-> 加 PR check CI、让 web 子项目 / release 流程都有自动验证、文档能引导未来贡献者。
+> v0.5.0 不引入新功能，专注**用户能间接感知的质量门槛**与**工程卫生基础设施**：
+> 发布自动化、PR 自动验证、dev 入口友好、测试基建落地。
 >
 > **范围说明**（本 phase 合并 `feat/price-update-date` 时由 agent 主动识别登记）：
-> - **本 phase 只放用户能直接/间接感知的任务**。工程上必须做但不直接被用户感知的事
->   （清 warning、`.gitignore` 调整、内部重构、模板清理、目录整理等）不进 REQUIREMENTS，
->   由具体功能任务的"完成定义"或单独的 cleanup PR 处理。
+> - **本 phase 只放用户能直接/间接感知的任务** + 工程卫生**基础设施**（CI / dev 入口 / 测试基建
+>   等"持续提升代码质量"的能力）。One-time 清理（清单个 warning、挪个文件、改 `.gitignore`
+>   这种一次性 housekeeping）由 cleanup PR 处理，不进 REQUIREMENTS。
 > - **测试任务不进 REQUIREMENTS 顶层**。测试是所属功能任务的子任务，ID 形式为 `<parent>-test`
 >   （如 `[0.4.0-DATA-A-001-test]`）。完整验收由"功能任务 + 测试子任务 + 完成定义"三者共同组成。
->   本 phase 顶层只放"用户能直接看到的测试入口"（如「PR check 触发后 `swift test` 跑过」），
->   不列具体测试用例。
 > - 任务是登记而非执行；执行时再单独开 worktree / 分支。
 
-### CI-A：持续集成（用户间接感知：发版前自动验证、PR 合并前自动测试）
+### CI-A：发布自动化 + PR 验证（围绕 3 件事）
 
-- [ ] [0.5.0-CI-A-000] 新增 `.github/workflows/pr-check.yml`：PR 触发时跑 `swift build` + `swift test`（基于 macOS 14 runner + Swift 6.2 toolchain）；用户可感知：PR 合并前自动测试，避免坏改动进 main #P1
-- [ ] [0.5.0-CI-A-001] 已有 `.github/workflows/release.yml` 的 main push 触发逻辑加一个 `swift test` 步骤；用户可感知：下载的 .app 都经过测试 #P1
-- [ ] [0.5.0-CI-A-002] PR check 加 build-app.sh 烟测（macOS runner 上跑一遍 `./quota-bar/scripts/build-app.sh`，验证 .app 能产出）；用户可感知：PR 不会破坏 .app 打包流程 #P2
-- [ ] [0.5.0-CI-A-003] PR check 加 `web/` 子项目烟测：`npm ci && npm run build` 验证 Astro 站点能正常产出 `dist/`；用户可感知：营销主页不会突然 build 失败 #P2
+> 1. **修改后在本地自动打包** —— `AGENTS.md` 已要求（`./scripts/build-app.sh`），不需要 GitHub
+>    代码自动化，agent 遵守 AGENTS 即可，无需本 phase 任务。
+> 2. **提交后自动打包到 Release** —— 需要 GitHub Actions 自动化。
+> 3. **PR 合并前自动验证** —— 工程卫生类，需要 GitHub Actions。
 
-### DOC-A：可被用户 / 未来贡献者感知的文档
+- [ ] [0.5.0-CI-A-000] 已存在 `.github/workflows/release.yml` 在 main push 触发里加 `./quota-bar/scripts/build-app.sh` 步骤（确保 main push 后自动产 .app 并发到 pre-release）；用户可感知：每个 commit 都自动有可下载的 .app #P1
+- [ ] [0.5.0-CI-A-001] `release.yml` 加 `cd web && npm ci && npm run build` 步骤，让营销主页（quotabar.ddonlien.com）跟着主仓一起更新 #P2
+- [ ] [0.5.0-CI-A-002] 新增 `.github/workflows/pr-check.yml`：PR 触发时跑 `swift build`（PR 合并前自动验证，避免坏改动进 main）#P1
 
-- [ ] [0.5.0-DOC-A-000] `AGENTS.md` 增补 worktree 约定：所有 feature/bugfix 在 `git worktree add -b <branch> .worktrees/<name>` 下进行，merge 走 fast-forward；agent 不主动切换 main；用户/贡献者间接感知：未来开发流程更稳，少出现"在 main 改坏又回滚" #P1
-- [ ] [0.5.0-DOC-A-001] 新增 `CONTRIBUTING.md`：PR 流程、commit message 规范（conventional commits）、不允许 rm cookie db / log token 的硬性约束；用户间接感知：项目欢迎贡献、隐私底线公开 #P2
-- [ ] [0.5.0-DOC-A-002] `README.md` 的「快速开始」增补 web 子项目（`cd web && npm install && npm run dev`）的独立段落；当前 README 只在「目录结构」里提到 web/；用户可感知：能直接看到怎么本地跑 web 主页 #P2
+### ENG-A：工程卫生基础设施（用户间接感知：可信任的代码质量、dev 入口友好）
+
+- [ ] [0.5.0-ENG-A-000] 清掉 pre-existing Swift warning（`MiniMaxConfigProvider.swift:346` 的未使用 `prefix`、`EdgeCookieReader.swift` 的未使用 `placeholders`）；用户间接感知：build 输出干净，CI 日志少噪音 #P1
+- [ ] [0.5.0-ENG-A-001] `Makefile` 或 `scripts/dev.sh` 入口封装 `swift build` / `swift run` / `swift test` / `./scripts/build-app.sh` / `cd web && npm ci && npm run build`，README / AGENTS 里只引用这一个入口；用户/贡献者间接感知：上手命令更一致 #P2
+- [ ] [0.5.0-ENG-A-002] 根 `.gitignore` 加 `web/node_modules/` / `web/dist/` / `web/.astro/` 双保险（当前靠 `web/.gitignore` 排除，但根 ignore 双保险更稳；上次 rsync 误把这些拷到了 worktree）#P1
+- [ ] [0.5.0-ENG-A-003] `Package.swift` 加 `Tests/QuotaBarTests/` test target（测试用例本身作为各功能任务的 `<parent>-test` 子任务登记，不在 phase 顶层列具体测试）#P2
+
+### DOC-A：可被用户感知的文档
+
+- [ ] [0.5.0-DOC-A-000] `README.md` 的「快速开始」增补 web 子项目（`cd web && npm install && npm run dev`）的独立段落；当前 README 只在「目录结构」里提到 web/；用户可感知：能直接看到怎么本地跑 web 主页 #P2
