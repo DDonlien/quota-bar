@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - 样式常量
 
 enum MenuDashboardStyle {
-    static let width: CGFloat = 292
+    static let width: CGFloat = 340
 
     // 容器与外边距（不与任何元素共享）
     static let menuTopPadding: CGFloat = 0           // 1 自身 = 0
@@ -46,7 +46,7 @@ enum MenuDashboardStyle {
     // 布局常量
     static let leadingGlyphColumn: CGFloat = 13
     static let statusDotSize: CGFloat = 6
-    static let quotaTitleWidth: CGFloat = 56
+    static let quotaTitleWidth: CGFloat = 120
     static let quotaRefreshWidth: CGFloat = 72
     static let percentWidth: CGFloat = 34
 
@@ -83,24 +83,27 @@ private enum Palette {
 // MARK: - 入口视图
 
 struct MenuView: View {
-    let state: DashboardState
-    let isRefreshing: Bool
-    let lastUpdatedText: String
-    let needsFullDiskAccess: Bool
+    /// 直接持有 coordinator，让 SwiftUI 自动订阅 `@Published` 变化。
+    /// 菜单打开期间刷新循环更新 `coordinator.state` 时，NSHostingView 内的 SwiftUI 树
+    /// 会原地重渲染，不需要重建 NSMenuItem / 避免 dropdown 必须开关才看到新数据。
+    @ObservedObject var coordinator: RefreshCoordinator
     let onSaveKey: ((ProviderKind, String) -> Void)?
+    let onHideKind: ((ProviderKind) -> Void)?
+    @State private var preferencesRevision = 0
+
+    private var state: DashboardState { coordinator.state }
+    private var isRefreshing: Bool { coordinator.isRefreshing }
+    private var lastUpdatedText: String { coordinator.lastUpdatedText }
+    private var needsFullDiskAccess: Bool { coordinator.needsFullDiskAccess }
 
     init(
-        state: DashboardState,
-        isRefreshing: Bool,
-        lastUpdatedText: String,
-        needsFullDiskAccess: Bool = false,
-        onSaveKey: ((ProviderKind, String) -> Void)? = nil
+        coordinator: RefreshCoordinator,
+        onSaveKey: ((ProviderKind, String) -> Void)? = nil,
+        onHideKind: ((ProviderKind) -> Void)? = nil
     ) {
-        self.state = state
-        self.isRefreshing = isRefreshing
-        self.lastUpdatedText = lastUpdatedText
-        self.needsFullDiskAccess = needsFullDiskAccess
+        self.coordinator = coordinator
         self.onSaveKey = onSaveKey
+        self.onHideKind = onHideKind
     }
 
     var body: some View {
@@ -117,6 +120,10 @@ struct MenuView: View {
         .background(Color.clear)
         .foregroundStyle(Palette.text)
         .fixedSize(horizontal: false, vertical: true)
+        .id(preferencesRevision)
+        .onReceive(NotificationCenter.default.publisher(for: .quotaPreferencesDidChange)) { _ in
+            preferencesRevision &+= 1
+        }
     }
 
     @ViewBuilder
@@ -124,9 +131,9 @@ struct MenuView: View {
         if state.isEmpty {
             EmptyStateView()
         } else if state.isInitialLoading {
-            LoadingStateView(state: state, onSaveKey: onSaveKey)
+            LoadingStateView(state: state, onSaveKey: onSaveKey, onHideKind: onHideKind)
         } else {
-            ReadyStateView(state: state, isRefreshing: isRefreshing, onSaveKey: onSaveKey)
+            ReadyStateView(state: state, isRefreshing: isRefreshing, onSaveKey: onSaveKey, onHideKind: onHideKind)
         }
     }
 }
@@ -192,6 +199,7 @@ private struct EmptyStateView: View {
 private struct LoadingStateView: View {
     let state: DashboardState
     let onSaveKey: ((ProviderKind, String) -> Void)?
+    let onHideKind: ((ProviderKind) -> Void)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -206,7 +214,14 @@ private struct LoadingStateView: View {
                 .padding(.bottom, MenuDashboardStyle.summaryDividerBottom)
 
             ForEach(Array(state.snapshots.enumerated()), id: \.element.id) { index, snapshot in
-                PlanSection(snapshot: snapshot, isLoading: true, onSaveKey: onSaveKey)
+                DraggablePlanSection(
+                    snapshot: snapshot,
+                    index: index,
+                    allSnapshots: state.snapshots,
+                    isLoading: true,
+                    onSaveKey: onSaveKey,
+                    onHideKind: onHideKind
+                )
 
                 if index < state.snapshots.count - 1 {
                     DividerLine()
@@ -230,6 +245,7 @@ private struct ReadyStateView: View {
     let state: DashboardState
     let isRefreshing: Bool
     let onSaveKey: ((ProviderKind, String) -> Void)?
+    let onHideKind: ((ProviderKind) -> Void)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -244,7 +260,16 @@ private struct ReadyStateView: View {
                 .padding(.bottom, MenuDashboardStyle.summaryDividerBottom)
 
             ForEach(Array(state.snapshots.enumerated()), id: \.element.id) { index, snapshot in
-                PlanSection(snapshot: snapshot, isLoading: false, onSaveKey: onSaveKey)
+                // isLoading 派生自 snapshot.availability：streaming refresh 中部分
+                // snapshot 可能是 .loading（骨架），已完成的是真实数据。
+                DraggablePlanSection(
+                    snapshot: snapshot,
+                    index: index,
+                    allSnapshots: state.snapshots,
+                    isLoading: snapshot.availability == .loading,
+                    onSaveKey: onSaveKey,
+                    onHideKind: onHideKind
+                )
 
                 if index < state.snapshots.count - 1 {
                     DividerLine()
@@ -322,17 +347,48 @@ private struct PlanSection: View {
     let snapshot: ProviderSnapshot
     let isLoading: Bool
     let onSaveKey: ((ProviderKind, String) -> Void)?
+    let onHideKind: ((ProviderKind) -> Void)?
+
+    /// 该 provider 的订阅组（按用户订阅组排序）及其 quota list。
+    private var subscriptionGroups: [(groupKey: String, items: [QuotaWindow])] {
+        let groupOrder = PreferencesStore.shared.subscriptionGroupOrder(for: snapshot.kind)
+        return snapshot.subscriptionGroups(customOrder: groupOrder)
+    }
+
+    private var hasMultipleSubscriptionGroups: Bool {
+        subscriptionGroups.count > 1
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: MenuDashboardStyle.planSectionSpacing) {
-            PlanHeader(snapshot: snapshot)
+            PlanHeader(snapshot: snapshot, onHide: {
+                onHideKind?(snapshot.kind)
+            })
 
             switch snapshot.availability {
+            case .loading:
+                // 正在刷新中：provider 行已出现（PlanHeader），下方展示骨架占位等待真实数据。
+                // 真实数据回填后这里会自动切到 .available / .needsConfiguration 分支。
+                QuotaSkeleton()
             case .available:
                 if isLoading {
                     QuotaSkeleton()
+                } else if hasMultipleSubscriptionGroups {
+                    // 多订阅组 provider：子组作为拖拽边界存在，但不渲染额外标签行。
+                    // 状态灯仍只在 provider header 上显示，组内多条 quota 作为整组移动。
+                    ForEach(Array(subscriptionGroups.enumerated()), id: \.element.groupKey) { groupIndex, group in
+                        SubscriptionGroupBlock(
+                            snapshot: snapshot,
+                            groupKey: group.groupKey,
+                            quotas: group.items,
+                            groupIndex: groupIndex,
+                            allGroupKeys: subscriptionGroups.map(\.groupKey),
+                            isLoading: false
+                        )
+                    }
                 } else {
-                    QuotaRows(snapshot: snapshot)
+                    // 单订阅组 provider：保持现有 UI（一个 quota list，状态灯在 planHeader 上）
+                    QuotaRows(snapshot: snapshot, quotas: subscriptionGroups.first?.items ?? [])
                 }
             case .needsConfiguration(let reason):
                 if snapshot.kind == .minimax, let onSaveKey {
@@ -353,14 +409,197 @@ private struct PlanSection: View {
     }
 }
 
+/// 订阅组 block（多订阅组 provider 下显示）。
+/// 不渲染独立组标题；拖拽作用域是整个订阅组，而不是组内单条 quota。
+private struct SubscriptionGroupBlock: View {
+    let snapshot: ProviderSnapshot
+    let groupKey: String
+    let quotas: [QuotaWindow]
+    let groupIndex: Int
+    let allGroupKeys: [String]
+    let isLoading: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(orderedQuotas) { quota in
+                QuotaRow(quota: quota)
+            }
+        }
+        .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
+        .contentShape(Rectangle())
+        .onDrag {
+            let provider = NSItemProvider(object: Self.dragString(forGroup: groupKey, kind: snapshot.kind) as NSString)
+            provider.suggestedName = "\(snapshot.kind.rawValue):\(groupKey)"
+            return provider
+        }
+        .onDrop(
+            of: [.text],
+            delegate: SubscriptionGroupDropDelegate(
+                targetGroupKey: groupKey,
+                kind: snapshot.kind,
+                allGroupKeys: allGroupKeys
+            )
+        )
+    }
+
+    /// 拖拽 payload：`<kind>:<groupKey>`，确保只与同 provider 内的订阅组 drop 配对。
+    static func dragString(forGroup groupKey: String, kind: ProviderKind) -> String {
+        "\(kind.rawValue):\(groupKey)"
+    }
+
+    /// 订阅组内按用户拖拽顺序排好的 quota list。
+    private var orderedQuotas: [QuotaWindow] {
+        let itemOrder = PreferencesStore.shared.quotaItemOrder(for: snapshot.kind)
+        return quotas.sorted { a, b in
+            let ai = itemOrder.firstIndex(of: a.stableKey) ?? Int.max
+            let bi = itemOrder.firstIndex(of: b.stableKey) ?? Int.max
+            if ai != bi { return ai < bi }
+            return (a.periodSeconds ?? .greatestFiniteMagnitude) < (b.periodSeconds ?? .greatestFiniteMagnitude)
+        }
+    }
+}
+
+/// 订阅组级 DropDelegate：只接受同 provider 内的订阅组 drop。
+private struct SubscriptionGroupDropDelegate: DropDelegate {
+    let targetGroupKey: String
+    let kind: ProviderKind
+    let allGroupKeys: [String]
+
+    func performDrop(info: DropInfo) -> Bool {
+        guard let itemProvider = info.itemProviders(for: [.text]).first else { return false }
+
+        itemProvider.loadItem(forTypeIdentifier: "public.text", options: nil) { (itemData, error) in
+            let dragged = (itemData as? Data).flatMap { String(data: $0, encoding: .utf8) }
+            DispatchQueue.main.async {
+                guard let dragged,
+                      let separatorIndex = dragged.firstIndex(of: ":") else { return }
+                let draggedKindRaw = String(dragged[dragged.startIndex..<separatorIndex])
+                let draggedGroupKey = String(dragged[dragged.index(after: separatorIndex)...])
+                guard draggedKindRaw == kind.rawValue,
+                      draggedGroupKey != targetGroupKey,
+                      allGroupKeys.contains(draggedGroupKey),
+                      allGroupKeys.contains(targetGroupKey) else { return }
+
+                var order = PreferencesStore.shared.subscriptionGroupOrder(for: kind)
+                if order.isEmpty {
+                    order = allGroupKeys
+                }
+                let currentKeys = Set(allGroupKeys)
+                order = order.filter { currentKeys.contains($0) }
+                let missing = allGroupKeys.filter { !order.contains($0) }
+                order.append(contentsOf: missing)
+
+                guard let from = order.firstIndex(of: draggedGroupKey),
+                      let to = order.firstIndex(of: targetGroupKey),
+                      from != to
+                else { return }
+
+                order.moveElement(at: from, to: to)
+                PreferencesStore.shared.setSubscriptionGroupOrder(order, for: kind)
+            }
+        }
+        return true
+    }
+}
+
+/// 支持 Provider 级拖拽排序的包装视图。
+private struct DraggablePlanSection: View {
+    let snapshot: ProviderSnapshot
+    let index: Int
+    let allSnapshots: [ProviderSnapshot]
+    let isLoading: Bool
+    let onSaveKey: ((ProviderKind, String) -> Void)?
+    let onHideKind: ((ProviderKind) -> Void)?
+
+    @State private var isDropTarget = false
+
+    var body: some View {
+        PlanSection(
+            snapshot: snapshot,
+            isLoading: isLoading,
+            onSaveKey: onSaveKey,
+            onHideKind: onHideKind
+        )
+        .contentShape(Rectangle())
+        .onDrag {
+            let provider = NSItemProvider(object: snapshot.kind.rawValue as NSString)
+            provider.suggestedName = snapshot.kind.rawValue
+            return provider
+        }
+        .onDrop(
+            of: [.text],
+            delegate: ProviderDropDelegate(
+                targetKind: snapshot.kind,
+                allKinds: allSnapshots.map(\.kind),
+                index: index,
+                isDropTarget: $isDropTarget
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(isDropTarget ? Color.blue : Color.clear, lineWidth: 1)
+                .padding(.horizontal, -4)
+        )
+        .opacity(isDropTarget ? 0.6 : 1.0)
+    }
+}
+
+/// SwiftUI DropDelegate：接收拖拽的 Provider rawValue，重新排序并持久化。
+private struct ProviderDropDelegate: DropDelegate {
+    let targetKind: ProviderKind
+    let allKinds: [ProviderKind]
+    let index: Int
+    @Binding var isDropTarget: Bool
+
+    func dropEntered(info: DropInfo) {
+        isDropTarget = true
+    }
+
+    func dropExited(info: DropInfo) {
+        isDropTarget = false
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        isDropTarget = false
+        guard let itemProvider = info.itemProviders(for: [.text]).first else { return false }
+
+        itemProvider.loadItem(forTypeIdentifier: "public.text", options: nil) { (itemData, error) in
+            // 先拷贝数据再进主线程，避免 Sendable 警告
+            let draggedRawValue = (itemData as? Data).flatMap { String(data: $0, encoding: .utf8) }
+            DispatchQueue.main.async {
+                guard let draggedRawValue,
+                      draggedRawValue != targetKind.rawValue,
+                      let sourceIndex = allKinds.firstIndex(where: { $0.rawValue == draggedRawValue }),
+                      sourceIndex != index
+                else { return }
+
+                var order = PreferencesStore.shared.providerOrder()
+                if order.isEmpty {
+                    order = allKinds.map(\.rawValue)
+                }
+                // 确保 order 包含所有当前 kind
+                let currentKinds = Set(allKinds.map(\.rawValue))
+                order = order.filter { currentKinds.contains($0) }
+                let missing = allKinds.map(\.rawValue).filter { !order.contains($0) }
+                order.append(contentsOf: missing)
+
+                guard let from = order.firstIndex(of: draggedRawValue),
+                      let to = order.firstIndex(of: targetKind.rawValue)
+                else { return }
+
+                order.moveElement(at: from, to: to)
+                PreferencesStore.shared.setProviderOrder(order)
+            }
+        }
+        return true
+    }
+}
+
 // MARK: - MiniMax Key 输入字段
 
-/// 在 dropdown 里直接输入 MiniMax API Key。状态分三种：
-/// - missing：完全没有 apiKey 字段 → 「待输入 Key」
-/// - placeholder：填了但仍是 sk-xxx 等占位符 → 「待替换占位符」
-/// - configured：真实 key（掩码显示）→ 「Key 已配置（如需更新请重新输入）」
-///
-/// 保存成功后回调 onSave，StatusBarController 会触发 refresh coordinator。
+/// 在 dropdown 里显示 MiniMax API Key 状态，并提供「输入/修改」按钮。
+/// 按钮点击后弹出 NSAlert（避免 NSMenu modal 循环导致 NSTextField 焦点丢失），
+/// 用户在 alert 中输入 API Key 后保存到 ~/.mavis/config.yaml。
 private struct MiniMaxKeyInputField: View {
     let reason: String
     let onSave: (String) -> Void
@@ -391,20 +630,17 @@ private struct MiniMaxKeyInputField: View {
             }
 
             HStack(spacing: 6) {
-                TextField(
-                    "粘贴或输入 MiniMax API Key",
-                    text: $keyInput
+                APIKeyTextField(
+                    text: $keyInput,
+                    placeholder: "粘贴或输入 MiniMax API Key",
+                    onSubmit: { save() }
                 )
-                .textFieldStyle(.roundedBorder)
-                .controlSize(.small)
-                .font(.system(size: 11, design: .monospaced))
-                .onSubmit { save() }
 
                 Button(action: save) {
                     Text("保存")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))
                 }
-                .controlSize(.small)
+                .controlSize(.regular)
                 .disabled(keyInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
 
@@ -432,30 +668,227 @@ private struct MiniMaxKeyInputField: View {
     }
 }
 
+// MARK: - AppKit TextField（在 NSMenu 的 custom view 中保持焦点和输入）
+
+import AppKit
+
+/// 在 NSMenu 的 trackMouse 循环中保持焦点和输入能力。
+///
+/// 关键：acceptsFirstMouse = true，让 NSTextField 在窗口非 key 时也能接收 mouseDown。
+/// mouseDown 中直接请求 firstResponder，不调用 super.mouseDown（避免 NSMenu 关闭）。
+/// mouseUp 也不调用 super，并通过 Coordinator 的 NSEvent 拦截器阻止 NSMenu 收到 mouseUp。
+private final class FocusTextField: NSTextField {
+    override var acceptsFirstResponder: Bool { true }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        window?.makeFirstResponder(self)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+    }
+}
+
+/// 用 AppKit NSTextField 包装成 SwiftUI 的 NSViewRepresentable，
+/// 确保在 NSMenu 的 custom view 中能正常获取焦点和接收键盘输入。
+///
+/// 使用 `bezelStyle = .roundedBezel` + `controlSize = .regular`，外观接近原生 SwiftUI `.roundedBorder`。
+/// 同时注册 `NSEvent` 本地监听器拦截 `Cmd+V`（解决 NSMenu 中 Paste 不可用）和 `mouseUp`（阻止菜单关闭）。
+struct APIKeyTextField: NSViewRepresentable {
+    @Binding var text: String
+    let placeholder: String
+    let onSubmit: () -> Void
+
+    func makeNSView(context: Context) -> NSTextField {
+        let textField = FocusTextField()
+        textField.placeholderString = placeholder
+        textField.isEditable = true
+        textField.isSelectable = true
+        textField.isBezeled = true
+        textField.bezelStyle = .roundedBezel
+        textField.isBordered = true
+        textField.controlSize = .regular
+        textField.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+        textField.focusRingType = .default
+        textField.usesSingleLineMode = true
+        textField.lineBreakMode = .byTruncatingTail
+        textField.drawsBackground = false
+        textField.backgroundColor = NSColor.clear
+        textField.textColor = NSColor.labelColor
+        textField.delegate = context.coordinator
+        textField.target = context.coordinator
+        textField.action = #selector(Coordinator.submit)
+        textField.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        textField.translatesAutoresizingMaskIntoConstraints = false
+
+        // 右键菜单支持 Paste
+        let menu = NSMenu()
+        let pasteItem = NSMenuItem(title: "粘贴", action: #selector(Coordinator.pasteMenuItem), keyEquivalent: "")
+        pasteItem.target = context.coordinator
+        menu.addItem(pasteItem)
+        textField.menu = menu
+
+        context.coordinator.textField = textField
+        return textField
+    }
+
+    func updateNSView(_ nsView: NSTextField, context: Context) {
+        if nsView.stringValue != text {
+            nsView.stringValue = text
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, NSTextFieldDelegate {
+        var parent: APIKeyTextField
+        weak var textField: NSTextField?
+        private var pasteMonitor: Any?
+        private var mouseUpMonitor: Any?
+
+        init(_ parent: APIKeyTextField) {
+            self.parent = parent
+            super.init()
+
+            // 拦截 mouseUp，阻止 NSMenu 在点击输入框时关闭菜单
+            mouseUpMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
+                guard let self = self else { return event }
+                let location = event.locationInWindow
+                let field = self.textField
+                Task { @MainActor in
+                    guard let f = field else { return }
+                    let point = f.convert(location, from: nil)
+                    if f.hitTest(point) != nil {
+                        // 点击在 textField 上，不返回事件（NSMenu 不关闭）
+                    }
+                }
+                return event
+            }
+
+            // 拦截 Cmd+V 粘贴（NSMenu 的 modal 事件循环会阻断标准 Edit 菜单）
+            pasteMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                guard let self = self else { return event }
+                if event.modifierFlags.contains(.command) && event.keyCode == 9 {
+                    // keyCode 9 = V key
+                    let field = self.textField
+                    Task { @MainActor in
+                        if let f = field {
+                            NSApp.sendAction(#selector(NSText.paste(_:)), to: f, from: nil)
+                        }
+                    }
+                    return nil
+                }
+                return event
+            }
+        }
+
+        func controlTextDidChange(_ obj: Notification) {
+            if let textField = obj.object as? NSTextField {
+                parent.text = textField.stringValue
+            }
+        }
+
+        @MainActor
+        @objc func submit() {
+            parent.onSubmit()
+        }
+
+        @MainActor
+        @objc func pasteMenuItem() {
+            if let field = textField {
+                NSApp.sendAction(#selector(NSText.paste(_:)), to: field, from: nil)
+            }
+        }
+
+        deinit {
+            if let monitor = mouseUpMonitor {
+                NSEvent.removeMonitor(monitor)
+            }
+            if let monitor = pasteMonitor {
+                NSEvent.removeMonitor(monitor)
+            }
+        }
+    }
+}
+
+// MARK: - 隐藏按钮（NSButton 包装，解决 NSMenu 中 SwiftUI Button 点击被拦截）
+
+private struct HideButton: NSViewRepresentable {
+    let action: () -> Void
+
+    func makeNSView(context: Context) -> NSButton {
+        let button = NSButton()
+        if let image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "隐藏") {
+            image.isTemplate = true
+            button.image = image
+        }
+        button.imageScaling = .scaleProportionallyDown
+        button.imagePosition = .imageOnly
+        button.isBordered = false
+        button.target = context.coordinator
+        button.action = #selector(Coordinator.tapped)
+        button.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        button.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }
+
+    func updateNSView(_ nsView: NSButton, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(action)
+    }
+
+    class Coordinator: NSObject {
+        let action: () -> Void
+        init(_ action: @escaping () -> Void) {
+            self.action = action
+        }
+        @objc func tapped() {
+            action()
+        }
+    }
+}
+
 // MARK: - 标题行
 
 private struct PlanHeader: View {
     let snapshot: ProviderSnapshot
+    let onHide: (() -> Void)?
 
     var body: some View {
         HStack(spacing: 0) {
             Circle()
-                .fill(snapshot.statusColor)
+                .fill(snapshot.statusColor(itemOrder: PreferencesStore.shared.subscriptionGroupOrder(for: snapshot.kind)))
                 .frame(width: MenuDashboardStyle.statusDotSize, height: MenuDashboardStyle.statusDotSize)
                 .frame(width: MenuDashboardStyle.leadingGlyphColumn, alignment: .center)
 
             Text(snapshot.displayName)
                 .font(.system(size: MenuDashboardStyle.planNameFontSize, weight: MenuDashboardStyle.planNameWeight))
-                .foregroundStyle(Palette.text)
+                .foregroundStyle(Color.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.9)
 
             Spacer()
 
-            Text(snapshot.monthlyPrice ?? "—")
-                .font(.system(size: MenuDashboardStyle.planPriceFontSize, weight: .regular))
-                .foregroundStyle(Palette.secondary)
-                .lineLimit(1)
+            switch snapshot.availability {
+            case .needsConfiguration:
+                HideButton(action: {
+                    onHide?()
+                })
+                .frame(width: 16, height: 16)
+                .help("隐藏此订阅")
+            default:
+                Text(snapshot.monthlyPrice ?? "—")
+                    .font(.system(size: MenuDashboardStyle.planPriceFontSize, weight: .regular))
+                    .foregroundStyle(Palette.secondary)
+                    .lineLimit(1)
+            }
         }
     }
 }
@@ -464,53 +897,93 @@ private struct PlanHeader: View {
 
 private struct QuotaRows: View {
     let snapshot: ProviderSnapshot
+    let quotas: [QuotaWindow]
 
-    /// 渲染前先按"最短订阅周期优先"排序；当 quota 有 scope 时按 scope 分组、
-    /// 组内仍按 periodSeconds 排序。UI 层兜底排序，保证所有 provider 一致体验。
-    private var sortedQuotas: [QuotaWindow] {
-        snapshot.quotas.sorted { lhs, rhs in
-            let ls = lhs.periodSeconds ?? .greatestFiniteMagnitude
-            let rs = rhs.periodSeconds ?? .greatestFiniteMagnitude
-            return ls < rs
+    /// 按用户自定义顺序排列后的 quotas。
+    private var orderedQuotas: [QuotaWindow] {
+        let customOrder = PreferencesStore.shared.quotaItemOrder(for: snapshot.kind)
+        return quotas.sorted { a, b in
+            let ai = customOrder.firstIndex(of: a.stableKey) ?? Int.max
+            let bi = customOrder.firstIndex(of: b.stableKey) ?? Int.max
+            if ai != bi { return ai < bi }
+            return (a.periodSeconds ?? .greatestFiniteMagnitude) < (b.periodSeconds ?? .greatestFiniteMagnitude)
         }
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            ForEach(sortedQuotas) { quota in
-                QuotaRow(quota: quota, showScope: hasMultipleScopes)
+            ForEach(orderedQuotas) { quota in
+                QuotaRow(quota: quota)
             }
         }
         .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
     }
+}
 
-    /// 始终显示 scope（如果有），让用户清楚每个额度窗口属于哪个 scope
-    /// （如 Kimi 的 `FEATURE_CODING` vs `FEATURE_WORK`）。即使只有一个 scope，
-    /// 也展示出来，因为 scope 名本身是有信息量的（区分不同 API token）。
-    private var hasMultipleScopes: Bool {
-        snapshot.quotas.contains { $0.scope?.isEmpty == false }
+/// 支持拖拽排序的单条额度对象视图。
+///
+/// `scopedGroupKey`：
+/// - `nil` → 单订阅组 provider，可在整个 provider 内拖拽 quota；
+/// - 非 nil → 多订阅组 provider，拖拽只在该订阅组内有效（避免跨组错位）。
+private struct DraggableQuotaRow: View {
+    let snapshot: ProviderSnapshot
+    let quota: QuotaWindow
+    let allQuotas: [QuotaWindow]
+    let index: Int
+    let scopedGroupKey: String?
+
+    @State private var isDropTarget = false
+
+    var body: some View {
+        QuotaRow(quota: quota)
+            .contentShape(Rectangle())
+            .onDrag {
+                // 多订阅组 provider：payload 包含 groupKey 防止跨组 drop；单订阅组沿用原 stableKey
+                let payload: String
+                if let groupKey = scopedGroupKey {
+                    payload = "\(snapshot.kind.rawValue):\(groupKey):\(quota.stableKey)"
+                } else {
+                    payload = quota.stableKey
+                }
+                let provider = NSItemProvider(object: payload as NSString)
+                provider.suggestedName = quota.stableKey
+                return provider
+            }
+            .onDrop(
+                of: [.text],
+                delegate: QuotaItemDropDelegate(
+                    snapshot: snapshot,
+                    quota: quota,
+                    allQuotas: allQuotas,
+                    index: index,
+                    scopedGroupKey: scopedGroupKey,
+                    isDropTarget: $isDropTarget
+                )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(isDropTarget ? Color.blue : Color.clear, lineWidth: 1)
+                    .padding(.horizontal, -4)
+            )
+            .opacity(isDropTarget ? 0.6 : 1.0)
     }
 }
 
 private struct QuotaRow: View {
     let quota: QuotaWindow
-    let showScope: Bool
 
     private var percentText: String {
         "\(Int((quota.remainingFraction * 100).rounded()))%"
     }
 
-    private var titleWithScope: String {
-        if showScope, let scope = quota.scope, !scope.isEmpty {
-            return "\(quota.title) · \(scope)"
-        }
-        return quota.title
+    private var displayTitle: String {
+        quota.displayTitle
     }
 
     var body: some View {
         VStack(spacing: MenuDashboardStyle.quotaTitleToProgress) {
             HStack(alignment: .firstTextBaseline) {
-                Text(titleWithScope)
+                Text(displayTitle)
                     .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: MenuDashboardStyle.quotaTitleWeight))
                     .foregroundStyle(Palette.text)
                     .lineLimit(1)
@@ -533,9 +1006,101 @@ private struct QuotaRow: View {
                     .frame(width: MenuDashboardStyle.percentWidth, alignment: .trailing)
             }
 
-            ProgressPill(value: quota.remainingFraction)
+            ProgressPill(value: quota.remainingFraction, tint: Self.healthColor(for: quota.remainingFraction))
         }
         .padding(.top, MenuDashboardStyle.quotaRowTop)
+    }
+
+    private static func healthColor(for remainingFraction: Double) -> Color {
+        remainingFraction <= 0.3 ? Palette.warning : Color.blue
+    }
+}
+
+/// SwiftUI DropDelegate：接收拖拽的额度对象 stableKey，重新排序并持久化。
+///
+/// `scopedGroupKey`：
+/// - `nil` → 单订阅组 provider，可在整个 provider 内拖拽 quota；
+/// - 非 nil → 多订阅组 provider，drop 仅在同 subscription group 内有效（payload 形如
+///   `<kind>:<groupKey>:<stableKey>`，跨组 drop 会被忽略）。
+private struct QuotaItemDropDelegate: DropDelegate {
+    let snapshot: ProviderSnapshot
+    let quota: QuotaWindow
+    let allQuotas: [QuotaWindow]
+    let index: Int
+    let scopedGroupKey: String?
+    @Binding var isDropTarget: Bool
+
+    func dropEntered(info: DropInfo) {
+        isDropTarget = true
+    }
+
+    func dropExited(info: DropInfo) {
+        isDropTarget = false
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        isDropTarget = false
+        guard let itemProvider = info.itemProviders(for: [.text]).first else { return false }
+
+        itemProvider.loadItem(forTypeIdentifier: "public.text", options: nil) { (itemData, error) in
+            // 先拷贝数据再进主线程，避免 Sendable 警告
+            let dragged = (itemData as? Data).flatMap { String(data: $0, encoding: .utf8) }
+            DispatchQueue.main.async {
+                // 多订阅组 provider：payload = "<kind>:<groupKey>:<stableKey>"，跨组 drop 忽略
+                if let scoped = scopedGroupKey {
+                    guard let dragged,
+                          let parsed = Self.parseScopedPayload(dragged, kind: snapshot.kind),
+                          parsed.groupKey == scoped,
+                          parsed.stableKey != quota.stableKey
+                    else { return }
+                } else {
+                    // 单订阅组：payload 直接是 stableKey
+                    guard let dragged,
+                          dragged != quota.stableKey
+                    else { return }
+                }
+
+                guard let dragged = dragged,
+                      let stableKey = (scopedGroupKey != nil
+                                       ? Self.parseScopedPayload(dragged, kind: snapshot.kind)?.stableKey
+                                       : dragged),
+                      let sourceIndex = allQuotas.firstIndex(where: { $0.stableKey == stableKey }),
+                      sourceIndex != index
+                else { return }
+
+                var order = PreferencesStore.shared.quotaItemOrder(for: snapshot.kind)
+                if order.isEmpty {
+                    order = allQuotas.map(\.stableKey)
+                }
+                // 确保 order 包含所有当前 key
+                let currentKeys = Set(allQuotas.map(\.stableKey))
+                order = order.filter { currentKeys.contains($0) }
+                let missing = allQuotas.map(\.stableKey).filter { !order.contains($0) }
+                order.append(contentsOf: missing)
+
+                guard let from = order.firstIndex(of: stableKey),
+                      let to = order.firstIndex(of: quota.stableKey)
+                else { return }
+
+                order.moveElement(at: from, to: to)
+                PreferencesStore.shared.setQuotaItemOrder(order, for: snapshot.kind)
+            }
+        }
+        return true
+    }
+
+    private static func parseScopedPayload(_ payload: String, kind: ProviderKind) -> (groupKey: String, stableKey: String)? {
+        // "<kind>:<groupKey>:<stableKey>"
+        let parts = payload.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false)
+        guard parts.count == 3, parts[0] == kind.rawValue else { return nil }
+        return (String(parts[1]), String(parts[2]))
+    }
+}
+
+private extension Array {
+    mutating func moveElement(at fromIndex: Int, to toIndex: Int) {
+        let element = remove(at: fromIndex)
+        insert(element, at: toIndex)
     }
 }
 
@@ -586,6 +1151,7 @@ private struct StatusRow: View {
 
 private struct ProgressPill: View {
     let value: Double
+    var tint: Color = Palette.blue
 
     private var clampedValue: Double {
         min(max(value, 0), 1)
@@ -598,7 +1164,7 @@ private struct ProgressPill: View {
                     .fill(Palette.track)
 
                 Capsule()
-                    .fill(Palette.blue)
+                    .fill(tint)
                     .frame(width: proxy.size.width * clampedValue)
             }
         }

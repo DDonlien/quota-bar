@@ -11,6 +11,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let menu = NSMenu()
     private let coordinator: RefreshCoordinator
     private var cancellables: Set<AnyCancellable> = []
+    private var isMenuOpen = false
+    private var needsRebuild = false
 
     let statusItem: NSStatusItem
 
@@ -37,7 +39,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         guard let button = statusItem.button else { return }
 
         button.imagePosition = .imageOnly
-        button.imageScaling = .scaleProportionallyDown
+        button.imageScaling = .scaleNone
         button.toolTip = "Quota Bar"
         statusItem.menu = menu
         refreshStatusItemAppearance()
@@ -46,12 +48,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     /// 根据 coordinator.state 切换状态栏图标 + tooltip。
     ///
     /// **状态栏设计**（Liquid Glass 风格）：
-    /// - **正常**：画 N 个垂直 bar，每个对应一个 `.available` 订阅；
+    /// - **正常**：画 N 个垂直圆角 bar，每个对应一个 `.available` 订阅；
     ///   - bar 数量 = 已配置订阅数（needsConfiguration / notInstalled / fetchFailed 不显示）
-    ///   - bar 颜色 = 该订阅的 brand color
-    ///   - bar 高度 = 该订阅所有 quota 窗口里最低 `remainingFraction`（用最低值对齐"最紧迫的额度"感知）
+    ///   - bar 颜色 = 该订阅名称的 brand color
+    ///   - bar 高度 = 该订阅最近重置 quota 窗口的 `remainingFraction`
     ///   - bar 顺序 = dashboard 里的 snapshot 顺序（按 `kind.rawValue` 字母升序）
-    ///   - 用完的（0%）仍然画最小 bar（2pt），让用户知道订阅存在
+    ///   - 用完的（0%）仍然画最小 bar，让用户知道订阅存在
     /// - **零订阅**：单 SF Symbol `questionmark.circle`
     /// - **有 fetchFailed**：fetchFailed 的订阅不画 bar，但其他正常订阅的 bar 仍画
     ///
@@ -61,7 +63,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         guard let button = statusItem.button else { return }
 
         let snapshots = coordinator.state.snapshots
-        let available = snapshots.filter { $0.availability == .available }
+        let available = Self.drawableSnapshots(from: snapshots)
 
         // 无论是否刷新中，都画 bars image（保持菜单栏稳定，不闪 spinner）
         let image = Self.makeBarsImage(from: available)
@@ -69,7 +71,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         button.title = ""
         statusItem.length = Self.statusItemLength(for: image)
 
-        // tooltip：每个订阅的剩余%
+        // tooltip：每个订阅的剩余%（loading 的 provider 显示「刷新中」而不是 50%）
         if available.isEmpty {
             let needsConfigCount = snapshots.filter {
                 if case .needsConfiguration = $0.availability { return true }
@@ -82,9 +84,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             }
         } else {
             let summary = available.map { snap -> String in
-                let pct = snap.quotas.isEmpty
-                    ? 100
-                    : Int((snap.quotas.map { $0.remainingFraction }.min()! * 100).rounded())
+                if case .loading = snap.availability {
+                    return "\(snap.kind.displayName) 刷新中"
+                }
+                let pct = Int((Self.remainingFraction(for: snap) * 100).rounded())
                 return "\(snap.kind.displayName) \(pct)%"
             }.joined(separator: " · ")
             button.toolTip = "Quota Bar · \(summary)"
@@ -93,26 +96,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     /// 画 N 个垂直 bar 的 NSImage（macOS 26 Liquid Glass menu bar widget 规范）。
     ///
-    /// 容器：
-    /// - 1px white 30% 透明边框，6pt 圆角
-    /// - 内框 20×20pt，padding 2pt → 内容区 16×16pt
-    ///
-    /// Bars：
-    /// - 颜色 = provider brand color
-    /// - 高度 = `max(2pt, remainingFraction × 16pt)`
-    /// - 居底对齐（bar bottom = container bottom）
-    /// - 宽度按订阅数动态：N=1 → 16pt；N=2 → 7.5pt；N≥3 → 4.67pt（最小宽度）
-    /// - gap = 1pt
-    /// - bar 本身无圆角，避免相邻 bar 之间出现圆角缝隙
-    ///
-    /// 总尺寸：
-    /// - 高度固定 24pt（容器 20pt + 上下 padding 2pt×2）
-    /// - 宽度 = 内容总宽 + 边框 2pt
-    ///   - N=1 → 22pt
-    ///   - N=2 → 22pt
-    ///   - N=3 → 22pt
-    ///   - N=4 → 29.67pt（容器变宽以容纳更多 bar）
+    /// 只绘制 `.available` / `.needsConfiguration` / `.loading` 的 snapshot；
+    /// 高度取该订阅最近重置 quota 窗口的 `remainingFraction`，
+    /// 与 dropdown 中最紧迫周期的读数一致。
+    /// **`.loading` 画 dimmed 50% 占位 bar**，streaming refresh 时随着 provider 一个个
+    /// 完成，bar 从"dimmed 占位"渐变为"实际高度"。
     private static func makeBarsImage(from snapshots: [ProviderSnapshot]) -> NSImage {
+        let snapshots = drawableSnapshots(from: snapshots)
+
         // 兜底：零订阅 → ? 图标
         if snapshots.isEmpty {
             if let fallback = NSImage(
@@ -125,81 +116,214 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             }
         }
 
-        let count = snapshots.count
-        let containerHeight: CGFloat = 20
-        let borderRadius: CGFloat = 6
-        let contentSize: CGFloat = 16  // 20 - 2×2 padding
-        let gap: CGFloat = 1
-        let minBarWidth: CGFloat = 4.67
-
-        // 动态 bar 宽度：理想 (content - (N-1) × gap) / N，但不低于 minBarWidth
-        let barWidth: CGFloat = {
-            if count <= 1 { return contentSize }
-            let totalGap = CGFloat(count - 1) * gap
-            let ideal = (contentSize - totalGap) / CGFloat(count)
-            return max(ideal, minBarWidth)
-        }()
-
-        // 内容总宽 = N × barWidth + (N-1) × gap
-        let contentWidth = CGFloat(count) * barWidth + CGFloat(max(0, count - 1)) * gap
-        // 外框宽度（含 2px padding）
-        let containerWidth = contentWidth + 4
-
-        // 画布尺寸：外框 + 上下 2pt margin（让 image 比 NSStatusItem 默认高度略小）
-        let imageHeight: CGFloat = 24
-        let imageWidth: CGFloat = containerWidth + 4  // 左右各 2pt margin
-
-        let image = NSImage(size: NSSize(width: imageWidth, height: imageHeight))
+        let layout = BarsImageLayout(count: snapshots.count)
+        let image = NSImage(size: layout.imageSize)
+        image.isTemplate = false
         image.lockFocus()
+        NSGraphicsContext.current?.shouldAntialias = true
 
-        // 计算容器在画布上的位置（居中）
-        let containerX = (imageWidth - containerWidth) / 2
-        let containerY: CGFloat = 2
-
-        // 1. Liquid glass 容器背景（白 30% 边框 + 透明填充，模拟 glass 容器）
-        let containerRect = NSRect(
-            x: containerX,
-            y: containerY,
-            width: containerWidth,
-            height: containerHeight
+        let borderPath = NSBezierPath(
+            roundedRect: layout.borderRect,
+            xRadius: layout.borderRadius,
+            yRadius: layout.borderRadius
         )
-        let containerPath = NSBezierPath(roundedRect: containerRect, xRadius: borderRadius, yRadius: borderRadius)
-        // 透明填充 + 1px 白 30% 边框
-        NSColor.clear.setFill()
-        containerPath.fill()
-        NSColor(white: 1.0, alpha: 0.3).setStroke()
-        containerPath.lineWidth = 1.0
-        containerPath.stroke()
+        NSColor(white: 1.0, alpha: 0.5).setStroke()
+        borderPath.lineWidth = layout.borderWidth
+        borderPath.stroke()
 
-        // 2. Bars（provider brand color，居底对齐）
-        let contentOriginX = containerX + 2  // 容器内 padding 2pt
-        let contentOriginY = containerY + 2  // 容器内 padding 2pt (bottom)
-        let minBarHeight: CGFloat = 2  // 用完也画最小 bar
-        let maxBarHeight = contentSize  // 16pt
-
+        // 填充 bars（白色，居底对齐）。最左侧 bar 左下角圆角。
+        // `.loading` snapshot 画 dimmed 50% bar（alpha 0.4），与其他 bar 视觉上
+        // 区分开（让用户看到「这个 provider 还在刷新」），同时保持可见以体现"动态增长"。
         for (i, snap) in snapshots.enumerated() {
-            // bar 高度 = 该订阅所有 quota 窗口里最低 remainingFraction
-            let remaining = snap.quotas.isEmpty
-                ? 1.0
-                : snap.quotas.map { $0.remainingFraction }.min() ?? 1.0
-            let barHeight = max(minBarHeight, CGFloat(remaining) * maxBarHeight)
-            let barX = contentOriginX + CGFloat(i) * (barWidth + gap)
-            // 居底对齐：bar bottom = contentOriginY（容器内 bottom）
-            let barY = contentOriginY
-
-            let rect = NSRect(x: barX, y: barY, width: barWidth, height: barHeight)
-            Self.brandNSColor(for: snap.kind).setFill()
-            rect.fill()
+            let remaining = remainingFraction(for: snap)
+            let rect = layout.barRect(at: i, remainingFraction: CGFloat(remaining))
+            guard rect.height > 0 else { continue }
+            let path = layout.barPath(at: i, rect: rect)
+            if case .loading = snap.availability {
+                NSColor(white: 1.0, alpha: 0.4).setFill()
+            } else {
+                NSColor.white.setFill()
+            }
+            path.fill()
         }
 
         image.unlockFocus()
-        image.isTemplate = false
         return image
     }
 
     private static func statusItemLength(for image: NSImage) -> CGFloat {
-        // NSStatusItem 的 length 包含按钮内边距；给 image 两侧留一点系统点击区域。
-        max(NSStatusItem.squareLength, ceil(image.size.width + 8))
+        // image 宽度就是可见 bar 组宽度；status item 不再额外加宽。
+        if image.isTemplate {
+            return NSStatusItem.squareLength
+        }
+        return ceil(image.size.width)
+    }
+
+    private static func drawableSnapshots(from snapshots: [ProviderSnapshot]) -> [ProviderSnapshot] {
+        // 显示：available（有 quota）/ needsConfiguration / loading
+        // 隐藏：notInstalled / fetchFailed
+        snapshots.filter { snapshot in
+            switch snapshot.availability {
+            case .available:
+                return !snapshot.quotas.isEmpty
+            case .needsConfiguration, .loading:
+                return true
+            case .notInstalled, .fetchFailed:
+                return false
+            }
+        }
+    }
+
+    private static func remainingFraction(for snapshot: ProviderSnapshot, now: Date = Date()) -> Double {
+        // loading 和 needsConfiguration 都显示 50% 的 bar（loading 用 dimmed alpha 区分）
+        switch snapshot.availability {
+        case .loading, .needsConfiguration:
+            return 0.5
+        default:
+            break
+        }
+        guard let quota = statusBarQuota(for: snapshot, now: now) else { return 0 }
+        return max(0, min(1, quota.remainingFraction))
+    }
+
+    private static func statusBarQuota(for snapshot: ProviderSnapshot, now: Date) -> QuotaWindow? {
+        // 取用户排序后第一个**订阅组**（top subscription group）里剩余比例最低的 quota。
+        // 多订阅组（MiniMax General/Video、Antigravity Gemini/Other）按用户拖拽顺序取排第一的组；
+        // 单一订阅组（Codex/Kimi 整组）取整组最差那条。
+        // bar/灯取值只跟"订阅组顺序"绑定，跟 quota 拖拽顺序解耦。
+        let groupOrder = PreferencesStore.shared.subscriptionGroupOrder(for: snapshot.kind)
+        return snapshot.primarySubscriptionGroupWorstQuota(itemOrder: groupOrder)
+    }
+
+    private struct BarsImageLayout {
+        let count: Int
+
+        let imageHeight: CGFloat = 18
+        let borderWidth: CGFloat = 1
+        let borderRadius: CGFloat = 4
+        let barToLinePadding: CGFloat = 1
+        let gap: CGFloat = 1
+        let barRadius: CGFloat = 2
+        let verticalPadding: CGFloat = 1
+
+        var barWidth: CGFloat {
+            switch count {
+            case 1: return 14
+            case 2: return 7
+            default: return 4
+            }
+        }
+
+        var contentWidth: CGFloat {
+            CGFloat(count) * barWidth + CGFloat(max(0, count - 1)) * gap
+        }
+
+        var imageSize: NSSize {
+            let totalWidth = contentWidth + 2 * barToLinePadding + 2 * borderWidth
+            return NSSize(width: totalWidth, height: imageHeight)
+        }
+
+        var borderRect: NSRect {
+            NSRect(
+                x: borderWidth / 2,
+                y: borderWidth / 2,
+                width: imageSize.width - borderWidth,
+                height: imageSize.height - borderWidth
+            )
+        }
+
+        func barRect(at index: Int, remainingFraction: CGFloat) -> NSRect {
+            let clampedFraction = max(0, min(1, remainingFraction))
+            let maxBarHeight = imageHeight - 2 * borderWidth - 2 * verticalPadding
+            let barHeight = clampedFraction * maxBarHeight
+            return NSRect(
+                x: borderWidth + barToLinePadding + CGFloat(index) * (barWidth + gap),
+                y: borderWidth + verticalPadding,
+                width: barWidth,
+                height: barHeight
+            )
+        }
+
+        func barPath(at index: Int, rect: NSRect) -> NSBezierPath {
+            let radius = min(barRadius, rect.width / 2, rect.height / 2)
+            guard radius > 0 else {
+                return NSBezierPath(rect: rect)
+            }
+
+            let isFirst = index == 0
+            let isLast = index == count - 1
+
+            if isFirst && isLast {
+                // 只有一个 bar，四个角都圆角
+                return NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+            } else if isFirst {
+                // 最左 bar，只绘制左侧圆角（左上和左下）
+                let path = NSBezierPath()
+                let minX = rect.minX
+                let maxX = rect.maxX
+                let minY = rect.minY
+                let maxY = rect.maxY
+
+                // 从左上圆角的起点开始
+                path.move(to: NSPoint(x: minX, y: maxY - radius))
+                path.curve(
+                    to: NSPoint(x: minX + radius, y: maxY),
+                    controlPoint1: NSPoint(x: minX, y: maxY - radius * 0.45),
+                    controlPoint2: NSPoint(x: minX + radius * 0.45, y: maxY)
+                )
+                // 上边
+                path.line(to: NSPoint(x: maxX, y: maxY))
+                // 右边
+                path.line(to: NSPoint(x: maxX, y: minY))
+                // 下边
+                path.line(to: NSPoint(x: minX + radius, y: minY))
+                // 左下圆角
+                path.curve(
+                    to: NSPoint(x: minX, y: minY + radius),
+                    controlPoint1: NSPoint(x: minX + radius * 0.45, y: minY),
+                    controlPoint2: NSPoint(x: minX, y: minY + radius * 0.45)
+                )
+                path.close()
+                return path
+            } else if isLast {
+                // 最右 bar，只绘制右侧圆角（右上和右下）
+                let path = NSBezierPath()
+                let minX = rect.minX
+                let maxX = rect.maxX
+                let minY = rect.minY
+                let maxY = rect.maxY
+
+                // 从左上开始
+                path.move(to: NSPoint(x: minX, y: maxY))
+                // 上边
+                path.line(to: NSPoint(x: maxX - radius, y: maxY))
+                // 右上圆角
+                path.curve(
+                    to: NSPoint(x: maxX, y: maxY - radius),
+                    controlPoint1: NSPoint(x: maxX - radius * 0.45, y: maxY),
+                    controlPoint2: NSPoint(x: maxX, y: maxY - radius * 0.45)
+                )
+                // 右边
+                path.line(to: NSPoint(x: maxX, y: minY + radius))
+                // 右下圆角
+                path.curve(
+                    to: NSPoint(x: maxX - radius, y: minY),
+                    controlPoint1: NSPoint(x: maxX, y: minY + radius * 0.45),
+                    controlPoint2: NSPoint(x: maxX - radius * 0.45, y: minY)
+                )
+                // 下边
+                path.line(to: NSPoint(x: minX, y: minY))
+                path.close()
+                return path
+            } else {
+                // 中间 bar，不绘制圆角
+                return NSBezierPath(rect: rect)
+            }
+        }
+    }
+
+    private static func statusBarColor(for snapshot: ProviderSnapshot) -> NSColor {
+        brandNSColor(for: snapshot.kind)
     }
 
     private static func brandNSColor(for kind: ProviderKind) -> NSColor {
@@ -253,7 +377,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     func menuWillOpen(_ menu: NSMenu) {
+        isMenuOpen = true
         rebuildMenu()
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        isMenuOpen = false
+        if needsRebuild {
+            needsRebuild = false
+            rebuildMenu()
+        }
     }
 
     // MARK: - 菜单重建
@@ -262,15 +395,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.removeAllItems()
 
         let dashboardItem = NSMenuItem()
-        let state = coordinator.state
         let menuView = MenuView(
-            state: state,
-            isRefreshing: coordinator.isRefreshing,
-            lastUpdatedText: coordinator.lastUpdatedText,
-            needsFullDiskAccess: coordinator.needsFullDiskAccess,
+            coordinator: coordinator,
             onSaveKey: { [weak self] kind, _ in
                 // 用户保存了某个 provider 的 API key → 触发刷新
                 self?.coordinator.refreshNow()
+            },
+            onHideKind: { [weak self] kind in
+                self?.coordinator.hide(kind: kind)
+                self?.rebuildMenu()
             }
         )
         let dashboardView = NSHostingView(rootView: menuView)
@@ -298,16 +431,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
         menu.addItem(refreshItem)
 
-        let autoRefreshItem = NSMenuItem(title: coordinator.autoRefreshText, action: nil, keyEquivalent: "")
-        autoRefreshItem.isEnabled = false
-        autoRefreshItem.attributedTitle = NSAttributedString(
-            string: coordinator.autoRefreshText,
+        let timeText = "\(coordinator.autoRefreshText)，\(coordinator.lastUpdatedText)"
+        let timeItem = NSMenuItem(title: timeText, action: nil, keyEquivalent: "")
+        timeItem.isEnabled = false
+        timeItem.attributedTitle = NSAttributedString(
+            string: timeText,
             attributes: [
                 .font: NSFont.systemFont(ofSize: 11),
                 .foregroundColor: NSColor.secondaryLabelColor
             ]
         )
-        menu.addItem(autoRefreshItem)
+        menu.addItem(timeItem)
 
         menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
@@ -339,7 +473,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         coordinator.$state
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
-                self?.rebuildMenu()
+                // MenuView 通过 @ObservedObject 订阅 coordinator，菜单打开期间 SwiftUI
+                // 会原地重渲染 NSHostingView 内容，不需要 rebuildMenu。
+                // 状态栏图标仍然需要主动刷新。
+                if !(self?.isMenuOpen ?? false) {
+                    self?.rebuildMenu()
+                }
                 self?.refreshStatusItemAppearance()
             }
             .store(in: &cancellables)
@@ -347,14 +486,34 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         coordinator.$isRefreshing
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
-                self?.rebuildMenu()
+                if !(self?.isMenuOpen ?? false) {
+                    self?.rebuildMenu()
+                }
                 self?.refreshStatusItemAppearance()
             }
             .store(in: &cancellables)
 
         coordinator.$needsFullDiskAccess
             .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.rebuildMenu() }
+            .sink { [weak self] _ in
+                if !(self?.isMenuOpen ?? false) {
+                    self?.rebuildMenu()
+                }
+            }
+            .store(in: &cancellables)
+
+        // 用户拖拽额度对象或 Provider 区块导致排序偏好变化时：
+        // 1. 立即刷新菜单栏图标（status item）；
+        // 2. 菜单关闭时整体 rebuild（菜单打开期间 SwiftUI 已通过 @ObservedObject 自动响应）。
+        NotificationCenter.default.publisher(for: .quotaPreferencesDidChange)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                if !self.isMenuOpen {
+                    self.rebuildMenu()
+                }
+                self.refreshStatusItemAppearance()
+            }
             .store(in: &cancellables)
     }
 

@@ -1,0 +1,117 @@
+---
+const REPO = "DDonlien/quota-bar";
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <span class="footer__logo" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="1" y="1" width="22" height="22" rx="6" fill="var(--brand)"/>
+          <rect x="4" y="7" width="16" height="2.5" rx="1.25" fill="#fff"/>
+          <rect x="4" y="11" width="16" height="2.5" rx="1.25" fill="rgba(255,255,255,0.3)"/>
+          <rect x="4" y="11" width="10" height="2.5" rx="1.25" fill="#fff"/>
+          <rect x="4" y="15" width="16" height="2.5" rx="1.25" fill="rgba(255,255,255,0.3)"/>
+          <rect x="4" y="15" width="4" height="2.5" rx="1.25" fill="#FFD60A"/>
+        </svg>
+      </span>
+      <div>
+        <p class="footer__name">Quota Bar</p>
+        <p class="footer__tagline">AI 订阅额度，一眼可见</p>
+      </div>
+    </div>
+
+    <nav class="footer__links" aria-label="页脚导航">
+      <a href="#providers">支持的服务</a>
+      <a href="#features">特性</a>
+      <a href="#how-it-works">工作原理</a>
+      <a href={`https://github.com/${REPO}`} target="_blank" rel="noopener">GitHub</a>
+      <a href={`https://github.com/${REPO}/releases`} target="_blank" rel="noopener">下载</a>
+    </nav>
+  </div>
+
+  <div class="container footer__bottom">
+    <p class="footer__copy">© {year} Quota Bar · 开源项目，MIT License</p>
+    <p class="footer__disclaimer">
+      Quota Bar 是独立开源项目，与 Antigravity、Codex、Claude、MiniMax、Kimi、Zcode 及其它任何服务商均无隶属关系。
+      所有额度数据仅在本机读取和解析，不上传任何信息。
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border);
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-6);
+  }
+
+  .footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--divider);
+  }
+
+  .footer__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .footer__name {
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .footer__tagline {
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+  }
+
+  .footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+  }
+
+  .footer__links a {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .footer__links a:hover {
+    color: var(--text-primary);
+  }
+
+  .footer__bottom {
+    padding-top: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .footer__copy {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+  }
+
+  .footer__disclaimer {
+    font-size: var(--text-xs);
+    line-height: 1.6;
+    color: var(--text-tertiary);
+    max-width: 720px;
+  }
+
+  @media (max-width: 640px) {
+    .footer__inner {
+      flex-direction: column;
+    }
+  }
+</style>

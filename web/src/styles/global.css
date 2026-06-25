@@ -1,0 +1,264 @@
+/* ============================================================
+ * Quota Bar 主页 Design Tokens
+ * 贴近 macOS 26 Liquid Glass 风格：浅色、半透明、克制动效
+ * 详见 web/DESIGN.md
+ * ============================================================ */
+
+:root {
+  /* —— 背景与表面 —— */
+  --bg: #f5f5f7;              /* 页面主背景，macOS 26 window backdrop */
+  --bg-elevated: #ffffff;     /* 卡片 / 下拉面板表面 */
+  --bg-glass: rgba(255, 255, 255, 0.72);  /* Liquid Glass 半透明 */
+  --bg-menu-bar: rgba(246, 246, 248, 0.82); /* macOS 菜单栏半透明 */
+
+  /* —— 文字 —— */
+  --text-primary: #1d1d1f;    /* 标题 */
+  --text-secondary: #6e6e73;  /* 正文 */
+  --text-tertiary: #8e8e93;   /* 辅助说明 */
+
+  /* —— 边框与分割 —— */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --divider: rgba(0, 0, 0, 0.06);
+
+  /* —— 品牌色 —— */
+  --brand: #0a7cff;           /* Quota Bar 主色（系统蓝） */
+  --brand-hover: #0066e0;
+  --brand-soft: rgba(10, 124, 255, 0.12);
+
+  /* —— 状态色（与 QuotaModels.swift 一致） —— */
+  --status-green: #35c85a;    /* 充足 */
+  --status-orange: #ff9f0a;   /* 告警 ≤30% */
+  --status-red: #ff453a;      /* 耗尽 =0% */
+
+  /* —— Provider 品牌色（从 QuotaModels.swift brandColor 提取） —— */
+  --provider-antigravity: #1a73e8;
+  --provider-codex: #35c85a;
+  --provider-claude: #d4a574;
+  --provider-minimax: #ff453a;
+  --provider-kimi: #ff9f0a;
+  --provider-zcode: #3866ff;
+
+  /* —— 圆角（macOS 控件尺度） —— */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* —— 间距基准（8px 栅格） —— */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* —— 字体 —— */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Helvetica Neue", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+
+  /* —— 字号层级 —— */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.375rem;   /* 22px */
+  --text-2xl: 1.75rem;   /* 28px */
+  --text-3xl: 2.25rem;   /* 36px */
+  --text-4xl: 3rem;      /* 48px */
+  --text-5xl: 3.75rem;   /* 60px */
+
+  /* —— 阴影（macOS 26 的轻柔投影） —— */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.14), 0 8px 24px rgba(0, 0, 0, 0.08);
+
+  /* —— 布局 —— */
+  --max-width: 1120px;
+  --nav-height: 60px;
+
+  /* —— 动效 —— */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 0.15s;
+  --duration-base: 0.25s;
+  --duration-slow: 0.5s;
+}
+
+/* ============================================================
+ * Reset
+ * ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg);
+  font-feature-settings: "ss01", "cv01";
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+ul {
+  list-style: none;
+}
+
+/* ============================================================
+ * 通用工具类
+ * ============================================================ */
+
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+}
+
+/* —— 按钮 —— */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-base);
+  font-weight: 500;
+  border-radius: var(--radius-pill);
+  transition: transform var(--duration-fast) var(--ease-spring),
+    background var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn--primary {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(10, 124, 255, 0.32);
+}
+
+.btn--primary:hover {
+  background: var(--brand-hover);
+  box-shadow: 0 6px 20px rgba(10, 124, 255, 0.42);
+}
+
+.btn--ghost {
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  backdrop-filter: blur(20px);
+}
+
+.btn--ghost:hover {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.22);
+}
+
+/* —— 章节 —— */
+.section {
+  padding-block: var(--space-9);
+}
+
+.section__eyebrow {
+  display: inline-block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: var(--space-3);
+}
+
+.section__title {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: var(--space-3);
+}
+
+.section__subtitle {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  max-width: 560px;
+}
+
+.section__header {
+  text-align: center;
+  margin-inline: auto;
+  margin-bottom: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ============================================================
+ * 滚动进入动画（IntersectionObserver 触发 .is-visible）
+ * ============================================================ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

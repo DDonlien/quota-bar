@@ -1,0 +1,87 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Hero from "../components/Hero.astro";
+import ProviderGrid from "../components/ProviderGrid.astro";
+import Features from "../components/Features.astro";
+import Showcase from "../components/Showcase.astro";
+import Footer from "../components/Footer.astro";
+
+// GitHub 仓库（用于下载按钮动态取最新 nightly release）
+const REPO = "DDonlien/quota-bar";
+---
+
+<Layout>
+  <Nav />
+  <main>
+    <Hero />
+    <ProviderGrid />
+    <Features />
+    <Showcase />
+  </main>
+  <Footer />
+</Layout>
+
+<!--
+  下载按钮：客户端动态取最新 nightly release（prerelease，不进 /releases/latest API）。
+  fallback 到 /releases 列表页。
+-->
+<script define:vars={{ REPO }}>
+  const UPDATE_DOWNLOAD = async () => {
+    const links = document.querySelectorAll('a[data-download]');
+    if (!links.length) return;
+
+    // 优先用缓存的 release 信息（避免每次访问都打 API）
+    const CACHE_KEY = 'qb_latest_release';
+    const CACHE_TTL = 1000 * 60 * 30; // 30 分钟
+
+    let release = null;
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.t < CACHE_TTL) {
+          release = parsed.d;
+        }
+      }
+    } catch (_) { /* ignore */ }
+
+    if (!release) {
+      try {
+        // nightly-<sha> 是 prerelease，必须用列表 API + per_page=1
+        const res = await fetch(
+          `https://api.github.com/repos/${REPO}/releases?per_page=1`,
+          { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        if (res.ok) {
+          const arr = await res.json();
+          if (Array.isArray(arr) && arr.length > 0) {
+            release = arr[0];
+            try {
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), d: release }));
+            } catch (_) { /* ignore quota */ }
+          }
+        }
+      } catch (_) { /* 离线 / rate limit，保留 fallback href */ }
+    }
+
+    if (!release) return;
+
+    // 找 .dmg 资产
+    const asset = (release.assets || []).find((a) =>
+      typeof a.name === 'string' && a.name.toLowerCase().endsWith('.dmg')
+    );
+    if (!asset || !asset.browser_download_url) return;
+
+    links.forEach((a) => {
+      a.href = asset.browser_download_url;
+    });
+  };
+
+  // 不阻塞首屏渲染
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', UPDATE_DOWNLOAD);
+  } else {
+    UPDATE_DOWNLOAD();
+  }
+</script>

@@ -56,8 +56,8 @@ enum PlaceholderProviders {
                 displayName: "Codex",
                 monthlyPrice: "¥150/月",
                 quotas: [
-                    QuotaWindow(title: "5小时额度", remainingFraction: 1.0, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 5 * 3600),
-                    QuotaWindow(title: "周额度", remainingFraction: 0.64, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 7 * 86400)
+                    QuotaWindow(title: "", remainingFraction: 1.0, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 5 * 3600),
+                    QuotaWindow(title: "", remainingFraction: 0.64, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 7 * 86400)
                 ]
             ),
             PlaceholderProvider(
@@ -66,8 +66,8 @@ enum PlaceholderProviders {
                 displayName: "MiniMax",
                 monthlyPrice: "¥150/月",
                 quotas: [
-                    QuotaWindow(title: "5小时额度", remainingFraction: 0.0, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 5 * 3600),
-                    QuotaWindow(title: "周额度", remainingFraction: 1.0, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 7 * 86400)
+                    QuotaWindow(title: "", remainingFraction: 0.0, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 5 * 3600),
+                    QuotaWindow(title: "", remainingFraction: 1.0, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 7 * 86400)
                 ]
             ),
             PlaceholderProvider(
@@ -76,8 +76,8 @@ enum PlaceholderProviders {
                 displayName: "Kimi",
                 monthlyPrice: "¥150/月",
                 quotas: [
-                    QuotaWindow(title: "5小时额度", remainingFraction: 0.28, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 5 * 3600),
-                    QuotaWindow(title: "周额度", remainingFraction: 1.0, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 7 * 86400)
+                    QuotaWindow(title: "", remainingFraction: 0.28, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 5 * 3600),
+                    QuotaWindow(title: "", remainingFraction: 1.0, refreshDescription: refreshText, resetsAt: nextRefresh, periodSeconds: 7 * 86400)
                 ]
             )
         ]

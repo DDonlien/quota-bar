@@ -318,11 +318,11 @@ enum KimiUsageParser {
 
         var windows: [QuotaWindow] = []
 
-        // 顶层 usage：周额度（基础周期窗口）。
+        // 顶层 usage：Code 周额度（基础周期窗口）。
         if let usage = json["usage"] as? [String: Any],
            let window = makeWindow(
                from: usage,
-               title: "周额度",
+               title: "Code",
                fetchedAt: fetchedAt,
                periodSeconds: 7 * 24 * 60 * 60,
                scope: scope
@@ -331,15 +331,15 @@ enum KimiUsageParser {
             windows.append(window)
         }
 
-        // limits[]：速率限制（每条带 window.duration + window.timeUnit）。
+        // limits[]：Code 速率限制（每条带 window.duration + window.timeUnit）。
         if let limits = json["limits"] as? [[String: Any]] {
             for item in limits {
                 let windowSeconds = parseWindowSeconds(item)
-                let label = limitLabel(item, fallbackSeconds: windowSeconds)
+                let _ = limitLabel(item, fallbackSeconds: windowSeconds)
                 let detail = item["detail"] as? [String: Any] ?? item
                 if let window = makeWindow(
                     from: detail,
-                    title: label,
+                    title: "Code",
                     fetchedAt: fetchedAt,
                     periodSeconds: windowSeconds,
                     scope: scope
@@ -483,7 +483,9 @@ enum KimiUsageParser {
             refreshDescription: refreshText,
             resetsAt: resetsAt,
             periodSeconds: periodSeconds,
-            scope: scope
+            scope: scope,
+            // CLI fallback：Kimi 单一订阅，所有窗口共享额度
+            subscriptionGroup: ProviderKind.kimi.rawValue
         )
     }
 

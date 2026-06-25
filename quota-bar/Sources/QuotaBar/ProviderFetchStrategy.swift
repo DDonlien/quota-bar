@@ -139,8 +139,9 @@ final class FetchPipeline {
     ) -> ProviderSnapshot {
         let priority: (ProviderAvailability) -> Int = { availability in
             switch availability {
-            case .available: return 3
-            case .needsConfiguration: return 2
+            case .available: return 4
+            case .needsConfiguration: return 3
+            case .loading: return 2
             case .notInstalled: return 1
             case .fetchFailed: return 0
             }

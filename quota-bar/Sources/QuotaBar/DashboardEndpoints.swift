@@ -19,6 +19,11 @@ enum DashboardEndpoints {
         var headers: [String: String] = [:]
         var followUpURL: (@Sendable (Data) -> URL?)?
         let parser: DashboardParser
+        /// 如果指定了此 cookie 名称，`BrowserCookieProvider` 会从读取到的 cookie 中
+        /// 提取该名称的值，作为 `Authorization: Bearer <value>` 发送，而不是
+        /// 传统的 `Cookie:` header。适用于 Kimi 等把 auth token 放在 cookie 中
+        /// 但 API 要求 Bearer 认证的场景。
+        var bearerTokenCookieName: String? = nil
     }
 
     static func endpoint(for kind: ProviderKind) -> Endpoint? {
@@ -43,7 +48,7 @@ enum DashboardEndpoints {
             )
         case .kimi:
             return Endpoint(
-                url: URL(string: "https://www.kimi.com/apiv2/kimi.gateway.billing.v1.BillingService/GetUsages")!,
+                url: URL(string: "https://www.kimi.com/apiv2/kimi.gateway.membership.v2.MembershipService/GetSubscriptionStat")!,
                 method: "POST",
                 body: Data("{}".utf8),
                 headers: [
@@ -51,7 +56,8 @@ enum DashboardEndpoints {
                     "Origin": "https://www.kimi.com",
                     "Referer": "https://www.kimi.com/"
                 ],
-                parser: KimiDashboardParser()
+                parser: KimiSubscriptionStatParser(),
+                bearerTokenCookieName: "kimi-auth"
             )
         case .gemini:
             return nil
@@ -97,12 +103,13 @@ struct CodexDashboardParser: DashboardParser {
         let rateLimit = (json["rate_limit"] as? [String: Any]) ?? json
         var windows: [QuotaWindow] = []
 
+        // Codex 5h + 周额度属于同一订阅组，共享额度，任一归零即全废。
         if let primary = pickWindow(in: rateLimit, names: ["five_hour", "primary_window", "five_hour_limit"]),
-           let window = makeWindow(from: primary, title: "5小时额度") {
+           let window = makeWindow(from: primary, title: "") {
             windows.append(window)
         }
         if let secondary = pickWindow(in: rateLimit, names: ["weekly", "secondary_window", "weekly_limit"]),
-           let window = makeWindow(from: secondary, title: "周额度") {
+           let window = makeWindow(from: secondary, title: "") {
             windows.append(window)
         }
 
@@ -110,6 +117,34 @@ struct CodexDashboardParser: DashboardParser {
         windows.sort { ($0.periodSeconds ?? .greatestFiniteMagnitude) < ($1.periodSeconds ?? .greatestFiniteMagnitude) }
 
         return windows.isEmpty ? nil : windows
+    }
+
+    func parseTier(data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        // 顶层 plan_type
+        let planType = json["plan_type"] as? String
+            ?? json["planType"] as? String
+            ?? json["plan"] as? String
+            ?? json["subscription"] as? String
+            ?? json["tier"] as? String
+        // 嵌套在 account / user 中
+        if planType == nil {
+            if let account = json["account"] as? [String: Any] {
+                return account["plan_type"] as? String
+                    ?? account["planType"] as? String
+                    ?? account["plan"] as? String
+                    ?? account["tier"] as? String
+                    ?? account["subscription"] as? String
+            }
+            if let user = json["user"] as? [String: Any] {
+                return user["plan_type"] as? String
+                    ?? user["planType"] as? String
+                    ?? user["plan"] as? String
+                    ?? user["tier"] as? String
+                    ?? user["subscription"] as? String
+            }
+        }
+        return planType.flatMap { ProviderPricing.normalizedTier($0) }
     }
 
     private func pickWindow(in rateLimit: [String: Any], names: [String]) -> [String: Any]? {
@@ -162,7 +197,9 @@ struct CodexDashboardParser: DashboardParser {
             remainingFraction: remainingFraction,
             refreshDescription: refreshText,
             resetsAt: resetAt,
-            periodSeconds: periodSeconds
+            periodSeconds: periodSeconds,
+            // Codex 是单一订阅：5h + 周窗口共享同一订阅组
+            subscriptionGroup: ProviderKind.codex.rawValue
         )
     }
 }
@@ -309,6 +346,113 @@ struct KimiDashboardParser: DashboardParser {
     }
 }
 
+// MARK: - Kimi Subscription Stat 解析（Web 端额度）
+
+/// 解析 `https://www.kimi.com/apiv2/kimi.gateway.membership.v2.MembershipService/GetSubscriptionStat`
+/// 的响应，该端点同时返回 Kimi Work 月度额度和 Kimi Code 速率限制额度。
+///
+/// 响应结构：
+/// ```json
+/// {
+///   "ratelimitCode5h": { "enabled": true, "resetTime": "..." },
+///   "ratelimitCode7d": { "ratio": 0.70, "enabled": true, "resetTime": "..." },
+///   "subscriptionBalance": {
+///     "amountUsedRatio": 0.62,
+///     "kimiCodeUsedRatio": 0.15,
+///     "expireTime": "..."
+///   }
+/// }
+/// ```
+struct KimiSubscriptionStatParser: DashboardParser {
+    func parse(data: Data) -> [QuotaWindow]? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        let fetchedAt = Date()
+        var windows: [QuotaWindow] = []
+
+        // Work 月度额度：从 subscriptionBalance.amountUsedRatio 推算
+        if let balance = json["subscriptionBalance"] as? [String: Any],
+           let amountUsedRatio = parseNum(balance["amountUsedRatio"]) {
+            let remainingFraction = max(0, min(1, 1 - amountUsedRatio))
+            let expireTime = parseDate(balance["expireTime"])
+            let refreshText = expireTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
+            windows.append(QuotaWindow(
+                title: "Work",
+                remainingFraction: remainingFraction,
+                refreshDescription: refreshText,
+                resetsAt: expireTime,
+                periodSeconds: 30 * 86400,
+                scope: "work",
+                // Kimi 是单一订阅：Code 5h/Code 周/Work 月共享额度，任一归零即全废
+                subscriptionGroup: ProviderKind.kimi.rawValue
+            ))
+        }
+
+        // Code 7天额度
+        if let ratelimitCode7d = json["ratelimitCode7d"] as? [String: Any],
+           let ratio = parseNum(ratelimitCode7d["ratio"]) {
+            let remainingFraction = max(0, min(1, 1 - ratio))
+            let resetTime = parseDate(ratelimitCode7d["resetTime"])
+            let refreshText = resetTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
+            windows.append(QuotaWindow(
+                title: "Code",
+                remainingFraction: remainingFraction,
+                refreshDescription: refreshText,
+                resetsAt: resetTime,
+                periodSeconds: 7 * 86400,
+                scope: "code",
+                subscriptionGroup: ProviderKind.kimi.rawValue
+            ))
+        }
+
+        // Code 5小时额度
+        if let ratelimitCode5h = json["ratelimitCode5h"] as? [String: Any],
+           (ratelimitCode5h["enabled"] as? Bool) == true {
+            let resetTime = parseDate(ratelimitCode5h["resetTime"])
+            let remainingFraction: Double = {
+                if let ratio = parseNum(ratelimitCode5h["ratio"]) {
+                    return max(0, min(1, 1 - ratio))
+                }
+                return 1.0
+            }()
+            let refreshText = resetTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
+            windows.append(QuotaWindow(
+                title: "Code",
+                remainingFraction: remainingFraction,
+                refreshDescription: refreshText,
+                resetsAt: resetTime,
+                periodSeconds: 5 * 3600,
+                scope: "code",
+                subscriptionGroup: ProviderKind.kimi.rawValue
+            ))
+        }
+
+        return windows.isEmpty ? nil : windows
+    }
+
+    func parseTier(data: Data) -> String? {
+        // GetSubscriptionStat 不返回 tier，不猜测，让 UI 显示 provider 名称即可。
+        return nil
+    }
+
+    private func parseNum(_ value: Any?) -> Double? {
+        if let n = value as? NSNumber { return n.doubleValue }
+        if let s = value as? String, let n = Double(s) { return n }
+        return nil
+    }
+
+    private func parseDate(_ raw: Any?) -> Date? {
+        guard let s = raw as? String else { return nil }
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = iso.date(from: s) { return d }
+        let isoFallback = ISO8601DateFormatter()
+        isoFallback.formatOptions = [.withInternetDateTime]
+        return isoFallback.date(from: s)
+    }
+}
+
 // MARK: - MiniMax Coding Plan 解析
 
 /// 解析 `https://api.minimaxi.com/v1/coding_plan/remains` 响应：
@@ -406,5 +550,38 @@ struct MiniMaxDashboardParser: DashboardParser {
         guard let priceUSD else { return nil }
         let cny = priceUSD * 7.25
         return String(format: "¥%.0f/月", cny)
+    }
+}
+
+// MARK: - Kimi Subscription 解析（获取 tier 和价格）
+
+/// 解析 `GetSubscription` 响应，提取 tier 名称和订阅价格。
+/// 该端点同时返回 `subscription.goods.title`（Andante/Moderato/Allegretto/Allegro）
+/// 和 `subscription.goods.amounts`（价格信息）。
+struct KimiSubscriptionParser: DashboardParser {
+    func parse(data: Data) -> [QuotaWindow]? {
+        // GetSubscription 主要用于获取 tier，额度从 GetSubscriptionStat 获取
+        return nil
+    }
+
+    func parseTier(data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let subscription = json["subscription"] as? [String: Any],
+              let goods = subscription["goods"] as? [String: Any],
+              let title = goods["title"] as? String
+        else { return nil }
+        return title
+    }
+
+    func parseMonthlyPrice(data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let subscription = json["subscription"] as? [String: Any],
+              let goods = subscription["goods"] as? [String: Any],
+              let amounts = goods["amounts"] as? [[String: Any]],
+              let firstAmount = amounts.first,
+              let priceInCents = firstAmount["priceInCents"] as? String,
+              let price = Double(priceInCents)
+        else { return nil }
+        return String(format: "¥%.0f/月", price / 100.0)
     }
 }

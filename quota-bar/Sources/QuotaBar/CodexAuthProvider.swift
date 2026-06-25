@@ -111,6 +111,28 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return nil
         }
-        return json["plan_type"] as? String
+        // 顶层字段
+        if let plan = json["plan_type"] as? String
+            ?? json["planType"] as? String
+            ?? json["plan"] as? String
+            ?? json["tier"] as? String
+            ?? json["subscription"] as? String,
+           !plan.isEmpty {
+            return plan
+        }
+        // 嵌套字段
+        if let account = json["account"] as? [String: Any] {
+            return account["plan_type"] as? String
+                ?? account["planType"] as? String
+                ?? account["plan"] as? String
+                ?? account["tier"] as? String
+        }
+        if let user = json["user"] as? [String: Any] {
+            return user["plan_type"] as? String
+                ?? user["planType"] as? String
+                ?? user["plan"] as? String
+                ?? user["tier"] as? String
+        }
+        return nil
     }
 }

@@ -263,6 +263,11 @@ final class MiniMaxConfigProvider: QuotaProvider, @unchecked Sendable {
         case placeholder(current: String)
         /// 已配置真实 key（但 dashboard 调用可能仍失败）
         case configured(masked: String)
+
+        var isConfigured: Bool {
+            if case .configured = self { return true }
+            return false
+        }
     }
 
     /// 默认 config.yaml 路径（~/.mavis/config.yaml）

@@ -70,14 +70,14 @@ enum ProviderPipelines {
 
     @MainActor
     static func makePipelines(
-        cookieReader: BrowserCookieReader = FilesystemCookieReader()
+        cookieReader: BrowserCookieReader = FilesystemCookieReader(),
+        edgeCookieReader: BrowserCookieReader = EdgeCookieReader()
     ) -> [FetchPipeline] {
         [
             codexPipeline(cookieReader: cookieReader),
-            claudePipeline(cookieReader: cookieReader),
-            minimaxPipeline(cookieReader: cookieReader),
-            kimiPipeline(cookieReader: cookieReader),
-            traePipeline(),
+            claudePipeline(cookieReader: cookieReader, edgeCookieReader: edgeCookieReader),
+            minimaxPipeline(cookieReader: cookieReader, edgeCookieReader: edgeCookieReader),
+            kimiPipeline(cookieReader: cookieReader, edgeCookieReader: edgeCookieReader),
             antigravityPipeline(),
         ]
     }
@@ -97,10 +97,14 @@ enum ProviderPipelines {
     }
 
     @MainActor
-    private static func claudePipeline(cookieReader: BrowserCookieReader) -> FetchPipeline {
+    private static func claudePipeline(
+        cookieReader: BrowserCookieReader,
+        edgeCookieReader: BrowserCookieReader
+    ) -> FetchPipeline {
         FetchPipeline(
             kind: .claude,
             strategies: [
+                QuotaProviderStrategy(BrowserCookieProvider(id: "claude-edge", kind: .claude, cookieReader: edgeCookieReader)),
                 QuotaProviderStrategy(BrowserCookieProvider(id: "claude-cookie", kind: .claude, cookieReader: cookieReader)),
                 QuotaProviderStrategy(KeychainProvider(id: "claude-keychain", kind: .claude)),
             ],
@@ -109,14 +113,22 @@ enum ProviderPipelines {
     }
 
     @MainActor
-    private static func minimaxPipeline(cookieReader: BrowserCookieReader) -> FetchPipeline {
+    private static func minimaxPipeline(
+        cookieReader: BrowserCookieReader,
+        edgeCookieReader: BrowserCookieReader
+    ) -> FetchPipeline {
         FetchPipeline(
             kind: .minimax,
             strategies: [
-                // 首选：~/.mavis/config.yaml 里的 API Key → 调 Coding Plan dashboard
-                QuotaProviderStrategy(MiniMaxConfigProvider()),
-                // 兜底：浏览器 Cookie / Keychain（web 已登录场景）
+                // 首选：CLI 直接获取额度（mmx quota --output json）
+                QuotaProviderStrategy(MiniMaxCLIProvider()),
+                // 第二：Edge 浏览器 Cookie
+                QuotaProviderStrategy(BrowserCookieProvider(id: "minimax-edge", kind: .minimax, cookieReader: edgeCookieReader)),
+                // 第三：Chrome 浏览器 Cookie
                 QuotaProviderStrategy(BrowserCookieProvider(id: "minimax-cookie", kind: .minimax, cookieReader: cookieReader)),
+                // 第四：~/.mavis/config.yaml 里的 API Key
+                QuotaProviderStrategy(MiniMaxConfigProvider()),
+                // 兜底：Keychain
                 QuotaProviderStrategy(KeychainProvider(id: "minimax-keychain", kind: .minimax)),
             ],
             runMode: .sequential
@@ -124,12 +136,19 @@ enum ProviderPipelines {
     }
 
     @MainActor
-    private static func kimiPipeline(cookieReader: BrowserCookieReader) -> FetchPipeline {
+    private static func kimiPipeline(
+        cookieReader: BrowserCookieReader,
+        edgeCookieReader: BrowserCookieReader
+    ) -> FetchPipeline {
         FetchPipeline(
             kind: .kimi,
             strategies: [
-                QuotaProviderStrategy(KimiAuthProvider()),
+                // 首选：浏览器 Cookie，Web 端同时返回 Work 月度额度、Code 周额度、Code 5h 额度以及 Andante 档位/价格
+                QuotaProviderStrategy(BrowserCookieProvider(id: "kimi-edge", kind: .kimi, cookieReader: edgeCookieReader)),
                 QuotaProviderStrategy(BrowserCookieProvider(id: "kimi-cookie", kind: .kimi, cookieReader: cookieReader)),
+                // 第二：Kimi CLI OAuth，作为 Cookie 不可读或缺少 Code 周额度时的补充
+                QuotaProviderStrategy(KimiAuthProvider()),
+                // 兜底：Keychain
                 QuotaProviderStrategy(KeychainProvider(id: "kimi-keychain", kind: .kimi)),
             ],
             runMode: .sequential
@@ -153,9 +172,8 @@ enum ProviderPipelines {
             kind: .antigravity,
             strategies: [
                 // 首选：Antigravity IDE 本地 language_server gRPC-Web endpoint
-                // （需要 IDE 在跑且 workspace 已激活；未激活时 fallback）
                 QuotaProviderStrategy(AntigravityDashboardProvider()),
-                // 兜底：Keychain 里的 OAuth token（如果 Antigravity CLI 装过）
+                // 兜底：Keychain
                 QuotaProviderStrategy(KeychainProvider(id: "antigravity-keychain", kind: .antigravity)),
             ],
             runMode: .sequential

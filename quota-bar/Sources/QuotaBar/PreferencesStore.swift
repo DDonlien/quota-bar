@@ -14,6 +14,27 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
     /// 每个 Provider 的覆盖配置。
     var providerOverrides: [ProviderOverride]
 
+    /// 每个 Provider 的 quota 组显示顺序（旧版分组排序，已废弃，保留以兼容旧配置）。
+    /// Key 为 `ProviderKind.rawValue`，Value 为该 provider 下 quota title 的自定义顺序。
+    /// 未出现的 title 按默认顺序排在后面。
+    var quotaGroupOrder: [String: [String]]
+
+    /// Provider 区块的显示顺序。
+    /// 数组元素为 `ProviderKind.rawValue`，越靠前越靠上；未出现的 Provider 按 `kind.rawValue` 字母顺序排在后面。
+    var providerOrder: [String]
+
+    /// 每个 Provider 下具体额度对象的显示顺序。
+    /// Key 为 `ProviderKind.rawValue`，Value 为该 provider 下额度对象的 `QuotaWindow.stableKey` 顺序。
+    /// 未出现的对象按默认顺序排在后面。
+    var quotaItemOrder: [String: [String]]
+
+    /// 每个 Provider 下**订阅组**的自定义显示顺序。
+    /// Key 为 `ProviderKind.rawValue`，Value 为该 provider 下 `QuotaWindow.subscriptionGroup` 的顺序。
+    /// 决定状态栏 bar 高度和 dropdown 状态灯取值的"top subscription group"——
+    /// 多订阅组 provider（MiniMax General/Video、Antigravity Gemini/Other）拖拽排序后立即生效。
+    /// 单订阅组 provider（Codex/Kimi）只有一个组，排序无视觉差异但语义保留。
+    var subscriptionGroupOrder: [String: [String]]
+
     /// 自动刷新间隔（秒）。默认 5 分钟。
     var refreshIntervalSeconds: TimeInterval
 
@@ -31,6 +52,10 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
 
     init(
         providerOverrides: [ProviderOverride] = [],
+        quotaGroupOrder: [String: [String]] = [:],
+        providerOrder: [String] = [],
+        quotaItemOrder: [String: [String]] = [:],
+        subscriptionGroupOrder: [String: [String]] = [:],
         refreshIntervalSeconds: TimeInterval = 5 * 60,
         browserSource: BrowserSourcePreference = .auto,
         iconMode: IconModePreference = .combined,
@@ -38,6 +63,10 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         advanced: AdvancedPreferences = AdvancedPreferences()
     ) {
         self.providerOverrides = providerOverrides
+        self.quotaGroupOrder = quotaGroupOrder
+        self.providerOrder = providerOrder
+        self.quotaItemOrder = quotaItemOrder
+        self.subscriptionGroupOrder = subscriptionGroupOrder
         self.refreshIntervalSeconds = refreshIntervalSeconds
         self.browserSource = browserSource
         self.iconMode = iconMode
@@ -114,7 +143,7 @@ struct AdvancedPreferences: Codable, Equatable, Sendable {
     var showResetDates: Bool
 
     init(
-        providerTimeoutSeconds: TimeInterval = 10,
+        providerTimeoutSeconds: TimeInterval = 30,
         currencyCode: String? = nil,
         showResetDates: Bool = true
     ) {
@@ -219,6 +248,50 @@ final class PreferencesStore {
 
     func setAdvanced(_ advanced: AdvancedPreferences) {
         preferences.advanced = advanced
+        _ = try? persist()
+    }
+
+    /// 获取某个 Provider 的 quota 组显示顺序。
+    func quotaGroupOrder(for kind: ProviderKind) -> [String] {
+        preferences.quotaGroupOrder[kind.rawValue] ?? []
+    }
+
+    /// 设置某个 Provider 的 quota 组显示顺序。
+    func setQuotaGroupOrder(_ order: [String], for kind: ProviderKind) {
+        preferences.quotaGroupOrder[kind.rawValue] = order
+        _ = try? persist()
+    }
+
+    /// 获取 Provider 区块的自定义显示顺序。
+    func providerOrder() -> [String] {
+        preferences.providerOrder
+    }
+
+    /// 设置 Provider 区块的自定义显示顺序。
+    func setProviderOrder(_ order: [String]) {
+        preferences.providerOrder = order
+        _ = try? persist()
+    }
+
+    /// 获取某个 Provider 下具体额度对象的显示顺序。
+    func quotaItemOrder(for kind: ProviderKind) -> [String] {
+        preferences.quotaItemOrder[kind.rawValue] ?? []
+    }
+
+    /// 设置某个 Provider 下具体额度对象的显示顺序。
+    func setQuotaItemOrder(_ order: [String], for kind: ProviderKind) {
+        preferences.quotaItemOrder[kind.rawValue] = order
+        _ = try? persist()
+    }
+
+    /// 获取某个 Provider 下**订阅组**的自定义显示顺序。
+    func subscriptionGroupOrder(for kind: ProviderKind) -> [String] {
+        preferences.subscriptionGroupOrder[kind.rawValue] ?? []
+    }
+
+    /// 设置某个 Provider 下**订阅组**的自定义显示顺序。
+    func setSubscriptionGroupOrder(_ order: [String], for kind: ProviderKind) {
+        preferences.subscriptionGroupOrder[kind.rawValue] = order
         _ = try? persist()
     }
 

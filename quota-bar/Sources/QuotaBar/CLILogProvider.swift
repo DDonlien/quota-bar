@@ -66,18 +66,21 @@ final class CLILogProvider: QuotaProvider, @unchecked Sendable {
             availability: .available,
             quotas: [
                 QuotaWindow(
-                    title: "5小时额度",
+                    title: "",
                     remainingFraction: sessionFraction,
                     refreshDescription: refreshDescription(window: sessionWindow, fetchedAt: fetchedAt),
                     resetsAt: fetchedAt.addingTimeInterval(sessionWindow),
-                    periodSeconds: sessionWindow
+                    periodSeconds: sessionWindow,
+                    // Codex session + weekly 共享同一订阅
+                    subscriptionGroup: ProviderKind.codex.rawValue
                 ),
                 QuotaWindow(
-                    title: "周额度",
+                    title: "",
                     remainingFraction: weeklyFraction,
                     refreshDescription: refreshDescription(window: weeklyWindow, fetchedAt: fetchedAt),
                     resetsAt: fetchedAt.addingTimeInterval(weeklyWindow),
-                    periodSeconds: weeklyWindow
+                    periodSeconds: weeklyWindow,
+                    subscriptionGroup: ProviderKind.codex.rawValue
                 )
             ],
             monthlyPrice: kind.fallbackMonthlyPrice,

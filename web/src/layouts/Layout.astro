@@ -1,0 +1,69 @@
+---
+import "../styles/global.css";
+
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Quota Bar — AI 订阅额度，一眼可见",
+  description = "macOS 菜单栏应用，自动探测并展示你的 AI 订阅额度。装上即用，无需配置，无需打开窗口。支持 Antigravity、Codex、Claude、MiniMax、Kimi、Zcode。",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://quotabar.ddonlien.com" />
+    <meta property="og:locale" content="zh_CN" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <!-- 主题色与 PWA -->
+    <meta name="theme-color" content="#0a7cff" />
+    <meta name="apple-mobile-web-app-title" content="Quota Bar" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <meta name="color-scheme" content="light dark" />
+  </head>
+  <body>
+    <slot />
+
+    <!-- 滚动入场动画：基于 IntersectionObserver，无依赖 -->
+    <script>
+      const reveals = document.querySelectorAll(".reveal");
+      if ("IntersectionObserver" in window && reveals.length > 0) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+              }
+            }
+          },
+          { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+        );
+        reveals.forEach((el) => observer.observe(el));
+      } else {
+        reveals.forEach((el) => el.classList.add("is-visible"));
+      }
+    </script>
+  </body>
+</html>

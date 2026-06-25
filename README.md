@@ -63,7 +63,7 @@ Gemini 已从主动展示路径移除，Google 系配额优先通过 Antigravity
 
 ### 安装（推荐）
 
-从 [Releases](../../releases) 页面下载最新的 `QuotaBar-<sha>.dmg`，打开后把 **Quota Bar** 拖进 **Applications**，或在 DMG 窗口里直接双击运行。
+从 [Releases](https://github.com/DDonlien/quota-bar/releases) 页面下载最新的 `QuotaBar-<sha>.dmg`，打开后把 **Quota Bar** 拖进 **Applications**，或在 DMG 窗口里直接双击运行。也可以访问主页 [quotabar.ddonlien.com](https://quotabar.ddonlien.com) 一键下载。
 
 > 每个 push 到 `main` 都会自动构建一个新的 pre-release；CI 配置见 [`.github/workflows/release.yml`](./.github/workflows/release.yml)。
 >
@@ -135,6 +135,10 @@ quota-bar/build/
 │   │   └── ...
 │   ├── scripts/build-app.sh   # 本地打包脚本
 │   └── build/                 # 手工 build 产物（gitignored）
+├── web/                       # 营销主页（Astro 静态站，部署到 quotabar.ddonlien.com）
+│   ├── src/                   # 页面、组件、design tokens
+│   ├── public/                # favicon 等静态资源
+│   └── ...
 ├── .github/workflows/         # CI / Release
 ├── AGENTS.md                  # Agent 协作规范
 ├── REQUIREMENTS.md            # 需求追踪

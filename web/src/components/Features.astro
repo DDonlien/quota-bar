@@ -1,0 +1,141 @@
+---
+// 4 个深度卖点卡片
+const features = [
+  {
+    icon: "bar",
+    title: "菜单栏就是进度条",
+    desc: "把进度条直接搬进菜单栏：每根 bar 的高度就是该项服务的剩余额度。无需打开任何窗口，余光一扫就知道哪些还充足、哪些快见底。",
+    accent: "var(--brand)",
+  },
+  {
+    icon: "bolt",
+    title: "装上即用，零配置",
+    desc: "无需填写 API Key、无需手动登录。Quota Bar 自动探测本机已安装的 CLI、桌面 App 和浏览器登录态，装好即开始读取真实额度。",
+    accent: "var(--provider-codex)",
+  },
+  {
+    icon: "target",
+    title: "精准反映真实额度",
+    desc: "如实还原每个服务的多档额度分组：5 小时 / 周 / 月分窗、多订阅组独立计费、多身份额度池。绝不把不同周期的额度糊成一条糊弄你。",
+    accent: "var(--provider-claude)",
+  },
+  {
+    icon: "layers",
+    title: "四渠道全覆盖",
+    desc: "API Key、CLI 凭证、桌面 App 登录态、浏览器 Cookie —— 只要你登录过，Quota Bar 都能读到。不只看 CLI，也看你怎么用。",
+    accent: "var(--provider-minimax)",
+  },
+];
+---
+
+<section id="features" class="section features-section">
+  <div class="container">
+    <header class="section__header reveal">
+      <span class="section__eyebrow">为什么是 Quota Bar</span>
+      <h2 class="section__title">不只是显示数字，是显示对的数字</h2>
+      <p class="section__subtitle">
+        其它工具只看一个维度。Quota Bar 从 4 个渠道读取，并忠实反映每个服务商真实的额度分组结构。
+      </p>
+    </header>
+
+    <div class="features-grid reveal">
+      {
+        features.map((f) => (
+          <article class="feature">
+            <span class="feature__icon" style={`color:${f.accent}`}>
+              {f.icon === "bar" && (
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                  <rect x="3" y="4" width="22" height="3" rx="1.5" fill="currentColor"/>
+                  <rect x="3" y="9" width="22" height="3" rx="1.5" fill="currentColor" opacity="0.25"/>
+                  <rect x="3" y="9" width="13" height="3" rx="1.5" fill="currentColor"/>
+                  <rect x="3" y="14" width="22" height="3" rx="1.5" fill="currentColor" opacity="0.25"/>
+                  <rect x="3" y="14" width="18" height="3" rx="1.5" fill="currentColor"/>
+                  <rect x="3" y="19" width="22" height="3" rx="1.5" fill="currentColor" opacity="0.25"/>
+                  <rect x="3" y="19" width="5" height="3" rx="1.5" fill="currentColor"/>
+                </svg>
+              )}
+              {f.icon === "bolt" && (
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                  <path d="M15 2L4 16h8l-1 10 11-14h-8l1-10z" fill="currentColor"/>
+                </svg>
+              )}
+              {f.icon === "target" && (
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                  <circle cx="14" cy="14" r="11" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+                  <circle cx="14" cy="14" r="7" stroke="currentColor" stroke-width="2" opacity="0.55"/>
+                  <circle cx="14" cy="14" r="3" fill="currentColor"/>
+                </svg>
+              )}
+              {f.icon === "layers" && (
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                  <path d="M14 3l11 6-11 6L3 9l11-6z" fill="currentColor" opacity="0.9"/>
+                  <path d="M3 14l11 6 11-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+                  <path d="M3 19l11 6 11-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
+                </svg>
+              )}
+            </span>
+            <h3 class="feature__title">{f.title}</h3>
+            <p class="feature__desc">{f.desc}</p>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .features-section {
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-5);
+  }
+
+  .feature {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    transition: transform var(--duration-base) var(--ease-spring),
+      box-shadow var(--duration-base) var(--ease-out);
+  }
+
+  .feature:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .feature__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    margin-bottom: var(--space-4);
+  }
+
+  .feature__title {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-3);
+    letter-spacing: -0.01em;
+  }
+
+  .feature__desc {
+    font-size: var(--text-base);
+    line-height: 1.65;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 768px) {
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
