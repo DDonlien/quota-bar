@@ -76,11 +76,21 @@ protocol DashboardParser: Sendable {
     func parseTier(data: Data) -> String?
     /// 从响应数据提取已知订阅价格；默认 nil，避免无依据地猜价格。
     func parseMonthlyPrice(data: Data) -> String?
+    /// 从响应数据提取**真实订阅到期日**（续费日 / 会员到期日）。
+    ///
+    /// v0.6.0 起用来填 `ProviderSnapshot.subscriptionExpiresAt`。**不是** quota
+    /// 窗口的「下次重置时间」——那应该走 `QuotaWindow.resetsAt`。
+    ///
+    /// 默认实现返回 nil（找不到真实到期日时 UI hide，不 fallback 到
+    /// max(resetsAt)）。Kimi 的 `KimiSubscriptionStatParser` 实现从
+    /// `subscriptionBalance.expireTime` 提取。
+    func parseSubscriptionExpiresAt(data: Data) -> Date?
 }
 
 extension DashboardParser {
     func parseTier(data: Data) -> String? { nil }
     func parseMonthlyPrice(data: Data) -> String? { nil }
+    func parseSubscriptionExpiresAt(data: Data) -> Date? { nil }
 }
 
 // MARK: - Codex / OpenAI Wham Usage 解析
