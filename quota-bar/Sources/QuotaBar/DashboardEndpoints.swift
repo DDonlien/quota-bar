@@ -385,13 +385,17 @@ struct KimiSubscriptionStatParser: DashboardParser {
         if let balance = json["subscriptionBalance"] as? [String: Any],
            let amountUsedRatio = parseNum(balance["amountUsedRatio"]) {
             let remainingFraction = max(0, min(1, 1 - amountUsedRatio))
+            // v0.6.0 起：subscriptionBalance.expireTime 是**订阅到期日**，不再塞给
+            // Work quota 的 resetsAt（Work 是月度窗口，跟 subscription 到期日是
+            // 不同概念）。订阅到期日走 `parseSubscriptionExpiresAt` 提取到
+            // `ProviderSnapshot.subscriptionExpiresAt`。
             let expireTime = parseDate(balance["expireTime"])
             let refreshText = expireTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
             windows.append(QuotaWindow(
                 title: "Work",
                 remainingFraction: remainingFraction,
                 refreshDescription: refreshText,
-                resetsAt: expireTime,
+                resetsAt: nil,
                 periodSeconds: 30 * 86400,
                 scope: "work",
                 // Kimi 是单一订阅：Code 5h/Code 周/Work 月共享额度，任一归零即全废
@@ -444,6 +448,22 @@ struct KimiSubscriptionStatParser: DashboardParser {
     func parseTier(data: Data) -> String? {
         // GetSubscriptionStat 不返回 tier，不猜测，让 UI 显示 provider 名称即可。
         return nil
+    }
+
+    /// v0.6.0 起：从 `subscriptionBalance.expireTime` 提取 Kimi 订阅的真实到期日。
+    ///
+    /// 历史背景：之前这个值被错塞到 Work quota 的 `resetsAt`，被 `max(resetsAt)`
+    /// fallback 误以为是「最晚重置时间」，导致 dropdown 价格旁灰色标签显示
+    /// 「续费日」但实际是 Work 月度窗口重置。修复后：
+    /// - Work quota 的 `resetsAt` 改 `nil`（月度窗口重置日跟 subscription 到期日重叠，
+    ///   信息冗余，干脆不显示）
+    /// - `expireTime` 走 `parseSubscriptionExpiresAt` 提取到
+    ///   `ProviderSnapshot.subscriptionExpiresAt`，UI 价格旁才显示真实续费日
+    func parseSubscriptionExpiresAt(data: Data) -> Date? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let balance = json["subscriptionBalance"] as? [String: Any]
+        else { return nil }
+        return parseDate(balance["expireTime"])
     }
 
     private func parseNum(_ value: Any?) -> Double? {

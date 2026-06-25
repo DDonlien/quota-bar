@@ -138,12 +138,16 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
             monthlyPrice = await ProviderPricing.localizedMonthlyPrice(kind: kind, tier: tier)
         }
         NSLog("QuotaBar: [\(kind.rawValue)-cookie] final tier=\(tier ?? "<nil>"), price=\(monthlyPrice ?? "<nil>")")
+        // v0.6.0：parser 显式提供订阅到期日（Kimi 的 KimiSubscriptionStatParser 从
+        // subscriptionBalance.expireTime 取）；其他 parser 默认返回 nil（UI hide）。
+        let subscriptionExpiresAt = endpoint.parser.parseSubscriptionExpiresAt(data: data)
         return ProviderSnapshot(
             kind: kind,
             subscriptionTier: ProviderPricing.normalizedTier(tier),
             availability: .available,
             quotas: windows,
             monthlyPrice: monthlyPrice,
+            subscriptionExpiresAt: subscriptionExpiresAt,
             fetchedAt: fetchedAt
         )
     }
@@ -217,13 +221,17 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
         } else {
             monthlyPrice = await ProviderPricing.localizedMonthlyPrice(kind: .kimi, tier: tier)
         }
-        NSLog("QuotaBar: [kimi-cookie] final tier=\(tier ?? "<nil>"), price=\(monthlyPrice ?? "<nil>")")
+        // v0.6.0：Kimi 的 KimiSubscriptionStatParser 从 subscriptionBalance.expireTime
+        // 提取真实订阅到期日。
+        let subscriptionExpiresAt = quotaEndpoint.parser.parseSubscriptionExpiresAt(data: quotaData)
+        NSLog("QuotaBar: [kimi-cookie] final tier=\(tier ?? "<nil>"), price=\(monthlyPrice ?? "<nil>"), expiresAt=\(subscriptionExpiresAt?.description ?? "<nil>")")
         return ProviderSnapshot(
             kind: .kimi,
             subscriptionTier: ProviderPricing.normalizedTier(tier),
             availability: .available,
             quotas: windows,
             monthlyPrice: monthlyPrice,
+            subscriptionExpiresAt: subscriptionExpiresAt,
             fetchedAt: fetchedAt
         )
     }
