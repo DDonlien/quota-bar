@@ -866,15 +866,30 @@ private struct PlanHeader: View {
     let snapshot: ProviderSnapshot
     let onHide: (() -> Void)?
 
+    /// 触发「显示日期 + 价格」组合的共享前置条件：必须有订阅到期日、有月费、
+    /// 且处于已配置可用状态。集中在一处方便 UI-A-000 / UI-A-001 复用。
+    ///
+    /// 任何一条不满足都返回 `nil`，对应 UI 走「只渲染价格」分支——
+    /// `if let expiresAtText` 不渲染日期 Text，HStack 自动收缩为只装价格，
+    /// 配合左侧 `Spacer()` 把价格推回右边缘（v0.6.0-UI-A-000）。
+    private var subscriptionExpiresDate: Date? {
+        guard snapshot.monthlyPrice != nil,
+              snapshot.availability == .available,
+              let date = snapshot.subscriptionExpiresAt else { return nil }
+        return date
+    }
+
     /// 订阅/数据最后有效日期展示文案：`YYYY/M/D`（无前导零，例如 "2026/6/25"）。
     /// 语义见 `ProviderSnapshot.subscriptionExpiresAt`。
     private var expiresAtText: String? {
-        guard let date = snapshot.subscriptionExpiresAt,
-              snapshot.monthlyPrice != nil,
-              snapshot.availability == .available else {
-            return nil
-        }
-        return Self.expiresAtFormatter.string(from: date)
+        subscriptionExpiresDate.map { Self.expiresAtFormatter.string(from: $0) }
+    }
+
+    /// 订阅/数据最后有效日期的精确时间（tooltip 用），格式 `yyyy-MM-dd HH:mm:ss zzz`
+    /// （本地时区，例如 `2026-06-25 22:00:00 GMT+8`）。比 `yyyy/M/d` 多出时、分、秒和
+    /// 时区信息，避免「0:00 还是 12:00 重置」之类的歧义（v0.6.0-UI-A-001）。
+    private var preciseExpiresAtText: String? {
+        subscriptionExpiresDate.map { Self.preciseExpiresAtFormatter.string(from: $0) }
     }
 
     private static let expiresAtFormatter: DateFormatter = {
@@ -882,6 +897,14 @@ private struct PlanHeader: View {
         f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = TimeZone.current
         f.dateFormat = "yyyy/M/d"
+        return f
+    }()
+
+    private static let preciseExpiresAtFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone.current
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss zzz"
         return f
     }()
 
@@ -912,11 +935,13 @@ private struct PlanHeader: View {
                     if let expiresAtText {
                         // 订阅/数据最后有效日期；灰色 11pt 视觉上比 13pt 价格次要，
                         // 与右侧价格共享 secondary 灰系，让「日期 + 价格」形成一组信息。
+                        // UI-A-001：hover 显示精确到秒的本地时区时间。
                         Text(expiresAtText)
                             .font(.system(size: MenuDashboardStyle.planExpiresAtFontSize, weight: .regular))
                             .foregroundStyle(Palette.secondary)
                             .lineLimit(1)
                             .monospacedDigit()
+                            .help("订阅续费日期：\(preciseExpiresAtText ?? expiresAtText)")
                     }
                     Text(snapshot.monthlyPrice ?? "—")
                         .font(.system(size: MenuDashboardStyle.planPriceFontSize, weight: .regular))

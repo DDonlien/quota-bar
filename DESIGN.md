@@ -33,7 +33,7 @@
 - 顶部金额与计数：13 pt，regular，次级灰。
 - 服务名称：白色（在菜单栏深色背景下保持清晰）。
 - 订阅金额：13 pt，regular，次级灰。
-- 计划头部「订阅/数据最后有效日期」：11 pt，regular，次级灰，等宽数字；在订阅金额左侧，gap 6 pt。语义上表达「该 provider 当前剩余额度过期日」。
+- 计划头部「订阅/数据最后有效日期」：11 pt，regular，次级灰，等宽数字；在订阅金额左侧，gap 6 pt。语义上表达「该 provider 当前剩余额度过期日」。Hover 显示精确时间（`yyyy-MM-dd HH:mm:ss zzz` 本地时区，例如 `2026-06-25 22:00:00 GMT+8`），避免 `yyyy/M/d` 看不到时分的歧义。
 - 额度标签：11 pt，medium。
 - 刷新时间与百分比：11 pt，regular，次级灰。
 
@@ -62,7 +62,7 @@
 
 - 下拉面板：`NSMenu` 承载，不使用自绘 `NSWindow` dropdown。
 - 顶部汇总：两行左右对齐，左侧黑色标题，右侧灰色数值。
-- 服务标题行：左侧状态圆点和服务名，右侧「订阅/数据最后有效日期（灰、小字）」+「月费（次级灰、13pt）」。`needsConfiguration` 时右侧换为隐藏按钮，日期不展示。
+- 服务标题行：左侧状态圆点和服务名，右侧「订阅/数据最后有效日期（灰、小字）」+「月费（次级灰、13pt）」。`needsConfiguration` 时右侧换为隐藏按钮，日期不展示；当 `subscriptionExpiresAt == nil` / `monthlyPrice == nil` / `availability != .available` 时右侧只渲染月费 Text，HStack 自动收缩、Spacer 把价格推回右边缘，不留空隙、不跳行。
 - 额度行：上方一行标签、刷新时间和百分比，下方一条进度。
 - 底部操作：使用原生 `NSMenuItem`，包含图标、标题、系统高亮和快捷键。
 
