@@ -175,15 +175,24 @@
 - [x] [0.3.0-FE-A-006] 拖拽订阅组后，菜单栏 bar 与当前可见状态灯立即按新的第一订阅组 worst quota 刷新；菜单打开期间 preferences 变化也触发 SwiftUI 重算 #P1
 - [ ] [0.3.0-UI-A-008] 多订阅组 provider 的每个子组状态灯显示该子组自身 worst quota #cut 用户明确不需要每个子组独立状态灯，改由 provider header 唯一灯显示第一组 worst quota
 
-### PM-A：偏好设置与后续能力
+### PM-A：偏好设置与后续能力（激活）
 
-- [ ] [0.3.0-PM-A-000] 偏好设置页面 / 窗口：Provider 开关、刷新间隔自定义、高级选项 #P2 #deferred
-- [ ] [0.3.0-PM-A-001] 支持手动添加/移除 Provider，覆盖自动探测结果 #P2 #deferred
-- [ ] [0.3.0-PM-A-002] 支持选择不同的浏览器作为 Cookie 来源（Safari / Chrome / Firefox）#P2 #deferred
-- [ ] [0.3.0-PM-A-003] 支持菜单栏图标合并模式（单图标汇总 vs 多图标分 Provider）#P2 #deferred
-- [ ] [0.3.0-PM-A-004] 支持 Provider 服务状态监控（incident 检测与展示）#P2 #deferred
-- [ ] [0.3.0-PM-A-005] 支持 WidgetKit 桌面小组件 #P2 #deferred
-- [ ] [0.3.0-PM-A-006] 支持 CLI 命令行工具（`quotabar status`）#P2 #deferred
+> **2026-06-28 更新**：本组任务在 `feat/preferences` branch 落地第一版偏好设置窗口（macOS 26
+> 系统设置风格，sidebar + detail，Liquid Glass），打通 `Cmd+,` 入口与 PreferencesStore
+> 数据闭环。后续能力（手动添加 Provider / WidgetKit / CLI 等）暂留 P2 deferred。
+
+- [x] [0.3.0-PM-A-000] 偏好设置窗口骨架：macOS 26 系统设置风格 sidebar + detail，Liquid Glass，`NavigationSplitView` + `Form`；`CodingPlanMenuApp` 用 SwiftUI `Settings` scene 注册并自动接入 `Cmd+,` 快捷键 #P1
+- [x] [0.3.0-PM-A-001] sidebar 分组：默认组（无标题）放「通用」「模型」；「Quota Bar」组放「激活」「关于」；激活/关于项展示分组标题，未分组项不展示 #P1
+- [x] [0.3.0-PM-A-002] 「通用」页：刷新间隔（1-60 分钟 slider，默认 5 分钟）、浏览器 Cookie 来源（自动/Safari/Chrome/Firefox segmented）、菜单栏图标模式（单图标汇总/多图标分 Provider segmented）、登录时启动 toggle（落地后接入 LoginService / SMAppService）#P1
+- [x] [0.3.0-PM-A-003] 「模型」页：所有 `ProviderKind` 启用开关，关闭后 dropdown / status bar 不显示该 Provider；开关绑定 `PreferencesStore.setEnabled(_:for:)` #P1
+- [x] [0.3.0-PM-A-004] 「激活」页：当前激活状态 + 设备 ID（`PreferencesStore` 派生） + 引导文案（v0.3.0 阶段激活体系尚未上线，本页为占位骨架）#P1
+- [x] [0.3.0-PM-A-005] 「关于」页：应用名 + 版本号 + 构建号（`Bundle.main` 读取）+ GitHub repo 链接 + 版权 + 重置偏好按钮（绑定 `PreferencesStore.resetToDefaults()` + 二次确认）#P1
+- [x] [0.3.0-PM-A-006] 状态栏菜单恢复「偏好设置...」项（`Cmd+,`），点击触发 SwiftUI `Settings` scene；`openPreferences()` 方法从 NSSound.beep() stub 升级为 `NSApp.sendAction(Selector("showSettingsWindow:"), to: nil, from: nil)` #P1
+- [x] [0.3.0-PM-A-007] `PreferencesStore.QuotaPreferences` 新增 `launchAtLogin: Bool` 字段（Codable 向后兼容，旧配置自动获得 `false`）#P1
+- [ ] [0.3.0-PM-A-008] 手动添加/移除 Provider 入口（覆盖自动探测结果）#P2 #deferred — 本次仅做"关闭自动探测结果"，手动添加不在本轮范围
+- [ ] [0.3.0-PM-A-009] Provider 服务状态监控（incident 检测与展示）#P2 #deferred
+- [ ] [0.3.0-PM-A-010] WidgetKit 桌面小组件 #P2 #deferred
+- [ ] [0.3.0-PM-A-011] CLI 命令行工具（`quotabar status`）#P2 #deferred
 
 ## Phase - v0.4.0 - 新 Provider 接入（zcode / 千问 / 其他）
 

@@ -50,6 +50,11 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
     /// 高级选项。
     var advanced: AdvancedPreferences
 
+    /// 是否在用户登录 macOS 后自动启动 Quota Bar。
+    /// 通过 `SMAppService.mainApp.register()` / `.unregister()` 落地。
+    /// 字段新增于 v0.3.0-PM-A-007，向后兼容（旧配置反序列化时获得 `false`）。
+    var launchAtLogin: Bool
+
     init(
         providerOverrides: [ProviderOverride] = [],
         quotaGroupOrder: [String: [String]] = [:],
@@ -60,7 +65,8 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         browserSource: BrowserSourcePreference = .auto,
         iconMode: IconModePreference = .combined,
         incidentMonitoringEnabled: Bool = false,
-        advanced: AdvancedPreferences = AdvancedPreferences()
+        advanced: AdvancedPreferences = AdvancedPreferences(),
+        launchAtLogin: Bool = false
     ) {
         self.providerOverrides = providerOverrides
         self.quotaGroupOrder = quotaGroupOrder
@@ -72,6 +78,7 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         self.iconMode = iconMode
         self.incidentMonitoringEnabled = incidentMonitoringEnabled
         self.advanced = advanced
+        self.launchAtLogin = launchAtLogin
     }
 }
 
@@ -248,6 +255,12 @@ final class PreferencesStore {
 
     func setAdvanced(_ advanced: AdvancedPreferences) {
         preferences.advanced = advanced
+        _ = try? persist()
+    }
+
+    /// 设置是否在登录时启动。落地逻辑由调用方负责（`SMAppService`），本方法只持久化。
+    func setLaunchAtLogin(_ enabled: Bool) {
+        preferences.launchAtLogin = enabled
         _ = try? persist()
     }
 

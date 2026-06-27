@@ -443,10 +443,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         menu.addItem(timeItem)
 
-        // 偏好设置入口暂时隐藏 — v0.3.0-PM-A-000 偏好设置页/窗口已 deferred 到 P2，
-        // 且当前 openPreferences() 仅为 NSSound.beep() 占位。等偏好设置面板真正落地
-        // 再恢复菜单项（feat/hide-preferences branch 上做后续工作）。
-        // menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
+        // 偏好设置入口：v0.3.0-PM-A-000 在 feat/preferences branch 落地后重新启用。
+        // SwiftUI `Settings` scene 自动处理 `⌘,` 快捷键与窗口生命周期，这里只需要 sendAction 触发。
+        menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(makeMenuItem(title: "退出", systemSymbolName: "xmark.square", action: #selector(quit), keyEquivalent: "q"))
     }
@@ -526,11 +525,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         coordinator.refreshNow()
     }
 
-    // openPreferences() 暂时禁用：偏好设置入口已隐藏（见 buildMenu 注释），
-    // 保留方法定义待偏好设置面板实现后复用。NSSound.beep() stub 一并注释避免编译警告。
-    // @objc private func openPreferences() {
-    //     NSSound.beep()
-    // }
+    // 触发 SwiftUI `Settings` scene：sendAction `showSettingsWindow:` 是系统约定的 selector，
+    // SwiftUI App 的 Settings scene 自动响应并显示/聚焦偏好窗口（v0.3.0-PM-A-006）。
+    @objc private func openPreferences() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    }
 
     @objc private func quit() {
         coordinator.stop()
