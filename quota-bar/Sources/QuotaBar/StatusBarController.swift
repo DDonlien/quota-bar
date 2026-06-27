@@ -443,7 +443,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         menu.addItem(timeItem)
 
-        menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
+        // 偏好设置入口暂时隐藏 — v0.3.0-PM-A-000 偏好设置页/窗口已 deferred 到 P2，
+        // 且当前 openPreferences() 仅为 NSSound.beep() 占位。等偏好设置面板真正落地
+        // 再恢复菜单项（feat/hide-preferences branch 上做后续工作）。
+        // menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(makeMenuItem(title: "退出", systemSymbolName: "xmark.square", action: #selector(quit), keyEquivalent: "q"))
     }
@@ -523,9 +526,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         coordinator.refreshNow()
     }
 
-    @objc private func openPreferences() {
-        NSSound.beep()
-    }
+    // openPreferences() 暂时禁用：偏好设置入口已隐藏（见 buildMenu 注释），
+    // 保留方法定义待偏好设置面板实现后复用。NSSound.beep() stub 一并注释避免编译警告。
+    // @objc private func openPreferences() {
+    //     NSSound.beep()
+    // }
 
     @objc private func quit() {
         coordinator.stop()
