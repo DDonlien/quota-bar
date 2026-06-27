@@ -28,6 +28,13 @@ final class RefreshCoordinator: ObservableObject {
     var refreshInterval: TimeInterval
     var providerTimeout: TimeInterval
 
+    private let cookieReader: BrowserCookieReader
+    /// v0.6.0 第二批 headless harvester 的总超时（含 cookie 读取 + 页面加载 + JS 提取）。
+    /// 故意设得比 `providerTimeout` 略长：headless 加载订阅页一般 3-5s，但首字节 + 重定向
+    /// 可能需要更久。同时**不能过长**：harvester 在 `applyProviderResult` 之前串行等待，
+    /// 整个 refresh cycle 的尾延迟 = max(providerTimeout, harvesterTimeout)。
+    private let harvesterTimeout: TimeInterval = 6.0
+
     private var autoRefreshTask: Task<Void, Never>?
     private var inFlightTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []
@@ -36,12 +43,14 @@ final class RefreshCoordinator: ObservableObject {
         providers: [QuotaProvider],
         installDetectors: [ProviderKind: InstallDetectorProvider] = [:],
         refreshInterval: TimeInterval = 5 * 60,
-        providerTimeout: TimeInterval = 10
+        providerTimeout: TimeInterval = 10,
+        cookieReader: BrowserCookieReader = FilesystemCookieReader()
     ) {
         self.providers = providers
         self.installDetectors = installDetectors
         self.refreshInterval = refreshInterval
         self.providerTimeout = providerTimeout
+        self.cookieReader = cookieReader
 
         NotificationCenter.default.publisher(for: .quotaPreferencesDidChange)
             .receive(on: RunLoop.main)
@@ -202,7 +211,11 @@ final class RefreshCoordinator: ObservableObject {
                         let tier = snapshot.subscriptionTier ?? "nil"
                         let price = snapshot.monthlyPrice ?? "nil"
                         NSLog("QuotaBar: ✅ \(kind.rawValue) done, tier=\(tier), price=\(price), avail=\(snapshot.availability), quotas=[\(quotasInfo)]")
-                        result = .success(snapshot)
+                        // v0.6.0 第二批：snapshot 已有 subscriptionExpiresAt（Kimi API 路径）
+                        // 时跳过 headless；否则并行跑 harvester（短超时）拿真实订阅到期日。
+                        // 失败 / 超时 / 找不到 → nil，UI hide。
+                        let enriched = await self.enrichWithHarvester(snapshot, kind: kind)
+                        result = .success(enriched)
                     } catch {
                         NSLog("QuotaBar: ❌ \(kind.rawValue) failed: \(error)")
                         result = .failure(error)
@@ -388,6 +401,62 @@ final class RefreshCoordinator: ObservableObject {
         }
 
         return sorted.first
+    }
+
+    // MARK: - v0.6.0 第二批：订阅到期日 headless enrich
+
+    /// 给 snapshot 补上真实订阅到期日（如果已有则跳过；没有则并行跑 harvester）。
+    ///
+    /// 调用约定：
+    /// - `snapshot.subscriptionExpiresAt != nil`（如 Kimi API 路径已拿到）→ 直接返回原 snapshot；
+    /// - `Harvesters.harvester(for: kind) == nil` → 该 provider 无 headless 路径，原样返回；
+    /// - availability 不是 `.available`（如 `.needsConfiguration` / `.fetchFailed`）→ 跳过 harvester
+    ///   （没登录态时没必要抓订阅页）；
+    /// - 其它 → 用 `WKWebViewHeadlessLoader` 加载 harvester 的目标页 + 注入 cookie + 跑 extract。
+    ///
+    /// **失败兜底**：harvester 任何错误（cookie 读不到 / permission / transient / 超时 / 找不到日期）
+    /// 都返回原 snapshot，UI hide subscriptionExpiresAt。不污染主 pipeline。
+    private func enrichWithHarvester(
+        _ snapshot: ProviderSnapshot,
+        kind: ProviderKind
+    ) async -> ProviderSnapshot {
+        // 已经有过期日（API 路径）→ 跳过
+        guard snapshot.subscriptionExpiresAt == nil else { return snapshot }
+        // 只有 available 状态才有意义抓订阅页
+        guard case .available = snapshot.availability else { return snapshot }
+        // 没有 harvester → 原样返回
+        guard let harvester = Harvesters.harvester(for: kind) else { return snapshot }
+
+        NSLog("QuotaBar: [\(harvester.identifier)] starting headless harvest")
+        let loader = WKWebViewHeadlessLoader(cookieReader: cookieReader)
+        do {
+            let html = try await loader.load(
+                url: harvester.pageURL,
+                kind: kind,
+                timeout: harvesterTimeout,
+                identifier: harvester.identifier
+            )
+            guard let expiresAt = harvester.extract(from: html) else {
+                NSLog("QuotaBar: [\(harvester.identifier)] extract returned nil, UI will hide")
+                return snapshot
+            }
+            NSLog("QuotaBar: [\(harvester.identifier)] ✅ parsed expiresAt=\(expiresAt)")
+            // 用新 expiresAt 重建 snapshot（ProviderSnapshot 当前不是 mutable，构造新实例）
+            return ProviderSnapshot(
+                id: snapshot.id,
+                kind: snapshot.kind,
+                subscriptionTier: snapshot.subscriptionTier,
+                availability: snapshot.availability,
+                quotas: snapshot.quotas,
+                monthlyPrice: snapshot.monthlyPrice,
+                subscriptionExpiresAt: expiresAt,
+                fetchedAt: snapshot.fetchedAt,
+                isStale: snapshot.isStale
+            )
+        } catch {
+            NSLog("QuotaBar: [\(harvester.identifier)] failed: \(error)")
+            return snapshot
+        }
     }
 
     // MARK: - 辅助
