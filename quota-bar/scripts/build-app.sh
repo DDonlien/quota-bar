@@ -5,13 +5,22 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT="$(cd "$SCRIPT_DIR/.." && pwd)"
 APP_NAME="QuotaBar"
 
-# 每次构建生成以时间命名的子文件夹，保留历史版本便于验证
+# 每次构建生成 `YYYYMMDD-HHMMSS-<branch>` 命名的子文件夹，保留历史版本便于验证。
+# branch 段来自 `git rev-parse --abbrev-ref HEAD`；detached HEAD 时 fallback 到
+# `detached-<short-sha>`，避免不同 commit 的 build 落在同一文件夹名。
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
-BUILD_DIR="$PROJECT/build/$TIMESTAMP"
+BRANCH="$(cd "$PROJECT/.." && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+if [ -z "$BRANCH" ] || [ "$BRANCH" = "HEAD" ]; then
+    SHORT_SHA="$(cd "$PROJECT/.." && git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    BRANCH="detached-$SHORT_SHA"
+fi
+# sanitize：把 branch 名里的 `/` 替换成 `-`，避免影响目录层级（例如 `feat/preferences` → `feat-preferences`）
+BRANCH_SAFE="$(echo "$BRANCH" | tr '/' '-')"
+BUILD_DIR="$PROJECT/build/${TIMESTAMP}-${BRANCH_SAFE}"
 APP_DIR="$BUILD_DIR/${APP_NAME}.app"
 LATEST_LINK="$PROJECT/build/latest"
 
-echo "Building $APP_NAME into $BUILD_DIR..."
+echo "Building $APP_NAME into $BUILD_DIR (branch: $BRANCH)..."
 
 # 1. 编译
 cd "$PROJECT"

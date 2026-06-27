@@ -172,6 +172,7 @@
 - 测试命令：当前暂无自动化测试。
 - 构建命令：`cd quota-bar && swift build`
 - 应用打包：`cd quota-bar && ./scripts/build-app.sh`
+- 统一 dev 入口：`make` / `make app` / `make test` / `make web` / `make deploy`（v0.5.0-ENG-A-001 落地）
 
 ### 文档入口
 
@@ -191,3 +192,17 @@
 - 语言与命名：面向用户的文案默认中文；Swift 类型、属性、文件名沿用英文。
 - 设计原则：优先贴近 macOS 26 Liquid Glass 风格，保持菜单栏下拉面板的轻量、紧凑和可扫读。
 - 架构限制：实际额度、订阅同步和数据存储尚未定义；当前 UI 使用静态占位数据。
+
+### 打包规则
+
+- **打包触发**：Agent 每次任务收尾自动跑 `make app`（即 `quota-bar/scripts/build-app.sh`），
+  在交付前给用户一个可立即双击运行的 `.app`。不依赖 CI，本地立即可用。
+- **产物目录命名**：`build/YYYYMMDD-HHMMSS-<branch>/`，其中 `<branch>` 来自
+  `git rev-parse --abbrev-ref HEAD`，`/` 被替换为 `-`（例如 `feat/preferences` →
+  `feat-preferences`）。detached HEAD 时 fallback 到 `detached-<short-sha>`。
+- **latest 软链**：`build/latest` 始终指向最近一次构建，配合 `open build/latest/QuotaBar.app`
+  可以一键启动最新版本。
+- **build/ 不进 git**：根 `.gitignore` 已排除 `quota-bar/build/`（`.gitkeep` 保留目录）。
+- **历史保留**：每次构建保留独立子目录，旧版本不会被清理；如果磁盘吃紧可以手工删旧。
+- **跨 worktree 隔离**：每个 worktree 自带独立的 `quota-bar/build/`，互不影响；
+  切换 branch 时 `build/latest` 会自动更新到该 worktree 的最新构建。

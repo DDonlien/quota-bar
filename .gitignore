@@ -16,6 +16,10 @@ DerivedData/
 *.dSYM/
 *.app
 
+# build-app.sh 的产物目录；保留 .gitkeep 作为目录占位
+quota-bar/build/*
+!quota-bar/build/.gitkeep
+
 # web 子项目（双保险：web/.gitignore 也已排除，根 ignore 兜底）
 web/node_modules/
 web/dist/
