@@ -60,14 +60,53 @@ extension SubscriptionDateHarvester {
         return nil
     }
 
+    /// 上下文敏感提取：在 pageSource 里找任一 `keyword`（大小写不敏感）后 `window` 字符内
+    /// 第一个匹配的日期。
+    ///
+    /// 用法：避免页面上的"账号创建日 / 首次登录日 / 优惠到期"等无关日期被误识别为
+    /// 「续费日」。每个 harvester 列出"真正表示续费"的关键词（"Next billing"、
+    /// "Renews on" 等），只有匹配关键词附近的日期才会被采纳。
+    ///
+    /// 找完所有 keyword 都失败 → 返回 nil（**不** fallback 到无关键词的 `firstDate`，
+    /// 否则可能抓到错误日期；harvester 的核心契约是"找不到就 nil"）。
+    ///
+    /// - Parameters:
+    ///   - keywords: 大小写不敏感的关键词列表，按优先级排序。
+    ///   - candidates: 日期 regex 列表，按优先级排序。
+    ///   - window: 关键词后多少字符内查找（默认 100）。
+    ///   - pageSource: headless 渲染后的 outerHTML。
+    func extractNear(
+        keywords: [String],
+        candidates: [String],
+        window: Int = 100,
+        in pageSource: String
+    ) -> Date? {
+        for keyword in keywords {
+            guard let range = pageSource.range(of: keyword, options: .caseInsensitive) else { continue }
+            let after = pageSource[range.upperBound...]
+            let windowed = String(after.prefix(window))
+            if let date = firstDate(in: windowed, candidates: candidates) {
+                return date
+            }
+        }
+        return nil
+    }
+
     /// 尝试用 `ISO8601DateFormatter` / `DateFormatter` 多种 format 解析日期字符串。
     private func parseLooseDate(_ raw: String) -> Date? {
-        // ISO 8601
+        // ISO 8601 with full datetime
         let isoFractional = ISO8601DateFormatter()
         isoFractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         if let d = isoFractional.date(from: raw) { return d }
         let iso = ISO8601DateFormatter()
         if let d = iso.date(from: raw) { return d }
+        // ISO 8601 date-only: "2026-12-15"（很多订阅管理页只渲染日期不带时间）。
+        // 用 UTC 时区解析，避免本地时区导致日期偏移一天。
+        let isoDateOnly = DateFormatter()
+        isoDateOnly.locale = Locale(identifier: "en_US_POSIX")
+        isoDateOnly.dateFormat = "yyyy-MM-dd"
+        isoDateOnly.timeZone = TimeZone(identifier: "UTC")
+        if let d = isoDateOnly.date(from: raw) { return d }
         // 美式 "July 25, 2026" / "Jul 25, 2026" / "25 Jul 2026"
         let englishFormats = [
             "MMMM d, yyyy",
