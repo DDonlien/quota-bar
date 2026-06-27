@@ -1,10 +1,14 @@
-# feat/hide-preferences
+# feat/preferences
 
 ## 用途
 
 偏好设置面板（P2 deferred）后续实现的独立工作线。当前 main 上已经把菜单里的
 "偏好设置..."项隐藏（commit `e522a1b`），因为 `openPreferences()` 只是个
 `NSSound.beep()` 占位，没真实面板可以打开。
+
+> 注：branch 名称原为 `feat/hide-preferences`，2026-06-28 重命名为
+> `feat/preferences`（方向从"先隐藏再恢复"转为"直接实现偏好面板"，
+> 更贴合 v0.3.0-PM-A-000 的最终目标）。
 
 等 v0.3.0-PM-A-000 偏好设置页面真正落地时，再从这个 branch 恢复菜单项 + 实现
 PreferencesView。
