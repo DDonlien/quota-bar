@@ -1,69 +1,218 @@
+---
+// Pricing — vibeisland 节奏：380px 容器 / 36px 卡片 padding / 48px 大数字
+---
+
 <!-- BEGIN: Pricing Section -->
-<section class="max-w-md mx-auto px-4 mb-32">
-  <div class="text-center mb-10">
-    <h2 class="text-3xl font-bold mb-4">
-      <span data-i18n="pricing.heading">Ready to upgrade your workflow?</span>
-    </h2>
-    <p class="text-gray-400">
-      <span data-i18n="pricing.subheading">One-time purchase. No subscriptions.</span>
-    </p>
-  </div>
-  <div class="glass-card p-8 relative overflow-hidden border-t-2 border-t-gray-600">
-    <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
-    <div class="flex justify-between items-start mb-6">
-      <div>
-        <h3 class="text-lg font-semibold mb-2">
-          <span data-i18n="pricing.plan.name">Quota Bar Pro</span>
-        </h3>
-        <div class="flex items-end gap-3">
-          <span class="text-4xl font-bold">$9.99</span>
-          <span class="text-lg text-gray-500 line-through mb-1">$14.99</span>
+<section class="pricing section">
+  <div class="container-content">
+    <div class="pricing__header">
+      <h2 class="pricing__heading">
+        <span data-i18n="pricing.heading">Ready to upgrade your workflow?</span>
+      </h2>
+      <p class="pricing__subheading">
+        <span data-i18n="pricing.subheading">One-time purchase. No subscriptions.</span>
+      </p>
+    </div>
+
+    <div class="pricing__card-wrap">
+      <div class="pricing__card">
+        <div class="pricing__glow" aria-hidden="true"></div>
+
+        <div class="pricing__plan">
+          <h3 class="pricing__plan-name">
+            <span data-i18n="pricing.plan.name">Quota Bar Pro</span>
+          </h3>
+          <div class="pricing__amount">
+            <span class="pricing__amount-current">$9.99</span>
+            <span class="pricing__amount-old">$14.99</span>
+          </div>
         </div>
+
+        <p class="pricing__note">
+          <span data-i18n="pricing.plan.note">Lifetime license</span>
+        </p>
+
+        <ul class="pricing__bullets">
+          <li>
+            <svg class="pricing__check" fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="pricing.bullet.unlimited">Unlimited Services Tracking</span>
+          </li>
+          <li>
+            <svg class="pricing__check" fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="pricing.bullet.alerts">Advanced Custom Alerts</span>
+          </li>
+          <li>
+            <svg class="pricing__check" fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="pricing.bullet.support">Priority Support</span>
+          </li>
+          <li>
+            <svg class="pricing__check" fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="pricing.bullet.updates">Unlimited sessions & future updates</span>
+          </li>
+          <li>
+            <svg class="pricing__check" fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="pricing.bullet.swift">Native Swift Performance</span>
+          </li>
+        </ul>
+
+        <button class="pricing__cta" type="button">
+          <span data-i18n="pricing.cta">Get Quota Bar Pro</span>
+        </button>
+
+        <p class="pricing__support">
+          <span data-i18n="pricing.support.hint">Payment issues? hi@quotabar.app</span>
+        </p>
       </div>
     </div>
-    <p class="text-xs text-gray-500 mb-6">
-      <span data-i18n="pricing.plan.note">Lifetime license</span>
-    </p>
-    <ul class="space-y-3 mb-8 text-sm text-gray-300">
-      <li class="flex items-start gap-2">
-        <svg class="text-green-500 mt-0.5 shrink-0" fill="none" height="16" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span data-i18n="pricing.bullet.unlimited">Unlimited Services Tracking</span>
-      </li>
-      <li class="flex items-start gap-2">
-        <svg class="text-green-500 mt-0.5 shrink-0" fill="none" height="16" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span data-i18n="pricing.bullet.alerts">Advanced Custom Alerts</span>
-      </li>
-      <li class="flex items-start gap-2">
-        <svg class="text-green-500 mt-0.5 shrink-0" fill="none" height="16" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span data-i18n="pricing.bullet.support">Priority Support</span>
-      </li>
-      <li class="flex items-start gap-2">
-        <svg class="text-green-500 mt-0.5 shrink-0" fill="none" height="16" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span data-i18n="pricing.bullet.updates">Unlimited sessions & future updates</span>
-      </li>
-      <li class="flex items-start gap-2">
-        <svg class="text-green-500 mt-0.5 shrink-0" fill="none" height="16" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span data-i18n="pricing.bullet.swift">Native Swift Performance</span>
-      </li>
-    </ul>
-    <button
-      class="w-full bg-white text-black font-semibold py-3 rounded-lg hover:bg-gray-100 transition-colors mb-4"
-    >
-      <span data-i18n="pricing.cta">Get Quota Bar Pro</span>
-    </button>
-    <p class="text-center text-xs text-gray-600 mt-6">
-      <span data-i18n="pricing.support.hint">Payment issues? hi@quotabar.app</span>
-    </p>
   </div>
 </section>
 <!-- END: Pricing Section -->
+
+<style>
+  .pricing__header {
+    text-align: center;
+    margin-bottom: var(--space-7);  /* 32px */
+  }
+
+  .pricing__heading {
+    font-size: var(--text-3xl);  /* 36px */
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-bottom: var(--space-3);  /* 12px */
+  }
+  @media (max-width: 768px) {
+    .pricing__heading {
+      font-size: var(--text-2xl);  /* 28px */
+    }
+  }
+
+  .pricing__subheading {
+    font-size: var(--text-base);  /* 14px */
+    color: var(--text-secondary);
+  }
+
+  .pricing__card-wrap {
+    display: flex;
+    justify-content: center;
+  }
+
+  .pricing__card {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: var(--max-w-pricing);  /* 380px */
+    padding: var(--space-7);  /* 32px — 偏紧 vibeisland */
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);  /* 16px */
+  }
+
+  /* 右上角装饰光晕 */
+  .pricing__glow {
+    position: absolute;
+    top: -2.5rem;
+    right: -2.5rem;
+    width: 8rem;
+    height: 8rem;
+    background: radial-gradient(circle, rgba(217, 119, 87, 0.18) 0%, rgba(15, 15, 17, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .pricing__plan {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  .pricing__plan-name {
+    font-size: var(--text-md);  /* 15px */
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: 0.01em;
+  }
+
+  .pricing__amount {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+  }
+
+  .pricing__amount-current {
+    font-size: var(--text-4xl);  /* 48px */
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .pricing__amount-old {
+    font-size: var(--text-md);  /* 15px */
+    color: var(--text-muted);
+    text-decoration: line-through;
+  }
+
+  .pricing__note {
+    font-size: var(--text-xs);  /* 12px */
+    color: var(--text-muted);
+    margin-bottom: var(--space-6);  /* 24px */
+  }
+
+  .pricing__bullets {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);  /* 12px */
+    margin-bottom: var(--space-7);  /* 32px */
+    font-size: var(--text-sm);  /* 13px */
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+  .pricing__bullets li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .pricing__check {
+    color: var(--success);
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+
+  .pricing__cta {
+    display: block;
+    width: 100%;
+    padding: 12px 28px;
+    background: #ffffff;
+    color: #000000;
+    font-weight: 500;
+    font-size: var(--text-base);  /* 14px */
+    border-radius: var(--radius-md);  /* 12px */
+    transition: background var(--duration-fast) var(--ease-out);
+    margin-bottom: var(--space-3);
+  }
+  .pricing__cta:hover {
+    background: #f0f0f0;
+  }
+
+  .pricing__support {
+    text-align: center;
+    font-size: var(--text-xs);  /* 12px */
+    color: var(--text-muted);
+    margin-top: var(--space-3);
+  }
+</style>

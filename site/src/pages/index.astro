@@ -14,7 +14,7 @@ const REPO = "DDonlien/quota-bar";
 
 <Layout>
   <Nav />
-  <main class="pt-32 pb-24">
+  <main class="site-main">
     <Hero />
     <ProductPreview />
     <Features />
@@ -87,3 +87,11 @@ const REPO = "DDonlien/quota-bar";
     UPDATE_DOWNLOAD();
   }
 </script>
+
+<style>
+  .site-main {
+    /* 给 fixed nav 留出空间：nav 高度约 60px，加点 buffer */
+    padding-top: 8rem;     /* 128px */
+    padding-bottom: 6rem;  /* 96px */
+  }
+</style>

@@ -1,55 +1,136 @@
+---
+// FAQ — 暗色 details 列表 + 旋转箭头（无横线）
+// 节奏：vibeisland 640 容器 / 13px question / 13px answer 1.6
+---
+
 <!-- BEGIN: FAQ Section -->
-<section class="max-w-3xl mx-auto px-4 mb-32">
-  <div class="text-center mb-12">
-    <h2 class="text-3xl font-bold">
-      <span data-i18n="faq.heading">Frequently Asked Questions</span>
-    </h2>
-  </div>
-  <div class="grid grid-cols-1 gap-4">
-    <details class="group cursor-pointer">
-      <summary class="text-lg font-semibold flex justify-between items-center focus:outline-none py-4">
-        <span data-i18n="faq.q1">What services are supported?</span>
-        <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-        </svg>
-      </summary>
-      <p class="text-gray-400 text-sm mt-4 leading-relaxed pb-2">
-        <span data-i18n="faq.a1">We currently support GitHub, OpenAI, Claude, Vercel, and many more out of the box. You can also configure custom endpoints to track virtually anything.</span>
-      </p>
-    </details>
-    <details class="group cursor-pointer">
-      <summary class="text-lg font-semibold flex justify-between items-center focus:outline-none py-4">
-        <span data-i18n="faq.q2">Is it secure?</span>
-        <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-        </svg>
-      </summary>
-      <p class="text-gray-400 text-sm mt-4 leading-relaxed pb-2">
-        <span data-i18n="faq.a2">Absolutely. Your API keys and data never leave your local machine. Quota Bar communicates directly with the service providers.</span>
-      </p>
-    </details>
-    <details class="group cursor-pointer">
-      <summary class="text-lg font-semibold flex justify-between items-center focus:outline-none py-4">
-        <span data-i18n="faq.q3">Does it work on Windows?</span>
-        <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-        </svg>
-      </summary>
-      <p class="text-gray-400 text-sm mt-4 leading-relaxed pb-2">
-        <span data-i18n="faq.a3">No, Quota Bar is exclusively built for macOS to deeply integrate with the menu bar and deliver native performance.</span>
-      </p>
-    </details>
-    <details class="group cursor-pointer">
-      <summary class="text-lg font-semibold flex justify-between items-center focus:outline-none py-4">
-        <span data-i18n="faq.q4">Is this a subscription?</span>
-        <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-        </svg>
-      </summary>
-      <p class="text-gray-400 text-sm mt-4 leading-relaxed pb-2">
-        <span data-i18n="faq.a4">No! Quota Bar is a one-time purchase. You get lifetime access to the current features and all future minor updates.</span>
-      </p>
-    </details>
+<section class="faq section">
+  <div class="container-faq">
+    <div class="faq__header">
+      <h2 class="faq__heading">
+        <span data-i18n="faq.heading">Frequently Asked Questions</span>
+      </h2>
+    </div>
+
+    <div class="faq__list">
+      <details class="faq__item">
+        <summary class="faq__summary">
+          <span data-i18n="faq.q1">What services are supported?</span>
+          <svg class="faq__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </summary>
+        <p class="faq__answer">
+          <span data-i18n="faq.a1">We currently support GitHub, OpenAI, Claude, Vercel, and many more out of the box. You can also configure custom endpoints to track virtually anything.</span>
+        </p>
+      </details>
+
+      <details class="faq__item">
+        <summary class="faq__summary">
+          <span data-i18n="faq.q2">Is it secure?</span>
+          <svg class="faq__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </summary>
+        <p class="faq__answer">
+          <span data-i18n="faq.a2">Absolutely. Your API keys and data never leave your local machine. Quota Bar communicates directly with the service providers.</span>
+        </p>
+      </details>
+
+      <details class="faq__item">
+        <summary class="faq__summary">
+          <span data-i18n="faq.q3">Does it work on Windows?</span>
+          <svg class="faq__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </summary>
+        <p class="faq__answer">
+          <span data-i18n="faq.a3">No, Quota Bar is exclusively built for macOS to deeply integrate with the menu bar and deliver native performance.</span>
+        </p>
+      </details>
+
+      <details class="faq__item">
+        <summary class="faq__summary">
+          <span data-i18n="faq.q4">Is this a subscription?</span>
+          <svg class="faq__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </summary>
+        <p class="faq__answer">
+          <span data-i18n="faq.a4">No! Quota Bar is a one-time purchase. You get lifetime access to the current features and all future minor updates.</span>
+        </p>
+      </details>
+    </div>
   </div>
 </section>
 <!-- END: FAQ Section -->
+
+<style>
+  .faq__header {
+    text-align: center;
+    margin-bottom: var(--space-8);  /* 48px */
+  }
+
+  .faq__heading {
+    font-size: var(--text-3xl);  /* 36px */
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  @media (max-width: 768px) {
+    .faq__heading {
+      font-size: var(--text-2xl);  /* 28px */
+    }
+  }
+
+  .faq__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);  /* 12px */
+  }
+
+  .faq__item {
+    /* 无横线 */
+  }
+
+  .faq__summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: var(--text-sm);  /* 13px */
+    font-weight: 500;
+    padding: var(--space-4) 0;  /* 16px 0 */
+    cursor: pointer;
+    list-style: none;
+    outline: none;
+    color: var(--text-primary);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+  .faq__summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq__summary:hover {
+    color: var(--accent);
+  }
+
+  .faq__chevron {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    transition: transform var(--duration-fast) var(--ease-out);
+    flex-shrink: 0;
+    margin-left: var(--space-3);
+  }
+  .faq__item[open] .faq__chevron {
+    transform: rotate(180deg);
+    color: var(--text-primary);
+  }
+
+  .faq__answer {
+    font-size: var(--text-sm);  /* 13px */
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-top: var(--space-3);
+    padding-bottom: var(--space-2);
+  }
+</style>

@@ -1,100 +1,132 @@
 /* ============================================================
- * Quota Bar 主页 Design Tokens
- * 贴近 macOS 26 Liquid Glass 风格：浅色、半透明、克制动效
- * 详见 site/DESIGN.md
+ * Quota Bar 主页 — Design Tokens
+ * 字体：英文 JetBrains Mono NL + 中文 Maple Mono NL（@font-face 自托管）
+ * 节奏：参考 vibeisland.app（1060/960/640/380 容器宽度 + 80px section y + 12-16px 卡片圆角）
  * ============================================================ */
 
+/* —— 字体声明（自托管 woff2） —— */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Maple Mono NL";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/MapleMonoNL-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Maple Mono NL";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/MapleMonoNL-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Maple Mono NL";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/MapleMonoNL-Bold.woff2") format("woff2");
+}
+
 :root {
-  /* —— 背景与表面 —— */
-  --bg: #f5f5f7;              /* 页面主背景，macOS 26 window backdrop */
-  --bg-elevated: #ffffff;     /* 卡片 / 下拉面板表面 */
-  --bg-glass: rgba(255, 255, 255, 0.72);  /* Liquid Glass 半透明 */
-  --bg-menu-bar: rgba(246, 246, 248, 0.82); /* macOS 菜单栏半透明 */
+  /* —— 颜色（暗色 + 暖橙强调） —— */
+  --bg: #0f0f11;                       /* 页面主背景（深色） */
+  --bg-elevated: #1a1a1a;              /* 卡片表面 */
+  --bg-glass: rgba(25, 25, 28, 0.6);   /* 玻璃卡片 */
+  --bg-header: rgba(15, 15, 17, 0.78); /* fixed 顶栏半透明 */
 
-  /* —— 文字 —— */
-  --text-primary: #1d1d1f;    /* 标题 */
-  --text-secondary: #6e6e73;  /* 正文 */
-  --text-tertiary: #8e8e93;   /* 辅助说明 */
+  --text-primary: #ffffff;
+  --text-secondary: #b8b8b8;           /* 副文（70% 白） */
+  --text-tertiary: #8a8a8a;            /* muted */
+  --text-muted: #5a5a5a;               /* 极弱（35% 白） */
 
-  /* —— 边框与分割 —— */
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.14);
-  --divider: rgba(0, 0, 0, 0.06);
+  --border: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.1);
 
-  /* —— 品牌色 —— */
-  --brand: #0a7cff;           /* Quota Bar 主色（系统蓝） */
-  --brand-hover: #0066e0;
-  --brand-soft: rgba(10, 124, 255, 0.12);
+  --accent: #d97757;                   /* 暖橙（vibeisland 同款 D97757） */
+  --accent-deep: #b85d3f;
+  --accent-soft: rgba(217, 119, 87, 0.14);
+  --success: #22c55e;                  /* idle / 工作状态 */
 
-  /* —— 状态色（与 QuotaModels.swift 一致） —— */
-  --status-green: #35c85a;    /* 充足 */
-  --status-orange: #ff9f0a;   /* 告警 ≤30% */
-  --status-red: #ff453a;      /* 耗尽 =0% */
-
-  /* —— Provider 品牌色（从 QuotaModels.swift brandColor 提取） —— */
-  --provider-antigravity: #1a73e8;
-  --provider-codex: #35c85a;
-  --provider-claude: #d4a574;
-  --provider-minimax: #ff453a;
-  --provider-kimi: #ff9f0a;
-  --provider-zcode: #3866ff;
-
-  /* —— 圆角（macOS 控件尺度） —— */
+  /* —— 圆角 —— */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius-lg: 16px;
   --radius-pill: 999px;
 
-  /* —— 间距基准（8px 栅格） —— */
+  /* —— 间距（4px 节奏） —— */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-7: 48px;
-  --space-8: 64px;
-  --space-9: 96px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+  --space-9: 64px;
+  --space-10: 80px;
 
-  /* —— 字体 —— */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
-    "Helvetica Neue", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+  /* —— 容器宽度（vibeisland 节奏） —— */
+  --max-w-content: 1060px;   /* nav / hero / footer */
+  --max-w-features: 960px;   /* features grid */
+  --max-w-faq: 640px;
+  --max-w-pricing: 380px;
 
-  /* —— 字号层级 —— */
-  --text-xs: 0.75rem;    /* 12px */
-  --text-sm: 0.875rem;   /* 14px */
-  --text-base: 1rem;     /* 16px */
-  --text-lg: 1.125rem;   /* 18px */
-  --text-xl: 1.375rem;   /* 22px */
-  --text-2xl: 1.75rem;   /* 28px */
-  --text-3xl: 2.25rem;   /* 36px */
-  --text-4xl: 3rem;      /* 48px */
-  --text-5xl: 3.75rem;   /* 60px */
+  /* —— 字体栈：英文用 JetBrains Mono，中文用 Maple Mono NL（自动按 lang 切换） —— */
+  /* 主栈：英文优先（en 页） */
+  --font-en: "JetBrains Mono", "Maple Mono NL", ui-monospace, monospace;
+  /* 中文优先栈（zh 页） */
+  --font-zh: "Maple Mono NL", "JetBrains Mono", ui-monospace, monospace;
 
-  /* —— 阴影（macOS 26 的轻柔投影） —— */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.14), 0 8px 24px rgba(0, 0, 0, 0.08);
+  /* —— 字号层级（vibeisland 节奏：60/18/36/22/14/12/11/48） —— */
+  --text-overline: 11px;   /* tag / label */
+  --text-xs: 12px;         /* meta / footer */
+  --text-sm: 13px;         /* nav / FAQ body / footer link */
+  --text-base: 14px;       /* button / body */
+  --text-md: 15px;         /* price label */
+  --text-lg: 18px;         /* hero subtitle */
+  --text-xl: 22px;         /* section h3 / content h2 */
+  --text-2xl: 28px;        /* section h2 mobile */
+  --text-3xl: 36px;        /* section h2 desktop */
+  --text-4xl: 48px;        /* pricing big number */
+  --text-5xl: 60px;        /* hero headline */
 
-  /* —— 布局 —— */
-  --max-width: 1120px;
-  --nav-height: 60px;
+  /* —— 阴影 —— */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 
   /* —— 动效 —— */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --duration-fast: 0.15s;
-  --duration-base: 0.25s;
-  --duration-slow: 0.5s;
+  --duration-base: 0.2s;
 }
 
 /* ============================================================
  * Reset
  * ============================================================ */
-
 *,
 *::before,
 *::after {
@@ -107,15 +139,33 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  font-family: var(--font-en);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--bg);
+}
+
+html[lang="zh-CN"],
+html[lang="zh-Hans"] {
+  font-family: var(--font-zh);
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: inherit;
   font-size: var(--text-base);
   line-height: 1.6;
   color: var(--text-primary);
-  background: var(--bg);
-  font-feature-settings: "ss01", "cv01";
+  background-color: var(--bg);
+  /* 参考 reference.html 的点状背景（暗色 vibeisland 风格） */
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.05) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 }
 
 img,
@@ -127,125 +177,113 @@ svg {
 a {
   color: inherit;
   text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
 }
 
 button {
   font-family: inherit;
+  font-size: inherit;
   cursor: pointer;
   border: none;
   background: none;
+  color: inherit;
 }
 
 ul {
   list-style: none;
 }
 
+details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
 /* ============================================================
- * 通用工具类
+ * Section 节奏（vibeisland：80px y padding，24px x padding）
  * ============================================================ */
-
-.container {
-  width: 100%;
-  max-width: var(--max-width);
-  margin-inline: auto;
-  padding-inline: var(--space-5);
-}
-
-/* —— 按钮 —— */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  font-size: var(--text-base);
-  font-weight: 500;
-  border-radius: var(--radius-pill);
-  transition: transform var(--duration-fast) var(--ease-spring),
-    background var(--duration-fast) var(--ease-out),
-    box-shadow var(--duration-fast) var(--ease-out);
-  white-space: nowrap;
-}
-
-.btn:active {
-  transform: scale(0.97);
-}
-
-.btn--primary {
-  background: var(--brand);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(10, 124, 255, 0.32);
-}
-
-.btn--primary:hover {
-  background: var(--brand-hover);
-  box-shadow: 0 6px 20px rgba(10, 124, 255, 0.42);
-}
-
-.btn--ghost {
-  background: rgba(255, 255, 255, 0.7);
-  color: var(--text-primary);
-  border: 1px solid var(--border-strong);
-  backdrop-filter: blur(20px);
-}
-
-.btn--ghost:hover {
-  background: #fff;
-  border-color: rgba(0, 0, 0, 0.22);
-}
-
-/* —— 章节 —— */
 .section {
-  padding-block: var(--space-9);
+  padding-block: var(--space-10);  /* 80px */
 }
-
-.section__eyebrow {
-  display: inline-block;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--brand);
-  margin-bottom: var(--space-3);
-}
-
-.section__title {
-  font-size: var(--text-3xl);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  margin-bottom: var(--space-3);
-}
-
-.section__subtitle {
-  font-size: var(--text-lg);
-  color: var(--text-secondary);
-  max-width: 560px;
-}
-
-.section__header {
-  text-align: center;
-  margin-inline: auto;
-  margin-bottom: var(--space-8);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+@media (max-width: 768px) {
+  .section {
+    padding-block: var(--space-9);  /* 64px 移动端 */
+  }
 }
 
 /* ============================================================
- * 滚动进入动画（IntersectionObserver 触发 .is-visible）
+ * Container（统一宽度）
  * ============================================================ */
-
-.reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity var(--duration-slow) var(--ease-out),
-    transform var(--duration-slow) var(--ease-out);
+.container-content {
+  width: 100%;
+  max-width: var(--max-w-content);
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+}
+.container-features {
+  width: 100%;
+  max-width: var(--max-w-features);
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+}
+.container-pricing {
+  width: 100%;
+  max-width: var(--max-w-pricing);
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+}
+.container-faq {
+  width: 100%;
+  max-width: var(--max-w-faq);
+  margin-inline: auto;
+  padding-inline: var(--space-6);
 }
 
-.reveal.is-visible {
-  opacity: 1;
-  transform: none;
+/* ============================================================
+ * 全局装饰：顶部居中光晕
+ * ============================================================ */
+.glow-effect {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 600px;
+  background: radial-gradient(
+    circle,
+    rgba(217, 119, 87, 0.07) 0%,
+    rgba(15, 15, 17, 0) 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ============================================================
+ * 通用工具
+ * ============================================================ */
+.text-center {
+  text-align: center;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-deep) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-muted {
+  color: var(--text-secondary);
+}
+
+.overline {
+  font-size: var(--text-overline);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -255,10 +293,5 @@ ul {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-
-  .reveal {
-    opacity: 1;
-    transform: none;
   }
 }

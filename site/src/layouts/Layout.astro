@@ -1,5 +1,9 @@
 ---
 import "../styles/global.css";
+import { dictionaries } from "../i18n/dict";
+
+const enDict = dictionaries.en;
+const zhDict = dictionaries.zh;
 
 export interface Props {
   title?: string;
@@ -37,13 +41,117 @@ const {
     <meta name="twitter:description" content={description} />
 
     <!-- 主题色与 PWA -->
-    <meta name="theme-color" content="#0a7cff" />
+    <meta name="theme-color" content="#0f0f11" />
     <meta name="apple-mobile-web-app-title" content="Quota Bar" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Preload 主字体（首屏可见）+ Regular weight（i18n 注入后开始渲染） -->
+    <link rel="preload" href="/fonts/JetBrainsMono-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/MapleMonoNL-Regular.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- 字体：JetBrains Mono（英文）+ Maple Mono NL（中文）自托管 woff2，
+         在 global.css @font-face 声明，preload 主 weight 提升首屏体验 -->
+
+    <!-- i18n 字典注入（同步内联） -->
+    <script is:inline define:vars={{ enDict, zhDict }}>
+      window.QB_I18N = { en: enDict, zh: zhDict };
+    </script>
+
+    <!-- 同步：检测 locale + 设 html lang/attribute（必须在 body 解析前） -->
+    <script is:inline>
+      (function () {
+        var STORAGE = "qb_locale";
+        function pick() {
+          try {
+            var s = localStorage.getItem(STORAGE);
+            if (s === "en" || s === "zh") return s;
+          } catch (e) {}
+          var langs = [];
+          try {
+            if (navigator.languages && navigator.languages.length) {
+              langs = navigator.languages;
+            } else if (navigator.language) {
+              langs = [navigator.language];
+            }
+          } catch (e) {}
+          for (var i = 0; i < langs.length; i++) {
+            var t = String(langs[i] || "").toLowerCase();
+            if (t === "zh" || t.indexOf("zh-") === 0) return "zh";
+          }
+          return "en";
+        }
+        var locale = pick();
+        var html = document.documentElement;
+        html.lang = locale === "zh" ? "zh-CN" : "en";
+        html.setAttribute("data-locale", locale);
+        window.QB_LOCALE = locale;
+      })();
+    </script>
+
+    <!-- 同步遍历 [data-i18n] 替换文本 + 处理属性（placeholder / aria-label / title） -->
+    <script is:inline>
+      (function () {
+        var dict = window.QB_I18N || { en: {}, zh: {} };
+        var cur = window.QB_LOCALE || "en";
+        var firstApply = true;
+
+        function resolve(key, locale) {
+          return (dict[locale] && dict[locale][key]) || (dict.en && dict.en[key]) || null;
+        }
+
+        function apply(locale, isFirst) {
+          var nodes = document.querySelectorAll("[data-i18n]");
+          for (var i = 0; i < nodes.length; i++) {
+            var el = nodes[i];
+            var key = el.getAttribute("data-i18n");
+            var val = resolve(key, locale);
+            if (val != null) el.textContent = val;
+            var ph = el.getAttribute("data-i18n-placeholder");
+            if (ph) {
+              var pval = resolve(ph, locale);
+              if (pval != null) el.setAttribute("placeholder", pval);
+            }
+            var al = el.getAttribute("data-i18n-aria");
+            if (al) {
+              var aval = resolve(al, locale);
+              if (aval != null) el.setAttribute("aria-label", aval);
+            }
+            var tit = el.getAttribute("data-i18n-title");
+            if (tit) {
+              var tval = resolve(tit, locale);
+              if (tval != null) el.setAttribute("title", tval);
+            }
+          }
+
+          if (!isFirst) {
+            document.dispatchEvent(
+              new CustomEvent("qb:locale-applied", { detail: { locale: locale } })
+            );
+          }
+        }
+
+        document.addEventListener("qb:locale-change", function (e) {
+          var locale = (e.detail && e.detail.locale) || "en";
+          cur = locale;
+          document.documentElement.setAttribute("data-locale", locale);
+          document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
+          apply(locale, firstApply);
+          firstApply = false;
+        });
+
+        window.QB_APPLY = function () {
+          apply(cur, firstApply);
+          firstApply = false;
+        };
+      })();
+    </script>
   </head>
   <body>
+    <!-- 全局装饰：顶部居中光晕（参考 reference.html） -->
+    <div class="glow-effect"></div>
+
     <slot />
 
     <!-- 滚动入场动画：基于 IntersectionObserver，无依赖 -->
@@ -65,6 +173,31 @@ const {
       } else {
         reveals.forEach((el) => el.classList.add("is-visible"));
       }
+    </script>
+
+    <!-- i18n 增强：LocaleSwitcher 当前态 + 触发 apply -->
+    <script is:inline>
+      (function () {
+        function refreshSwitcherTick(locale) {
+          var ticks = document.querySelectorAll("[data-locale-pick] .locale-tick");
+          ticks.forEach(function (t) {
+            t.style.opacity =
+              t.parentElement.getAttribute("data-locale-pick") === locale ? "1" : "0";
+          });
+          var lbls = document.querySelectorAll("[data-current-locale-label]");
+          lbls.forEach(function (l) {
+            l.textContent = locale === "zh" ? "中文" : "EN";
+          });
+        }
+
+        if (typeof window.QB_APPLY === "function") window.QB_APPLY();
+        refreshSwitcherTick(window.QB_LOCALE || "en");
+
+        document.addEventListener("qb:locale-change", function (e) {
+          var locale = (e.detail && e.detail.locale) || "en";
+          refreshSwitcherTick(locale);
+        });
+      })();
     </script>
   </body>
 </html>

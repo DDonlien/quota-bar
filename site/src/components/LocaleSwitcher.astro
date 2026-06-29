@@ -1,128 +1,115 @@
 ---
 // 语言切换器：点击 → 弹出小菜单 → 选 en/zh → 切 html attribute + 写 localStorage
-// 不依赖 React/Vue，纯 inline script 绑事件。
+// vibeisland 风格：globe + code + chevron，菜单 8px 圆角 / 玻璃背景 / 阴影
 ---
 
-<button
-  type="button"
-  class="locale-switcher flex items-center gap-1 cursor-pointer hover:text-white transition-colors text-sm"
-  aria-haspopup="listbox"
-  aria-expanded="false"
-  aria-label="Language"
->
-  <svg
-    fill="none"
-    height="16"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    stroke-width="2"
-    viewBox="0 0 24 24"
-    width="16"
+<div class="locale-switcher">
+  <button
+    type="button"
+    class="locale-switcher__trigger"
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    aria-label="Language"
   >
-    <circle cx="12" cy="12" r="10"></circle>
-    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-    <path d="M2 12h20"></path>
-  </svg>
-  <span data-current-locale-label>EN</span>
-  <svg
-    class="locale-caret transition-transform"
-    fill="none"
-    height="12"
-    stroke="currentColor"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    stroke-width="2"
-    viewBox="0 0 24 24"
-    width="12"
-  >
-    <path d="m6 9 6 6 6-6"></path>
-  </svg>
-</button>
+    <svg
+      class="locale-switcher__globe"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+      <path d="M2 12h20"></path>
+    </svg>
+    <span class="locale-switcher__code" data-current-locale-label>EN</span>
+    <svg
+      class="locale-switcher__chevron"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path d="m6 9 6 6 6-6"></path>
+    </svg>
+  </button>
 
-<ul
-  class="locale-menu hidden absolute right-0 mt-2 min-w-[120px] py-1 rounded-lg
-         bg-[#1a1a1d] border border-white/10 backdrop-blur-md shadow-xl z-50"
-  role="listbox"
->
-  <li>
-    <button
-      type="button"
-      data-locale-pick="en"
-      class="locale-option w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white flex items-center justify-between"
-      role="option"
-    >
-      <span>English</span>
-      <span class="locale-tick text-orange-400 opacity-0">✓</span>
-    </button>
-  </li>
-  <li>
-    <button
-      type="button"
-      data-locale-pick="zh"
-      class="locale-option w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white flex items-center justify-between"
-      role="option"
-    >
-      <span>中文</span>
-      <span class="locale-tick text-orange-400 opacity-0">✓</span>
-    </button>
-  </li>
-</ul>
+  <ul class="locale-switcher__menu" role="listbox">
+    <li>
+      <button
+        type="button"
+        class="locale-switcher__option"
+        data-locale-pick="en"
+        role="option"
+      >
+        <span>English</span>
+        <span class="locale-switcher__tick" aria-hidden="true">
+          <svg fill="none" height="12" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="12">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </span>
+      </button>
+    </li>
+    <li>
+      <button
+        type="button"
+        class="locale-switcher__option"
+        data-locale-pick="zh"
+        role="option"
+      >
+        <span>中文</span>
+        <span class="locale-switcher__tick" aria-hidden="true">
+          <svg fill="none" height="12" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="12">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </span>
+      </button>
+    </li>
+  </ul>
+</div>
 
 <script is:inline>
   (function () {
-    var buttons = document.querySelectorAll(".locale-switcher");
-    buttons.forEach(function (btn) {
-      // 容器是 Nav 里的 inline 节点，要让 dropdown 相对它定位
-      // 用 inline-block wrap：直接给按钮自身加 relative + 让 menu 用 fixed 定位（更稳）
-      var menu = btn.parentElement
-        ? btn.parentElement.querySelector(".locale-menu")
-        : null;
-      if (!menu) return;
+    function pick() {
+      var open = this.classList.contains("is-open");
+      this.classList.toggle("is-open");
+      this.querySelector(".locale-switcher__trigger").setAttribute(
+        "aria-expanded",
+        open ? "false" : "true"
+      );
+    }
 
-      btn.style.position = "relative";
+    document.querySelectorAll(".locale-switcher").forEach(function (root) {
+      var trigger = root.querySelector(".locale-switcher__trigger");
+      if (!trigger) return;
 
-      // 绝对定位改为 fixed，按钮 bbox 算位置（避免被父级 transform / overflow 切断）
-      function placeMenu() {
-        var r = btn.getBoundingClientRect();
-        menu.style.position = "fixed";
-        menu.style.top = r.bottom + 8 + "px";
-        menu.style.right = window.innerWidth - r.right + "px";
-        menu.style.left = "auto";
-      }
-
-      btn.addEventListener("click", function (e) {
+      trigger.addEventListener("click", function (e) {
         e.preventDefault();
         e.stopPropagation();
-        var open = !menu.classList.contains("hidden");
-        if (open) {
-          menu.classList.add("hidden");
-          btn.setAttribute("aria-expanded", "false");
-        } else {
-          placeMenu();
-          menu.classList.remove("hidden");
-          btn.setAttribute("aria-expanded", "true");
-        }
+        pick.call(root);
       });
 
-      // 点击外部关闭
       document.addEventListener("click", function (e) {
-        if (!menu.contains(e.target) && !btn.contains(e.target)) {
-          menu.classList.add("hidden");
-          btn.setAttribute("aria-expanded", "false");
+        if (!root.contains(e.target)) {
+          root.classList.remove("is-open");
+          trigger.setAttribute("aria-expanded", "false");
         }
       });
 
-      // Esc 关闭
       document.addEventListener("keydown", function (e) {
         if (e.key === "Escape") {
-          menu.classList.add("hidden");
-          btn.setAttribute("aria-expanded", "false");
+          root.classList.remove("is-open");
+          trigger.setAttribute("aria-expanded", "false");
         }
       });
     });
 
-    // 选项点击：写 localStorage + 切 attribute
     document.querySelectorAll("[data-locale-pick]").forEach(function (opt) {
       opt.addEventListener("click", function (e) {
         e.preventDefault();
@@ -132,17 +119,156 @@
         try { localStorage.setItem("qb_locale", pick); } catch (_) {}
         document.documentElement.lang = pick === "zh" ? "zh-CN" : "en";
         document.documentElement.setAttribute("data-locale", pick);
-        // 关闭菜单
-        var menu = opt.closest(".locale-menu");
-        if (menu) menu.classList.add("hidden");
-        var btn = menu
-          ? menu.parentElement.querySelector(".locale-switcher")
-          : null;
-        if (btn) btn.setAttribute("aria-expanded", "false");
         document.dispatchEvent(
           new CustomEvent("qb:locale-change", { detail: { locale: pick } })
         );
       });
     });
+
+    // 初始化当前 locale 的 tick 状态
+    function refreshTick(locale) {
+      document.querySelectorAll("[data-locale-pick]").forEach(function (opt) {
+        var isCurrent = opt.getAttribute("data-locale-pick") === locale;
+        opt.classList.toggle("is-current", isCurrent);
+      });
+    }
+    refreshTick(document.documentElement.getAttribute("data-locale") || "en");
+    document.addEventListener("qb:locale-change", function (e) {
+      var l = (e.detail && e.detail.locale) || "en";
+      refreshTick(l);
+    });
   })();
 </script>
+
+<style>
+  .locale-switcher {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Trigger：vibeisland globe + code + chevron */
+  .locale-switcher__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);  /* 8px */
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-tertiary);
+    font-size: var(--text-sm);  /* 13px */
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    cursor: pointer;
+    transition: color var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out);
+  }
+  .locale-switcher__trigger:hover,
+  .locale-switcher.is-open .locale-switcher__trigger {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .locale-switcher__globe {
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+  }
+
+  .locale-switcher__code {
+    display: inline-block;
+    min-width: 18px;
+    text-align: center;
+    letter-spacing: 0.06em;
+  }
+
+  .locale-switcher__chevron {
+    width: 10px;
+    height: 10px;
+    opacity: 0.6;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+  .locale-switcher.is-open .locale-switcher__chevron {
+    transform: rotate(180deg);
+  }
+
+  /* Dropdown menu：默认 hidden，is-open 时显示 */
+  .locale-switcher__menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 140px;
+    margin: 0;
+    padding: 4px;
+    list-style: none;
+    background: #121214fa;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);  /* 10px */
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.5),
+      0 2px 8px rgba(0, 0, 0, 0.3);
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+    pointer-events: none;
+    transition:
+      opacity var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
+    z-index: 1000;
+  }
+  .locale-switcher.is-open .locale-switcher__menu {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .locale-switcher__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);  /* 7px */
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: var(--text-sm);  /* 13px */
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.3;
+    cursor: pointer;
+    text-align: left;
+    transition: color var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out);
+    white-space: nowrap;
+  }
+  .locale-switcher__option:hover {
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .locale-switcher__option.is-current {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .locale-switcher__tick {
+    flex: 0 0 auto;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+  .locale-switcher__option.is-current .locale-switcher__tick {
+    opacity: 1;
+  }
+
+  @media (max-width: 720px) {
+    .locale-switcher__trigger {
+      padding: 5px 7px;
+      font-size: 11px;
+    }
+  }
+</style>

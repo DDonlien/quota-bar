@@ -10,87 +10,179 @@ const AGENTS_EN_JOINED = AGENTS_EN.join("|");
 const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
 ---
 
-<!-- BEGIN: Hero Section -->
-<section class="max-w-4xl mx-auto text-center px-4 mb-20">
-  <h1 class="hero-title text-5xl md:text-6xl leading-tight mb-6 font-bold">
-    <span data-i18n="hero.title.line1">Never lose track of</span><br />
-    <span data-i18n="hero.title.lead">your</span>
-    <span
-      class="typing-text"
-      data-typewriter="Antigravity"
-      data-words-en={AGENTS_EN_JOINED}
-      data-words-zh={AGENTS_ZH_JOINED}
-      aria-live="polite"
-    >Antigravity</span><span class="hero-tail" data-i18n="hero.title.tail">quotas</span>
-  </h1>
-  <p class="text-xl font-light text-gray-400 mb-10 max-w-2xl mx-auto">
-    <span data-i18n="hero.subtitle">Stay ahead of limits without breaking your workflow.</span>
-  </p>
-  <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-    <a
-      href={`https://github.com/${REPO}/releases`}
-      data-download
-      class="bg-white text-black font-medium px-8 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition-colors w-full sm:w-auto justify-center"
-    >
-      <svg fill="currentColor" height="18" viewBox="0 0 24 24" width="18">
-        <path
-          d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"
-        ></path>
-      </svg>
-      <span data-i18n="hero.cta.download">Download for Free</span>
-    </a>
-    <a
-      href={`https://github.com/${REPO}#readme`}
-      target="_blank"
-      rel="noopener"
-      class="bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium px-8 py-3 rounded-lg transition-colors w-full sm:w-auto flex justify-center items-center"
-    >
-      <span data-i18n="hero.cta.docs">View Documentation</span>
-    </a>
+<!-- BEGIN: Hero Section (vibeisland 节奏：60px 标题 + 180px 上 padding) -->
+<section class="hero">
+  <div class="hero__inner container-content">
+    <h1 class="hero__title">
+      <span data-i18n="hero.title.line1">Never lose track of</span><br />
+      <span data-i18n="hero.title.lead">your</span>
+      <span
+        class="typing-text"
+        data-typewriter="Antigravity"
+        data-words-en={AGENTS_EN_JOINED}
+        data-words-zh={AGENTS_ZH_JOINED}
+        aria-live="polite"
+      >Antigravity</span><span class="hero__tail" data-i18n="hero.title.tail">quotas</span>
+    </h1>
+    <p class="hero__subtitle">
+      <span data-i18n="hero.subtitle">Stay ahead of limits without breaking your workflow.</span>
+    </p>
+    <div class="hero__ctas">
+      <a
+        href={`https://github.com/${REPO}/releases`}
+        data-download
+        class="hero__cta hero__cta--primary"
+      >
+        <svg fill="currentColor" height="16" viewBox="0 0 24 24" width="16">
+          <path
+            d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"
+          ></path>
+        </svg>
+        <span data-i18n="hero.cta.download">Download for Free</span>
+      </a>
+      <a
+        href={`https://github.com/${REPO}#readme`}
+        target="_blank"
+        rel="noopener"
+        class="hero__cta hero__cta--ghost"
+      >
+        <span data-i18n="hero.cta.docs">View Documentation</span>
+      </a>
+    </div>
   </div>
 </section>
 <!-- END: Hero Section -->
 
 <style>
-  /* Hero 标题：靠 <br> 强制两行（"of" 后面），整段 white-space: nowrap
-     防止第二行 "your Antigravity quotas" 被容器宽度挤换行 */
-  .hero-title {
-    white-space: nowrap;
+  /* vibeisland hero 节奏：180px top padding / 20px bottom / 60px 标题 / 18px 副标 */
+  .hero {
+    padding-top: 180px;
+    padding-bottom: var(--space-5);  /* 20px */
   }
-  @media (max-width: 640px) {
-    .hero-title {
+  @media (max-width: 768px) {
+    .hero {
+      padding-top: 120px;
+      padding-bottom: var(--space-7);  /* 32px */
+    }
+  }
+
+  .hero__inner {
+    text-align: center;
+  }
+
+  .hero__title {
+    /* mono 字体本身视觉够粗，weight 用 500；中英文混排自动按 lang 切换字体 */
+    font-weight: 500;
+    font-size: var(--text-5xl);  /* 60px */
+    line-height: 76px;
+    letter-spacing: -0.01em;
+    margin-bottom: var(--space-6);  /* 24px */
+    white-space: nowrap;
+    color: var(--text-primary);
+  }
+  @media (max-width: 768px) {
+    .hero__title {
+      font-size: 32px;
+      line-height: 42px;
       white-space: normal;
     }
   }
 
-  /* 打字机文字：橙色渐变。不能用 Layout.astro 里 scoped 的 .text-gradient
-     （cid 不匹配 child 组件的 element），所以在本地重新定义一份 */
+  .hero__subtitle {
+    font-size: var(--text-lg);  /* 18px */
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0 auto var(--space-7);  /* 32px 下 */
+    max-width: 480px;
+  }
+
+  .hero__ctas {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);  /* 12px */
+    flex-wrap: wrap;
+  }
+
+  .hero__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: 12px 28px;
+    border-radius: var(--radius-md);  /* 12px */
+    font-weight: 500;
+    font-size: var(--text-base);  /* 14px */
+    transition:
+      background var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+  }
+
+  .hero__cta--primary {
+    background: #ffffff;
+    color: #000000;
+  }
+  .hero__cta--primary:hover {
+    background: #f0f0f0;
+  }
+
+  .hero__cta--ghost {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+  }
+  .hero__cta--ghost:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  /* 打字机：暖橙渐变（vibeisland --accent #d97757 → 深色） */
   .typing-text {
     display: inline-block;
-    background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-deep) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
     vertical-align: baseline;
     min-width: 1ch;
+    font-weight: 700;
   }
 
-  /* 闪烁光标 */
+  /* Maple Mono NL 渲染中文时字形偏宽，中文版 hero 整体缩 8% + 收紧字距 */
+  :lang(zh) .hero__title {
+    font-size: 56px;
+    line-height: 70px;
+    letter-spacing: -0.02em;
+  }
+  @media (max-width: 768px) {
+    :lang(zh) .hero__title {
+      font-size: 30px;
+      line-height: 40px;
+    }
+  }
+
+  /* 中文版副标题字号缩到 16px（Maple Mono NL 字距宽，18px 看着偏大） */
+  :lang(zh) .hero__subtitle {
+    font-size: 16px;
+  }
+
   .typing-text::after {
     content: "|";
     display: inline-block;
     margin-left: 2px;
-    color: #f59e0b;
-    -webkit-text-fill-color: #f59e0b;
+    color: var(--accent);
+    -webkit-text-fill-color: var(--accent);
     background: none;
     font-weight: 400;
     animation: typing-cursor 1s steps(1) infinite;
   }
-  /* 见 v4：动态文字跟 quotas 中间的间距 */
-  .hero-tail {
+
+  .hero__tail {
     margin-left: 0.3em;
   }
+
   @keyframes typing-cursor {
     0%, 50%   { opacity: 1; }
     50.01%, 100% { opacity: 0; }
@@ -104,12 +196,7 @@ const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
   }
 </style>
 
-<!-- 打字机动画：必须 is:inline 让 Astro 不要改写；ES5 写法兼容老 Safari。
-     支持 locale 切换：通过 data-words-en / data-words-zh 选词；
-     切换时由 Layout 派发 qb:locale-applied，本脚本监听后销毁旧实例按新词重建。
-     - 每个 element 上保留一个 TypeWriter 实例引用在 el._qbTw。
-     - 重建时先 clearTimeout 所有 setTimeout 句柄不现实（无名 setTimeout 无法取消），
-       所以靠 old._qbTw.alive=false 让旧 tick 不再写 DOM 即可实现"自然消亡"。 -->
+<!-- 打字机动画（locale 切换时按新词重建） -->
 <script is:inline>
   (function () {
     var TYPING_SPEED = 90;
@@ -167,7 +254,6 @@ const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
     function spawn(el) {
       var words = pickWords(el, locale());
       if (!words.length) return;
-      // 销毁旧实例
       if (el._qbTw) {
         el._qbTw.destroy();
       }
@@ -188,7 +274,6 @@ const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
       init();
     }
 
-    // 监听 locale 应用事件，按新 locale 重建
     document.addEventListener("qb:locale-applied", function () {
       var els = document.querySelectorAll("[data-typewriter]");
       for (var i = 0; i < els.length; i++) {
