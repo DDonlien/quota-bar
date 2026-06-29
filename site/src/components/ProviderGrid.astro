@@ -1,0 +1,185 @@
+---
+// 6 家核心 provider 卡片
+const providers = [
+  {
+    name: "Antigravity",
+    color: "var(--provider-antigravity)",
+    vendor: "Google",
+    channels: ["CLI", "App", "Cookie"],
+    note: "Gemini / Other 双订阅组",
+  },
+  {
+    name: "Codex",
+    color: "var(--provider-codex)",
+    vendor: "OpenAI",
+    channels: ["CLI", "Cookie"],
+    note: "5h + 周额度分窗",
+  },
+  {
+    name: "Claude",
+    color: "var(--provider-claude)",
+    vendor: "Anthropic",
+    channels: ["CLI", "API", "Cookie"],
+    note: "Pro / Max 多档位",
+  },
+  {
+    name: "MiniMax",
+    color: "var(--provider-minimax)",
+    vendor: "MiniMax",
+    channels: ["CLI", "App", "Cookie"],
+    note: "General / Video 独立计费",
+  },
+  {
+    name: "Kimi",
+    color: "var(--provider-kimi)",
+    vendor: "Moonshot",
+    channels: ["CLI", "App", "Cookie"],
+    note: "Code / Work 共享额度池",
+  },
+  {
+    name: "Zcode",
+    color: "var(--provider-zcode)",
+    vendor: "智谱",
+    channels: ["API", "Cookie"],
+    note: "原生国产模型支持",
+  },
+];
+---
+
+<section id="providers" class="section">
+  <div class="container">
+    <header class="section__header reveal">
+      <span class="section__eyebrow">广泛覆盖</span>
+      <h2 class="section__title">6 家主流 AI 服务，自动识别</h2>
+      <p class="section__subtitle">
+        Quota Bar 自动探测你机器上已经登录的 CLI、桌面 App 和浏览器登录态。
+        装了什么，它就识别什么 —— 不需要手动配置 API Key。
+      </p>
+    </header>
+
+    <div class="grid reveal">
+      {
+        providers.map((p) => (
+          <article class="card">
+            <div class="card__head">
+              <span class="card__logo" style={`background:${p.color}`}>
+                <span class="card__logo-mark" />
+              </span>
+              <div class="card__title-group">
+                <h3 class="card__name">{p.name}</h3>
+                <span class="card__vendor">{p.vendor}</span>
+              </div>
+            </div>
+            <div class="card__channels">
+              {p.channels.map((c) => (
+                <span class="chip">{c}</span>
+              ))}
+            </div>
+            <p class="card__note">{p.note}</p>
+          </article>
+        ))
+      }
+    </div>
+
+    <p class="providers__footnote reveal">
+      还支持 Cursor、Gemini、OpenAI、DeepSeek、Copilot、OpenRouter、Perplexity、Warp、Trae 等 14+ 服务的探测 —— 上面 6 家为已支持完整额度读取的核心服务。
+    </p>
+  </div>
+</section>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-7);
+  }
+
+  .card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    transition: transform var(--duration-base) var(--ease-spring),
+      box-shadow var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out);
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-strong);
+  }
+
+  .card__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .card__logo {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .card__logo-mark {
+    width: 18px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 6px;
+  }
+
+  .card__name {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .card__vendor {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+  }
+
+  .card__channels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .chip {
+    font-size: var(--text-xs);
+    font-weight: 500;
+    padding: 3px 10px;
+    background: var(--brand-soft);
+    color: var(--brand);
+    border-radius: var(--radius-pill);
+  }
+
+  .card__note {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .providers__footnote {
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+    max-width: 640px;
+    margin-inline: auto;
+  }
+
+  @media (max-width: 768px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
