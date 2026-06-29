@@ -211,9 +211,14 @@ final class RefreshCoordinator: ObservableObject {
                         let tier = snapshot.subscriptionTier ?? "nil"
                         let price = snapshot.monthlyPrice ?? "nil"
                         NSLog("QuotaBar: ✅ \(kind.rawValue) done, tier=\(tier), price=\(price), avail=\(snapshot.availability), quotas=[\(quotasInfo)]")
-                        // v0.6.0 第二批：snapshot 已有 subscriptionExpiresAt（Kimi API 路径）
-                        // 时跳过 headless；否则并行跑 harvester（短超时）拿真实订阅到期日。
-                        // 失败 / 超时 / 找不到 → nil，UI hide。
+                        // v0.6.0 第二批：snapshot 已有 subscriptionExpiresAt（未来扩展
+                        // — 例如其他 provider 走订阅 API 拿到）时跳过 headless；否则
+                        // 并行跑 harvester（短超时）拿真实订阅到期日。失败 / 超时 /
+                        // 找不到 → nil，UI hide。
+                        //
+                        // 注意：v0.6.0 第一批 Kimi 路径只在 BrowserCookieProvider 里
+                        // 塞了 expiresAt，KimiAuthProvider (CLI OAuth) 路径由 v0.7.0
+                        // 方案 A 在 fetchSnapshot 内部追加 GetSubscriptionStat 拿。
                         let enriched = await self.enrichWithHarvester(snapshot, kind: kind)
                         result = .success(enriched)
                     } catch {

@@ -60,14 +60,60 @@ final class KimiAuthProvider: QuotaProvider, @unchecked Sendable {
             timeout: timeout,
             fetchedAt: fetchedAt
         )
+        // v0.7.0 修复：usages API 响应里没有 `subscriptionBalance.expireTime`。
+        // 追加调 GetSubscriptionStat 端点拿真实订阅到期日；失败（401/403/网络）
+        // 静默吞掉，返回 nil，UI hide。原主路径（拿 quota windows）不受影响。
+        let expiresAt = await fetchSubscriptionExpiresAt(
+            accessToken: creds.accessToken,
+            timeout: timeout
+        )
         return ProviderSnapshot(
             kind: .kimi,
             subscriptionTier: parsed.tier,
             availability: .available,
             quotas: parsed.windows,
             monthlyPrice: await ProviderPricing.localizedMonthlyPrice(kind: .kimi, tier: parsed.tier),
+            subscriptionExpiresAt: expiresAt,
             fetchedAt: fetchedAt
         )
+    }
+
+    /// 调 `GetSubscriptionStat` 端点解析 `subscriptionBalance.expireTime`。
+    /// 端点对 OAuth bearer token 的接受情况未确认（试一下），失败一律 nil。
+    private func fetchSubscriptionExpiresAt(
+        accessToken: String,
+        timeout: TimeInterval
+    ) async -> Date? {
+        guard let url = URL(string: "https://www.kimi.com/apiv2/kimi.gateway.membership.v2.MembershipService/GetSubscriptionStat") else {
+            return nil
+        }
+        var request = URLRequest(url: url, timeoutInterval: timeout)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("https://www.kimi.com", forHTTPHeaderField: "Origin")
+        request.setValue("https://www.kimi.com/", forHTTPHeaderField: "Referer")
+        request.httpBody = Data("{}".utf8)
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            FileHandle.standardError.write(Data("PROBE-KIMI-STAT: error=\(error.localizedDescription)\n".utf8))
+            return nil
+        }
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+        // v0.7.0 探针：完整 dump 到 stderr，包含 status code + body
+        FileHandle.standardError.write(Data("PROBE-KIMI-STAT: status=\(statusCode) body=\(String(data: data, encoding: .utf8) ?? "<binary>")\n".utf8))
+        guard (200..<300).contains(statusCode) else {
+            return nil
+        }
+        let parser = KimiSubscriptionStatParser()
+        let expiresAt = parser.parseSubscriptionExpiresAt(data: data)
+        FileHandle.standardError.write(Data("PROBE-KIMI-STAT: parsed expiresAt=\(expiresAt?.description ?? "nil")\n".utf8))
+        return expiresAt
     }
 
     // MARK: - 凭证
@@ -207,6 +253,8 @@ final class KimiAuthProvider: QuotaProvider, @unchecked Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         let (data, response) = try await session.data(for: request)
+        // v0.7.0 探针：写到 stderr
+        FileHandle.standardError.write(Data("PROBE-KIMI-USAGES: \(String(data: data, encoding: .utf8) ?? "<binary>")\n".utf8))
         guard let http = response as? HTTPURLResponse else {
             throw QuotaFetchError.transient(detail: "Kimi usage 返回非 HTTP 响应")
         }

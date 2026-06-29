@@ -322,7 +322,6 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
         request.timeoutInterval = 10
 
         let (data, response) = try await session.data(for: request)
-
         guard let http = response as? HTTPURLResponse else {
             throw QuotaFetchError.transient(detail: "Dashboard 返回非 HTTP 响应")
         }
