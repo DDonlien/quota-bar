@@ -2,10 +2,11 @@ import SwiftUI
 
 /// Quota Bar 偏好设置窗口主场景。
 ///
-/// 在 `CodingPlanMenuApp` 通过 SwiftUI `Settings` scene 注册后：
-/// - macOS 自动创建标准偏好窗口（`⌘,` 触发）
-/// - 应用菜单自动出现「Quota Bar → 偏好设置…」项
-/// - window 自动应用 macOS 26 Liquid Glass 材质
+/// 视觉风格对齐 macOS 26 系统设置（参考 Vibe Island 复刻）：
+/// - Sidebar 列表彩色 SF Symbol icon + 选中行 system glass 高亮
+/// - 顶部 toolbar-style title（NavigationSplitView 自动渲染）
+/// - Detail 用 `SettingsSection` + `SettingsGroup` + `SettingsRow` 组件拼装
+/// - 整个窗口用 `.regularMaterial` 玻璃背景（由 `PreferencesWindowController` 设置）
 ///
 /// Sidebar 布局：默认组（无标题）→ 通用 / 模型；Quota Bar 组 → 激活 / 关于。
 struct PreferencesScene: View {
@@ -14,25 +15,27 @@ struct PreferencesScene: View {
     var body: some View {
         NavigationSplitView {
             sidebar
-                .navigationSplitViewColumnWidth(min: 180, ideal: 200)
+                .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
         } detail: {
             detailView
-                .frame(minWidth: 540)
         }
         .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 720, minHeight: 480)
+        .frame(minWidth: 760, minHeight: 540)
+        // 整个窗口加 glass 背景（macOS 26 系统设置风格）；
+        // NSWindow 已设 backgroundColor = .clear，这里覆盖玻璃材质让桌面透出来。
+        .background(.regularMaterial)
     }
 
     // MARK: - Sidebar
 
     private var sidebar: some View {
         List(selection: $selection) {
-            // 默认组：直接放在 List 顶层，不渲染 Section header
+            // 默认组：放在 List 顶层，SwiftUI sidebar style 不渲染 header。
             ForEach(PreferencesSection.allCases.filter { $0.group == .default }) { section in
                 sidebarRow(section)
             }
 
-            // Quota Bar 组：带 Section header
+            // Quota Bar 组：用 `Section("title")` 渲染 macOS 26 风格的分组 header。
             Section {
                 ForEach(PreferencesSection.allCases.filter { $0.group == .quotaBar }) { section in
                     sidebarRow(section)
@@ -53,6 +56,7 @@ struct PreferencesScene: View {
             Text(section.title)
         } icon: {
             Image(systemName: section.icon)
+                .foregroundStyle(section.tint)
         }
         .tag(section)
     }

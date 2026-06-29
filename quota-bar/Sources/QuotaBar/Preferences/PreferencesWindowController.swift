@@ -19,12 +19,21 @@ final class PreferencesWindowController: NSWindowController {
 
     private init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 800, height: 560),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            contentRect: NSRect(x: 0, y: 0, width: 820, height: 580),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.title = "偏好设置"
+        // 视觉对齐 macOS 26 系统设置（参考 Vibe Island 复刻）：
+        // - titlebar 透明 + fullSizeContentView：traffic light 浮在 sidebar 顶部
+        //   （不再有独立 titlebar 分割线）
+        // - titleVisibility .hidden：把 title 让给 SwiftUI NavigationSplitView
+        //   的 inline toolbar title（`navigationTitle`）
+        // - backgroundColor .clear：让 SwiftUI 端 `.regularMaterial` 玻璃背景透出
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.backgroundColor = .clear
         window.contentViewController = NSHostingController(rootView: PreferencesScene())
         window.isReleasedWhenClosed = false
         window.center()

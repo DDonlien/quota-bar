@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// 偏好设置窗口的 sidebar 路由项。
 ///
@@ -29,6 +30,17 @@ enum PreferencesSection: String, Hashable, Identifiable, CaseIterable, Sendable 
         case .models: return "square.stack.3d.up"
         case .activation: return "key.fill"
         case .about: return "info.circle"
+        }
+    }
+
+    /// sidebar 图标的色彩（macOS 26 系统设置风格：每个 section 有自己的颜色，
+    /// 选中后高亮用 system glass）。
+    var tint: Color {
+        switch self {
+        case .general: return .gray
+        case .models: return .blue
+        case .activation: return .orange
+        case .about: return .blue
         }
     }
 

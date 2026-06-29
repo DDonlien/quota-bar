@@ -3,107 +3,119 @@ import ServiceManagement
 
 /// 「通用」偏好页：刷新 / 数据来源 / 菜单栏 / 启动。
 ///
-/// 字段全部绑定 `PreferencesStore.shared`，修改即时持久化到
-/// `~/Library/Application Support/QuotaBar/preferences.json`。
+/// 视觉对齐 macOS 26 系统设置（参考 Vibe Island）：
+/// - 4 个 `SettingsSection`，每个 section 1 个 `SettingsGroup` 圆角矩形容器
+/// - 字段全部绑定 `PreferencesStore.shared`，修改即时持久化到
+///   `~/Library/Application Support/QuotaBar/preferences.json`
 struct GeneralSettingsView: View {
     @State private var store = PreferencesStore.shared
 
     var body: some View {
-        Form {
-            refreshSection
-            browserSection
-            iconModeSection
-            launchSection
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                refreshSection
+                browserSection
+                iconModeSection
+                launchSection
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 20)
         }
-        .formStyle(.grouped)
-        .scrollContentBackground(.hidden)
-        .background(.regularMaterial)
         .navigationTitle("通用")
-        .padding(.horizontal, 4)
     }
 
     // MARK: - Sections
 
     private var refreshSection: some View {
-        Section {
-            refreshIntervalRow
-        } header: {
-            Text("刷新")
-        } footer: {
-            Text("Quota Bar 会按此间隔自动刷新各 Provider 的额度数据；也随时可通过菜单「立即刷新」手动触发。")
+        SettingsSection("刷新") {
+            SettingsGroup {
+                // Row 1: label + 当前值
+                SettingsRow(
+                    label: { Text("刷新间隔") },
+                    trailing: {
+                        Text(refreshIntervalText)
+                            .font(.system(size: 13).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                )
+                SettingsDivider()
+                // Row 2: 范围 slider 占满
+                SettingsRow(
+                    label: {
+                        HStack(spacing: 12) {
+                            Text("1 分")
+                                .font(.system(size: 11).monospacedDigit())
+                                .foregroundStyle(.secondary)
+                            Slider(value: bindingRefreshInterval, in: 60...3600, step: 60)
+                            Text("60 分")
+                                .font(.system(size: 11).monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                )
+            }
         }
     }
 
     private var browserSection: some View {
-        Section {
-            Picker(selection: bindingBrowserSource) {
-                ForEach(BrowserSourcePreference.allCases, id: \.self) { source in
-                    Text(source.displayName).tag(source)
-                }
-            } label: {
-                Text("Cookie 来源")
+        SettingsSection("数据来源") {
+            SettingsGroup {
+                SettingsRow(
+                    label: { Text("Cookie 来源") },
+                    subtitle: "选择从哪个浏览器读取 Cookie 获取 dashboard 数据；自动模式按导入顺序尝试所有已登录浏览器。",
+                    trailing: {
+                        Picker("", selection: bindingBrowserSource) {
+                            ForEach(BrowserSourcePreference.allCases, id: \.self) { source in
+                                Text(source.displayName).tag(source)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .fixedSize()
+                    }
+                )
             }
-            .pickerStyle(.menu)
-        } header: {
-            Text("数据来源")
-        } footer: {
-            Text("选择从哪个浏览器读取 Cookie 获取 dashboard 数据；自动模式按导入顺序尝试所有已登录浏览器。")
         }
     }
 
     private var iconModeSection: some View {
-        Section {
-            Picker(selection: bindingIconMode) {
-                ForEach(IconModePreference.allCases, id: \.self) { mode in
-                    Text(mode.displayName).tag(mode)
-                }
-            } label: {
-                Text("图标模式")
+        SettingsSection("菜单栏") {
+            SettingsGroup {
+                SettingsRow(
+                    label: { Text("图标模式") },
+                    subtitle: "单图标汇总：当前默认行为，画 N 个 bar 汇总所有可用订阅。多图标分 Provider：每个 Provider 一个独立状态栏图标（预留）。",
+                    trailing: {
+                        Picker("", selection: bindingIconMode) {
+                            ForEach(IconModePreference.allCases, id: \.self) { mode in
+                                Text(mode.displayName).tag(mode)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .fixedSize()
+                    }
+                )
             }
-            .pickerStyle(.menu)
-        } header: {
-            Text("菜单栏")
-        } footer: {
-            Text("单图标汇总：当前默认行为，画 N 个 bar 汇总所有可用订阅。多图标分 Provider：每个 Provider 一个独立状态栏图标（预留）。")
         }
     }
 
     private var launchSection: some View {
-        Section {
-            Toggle(isOn: bindingLaunchAtLogin) {
-                Text("登录时自动启动")
+        SettingsSection("启动") {
+            SettingsGroup {
+                SettingsRow(
+                    label: { Text("登录时自动启动") },
+                    subtitle: launchAtLoginFooter,
+                    trailing: {
+                        Toggle("", isOn: bindingLaunchAtLogin)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                    }
+                )
             }
-        } header: {
-            Text("启动")
-        } footer: {
-            Text(launchAtLoginFooter)
         }
     }
 
-    // MARK: - Rows
-
-    private var refreshIntervalRow: some View {
-        HStack(spacing: 12) {
-            Slider(value: bindingRefreshInterval, in: 60...3600, step: 60) {
-                Text("刷新间隔")
-            } minimumValueLabel: {
-                Text("1 分")
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            } maximumValueLabel: {
-                Text("60 分")
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-            Text(refreshIntervalText)
-                .font(.body.monospacedDigit())
-                .foregroundStyle(.secondary)
-                .frame(minWidth: 56, alignment: .trailing)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("刷新间隔")
-        .accessibilityValue(refreshIntervalText)
-    }
+    // MARK: - Helpers
 
     private var refreshIntervalText: String {
         let minutes = max(1, Int((store.preferences.refreshIntervalSeconds / 60).rounded()))
@@ -180,5 +192,5 @@ struct GeneralSettingsView: View {
 
 #Preview("General") {
     GeneralSettingsView()
-        .frame(width: 600, height: 500)
+        .frame(width: 700, height: 540)
 }

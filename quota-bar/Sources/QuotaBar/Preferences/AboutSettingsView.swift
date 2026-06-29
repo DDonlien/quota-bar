@@ -1,21 +1,24 @@
 import SwiftUI
 
 /// 「关于」偏好页：应用名 / 版本 / GitHub / 版权 / 重置偏好。
+///
+/// 视觉对齐 macOS 26 系统设置：
+/// - 3 个 `SettingsSection`（应用 / 链接 / 维护）
 struct AboutSettingsView: View {
     @State private var store = PreferencesStore.shared
     @State private var showResetConfirmation = false
 
     var body: some View {
-        Form {
-            appInfoSection
-            linksSection
-            resetSection
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                appInfoSection
+                linksSection
+                resetSection
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 20)
         }
-        .formStyle(.grouped)
-        .scrollContentBackground(.hidden)
-        .background(.regularMaterial)
         .navigationTitle("关于")
-        .padding(.horizontal, 4)
         .confirmationDialog(
             "确定要重置所有偏好设置吗？",
             isPresented: $showResetConfirmation,
@@ -33,100 +36,115 @@ struct AboutSettingsView: View {
     // MARK: - Sections
 
     private var appInfoSection: some View {
-        Section {
-            HStack(spacing: 14) {
-                // 应用图标：用 NSImage 桥接 SF Symbol fallback
-                Group {
-                    if let icon = appIconImage {
-                        Image(nsImage: icon)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    } else {
-                        Image(systemName: "chart.bar.doc.horizontal")
-                            .font(.system(size: 32, weight: .regular))
-                            .foregroundStyle(.tint)
-                    }
-                }
-                .frame(width: 48, height: 48)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        SettingsSection("应用") {
+            SettingsGroup {
+                SettingsRow(
+                    label: {
+                        HStack(spacing: 14) {
+                            Group {
+                                if let icon = appIconImage {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                } else {
+                                    Image(systemName: "chart.bar.doc.horizontal")
+                                        .font(.system(size: 28, weight: .regular))
+                                        .foregroundStyle(.tint)
+                                }
+                            }
+                            .frame(width: 40, height: 40)
+                            .background(.quaternary, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(appName)
-                        .font(.title3.weight(.semibold))
-                    HStack(spacing: 8) {
-                        Text("版本 \(appVersion)")
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                        Text("·")
-                            .foregroundStyle(.secondary)
-                        Text("Build \(appBuild)")
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(appName)
+                                    .font(.system(size: 13, weight: .semibold))
+                                Text("版本 \(appVersion) · Build \(appBuild)")
+                                    .font(.system(size: 11).monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
-                }
-                Spacer()
+                )
+                SettingsDivider()
+                SettingsRow(
+                    label: { Text("开发者") },
+                    trailing: { Text("DDonlien").foregroundStyle(.secondary) }
+                )
+                SettingsDivider()
+                SettingsRow(
+                    label: { Text("许可") },
+                    trailing: { Text("MIT").foregroundStyle(.secondary) }
+                )
+                SettingsDivider()
+                SettingsRow(
+                    label: { Text("平台") },
+                    trailing: { Text("macOS 26+").foregroundStyle(.secondary) }
+                )
             }
-            .padding(.vertical, 4)
-
-            HStack {
-                Text("开发者")
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text("DDonlien")
-            }
-            HStack {
-                Text("许可")
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text("MIT")
-            }
-            HStack {
-                Text("平台")
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text("macOS 26+")
-            }
-        } header: {
-            Text("应用")
         }
     }
 
     private var linksSection: some View {
-        Section {
-            if let repo = URL(string: "https://github.com/DDonlien/quota-bar") {
-                Link(destination: repo) {
-                    HStack {
-                        Label("GitHub 仓库", systemImage: "arrow.up.right.square")
-                        Spacer()
-                        Text("github.com/DDonlien/quota-bar")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
+        SettingsSection("链接") {
+            SettingsGroup {
+                if let repo = URL(string: "https://github.com/DDonlien/quota-bar") {
+                    SettingsRow(
+                        label: {
+                            Link(destination: repo) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.up.right.square")
+                                    Text("GitHub 仓库")
+                                        .font(.system(size: 13))
+                                }
+                            }
+                        },
+                        trailing: {
+                            Text("github.com/DDonlien/quota-bar")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                    )
+                }
+                SettingsDivider()
+                if let releases = URL(string: "https://github.com/DDonlien/quota-bar/releases") {
+                    SettingsRow(
+                        label: {
+                            Link(destination: releases) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "square.and.arrow.down")
+                                    Text("下载最新版本")
+                                        .font(.system(size: 13))
+                                }
+                            }
+                        }
+                    )
                 }
             }
-            if let releases = URL(string: "https://github.com/DDonlien/quota-bar/releases") {
-                Link(destination: releases) {
-                    Label("下载最新版本", systemImage: "square.and.arrow.down")
-                }
-            }
-        } header: {
-            Text("链接")
         }
     }
 
     private var resetSection: some View {
-        Section {
-            Button(role: .destructive) {
-                showResetConfirmation = true
-            } label: {
-                Label("重置偏好设置…", systemImage: "arrow.uturn.backward")
+        SettingsSection("维护") {
+            SettingsGroup {
+                SettingsRow(
+                    label: {
+                        Button(role: .destructive) {
+                            showResetConfirmation = true
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.uturn.backward")
+                                Text("重置偏好设置…")
+                                    .font(.system(size: 13))
+                            }
+                            .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                    },
+                    subtitle: "重置后所有 Provider 开关、刷新间隔、排序偏好都会清空，回到默认状态。"
+                )
             }
-        } header: {
-            Text("维护")
-        } footer: {
-            Text("重置后所有 Provider 开关、刷新间隔、排序偏好都会清空，回到默认状态。")
         }
     }
 
@@ -157,5 +175,5 @@ struct AboutSettingsView: View {
 
 #Preview("About") {
     AboutSettingsView()
-        .frame(width: 600, height: 500)
+        .frame(width: 700, height: 540)
 }
