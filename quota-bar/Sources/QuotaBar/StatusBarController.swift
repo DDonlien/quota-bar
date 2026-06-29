@@ -525,11 +525,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         coordinator.refreshNow()
     }
 
-    // 触发 SwiftUI `Settings` scene：sendAction `showSettingsWindow:` 是系统约定的 selector，
-    // SwiftUI App 的 Settings scene 自动响应并显示/聚焦偏好窗口（v0.3.0-PM-A-006）。
+    // 触发偏好窗口：由 PreferencesWindowController（NSWindow + NSHostingView）单例
+    // 负责显示/聚焦。SwiftUI `Settings` scene + sendAction `showSettingsWindow:` 在
+    // .accessory 菜单栏 app 下会被默默吞掉（见 PreferencesWindowController.swift 注释）。
     @objc private func openPreferences() {
-        NSApp.activate(ignoringOtherApps: true)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        PreferencesWindowController.shared.show()
     }
 
     @objc private func quit() {

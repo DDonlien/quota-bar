@@ -7,9 +7,16 @@ struct CodingPlanMenuApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        Settings {
-            PreferencesScene()
+        // 偏好窗口不由 SwiftUI `Settings` scene 管理 —— 它在 .accessory 菜单栏 app
+        // + AppDelegate 组合下行为不可靠（NSApp.sendAction `showSettingsWindow:`
+        // 被吞掉）。改由 PreferencesWindowController 单例负责。
+        // 这里仍需返回一个 Scene 满足 App 协议；用惰性 Window scene（只在
+        // openWindow(id: "preferences") 时才创建），不调用则永不创建窗口。
+        Window("Preferences", id: "preferences") {
+            EmptyView()
         }
+        .defaultSize(width: 800, height: 540)
+        .windowResizability(.contentSize)
     }
 }
 
