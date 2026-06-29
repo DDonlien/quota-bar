@@ -132,10 +132,18 @@
     pointer-events: none;
   }
 
+  /* Plan 行：plan-name 左 + amount 右，row + wrap 防溢出。
+   * 关键：plan-name 必须 white-space: nowrap，否则 "Quota Bar Pro"
+   * 在 380px 容器里会被迫换行成 "Quota Bar / Pro"。
+   * min-width: 0 + flex-shrink: 1 让 amount 优先收缩。
+   */
   .pricing__plan {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
     margin-bottom: var(--space-2);
   }
 
@@ -144,12 +152,17 @@
     font-weight: 500;
     color: var(--text-primary);
     letter-spacing: 0.01em;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .pricing__amount {
-    display: flex;
+    display: inline-flex;
     align-items: baseline;
-    gap: var(--space-3);
+    gap: var(--space-2);
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .pricing__amount-current {
