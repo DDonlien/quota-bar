@@ -2,9 +2,10 @@
 import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Hero from "../components/Hero.astro";
-import ProviderGrid from "../components/ProviderGrid.astro";
+import ProductPreview from "../components/ProductPreview.astro";
 import Features from "../components/Features.astro";
-import Showcase from "../components/Showcase.astro";
+import Pricing from "../components/Pricing.astro";
+import FAQ from "../components/FAQ.astro";
 import Footer from "../components/Footer.astro";
 
 // GitHub 仓库（用于下载按钮动态取最新 nightly release）
@@ -13,11 +14,12 @@ const REPO = "DDonlien/quota-bar";
 
 <Layout>
   <Nav />
-  <main>
+  <main class="pt-32 pb-24">
     <Hero />
-    <ProviderGrid />
+    <ProductPreview />
     <Features />
-    <Showcase />
+    <Pricing />
+    <FAQ />
   </main>
   <Footer />
 </Layout>
