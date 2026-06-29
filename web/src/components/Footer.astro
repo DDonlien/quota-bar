@@ -1,117 +1,61 @@
----
-const REPO = "DDonlien/quota-bar";
-const year = new Date().getFullYear();
----
-
-<footer class="footer">
-  <div class="container footer__inner">
-    <div class="footer__brand">
-      <span class="footer__logo" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <rect x="1" y="1" width="22" height="22" rx="6" fill="var(--brand)"/>
-          <rect x="4" y="7" width="16" height="2.5" rx="1.25" fill="#fff"/>
-          <rect x="4" y="11" width="16" height="2.5" rx="1.25" fill="rgba(255,255,255,0.3)"/>
-          <rect x="4" y="11" width="10" height="2.5" rx="1.25" fill="#fff"/>
-          <rect x="4" y="15" width="16" height="2.5" rx="1.25" fill="rgba(255,255,255,0.3)"/>
-          <rect x="4" y="15" width="4" height="2.5" rx="1.25" fill="#FFD60A"/>
-        </svg>
-      </span>
-      <div>
-        <p class="footer__name">Quota Bar</p>
-        <p class="footer__tagline">AI 订阅额度，一眼可见</p>
-      </div>
+<!-- BEGIN: Footer -->
+<footer
+  class="border-t border-white/5 pt-12 pb-8 px-8 max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-8"
+>
+  <div>
+    <div class="flex items-center gap-2 mb-2">
+      <img
+        alt="Quota Bar Logo"
+        class="h-6 w-6 object-contain"
+        src="https://lh3.googleusercontent.com/aida/AP1WRLsjMgT0WIPX4WswIk0h6ox6KqB2WHuhQdufgeYLGRcxfOiocPInM0DnM7Vsu_toR5Yhv-VXVwVe3hV_vgj618TPP_nVMO-pFB5mRyiWvM18HBLNjcXnxv3opcr49Cnri2PZmLNi1z0J9PTxdGpm50rokBnC8cOYZzO_0TYYedk-YhQgQGTptyvgHqqjuvAbUInXzrNJQVJydxGZr4AELNq0uMxuqWpwNetcV_J5vFeL5WQBCgOGrnSKohDn"
+      />
+      <span class="font-semibold tracking-wide text-lg">Quota Bar</span>
     </div>
-
-    <nav class="footer__links" aria-label="页脚导航">
-      <a href="#providers">支持的服务</a>
-      <a href="#features">特性</a>
-      <a href="#how-it-works">工作原理</a>
-      <a href={`https://github.com/${REPO}`} target="_blank" rel="noopener">GitHub</a>
-      <a href={`https://github.com/${REPO}/releases`} target="_blank" rel="noopener">下载</a>
-    </nav>
-  </div>
-
-  <div class="container footer__bottom">
-    <p class="footer__copy">© {year} Quota Bar · 开源项目，MIT License</p>
-    <p class="footer__disclaimer">
-      Quota Bar 是独立开源项目，与 Antigravity、Codex、Claude、MiniMax、Kimi、Zcode 及其它任何服务商均无隶属关系。
-      所有额度数据仅在本机读取和解析，不上传任何信息。
+    <p class="text-sm text-gray-500 mb-6 font-light">
+      <span data-i18n="footer.tagline">Visualize your API Quotas in your Menu Bar</span>
     </p>
+    <div class="flex gap-4 text-gray-500">
+      <a class="hover:text-white transition-colors" href="#" aria-label="X/Twitter">
+        <svg fill="currentColor" height="20" viewBox="0 0 24 24" width="20">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+        </svg>
+      </a>
+      <a class="hover:text-white transition-colors" href="#" aria-label="Discord">
+        <svg fill="currentColor" height="20" viewBox="0 0 24 24" width="20">
+          <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"></path>
+        </svg>
+      </a>
+    </div>
+  </div>
+  <div class="flex gap-16 text-sm">
+    <div class="flex flex-col gap-3 font-light">
+      <span class="text-xs font-semibold text-gray-500 mb-1">
+        <span data-i18n="footer.col.product">PRODUCT</span>
+      </span>
+      <a class="text-gray-400 hover:text-white transition-colors" href="#">
+        <span data-i18n="footer.link.compare">Compare</span>
+      </a>
+      <a class="text-gray-400 hover:text-white transition-colors" href="#">
+        <span data-i18n="footer.link.manage">Manage License</span>
+      </a>
+      <a class="text-gray-400 hover:text-white transition-colors" href="#">
+        <span data-i18n="footer.link.affiliate">Affiliate</span>
+      </a>
+    </div>
+    <div class="flex flex-col gap-3 font-light">
+      <span class="text-xs font-semibold text-gray-500 mb-1">
+        <span data-i18n="footer.col.legal">LEGAL</span>
+      </span>
+      <a class="text-gray-400 hover:text-white transition-colors" href="#">
+        <span data-i18n="footer.link.privacy">Privacy</span>
+      </a>
+      <a class="text-gray-400 hover:text-white transition-colors" href="#">
+        <span data-i18n="footer.link.terms">Terms</span>
+      </a>
+    </div>
   </div>
 </footer>
-
-<style>
-  .footer {
-    background: var(--bg-elevated);
-    border-top: 1px solid var(--border);
-    padding-top: var(--space-8);
-    padding-bottom: var(--space-6);
-  }
-
-  .footer__inner {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-6);
-    justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: var(--space-6);
-    border-bottom: 1px solid var(--divider);
-  }
-
-  .footer__brand {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-  }
-
-  .footer__name {
-    font-weight: 700;
-    color: var(--text-primary);
-  }
-
-  .footer__tagline {
-    font-size: var(--text-sm);
-    color: var(--text-tertiary);
-  }
-
-  .footer__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-5);
-  }
-
-  .footer__links a {
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
-    transition: color var(--duration-fast) var(--ease-out);
-  }
-
-  .footer__links a:hover {
-    color: var(--text-primary);
-  }
-
-  .footer__bottom {
-    padding-top: var(--space-5);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .footer__copy {
-    font-size: var(--text-xs);
-    color: var(--text-tertiary);
-  }
-
-  .footer__disclaimer {
-    font-size: var(--text-xs);
-    line-height: 1.6;
-    color: var(--text-tertiary);
-    max-width: 720px;
-  }
-
-  @media (max-width: 640px) {
-    .footer__inner {
-      flex-direction: column;
-    }
-  }
-</style>
+<div class="text-xs text-gray-600 text-center pb-8 font-light">
+  © 2026 Quota Bar · hi@quotabar.app
+</div>
+<!-- END: Footer -->

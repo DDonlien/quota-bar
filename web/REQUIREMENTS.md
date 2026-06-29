@@ -71,16 +71,40 @@
 - [x] [0.1.0-QA-A-003] 相关文档已更新（web 子项目四件套 + 根目录索引） #QA
 - [ ] [0.1.0-QA-A-004] Vercel 部署成功并绑定 `quotabar.ddonlien.com` #QA #deferred — 部署动作由用户触发，命令已写入 README
 
-## Phase - v0.2.0 - 视觉素材升级（延后）
-
-### UI-A：真实截图替换
-
-- [ ] [0.2.0-UI-A-000] 用真实应用截图替换 Hero 的 MenuBarMockup #UI #P2 #deferred — 当前纯 CSS mockup 已可用，截图由用户录制后放进 `public/` 替换
-- [ ] [0.2.0-UI-A-001] 用真实 SVG logo 替换 ProviderGrid 的品牌色方块占位 #UI #P2 #deferred
+- [x] [0.2.0-UI-A-000] 用真实应用截图替换 Hero 的 MenuBarMockup #UI
+- [x] [0.2.0-UI-A-001] 用真实 SVG logo 替换 ProviderGrid 的品牌色方块占位 #UI #cut — 页面重构移除 ProviderGrid
 - [ ] [0.2.0-UI-A-002] 补充 OG 分享图（1200×630），当前仅文字 meta #UI #P2 #deferred
 
 ### FE-A：站点增强
 
 - [ ] [0.2.0-FE-A-000] 添加 sitemap.xml 和 robots.txt #FE #P2 #deferred
 - [ ] [0.2.0-FE-A-001] 添加 JSON-LD 结构化数据（SoftwareApplication） #FE #P2 #deferred
-- [ ] [0.2.0-FE-A-002] 中英双语切换 #FE #P3 #deferred
+- [x] [0.2.0-FE-A-002] 中英双语切换 #FE #P3 — un-deferred，拆 0.8.0 子任务后完成
+
+## Phase - v0.8.0 - 双语 i18n + Locale 自动检测
+
+### FE-A：双语基础设施
+
+- [x] [0.8.0-FE-A-001] `src/i18n/dict.ts` — en / zh 翻译字典（约 60 个 key，语义块分组） #FE
+- [x] [0.8.0-FE-A-002] `src/i18n/apply.ts` — `detectFromNavigator` + `resolveLocale` + `applyLocale` 工具 #FE
+- [x] [0.8.0-FE-A-003] Layout.astro：`<head>` 同步 inline 脚本注入字典 + 检测 locale + 设 `<html lang>` 和 `data-locale` #FE
+- [x] [0.8.0-FE-A-004] Layout.astro：body 末尾 inline 脚本扫描 `[data-i18n]` 节点替换 textContent / placeholder / aria-label / title；监听 `qb:locale-change` 事件增量切换 #FE
+- [x] [0.8.0-FE-A-005] 切换器 LocaleSwitcher.astro：地球图标 + EN/中文 下拉菜单；点选 → 写 `localStorage` + dispatch `qb:locale-change` #FE
+
+### FE-B：组件文案双语化
+
+- [x] [0.8.0-FE-B-001] Nav.astro：Changelog / Download 按钮文案加 `data-i18n` #FE
+- [x] [0.8.0-FE-B-002] Hero.astro：title.line1 / lead / tail / subtitle / CTA + typewriter agent 列表按 locale 切换（data-words-en / data-words-zh） #FE
+- [x] [0.8.0-FE-B-003] ProductPreview.astro：tab 标签（监控 / 审批 / 提问 / 跳转）+ heading #FE
+- [x] [0.8.0-FE-B-004] Features.astro：改前端 map 循环，9 张卡 title + desc 双语 #FE
+- [x] [0.8.0-FE-B-005] Pricing.astro：heading / subheading / plan name / note / 5 bullets / CTA / 支持提示 #FE
+- [x] [0.8.0-FE-B-006] FAQ.astro：4 个问答双语 #FE
+- [x] [0.8.0-FE-B-007] Footer.astro：tagline / 列标题 / 5 个链接 #FE
+
+### QA-A：i18n 验证
+
+- [x] [0.8.0-QA-A-001] `npm run build` 通过，HTML 注入字典 58 key + `[data-i18n]` 标记全覆盖 #QA
+- [x] [0.8.0-QA-A-002] Playwright 验证 5 场景：en 浏览器 / zh 浏览器 / 手动切换 zh / 手动切换回 en / localStorage 覆盖 navigator #QA
+- [x] [0.8.0-QA-A-003] 切换菜单 UI 显示 LocaleSwitcher 当前态勾选 ✓ + 切换瞬时无 FOUC #QA
+- [x] [0.8.0-QA-A-004] `README.md` 增「i18n 工作机制」章节 + 目录索引同步（移除 MenuBarMockup / ProviderGrid / Showcase，引入 ProductPreview / Pricing / FAQ / LocaleSwitcher） #QA
+

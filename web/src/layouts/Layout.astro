@@ -1,5 +1,11 @@
 ---
-import "../styles/global.css";
+// SSR 时 Layout 不读取 browser locale — 仅固定输出 lang="en"，<head> 内联脚本
+// 会在首次绘制之前改写 lang/data-locale 并扫描 [data-i18n] 替换文案。
+
+import { dictionaries } from "../i18n/dict";
+// Astro frontmatter 端：直接传原对象，让 define:vars 序列化成 JS 字面量（不是 string）
+const enDict = dictionaries.en;
+const zhDict = dictionaries.zh;
 
 export interface Props {
   title?: string;
@@ -7,16 +13,16 @@ export interface Props {
 }
 
 const {
-  title = "Quota Bar — AI 订阅额度，一眼可见",
-  description = "macOS 菜单栏应用，自动探测并展示你的 AI 订阅额度。装上即用，无需配置，无需打开窗口。支持 Antigravity、Codex、Claude、MiniMax、Kimi、Zcode。",
+  title = "Quota Bar - Visualize API Quotas in your Menu Bar",
+  description = "macOS menu bar app to track your AI subscriptions and quota limits. Stay ahead of limits without breaking your workflow. Supports Antigravity, Codex, Claude, MiniMax, Kimi, Zcode.",
 } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
 
@@ -28,21 +34,235 @@ const {
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://quotabar.ddonlien.com" />
-    <meta property="og:locale" content="zh_CN" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
 
-    <!-- 主题色与 PWA -->
-    <meta name="theme-color" content="#0a7cff" />
-    <meta name="apple-mobile-web-app-title" content="Quota Bar" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- i18n 字典注入（同步内联，让 head 后续脚本能拿到） -->
+    <script is:inline define:vars={{ enDict, zhDict }}>
+      window.QB_I18N = { en: enDict, zh: zhDict };
+    </script>
 
-    <meta name="color-scheme" content="light dark" />
+    <!-- 同步：检测 locale + 设 html lang/attribute。
+         必须在 Tailwind CDN/body 解析之前运行，否则首次绘制会闪英文。
+         注：此脚本<b>不</b>替换 DOM 文案，只设 attribute + lang；DOM 替换由下面 IIFE 同步执行
+         （因为脚本在 head 末尾、body 起始前，inline 解析会阻塞渲染）。 -->
+    <script is:inline>
+      (function () {
+        var STORAGE = "qb_locale";
+        function pick() {
+          try {
+            var s = localStorage.getItem(STORAGE);
+            if (s === "en" || s === "zh") return s;
+          } catch (e) {}
+          var langs = [];
+          try {
+            if (navigator.languages && navigator.languages.length) {
+              langs = navigator.languages;
+            } else if (navigator.language) {
+              langs = [navigator.language];
+            }
+          } catch (e) {}
+          for (var i = 0; i < langs.length; i++) {
+            var t = String(langs[i] || "").toLowerCase();
+            if (t === "zh" || t.indexOf("zh-") === 0) return "zh";
+          }
+          return "en";
+        }
+        var locale = pick();
+        var html = document.documentElement;
+        html.lang = locale === "zh" ? "zh-CN" : "en";
+        html.setAttribute("data-locale", locale);
+
+        // 暴露给后续 IIFE
+        window.QB_LOCALE = locale;
+      })();
+    </script>
+
+    <!-- Tailwind CDN: 必须 is:inline，否则 Astro 5 会把外部 src 改写成本地 module，CDN 不会执行 -->
+    <script is:inline src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- 同步遍历 [data-i18n] 替换文本 + 处理属性（placeholder / aria-label 等）。
+         这是应用 locale 的实质工作。dict 由 window.QB_I18N 提供。
+         首次调用（页面加载）只替换 textContent，不分发 qb:locale-applied，
+         避免 Hero typewriter 在 SSR 文本基础上多一次"清空重建"动画。
+         此脚本必须在 body 全部解析后再跑（因为要扫 body 内的 [data-i18n]），
+         所以放在 body 末尾 — 但此时 first paint 尚未发生（浏览器等 HTML 解析完成
+         再绘制），所以仍是无 FOUC 的"加载完成即渲染正确 locale"。 -->
+    <script is:inline>
+      (function () {
+        var dict = window.QB_I18N || { en: {}, zh: {} };
+        var cur = window.QB_LOCALE || "en";
+        var firstApply = true;
+
+        function resolve(key, locale) {
+          return (dict[locale] && dict[locale][key]) || (dict.en && dict.en[key]) || null;
+        }
+
+        function apply(locale, isFirst) {
+          var nodes = document.querySelectorAll("[data-i18n]");
+          for (var i = 0; i < nodes.length; i++) {
+            var el = nodes[i];
+            var key = el.getAttribute("data-i18n");
+            var val = resolve(key, locale);
+            if (val != null) el.textContent = val;
+            var ph = el.getAttribute("data-i18n-placeholder");
+            if (ph) {
+              var pval = resolve(ph, locale);
+              if (pval != null) el.setAttribute("placeholder", pval);
+            }
+            var al = el.getAttribute("data-i18n-aria");
+            if (al) {
+              var aval = resolve(al, locale);
+              if (aval != null) el.setAttribute("aria-label", aval);
+            }
+            var tit = el.getAttribute("data-i18n-title");
+            if (tit) {
+              var tval = resolve(tit, locale);
+              if (tval != null) el.setAttribute("title", tval);
+            }
+          }
+
+          if (!isFirst) {
+            document.dispatchEvent(
+              new CustomEvent("qb:locale-applied", { detail: { locale: locale } })
+            );
+          }
+        }
+
+        // 监听 qb:locale-change（用户点击切换菜单后分发）
+        document.addEventListener("qb:locale-change", function (e) {
+          var locale = (e.detail && e.detail.locale) || "en";
+          cur = locale;
+          document.documentElement.setAttribute("data-locale", locale);
+          document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
+          apply(locale, firstApply);
+          firstApply = false;
+        });
+
+        // 暴露给 body 末尾的最后一次 apply 脚本调用
+        window.QB_APPLY = function () {
+          apply(cur, firstApply);
+          firstApply = false;
+        };
+      })();
+    </script>
+
+    <style data-purpose="custom-fonts">
+      /* ============================================================
+       * 字体策略（按字符类型分，而不是按语言分）：
+       *   - 拉丁字符 → JetBrains Mono NL（NL = No-Ligature，禁掉 calt）
+       *   - CJK 字符  → 浏览器回退到系统等宽中文（PingFang SC / 苹方 / 微软雅黑）
+       *   - 中英混排时，"中文里的英文"也会用 JetBrains Mono NL（按字符类型）
+       *
+       * 注意：Maple Mono NL 字体文件在 woff2 仓库里只带 Latin，
+       *   不带 CJK（CN 版本 137MB，太大）。所以 CSS 里不引 Maple Mono，
+       *   中文字符由 system-ui / PingFang SC 接管。如果以后要全字符 Maple，
+       *   需要 pyftsubset 做 CJK subset 切片后再替换。
+       * ============================================================ */
+
+      @font-face {
+        font-family: "JetBrains Mono";
+        src: url("/fonts/jetbrains/JetBrainsMono-Regular.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+        unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F, U+0180-024F,
+                       U+0250-02AF, U+02B0-02FF, U+0300-036F, U+0370-03FF,
+                       U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-214F,
+                       U+2150-218B, U+2190-21FF, U+2200-22FF, U+2500-257F;
+        font-feature-settings: "calt" 0, "liga" 0;
+      }
+
+      @font-face {
+        font-family: "JetBrains Mono";
+        src: url("/fonts/jetbrains/JetBrainsMono-Bold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+        unicode-range: U+0020-007F, U+00A0-00FF, U+0100-017F, U+0180-024F,
+                       U+0250-02AF, U+02B0-02FF, U+0300-036F, U+0370-03FF,
+                       U+2000-206F, U+2070-209F, U+20A0-20CF, U+2100-214F,
+                       U+2150-218F, U+2190-21FF, U+2200-22FF, U+2500-257F;
+        font-feature-settings: "calt" 0, "liga" 0;
+      }
+
+      body {
+        font-family: "JetBrains Mono", -apple-system, BlinkMacSystemFont,
+          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", monospace;
+        background-color: #0f0f11;
+        color: #ffffff;
+        background-image: radial-gradient(
+          rgba(255, 255, 255, 0.05) 1px,
+          transparent 1px
+        );
+        background-size: 20px 20px;
+      }
+
+      .pixel-font {
+        font-family: "JetBrains Mono", "Press Start 2P", monospace;
+        letter-spacing: -1px;
+      }
+
+      .text-gradient {
+        background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .glow-effect {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 800px;
+        height: 600px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.08) 0%,
+          rgba(15, 15, 17, 0) 70%
+        );
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .glass-card {
+        background: rgba(25, 25, 28, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+      }
+
+      .glass-window {
+        box-shadow:
+          0 25px 50px -12px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #1e1e1e;
+      }
+
+      details > summary {
+        list-style: none;
+      }
+      details > summary::-webkit-details-marker {
+        display: none;
+      }
+    </style>
+
+    <!-- i18n 兼容样式：避免 inline 脚本执行前短暂"看不到 -> 看到"的抖动。
+         注意：[data-locale] 默认由 head 同步脚本设置。如果脚本异常没运行（极少见），
+         浏览器仍会显示 SSR 默认的英文版，不会出错。 -->
+    <style is:inline>
+      /* 暂无视觉切换需求（用 JS 替换 textContent），保留供未来扩展 */
+    </style>
   </head>
-  <body>
+  <body class="antialiased min-h-screen relative overflow-x-hidden">
+    <!-- Background Glow -->
+    <div class="glow-effect"></div>
+
     <slot />
 
     <!-- 滚动入场动画：基于 IntersectionObserver，无依赖 -->
@@ -64,6 +284,31 @@ const {
       } else {
         reveals.forEach((el) => el.classList.add("is-visible"));
       }
+    </script>
+
+    <!-- i18n 增强：localeswitcher 当前态勾选 + 切换后修复 typewriter 等 -->
+    <script is:inline>
+      (function () {
+        function refreshSwitcherTick(locale) {
+          var ticks = document.querySelectorAll("[data-locale-pick] .locale-tick");
+          ticks.forEach(function (t) {
+            t.style.opacity = (t.parentElement.getAttribute("data-locale-pick") === locale) ? "1" : "0";
+          });
+          var lbls = document.querySelectorAll("[data-current-locale-label]");
+          lbls.forEach(function (l) { l.textContent = locale === "zh" ? "中文" : "EN"; });
+        }
+
+        // 首次同步：body DOM 已完整，调 head 暴露的 QB_APPLY 完成 i18n 替换。
+        // 必须在 LocaleSwitcher 的 IIFE 之后执行（LocaleSwitcher 同时刷新勾选状态）。
+        // 二者顺序：先 apply，再 refresh tick。
+        if (typeof window.QB_APPLY === "function") window.QB_APPLY();
+        refreshSwitcherTick(window.QB_LOCALE || "en");
+
+        document.addEventListener("qb:locale-change", function (e) {
+          var locale = (e.detail && e.detail.locale) || "en";
+          refreshSwitcherTick(locale);
+        });
+      })();
     </script>
   </body>
 </html>
