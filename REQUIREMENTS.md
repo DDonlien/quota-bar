@@ -377,3 +377,61 @@
 ### DOC-A：用户可见文档
 
 - [ ] [0.7.0-DOC-A-000] README.md 的「已支持 Provider」列表追加 Z Code（含 4 种 plan 简要说明 + 安装路径）#P1
+
+## Phase - v0.8.0 - 订阅过期识别（"权威 > API 反推"模型）
+
+> **触发 bug**：user 实测发现 `~/.codex/auth.json` 的 id_token 里 `chatgpt_subscription_active_until = 2026-06-25`，但 Codex.app 在订阅过期后调 `wham/usage` 仍能拿到 200 OK，**响应里** `plan_type` 跌成 `"free"`，`rate_limit.primary_window.limit_window_seconds` 跳到 `2592000`（30 天），被现有 parser 错误地按"5h 窗口"处理 → UI 推断成"月额度" → 显示"5% 月额度"——**完全是误导**。从原理上"用 quota 数值反推过期"就不靠谱（quota 数值会因用量变化、API 改动、free 用户本来就有月度窗口而误判）。
+>
+> **解决思路**：订阅状态最权威的来源 = 服务商在用户登录时写下来的本地授权元信息（OpenAI 把订阅到期日塞进 id_token 的 payload；其他 provider 类似），**不依赖网络、不需要解析 quota window**。按 user 提的优先级："app 授权信息 > CLI 指令 > Web 抓取"。
+>
+> **本 phase 第一批只覆盖 Codex**（user 当前 case），其他 provider 沿用同一 inspector 模式扩展：
+> 1. 从 `~/.codex/auth.json` 的 `id_token` 解码出 `chatgpt_plan_type` + `chatgpt_subscription_active_until`
+> 2. 过期时直接返回 `.subscriptionExpired` snapshot，不让 free 用户的"月额度"窗口被任何 strategy 渲染
+> 3. UI 状态灯红色 + 灰标"订阅已过期 · Plus · 到期 2026/6/25"
+> 4. CodexDashboardParser 加 `plan_type == "free"` 防御，避免 BrowserCookie 路径绕过
+>
+> **不做什么**（YAGNI）：
+> - 不重写整个订阅状态机——本 phase 只识别"过期 / free"两种清楚状态，"明天即将到期提醒"留 P2
+> - 不在 v0.8.0 接 Claude/Cursor/Antigravity 的同类检测——每个 provider 的 token 字段不一样（Claude 的 entitlement 路径不同，Cursor 走 dashboard 抓取，Antigravity 走本地 language_server），工作量是 Codex 的 3-5x
+> - 不做"明天续费提醒"等可观察性优化
+
+### ARCH-A：订阅状态基础架构
+
+> Codex 一次落地，其他 provider 复用同模式。
+
+- [x] [0.8.0-ARCH-A-000] `JWTPayloadDecoder` 工具：解 JWT payload 部分（不验签，只读 base64url+JSON），失败返回 nil #P1 — `SubscriptionInspector.swift:JWTPayloadDecoder`
+- [x] [0.8.0-ARCH-A-001] `OpenAIAuthPayload` struct：把 `https://api.openai.com/auth` 命名空间下的字段组装成 Swift 类型（plan_type / active_start / active_until / last_checked）#P1
+- [x] [0.8.0-ARCH-A-002] `SubscriptionStatus` 枚举：`.active(expiresAt)` / `.expired(lastPlan, expiredAt)` / `.free` / `.unknown`；`isEffectivelyExpired` 计算属性 #P1
+- [x] [0.8.0-ARCH-A-003] `CodexSubscriptionInspector`：从 `~/.codex/auth.json` 解 id_token → 映射成 `SubscriptionStatus`；失败（文件缺失 / 字段缺失 / JWT 坏）一律返回 `.unknown`，**不要**瞎猜 #P1 — `SubscriptionInspector.swift:CodexSubscriptionInspector`
+- [x] [0.8.0-ARCH-A-003-test] 单元测试：JWT 解析 4 种边界（合法 / 三段缺失 / base64 坏 / 非 JSON payload） + inspector 6 种路径（expired / active / free / 文件缺失 / 字段缺失） + `.isEffectivelyExpired` 语义 #P1
+
+### DATA-A：Codex 订阅过期识别
+
+- [x] [0.8.0-DATA-A-000] `CodexAuthProvider.fetchSnapshot` 在发 wham/usage 前先调 `CodexSubscriptionInspector.inspect()`，过期 / free 时**直接返回** `availability: .subscriptionExpired(plan, expiredAt)` 的 marker snapshot（**不** throw，让 pipeline 立即返回，不让后续 BrowserCookie / CLILog strategy 用 free 用户的"月额度"primary_window 覆盖掉正确状态）#P1
+- [x] [0.8.0-DATA-A-001] `CodexDashboardParser.parse(data:)` 在响应 `plan_type == "free"` 时返回 nil（防御 BrowserCookie 路径：parser 直接拒绝 free 用户的"月额度"窗口，让 pipeline 走 fallback 而不是显示误导数据）#P1
+- [x] [0.8.0-DATA-A-002] `BrowserCookieProvider.fetchSnapshotImpl`（Codex 路径）在发请求前先调 `CodexSubscriptionInspector`，过期 / free 时返回 marker snapshot（与 `CodexAuthProvider` 行为一致——保证两条路径都尊重订阅状态）#P1
+- [x] [0.8.0-DATA-A-003] `ProviderAvailability` 加新 case `.subscriptionExpired(plan: String?, expiredAt: Date?)`；`statusColor` 给红色（`#FF453A`），区别于 `.needsConfiguration` 灰 / `.fetchFailed` 橙 #P1 — `QuotaModels.swift:ProviderAvailability`
+- [x] [0.8.0-DATA-A-004] `QuotaFetchError` 加新 case `.subscriptionExpired(plan, expiredAt)`；`availabilityFallback` 返回 `.subscriptionExpired(plan, expiredAt)`；`fallbackPriority` = 2（与 missingCredentials 同级，"配置相关"问题）#P1
+- [x] [0.8.0-DATA-A-005] `RefreshCoordinator.applyProviderResult.keepAfterApply` 把 `.subscriptionExpired` 当 keep=true（跟 `.needsConfiguration` 一样保留，让 UI 展示过期 hint）#P1
+- [x] [0.8.0-DATA-A-006] `RefreshCoordinator.pickBestSnapshot.priority` 给 `.subscriptionExpired` 优先级 3（与 `.needsConfiguration` 同级）；`needsFullDiskAccess` switch 显式排除（不混淆 Full Disk Access 检测）#P1
+- [x] [0.8.0-DATA-A-007] `ProviderFetchPipeline.merge.priority` 同样把 `.subscriptionExpired` 放 3（与 RefreshCoordinator 一致；目前 CodexPipeline 用 sequential 模式，parallel 模式留给将来 multi-source 的 provider）#P1
+- [x] [0.8.0-DATA-A-001-test] 单元测试：CodexDashboardParser `plan_type=free` → nil；`planType` 大小写不敏感；`plan_type=plus` 仍正常解析 5h+weekly #P1
+- [x] [0.8.0-DATA-A-000-test] 单元测试：ProviderSnapshot `.subscriptionExpired` 的 statusColor 安全（不读 quotas，quotas 为空时不崩）#P1
+
+### UI-A：过期状态 UI 表现
+
+- [x] [0.8.0-UI-A-000] `MenuView.PlanSection` 处理 `.subscriptionExpired(plan, expiredAt)`：不渲染任何 quota window（避免被 free 月度窗口误导），只展示一行灰标 hint `订阅已过期 · Plus · 到期 2026/6/25`（无 plan 时省略，无到期日时省略）#P1
+- [x] [0.8.0-UI-A-001] `StatusBarController.drawableSnapshots` 把 `.subscriptionExpired` 当 drawable（区别于 `.notInstalled` / `.fetchFailed`），让菜单栏仍画 bar（0% 高度 + 最小占位 bar）以表达"我知道这个订阅存在但已过期" #P1
+- [x] [0.8.0-UI-A-002] `StatusBarController.remainingFraction` 对 `.subscriptionExpired` 返回 0（与其他"用完"视觉一致，区别于 `.loading` / `.needsConfiguration` 的 50%）#P1
+- [x] [0.8.0-UI-A-003] `StatusBarController.refreshStatusItemAppearance` tooltip 对 `.subscriptionExpired` 显示 `"Codex 已过期"`，区别于正常 `Codex 5%` / `Codex 刷新中` #P1
+
+### DATA-B：其他 provider 沿用 Inspector 模式（v0.8.0 不落地，只登记）
+
+> 每个 provider 的订阅状态来源不同，工作量是 Codex 的 3-5x。先登记，等 Codex 这条线稳定后再排期。
+
+- [ ] [0.8.0-DATA-B-000] Claude 订阅到期日：claude.ai 的 session cookie 里解析 `membership_type` / `subscription_end_date` 字段；或抓 `claude.ai/settings/plan` DOM 提取"Next billing" #deferred — 等 v0.6.0-DATA-C（Claude 真实订阅到期日 headless 抓取）落地后顺手做
+- [ ] [0.8.0-DATA-B-001] Cursor 订阅到期日：Cursor 没有原生 token 元信息，需要抓 `cursor.com/dashboard` DOM 提取"Plan renews on..." #deferred
+- [ ] [0.8.0-DATA-B-002] MiniMax 订阅到期日：MiniMax Web dashboard `coding_plan/remains` 不返回订阅到期日；需要抓 `minimaxi.com/user-center/payment/balance` DOM #deferred
+- [ ] [0.8.0-DATA-B-003] Antigravity 订阅到期日：走本地 language_server probe 不容易拿到订阅元信息，可能要抓 antigravity.google/settings 页面 #deferred
+- [ ] [0.8.0-DATA-B-004] Kimi 订阅到期日：已通过 `KimiSubscriptionStatParser.parseSubscriptionExpiresAt` 从 `subscriptionBalance.expireTime` 提取（v0.6.0 已落地）；但**没有过期判定**——只填 `subscriptionExpiresAt`，UI 仅在 `.available` 时显示日期，过期后会显示一个"很久以前"的到期日但不报红 #cut — 实际 Kimi 不会让订阅过期数据继续返回，过期后会跌到 free 不返 quota，行为自然
+

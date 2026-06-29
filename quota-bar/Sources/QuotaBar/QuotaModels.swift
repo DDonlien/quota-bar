@@ -279,10 +279,24 @@ enum ProviderAvailability: Hashable {
     /// UI 展示「订阅组名 + 状态灯（灰色）+ 骨架占位」，直到真实数据回填。
     /// 与 `available` 的区别：loading 状态下没有真实 quota 窗口，只有骨架；
     /// 一旦 pipeline 返回或 fallback 决定，availability 会切到 `.available` / `.needsConfiguration` /
-    /// `.fetchFailed` / `.notInstalled` 之一。
+    /// `.subscriptionExpired` / `.fetchFailed` / `.notInstalled` 之一。
     case loading
     case available
     case needsConfiguration(reason: String)
+    /// 订阅已过期（v0.8.0 新增）。
+    ///
+    /// 判定来源（按 user 提的 "权威 > API 反推" 优先级）：
+    /// 1. **app 授权信息**：`~/.codex/auth.json` 的 id_token 解析 `chatgpt_subscription_active_until < now`
+    ///    （v0.8.0 仅 Codex；Claude/Kimi/Antigravity 等后续按同模式扩展）
+    /// 2. **CLI 指令**：CLI 输出的 plan / status
+    /// 3. **Web 抓取兜底**：`wham/usage` 返回 `plan_type == "free"` + `secondary_window == null`
+    ///
+    /// UI 表现：
+    /// - 状态灯 = 红色（区别于 needsConfiguration 灰 / fetchFailed 橙）
+    /// - planHeader 显示"已过期"灰标，hint 上次套餐名（`lastPlan`）和到期日
+    /// - 不展示任何 quota window（避免被 free 用户的"月额度"误导成付费额度）
+    /// - 菜单栏 bar 仍画（红色或最小占位）以保持"已知订阅存在"信号
+    case subscriptionExpired(plan: String?, expiredAt: Date?)
     case notInstalled
     case fetchFailed(reason: String)
 }
@@ -420,6 +434,9 @@ struct ProviderSnapshot: Identifiable, Hashable {
             } else {
                 return Color.green
             }
+        case .subscriptionExpired:
+            // v0.8.0：订阅已过期用红色灯，区别于 needsConfiguration 灰 / fetchFailed 橙。
+            return Color(hex: "#FF453A")
         case .needsConfiguration: return Color(hex: "#8E8E93")
         case .notInstalled: return Color(hex: "#8E8E93")
         case .fetchFailed: return Color(hex: "#FF9F0A")
@@ -565,11 +582,28 @@ enum QuotaFetchError: LocalizedError, Equatable {
     case permissionRequired(detail: String)
     case sourceUnavailable(detail: String)
     case transient(detail: String)
+    /// 订阅已过期（v0.8.0 新增）。
+    ///
+    /// 与 `missingCredentials`（"我没登录"）和 `transient`（"网络挂了"）区分：
+    /// 这是"我登录了、token 还有效、但订阅本身已经过期"——意思是账号在，
+    /// 拿到的数据可能不再代表付费档位（Codex 这种情况会跌成 free 用户的"月额度"）。
+    ///
+    /// 由 Codex `CodexAuthProvider` 在调用 `CodexSubscriptionInspector` 后判定：
+    /// `chatgpt_subscription_active_until < now` 或 `plan_type == "free"` → 抛此错。
+    case subscriptionExpired(plan: String?, expiredAt: Date?)
 
     var errorDescription: String? {
         switch self {
         case .missingCredentials(let d), .permissionRequired(let d), .sourceUnavailable(let d), .transient(let d):
             return d
+        case .subscriptionExpired(let plan, let expiredAt):
+            if let plan, let expiredAt {
+                return "订阅已过期：\(plan)（到期 \(expiredAt)）"
+            } else if let plan {
+                return "订阅已过期：\(plan)"
+            } else {
+                return "订阅已过期"
+            }
         }
     }
 
@@ -583,6 +617,8 @@ enum QuotaFetchError: LocalizedError, Equatable {
             return .notInstalled
         case .transient(let reason):
             return .fetchFailed(reason: reason)
+        case .subscriptionExpired(let plan, let expiredAt):
+            return .subscriptionExpired(plan: plan, expiredAt: expiredAt)
         }
     }
 
@@ -592,6 +628,7 @@ enum QuotaFetchError: LocalizedError, Equatable {
         case .missingCredentials: return 2
         case .transient: return 1
         case .sourceUnavailable: return 0
+        case .subscriptionExpired: return 2  // 与 missingCredentials 同级（都是"配置相关"问题）
         }
     }
 }

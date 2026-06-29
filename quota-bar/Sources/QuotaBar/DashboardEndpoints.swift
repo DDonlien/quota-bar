@@ -110,6 +110,19 @@ struct CodexDashboardParser: DashboardParser {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return nil
         }
+
+        // v0.8.0：Codex 在订阅过期后会跌成 free 用户，响应里 `plan_type == "free"`。
+        // 这种情况下 `rate_limit.primary_window` 的 `limit_window_seconds` 是 2592000
+        // （30 天），被 UI 推断为"月额度"——但实际上是 free 用户的月度窗口，**不是**
+        // 付费 Plus 档位的真实额度。直接返回 nil，让 CodexAuthProvider 路径之外的
+        // strategy（BrowserCookie / CLILog）也走 fallback 而不是显示误导数据。
+        if let planType = (json["plan_type"] as? String ?? json["planType"] as? String)?
+            .trimmingCharacters(in: .whitespaces).lowercased(),
+           planType == "free"
+        {
+            return nil
+        }
+
         let rateLimit = (json["rate_limit"] as? [String: Any]) ?? json
         var windows: [QuotaWindow] = []
 

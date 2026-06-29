@@ -87,6 +87,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 if case .loading = snap.availability {
                     return "\(snap.kind.displayName) 刷新中"
                 }
+                if case .subscriptionExpired = snap.availability {
+                    // v0.8.0：tooltip 提示"已过期"，区别于正常的 0% / 30% 数字
+                    return "\(snap.kind.displayName) 已过期"
+                }
                 let pct = Int((Self.remainingFraction(for: snap) * 100).rounded())
                 return "\(snap.kind.displayName) \(pct)%"
             }.joined(separator: " · ")
@@ -160,13 +164,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private static func drawableSnapshots(from snapshots: [ProviderSnapshot]) -> [ProviderSnapshot] {
-        // 显示：available（有 quota）/ needsConfiguration / loading
+        // 显示：available（有 quota）/ needsConfiguration / loading / subscriptionExpired
         // 隐藏：notInstalled / fetchFailed
+        // v0.8.0：subscriptionExpired 仍画 bar（0% 高度，最小占位），让用户看到
+        // "我知道这个订阅存在但已过期"——区别于 notInstalled（直接不画）。
         snapshots.filter { snapshot in
             switch snapshot.availability {
             case .available:
                 return !snapshot.quotas.isEmpty
-            case .needsConfiguration, .loading:
+            case .needsConfiguration, .loading, .subscriptionExpired:
                 return true
             case .notInstalled, .fetchFailed:
                 return false
@@ -179,6 +185,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         switch snapshot.availability {
         case .loading, .needsConfiguration:
             return 0.5
+        case .subscriptionExpired:
+            // v0.8.0：订阅已过期 → bar 高度 0%（与其他"用完"视觉一致），但仍画最小 bar
+            // 占位以让用户知道订阅存在。
+            return 0
         default:
             break
         }

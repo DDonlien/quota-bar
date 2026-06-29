@@ -17,12 +17,16 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
     private let endpoint: URL
     private let session: URLSession
     private let dateProvider: () -> Date
+    /// v0.8.0：订阅状态检查器——从 auth.json 的 id_token 读 `chatgpt_subscription_active_until`。
+    /// 见 `SubscriptionInspector.swift` 顶部说明。
+    private let inspector: CodexSubscriptionInspector
 
     init(
         authPath: String? = nil,
         endpoint: URL = URL(string: "https://chatgpt.com/backend-api/wham/usage")!,
         session: URLSession = .shared,
-        dateProvider: @escaping () -> Date = Date.init
+        dateProvider: @escaping () -> Date = Date.init,
+        inspector: CodexSubscriptionInspector? = nil
     ) {
         if let authPath {
             self.authPath = authPath
@@ -34,10 +38,32 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
         self.endpoint = endpoint
         self.session = session
         self.dateProvider = dateProvider
+        // 默认用同一个 authPath 构造 inspector；测试可注入自定义
+        self.inspector = inspector ?? CodexSubscriptionInspector(authPath: self.authPath, dateProvider: dateProvider)
     }
 
     func fetchSnapshot(timeout: TimeInterval) async throws -> ProviderSnapshot {
         let fetchedAt = dateProvider()
+
+        // v0.8.0：先用 CodexSubscriptionInspector 检查订阅状态（"权威 > API 反推"模型）。
+        // - 订阅已过期 / 已跌成 free → **返回** availability=.subscriptionExpired 的 marker
+        //   snapshot（不是 throw！），让 pipeline 立即返回，**不**让后续 BrowserCookie / CLILog
+        //   strategy 用 free 用户的"月额度" primary_window 覆盖掉正确状态
+        // - .active / .unknown → 继续走原流程，让 wham/usage 拿真实 quota
+        // 失败读不到 auth.json 时跳过检查（保持向后兼容：旧用户/CLI 模式 → 走原路径）
+        let subscriptionStatus = inspector.inspect()
+        if subscriptionStatus.isEffectivelyExpired {
+            let (plan, expiredAt) = Self.extractExpiry(from: subscriptionStatus)
+            return ProviderSnapshot(
+                kind: .codex,
+                subscriptionTier: ProviderPricing.normalizedTier(plan),
+                availability: .subscriptionExpired(plan: plan, expiredAt: expiredAt),
+                quotas: [],
+                monthlyPrice: nil,
+                fetchedAt: fetchedAt
+            )
+        }
+
         guard let creds = loadCredentials() else {
             throw QuotaFetchError.missingCredentials(detail: "未找到 ~/.codex/auth.json")
         }
@@ -84,6 +110,19 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
             monthlyPrice: await ProviderPricing.localizedMonthlyPrice(kind: .codex, tier: tier),
             fetchedAt: fetchedAt
         )
+    }
+
+    /// 从 `SubscriptionStatus` 中提取 `(plan, expiredAt)` 给错误用。
+    private static func extractExpiry(from status: SubscriptionStatus) -> (String?, Date?) {
+        switch status {
+        case .expired(let lastPlan, let expiredAt):
+            return (lastPlan, expiredAt)
+        case .free:
+            // free 状态：planType 是 "free"（OpenAI 自己标），但 lastPlan 历史 plan 是 nil
+            return (nil, nil)
+        case .active, .unknown:
+            return (nil, nil)
+        }
     }
 
     private struct Credentials {

@@ -233,7 +233,7 @@ final class RefreshCoordinator: ObservableObject {
         let hasFailedKind = finalSnapshots.contains { snapshot in
             switch snapshot.availability {
             case .available, .loading: return false
-            case .needsConfiguration, .notInstalled, .fetchFailed: return true
+            case .needsConfiguration, .notInstalled, .fetchFailed, .subscriptionExpired: return true
             }
         }
         let hasAnyLoading = finalSnapshots.contains { $0.availability == .loading }
@@ -252,7 +252,7 @@ final class RefreshCoordinator: ObservableObject {
             case .needsConfiguration(let reason), .fetchFailed(let reason):
                 return reason.localizedCaseInsensitiveContains("Full Disk Access")
                     || reason.localizedCaseInsensitiveContains("完全磁盘访问")
-            case .available, .loading, .notInstalled:
+            case .available, .loading, .notInstalled, .subscriptionExpired:
                 return false
             }
         }
@@ -309,12 +309,14 @@ final class RefreshCoordinator: ObservableObject {
         }
 
         // 过滤掉 fetchFailed / notInstalled（与原行为一致）：不在 dropdown 显示
-        // loading（理论上此时 loading 已被替换）/ available / needsConfiguration 保留
+        // loading（理论上此时 loading 已被替换）/ available / subscriptionExpired / needsConfiguration 保留
         let keepAfterApply: Bool
         switch newSnapshot.availability {
         case .available:
             keepAfterApply = !newSnapshot.quotas.isEmpty
-        case .needsConfiguration:
+        case .needsConfiguration, .subscriptionExpired:
+            // v0.8.0：subscriptionExpired 跟 needsConfiguration 一样，保留让 UI 展示
+            // 「已过期 / 上次套餐 / 到期日」灰标（让用户知道"我曾经是 Plus，但过期了"）。
             keepAfterApply = true
         case .loading, .notInstalled, .fetchFailed:
             keepAfterApply = false
@@ -368,10 +370,12 @@ final class RefreshCoordinator: ObservableObject {
         // 优先级：available > needsConfiguration > loading > notInstalled > fetchFailed
         // loading 介于 needsConfiguration 和 notInstalled 之间：它表明 service 已装且正在取数据，
         // 优先级略高于 notInstalled / fetchFailed 但低于 available / needsConfiguration。
+        // v0.8.0：subscriptionExpired 优先级与 needsConfiguration 同级（都是"配置相关"问题）
         let priority: (ProviderAvailability) -> Int = { availability in
             switch availability {
             case .available: return 4
             case .needsConfiguration: return 3
+            case .subscriptionExpired: return 3
             case .loading: return 2
             case .notInstalled: return 1
             case .fetchFailed: return 0

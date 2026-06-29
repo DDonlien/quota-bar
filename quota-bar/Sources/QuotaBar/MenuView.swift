@@ -395,6 +395,11 @@ private struct PlanSection: View {
                     // 单订阅组 provider：保持现有 UI（一个 quota list，状态灯在 planHeader 上）
                     QuotaRows(snapshot: snapshot, quotas: subscriptionGroups.first?.items ?? [])
                 }
+            case .subscriptionExpired(let plan, let expiredAt):
+                // v0.8.0：订阅已过期。不渲染任何 quota window（避免被 free 用户的"月额度"
+                // primary_window 误导成有效付费额度），只展示一行灰标 hint，让用户知道
+                // 1) 账号在 2) 上次付费档位 3) 到期日
+                StatusRow(text: Self.expiredHint(plan: plan, expiredAt: expiredAt))
             case .needsConfiguration(let reason):
                 if snapshot.kind == .minimax, let onSaveKey {
                     MiniMaxKeyInputField(
@@ -411,6 +416,24 @@ private struct PlanSection: View {
             }
         }
         .opacity(snapshot.isStale ? 0.7 : 1.0)
+    }
+
+    /// v0.8.0：把 `.subscriptionExpired(plan, expiredAt)` 拼成一行用户可读的灰标 hint。
+    /// 例：`订阅已过期 · Plus · 到期 2026/6/25`，`订阅已过期 · Plus`（无到期日），
+    /// 或 `订阅已过期`（都没有）。
+    private static func expiredHint(plan: String?, expiredAt: Date?) -> String {
+        var parts: [String] = ["订阅已过期"]
+        if let plan, !plan.isEmpty {
+            parts.append(plan)
+        }
+        if let expiredAt {
+            let f = DateFormatter()
+            f.locale = Locale(identifier: "en_US_POSIX")
+            f.timeZone = TimeZone.current
+            f.dateFormat = "yyyy/M/d"
+            parts.append("到期 \(f.string(from: expiredAt))")
+        }
+        return parts.joined(separator: " · ")
     }
 }
 

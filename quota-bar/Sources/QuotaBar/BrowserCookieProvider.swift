@@ -71,6 +71,26 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
     }
 
     private func fetchSnapshotImpl(endpoint: DashboardEndpoints.Endpoint, fetchedAt: Date, timeout: TimeInterval) async throws -> ProviderSnapshot {
+        // v0.8.0：Codex 路径在发请求前先检查订阅状态（与 CodexAuthProvider 一致的"权威"
+        // 模型）。如果订阅已过期，直接返回 marker snapshot，不让 free 用户的"月额度"窗口
+        // 渲染到 UI。失败读不到 auth.json 时跳过（与 CodexAuthProvider 行为一致）。
+        if kind == .codex {
+            let inspector = CodexSubscriptionInspector()
+            let status = inspector.inspect()
+            if status.isEffectivelyExpired {
+                let (plan, expiredAt) = Self.extractExpiry(from: status)
+                NSLog("QuotaBar: [codex-cookie] subscription expired (plan=\(plan ?? "?"), until=\(expiredAt?.description ?? "?")) — skip dashboard")
+                return ProviderSnapshot(
+                    kind: .codex,
+                    subscriptionTier: ProviderPricing.normalizedTier(plan),
+                    availability: .subscriptionExpired(plan: plan, expiredAt: expiredAt),
+                    quotas: [],
+                    monthlyPrice: nil,
+                    fetchedAt: fetchedAt
+                )
+            }
+        }
+
         let domains = kind.dashboardCookieDomains
         let cookies: [HTTPCookie]
         do {
@@ -288,6 +308,18 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
                 ?? user["tier"] as? String
         }
         return nil
+    }
+
+    /// v0.8.0：从 `SubscriptionStatus` 中提取 `(plan, expiredAt)` 给 snapshot 用。
+    private static func extractExpiry(from status: SubscriptionStatus) -> (String?, Date?) {
+        switch status {
+        case .expired(let lastPlan, let expiredAt):
+            return (lastPlan, expiredAt)
+        case .free:
+            return (nil, nil)
+        case .active, .unknown:
+            return (nil, nil)
+        }
     }
 
     private func performRequest(with cookies: [HTTPCookie], endpoint: DashboardEndpoints.Endpoint) async throws -> Data {
