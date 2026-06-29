@@ -22,30 +22,30 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            quota-bar/.build
-            quota-bar/.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('quota-bar/Package.swift', 'quota-bar/Package.resolved') }}
+            macos/.build
+            macos/.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('macos/Package.swift', 'macos/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-
 
       - name: Show Swift toolchain
-        working-directory: quota-bar
+        working-directory: macos
         run: swift --version
 
       - name: Resolve dependencies
-        working-directory: quota-bar
+        working-directory: macos
         run: swift package resolve
 
       - name: Build (debug)
-        working-directory: quota-bar
+        working-directory: macos
         run: swift build
 
-  web-build:
-    name: web build
+  site-build:
+    name: site build
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: web
+        working-directory: site
     steps:
       - uses: actions/checkout@v4
 
@@ -54,7 +54,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: site/package-lock.json
 
       - name: Install dependencies
         run: npm ci

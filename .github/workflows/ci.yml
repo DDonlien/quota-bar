@@ -21,24 +21,24 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            quota-bar/.build
-            quota-bar/.swiftpm
-          key: ${{ runner.os }}-spm-${{ matrix.os }}-${{ hashFiles('quota-bar/Package.swift', 'quota-bar/Package.resolved') }}
+            macos/.build
+            macos/.swiftpm
+          key: ${{ runner.os }}-spm-${{ matrix.os }}-${{ hashFiles('macos/Package.swift', 'macos/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-${{ matrix.os }}-
 
       - name: Show Swift toolchain
-        working-directory: quota-bar
+        working-directory: macos
         run: swift --version
 
       - name: Resolve dependencies
-        working-directory: quota-bar
+        working-directory: macos
         run: swift package resolve
 
       - name: Build (debug)
-        working-directory: quota-bar
+        working-directory: macos
         run: swift build
 
       - name: Build (release)
-        working-directory: quota-bar
+        working-directory: macos
         run: swift build -c release

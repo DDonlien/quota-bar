@@ -16,12 +16,12 @@ DerivedData/
 *.dSYM/
 *.app
 
-# web 子项目（双保险：web/.gitignore 也已排除，根 ignore 兜底）
-web/node_modules/
-web/dist/
-web/.astro/
-web/.output/
-web/.vercel/
+# site 子项目（双保险：site/.gitignore 也已排除，根 ignore 兜底）
+site/node_modules/
+site/dist/
+site/.astro/
+site/.output/
+site/.vercel/
 
 # 编辑器
 .vscode/
@@ -34,6 +34,6 @@ web/.vercel/
 /tmp/
 
 # Agent 工作的中间产物（保持 agent-log/ 干净）
-.worktrees/
+worktrees/
 reference/project/hidden/
 reference/project/Mos/

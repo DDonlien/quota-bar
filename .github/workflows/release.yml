@@ -25,33 +25,33 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            quota-bar/.build
-            quota-bar/.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('quota-bar/Package.swift', 'quota-bar/Package.resolved') }}
+            macos/.build
+            macos/.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('macos/Package.swift', 'macos/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-
 
       - name: Show Swift toolchain
-        working-directory: quota-bar
+        working-directory: macos
         run: swift --version
 
       - name: Resolve dependencies
-        working-directory: quota-bar
+        working-directory: macos
         run: swift package resolve
 
       - name: Build (debug)
-        working-directory: quota-bar
+        working-directory: macos
         run: swift build
 
       - name: Build (release)
-        working-directory: quota-bar
+        working-directory: macos
         run: swift build -c release
 
-      - name: Build web subproject (Astro, smoke test)
+      - name: Build site subproject (Astro, smoke test)
         # 真正的部署走 Vercel 的 GitHub integration（Vercel dashboard 里把项目 link 到这个 repo，
         # push main 时 Vercel 自己会 build + deploy + 绑 quotabar.ddonlien.com）。这里的 npm run
-        # build 只是提前抓 web/ 的构建错误（marketing 主页破图不能等到 Vercel 才暴露）。
-        working-directory: web
+        # build 只是提前抓 site/ 的构建错误（marketing 主页破图不能等到 Vercel 才暴露）。
+        working-directory: site
         run: |
           if [ -f package.json ]; then
             npm ci
@@ -70,14 +70,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            quota-bar/.build
-            quota-bar/.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('quota-bar/Package.swift', 'quota-bar/Package.resolved') }}
+            macos/.build
+            macos/.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('macos/Package.swift', 'macos/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-
 
       - name: Build .app via build-app.sh
-        working-directory: quota-bar
+        working-directory: macos
         env:
           APP_NAME: QuotaBar
           SHORT_SHA: ${{ github.sha }}
@@ -89,7 +89,7 @@ jobs:
           SHORT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          APP="$GITHUB_WORKSPACE/quota-bar/build/latest/${APP_NAME}.app"
+          APP="$GITHUB_WORKSPACE/macos/build/latest/${APP_NAME}.app"
           test -d "$APP" || { echo "build-app.sh did not produce $APP"; exit 1; }
           STAGE="$RUNNER_TEMP/dmg-stage"
           rm -rf "$STAGE"

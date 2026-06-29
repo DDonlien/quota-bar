@@ -73,7 +73,7 @@ Gemini 已从主动展示路径移除，Google 系配额优先通过 Antigravity
 
 ```bash
 git clone https://github.com/yourname/quota-bar.git
-cd quota-bar/quota-bar
+cd quota-bar/macos
 swift run
 ```
 
@@ -83,15 +83,15 @@ swift run
 2. 点开 → 顶部若有橙色横幅 → 点「打开系统设置」授权 Full Disk Access
 3. 重启 quota-bar → 在任一支持的浏览器里登录过 Codex / Claude / Kimi / MiniMax，或运行过 Antigravity 后，菜单里会出现真实额度
 
-### 跑 web 主页（[quotabar.ddonlien.com](https://quotabar.ddonlien.com) 的本地版）
+### 跑 site 主页（[quotabar.ddonlien.com](https://quotabar.ddonlien.com) 的本地版）
 
-营销主页是独立 Astro 静态站，部署在 `web/` 子项目里。日常不需启动，但 PR 改到主页或新增 provider 卡片时本地预览用：
+营销主页是独立 Astro 静态站，按新模板目录规则部署在 `site/` 子项目里。日常不需启动，但 PR 改到主页或新增 provider 卡片时本地预览用：
 
 ```bash
-cd web
+cd site
 npm install
 npm run dev      # 本地预览 http://localhost:4321
-npm run build    # 构建到 web/dist/，CI 会把 dist/ 部署到 quotabar.ddonlien.com
+npm run build    # 构建到 site/dist/，CI 会把 dist/ 部署到 quotabar.ddonlien.com
 ```
 
 依赖 `node 20+`（GitHub Actions 用 ubuntu-latest + setup-node@v4 也是 20）。
@@ -99,14 +99,14 @@ npm run build    # 构建到 web/dist/，CI 会把 dist/ 部署到 quotabar.ddon
 ### 打包成 .app
 
 ```bash
-cd quota-bar
+cd macos
 ./scripts/build-app.sh
 ```
 
-每次运行都会在 `quota-bar/build/` 下生成一个以当前时间命名的子文件夹：
+每次运行都会在 `macos/build/` 下生成一个以当前时间命名的子文件夹：
 
 ```text
-quota-bar/build/
+macos/build/
 ├── 20260620-193559/
 │   └── QuotaBar.app
 ├── latest -> 20260620-193559/
@@ -127,7 +127,7 @@ quota-bar/build/
 
 ```text
 .
-├── quota-bar/                 # 实际 SwiftPM 包（PascalCase 标识符是 SPM 硬约束）
+├── macos/                 # 实际 SwiftPM 包（PascalCase 标识符是 SPM 硬约束）
 │   ├── Package.swift          # SPM 入口（依赖 SweetCookieKit）
 │   ├── Sources/QuotaBar/
 │   │   ├── QuotaModels.swift           # 领域模型：ProviderKind / QuotaWindow / Snapshot
@@ -148,7 +148,7 @@ quota-bar/build/
 │   │   └── ...
 │   ├── scripts/build-app.sh   # 本地打包脚本
 │   └── build/                 # 手工 build 产物（gitignored）
-├── web/                       # 营销主页（Astro 静态站，部署到 quotabar.ddonlien.com）
+├── site/                       # 营销主页（Astro 静态站，部署到 quotabar.ddonlien.com）
 │   ├── src/                   # 页面、组件、design tokens
 │   ├── public/                # favicon 等静态资源
 │   └── ...
@@ -166,7 +166,7 @@ quota-bar/build/
 ### 构建 & 运行测试
 
 ```bash
-cd quota-bar
+cd macos
 swift build          # debug 构建
 swift run            # 启动菜单栏 App
 swift build -c release

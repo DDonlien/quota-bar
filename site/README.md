@@ -2,7 +2,7 @@
 
 > Quota Bar macOS 应用的官方主页，部署在 [quotabar.ddonlien.com](https://quotabar.ddonlien.com)。
 
-本目录是 Quota Bar 仓库的 web 子项目，负责应用对外展示和下载入口。macOS 应用本体在 [`../quota-bar/`](../quota-bar/)。
+本目录是 Quota Bar 仓库的 site 子项目，负责应用对外展示和下载入口。macOS 应用本体在 [`../macos/`](../macos/)。
 
 ## 当前能力
 
@@ -23,7 +23,7 @@
 ## 快速开始
 
 ```bash
-cd web
+cd site
 npm install
 npm run dev      # http://localhost:4321
 ```
@@ -42,7 +42,7 @@ npm run preview  # 本地预览构建产物
 首次部署：
 
 ```bash
-cd web
+cd site
 vercel           # 链接/创建项目
 vercel --prod    # 部署到生产
 ```
@@ -50,12 +50,12 @@ vercel --prod    # 部署到生产
 之后到 Vercel 后台绑定自定义域名 `quotabar.ddonlien.com`。
 
 > Vercel 会自动识别 Astro，无需 `vercel.json`。
-> Root Directory 在 Vercel 项目设置里指向 `web/`。
+> Root Directory 在 Vercel 项目设置里指向 `site/`。
 
 ## 目录结构
 
 ```text
-web/
+site/
 ├── astro.config.mjs
 ├── package.json
 ├── tsconfig.json

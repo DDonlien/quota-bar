@@ -1,6 +1,6 @@
-# 视觉规范 · web/
+# 视觉规范 · site/
 
-本文件是 Quota Bar 营销主页（`web/`）的视觉规范。它只描述 web 主页的视觉风格，不记录 macOS 应用本身或任务列表。
+本文件是 Quota Bar 营销主页（`site/`）的视觉规范。它只描述 site 主页的视觉风格，不记录 macOS 应用本身或任务列表。
 
 > 注意：macOS 应用本体的视觉规范在 [`../DESIGN.md`](../DESIGN.md)。两者颜色 token 保持一致，但应用范围不同。
 

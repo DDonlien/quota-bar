@@ -6,35 +6,54 @@
 
 ### 0. 文档缺失时先创建
 
-- 如果当前仓库或当前子功能根目录没有 `AGENTS.md`，先阅读 `agent-template/AGENTS.md` ，并在根目录创建属于该目录自己的 `AGENTS.md` 。
-- 如果没有 `REQUIREMENTS.md` ，先阅读 `agent-template/REQUIREMENTS.md` ，并在根目录属于该目录自己的`REQUIREMENTS.md` 。
-- 如果没有 `DESIGN.md` ，先阅读 `agent-template/DESIGN.md` ，并在根目录属于该目录自己的 `DESIGN.md` 。
-- 如果没有 `README.md`，先阅读 `agent-template/README.md` ，并在根目录属于该目录自己的 `README.md` 。
-- 如果仓库内已有内容，或已经与当前agent进行过对话，基于仓库内的内容和对话的实际情况，填写上述文件，填写规则会在下文中写明。
+- 如果当前仓库或当前子功能根目录没有 `AGENTS.md`，先阅读 `agent-template/AGENTS.md`，并在当前适用目录创建属于该目录自己的 `AGENTS.md`。
+- 如果没有 `REQUIREMENTS.md`，先阅读 `agent-template/REQUIREMENTS.md`，并在当前适用目录创建属于该目录自己的 `REQUIREMENTS.md`。
+- 如果没有 `DESIGN.md`，先阅读 `agent-template/DESIGN.md`，并在当前适用目录创建属于该目录自己的 `DESIGN.md`。
+- 如果没有 `README.md`，先阅读 `agent-template/README.md`，并在当前适用目录创建属于该目录自己的 `README.md`。
+- 如果仓库内已有内容，或已经与当前 Agent 进行过对话，基于仓库内的内容和对话的实际情况，填写上述文件，填写规则会在下文中写明。
 - `AGENTS.md`、`REQUIREMENTS.md`、`DESIGN.md` 和 `README.md` 默认使用中文书写；除非用户特别说明，或术语、代码符号、专有名词本身应使用英文。
 - `agent-template/` 中的 `README.md`、`REQUIREMENTS.md`、`DESIGN.md` 和 `agent-log/` 日志模板只保留演示内容；具体撰写规则统一以本 `AGENTS.md` 为准，阅读时需要注意分辨规则和示例的差异。
-- 上述创建的文件的文件名必须全大写，其中AGENTS和REQUIREMENTS需要复数，即使用户临时写成小写或单数，也应该注意到该统一标准（除非用户数明确要求修改）。
-- 由于本template也经由git管理，所以目录下会存在.git等相关文件，所有实际仓库在使用时，应该先删除agent-template下的git相关资产，移除其git仓库特征，避免上层仓库管理问题。
+- 上述创建的文件名必须全大写；其中 `AGENTS.md` 和 `REQUIREMENTS.md` 必须使用复数形式。即使用户临时写成小写或单数，也应遵循该统一标准，除非用户明确要求修改。
+- 由于本 template 本身也由 Git 管理，复制到实际仓库使用前，应先删除 `agent-template/` 中的 `.git` 等 Git 相关资产，移除其仓库特征，避免影响上层仓库管理。同时清理 `agent-log/` 中除日志模板文件 `yyyymmdd-hhmmss-utcpn-username-modelname.md` 以外的历史日志，避免把模板仓库的执行上下文带入新项目。
 
 ### 1. 每次任务开始前
 
-- 确认当前分支是用户希望工作的分支；分支切换由用户手动完成，Agent 不主动切换分支。
-- 如果当前目录属于 git 仓库，先执行 `git pull`，确保任务基准更新到最新。
-- 如果 `git pull` 失败、发生冲突，或提示需要人工处理，停止执行并告知用户。
+- 确认当前工作目录、分支和 worktree 是否符合用户本次明确指定的工作目标。
+- 如果用户已经明确指定 feature、branch 或 worktree，且当前目录不匹配，Agent 可以按项目规则为用户进入已有 worktree，或创建对应 branch/worktree 后再执行任务。
+- 如果用户没有明确指定目标分支或 feature，Agent 不得自行猜测并切换分支、创建分支或创建 worktree；应在当前分支继续，或停止并询问用户。
+- 如果当前工作区存在未提交改动，Agent 不得切换分支、移动 worktree 或创建会覆盖现有路径的 worktree；必须先告知用户当前状态。
+- 在 Git worktree 模式下，优先通过“进入已有 worktree”或“创建新的 worktree”来切换工作上下文，而不是在已有 worktree 内执行 `git checkout` / `git switch`。
+- Agent 严禁在未获得用户明确授权的情况下执行 `git reset --hard`、`git clean`、`git branch -D`、`git worktree remove`、`git worktree move` 等破坏性命令。
+- Git 同步预检规则：
+  - 如果当前目录属于 Git 仓库，任务开始前先执行 `git fetch --prune`，只更新远端追踪信息，不直接修改本地工作区。
+  - 然后检查当前分支是否设置了 upstream；如果没有 upstream，只记录当前分支状态，不执行 pull、merge 或 rebase。
+  - 检查当前分支相对 upstream 的 ahead / behind 状态：
+    - 如果没有落后远端，继续执行任务。
+    - 如果本地没有未提交改动，且当前分支只落后远端，则执行 `git merge --ff-only @{u}`，只允许快进更新。
+    - 如果本地存在未提交改动，先比较“本地已改文件”和“远端新增变更文件”是否重叠：
+      - 如果没有重叠，可以执行 `git merge --ff-only @{u}`。
+      - 如果存在重叠，停止执行并告知用户哪些文件同时被本地和远端修改。
+    - 如果当前分支同时 ahead 和 behind，不自动 merge、不自动 rebase，停止执行并告知用户需要人工决定同步方式。
+  - Agent 不主动执行普通 `git pull`，因为普通 `git pull` 可能隐式 merge 或 rebase，导致超出用户预期的历史变化。
+- 如果发现当前分支、worktree、目录位置或任务基准不符合用户本次明确指定的工作目标，必须按上述规则处理，不得自行猜测目标上下文。
 - 阅读用户本次原始 prompt。
 - 阅读当前目录适用的 `AGENTS.md`、`README.md`、`REQUIREMENTS.md`、`DESIGN.md` 和 `agent-log/` 中的日志。日志的阅读规则如下：
-  - 找到由当前agent/对话创建的最新日志。
+  - 找到由当前 Agent / 对话创建的最新日志。
   - 如果有任何日志比该日志更新，阅读所有更新。
-  - 如果没有，则不阅读任何日志
+  - 如果没有，则不阅读任何日志。
+  - 如果无法可靠判断“当前 Agent / 对话创建的最新日志”，则阅读最近 3 条日志，或阅读最近 7 天内的日志，并由 Agent 根据任务相关性取舍。
 - 检查 `REQUIREMENTS.md`，确认用户本次需求是否匹配已有需求、子需求、验收项或已标记的阻塞项。
 - 如果仓库内有父级与子级 `AGENTS.md`，从父到子依次阅读；更具体目录的规则优先，但不得违反父级标准内容和用户明确要求。
 
 ### 2. 每次任务执行中
 
 - 为每次任务执行创建一条新的执行日志，放在当前适用目录的 `agent-log/`。
-- 日志命名规则：`YYYYMMDDHHMMSS-utcpN-model.md` 或 `YYYYMMDDHHMMSS-utcnN-model.md`。
-- `utcpN` 表示 UTC 正偏移，`utcnN` 表示 UTC 负偏移；不要在文件名中使用 `+` 或 `-`，以确保不同系统和工具链的适配性，N由实际数字代替。
-- 示例：`20260530174209-utcp8-gpt5.md`、`20260530094209-utcn8-gpt5.md`。
+- 如果本次任务没有修改任何仓库文件，且只是解释、咨询、排查思路或一次性问答，可以不创建执行日志；但如果用户明确要求记录，或本次对话形成了新的需求、设计决策、技术约束，则仍应更新对应文档或日志。
+- 日志命名规则：`YYYYMMDD-HHMMSS-utcpN-username-modelname.md` 或 `YYYYMMDD-HHMMSS-utcnN-username-modelname.md`。
+- `utcpN` 表示 UTC 正偏移，`utcnN` 表示 UTC 负偏移；不要在文件名中使用 `+` 或 `-`，以确保不同系统和工具链的适配性，N 由实际数字代替。
+- `username` 使用当前执行者或系统用户名称。
+- `modelname` 使用真实模型名称；空格、斜杠、冒号、小数点等不适合作为文件名的字符统一替换为连字符 `-`。
+- 示例：`20260530-174209-utcp8-taobe-gpt-5-thinking.md`、`20260530-094209-utcn8-taobe-claude-3-5-sonnet.md`、`20260530-174209-utcp8-taobe-gemini-2-5-pro.md`。
 - 使用任务完成时间作为日志文件名中的时间；如果任务开始时先创建临时日志，交付前按完成时间重命名。
 - 一次任务执行从 Agent 开始处理用户请求算起，到交付、提交、阻塞或明确暂停为止。
 - 如果用户在同一次执行中补充或修正要求、引导对话，把补充 prompt 原文和时间追加到同一条日志。
@@ -42,7 +61,7 @@
 - 每条日志记录一次任务执行中的对话、行动和总结；中间过程可由 Agent 自行概括，但要足够支持后续接手。
 - 每条日志开头必须包含：
   - 用户原始 prompt
-  - 启动运行时的分支和版本，也就是 `git pull` 以后实际所在分支与提交版本
+  - 启动运行时的分支和版本，也就是 Git 同步预检后实际所在分支与提交版本
   - 任务开始时间
   - 任务结束时间
   - 任务结束时是否执行了提交
@@ -61,7 +80,7 @@
 - `REQUIREMENTS.md` 使用 Obsidian 原生友好的 Markdown 格式：标题层级、缩进任务列表、稳定 ID、少量标签。
 - 不使用复杂表格。
 - 不使用 YAML 字段。
-- 通过标题分级拆分阶段、模块和主题；阶段如何命名、是否使用 Phase、Phase 如何划分，由具体项目自行决定。
+- 通过标题分级拆分 Phase、branch/worktree 和 feature；Phase 命名、三级标题格式和 task ID 结构应遵循后文规则。
 - 更频繁地通过缩进 checkbox 表达父子任务、子任务、验收项和检查点关系。
 - 每个可执行需求必须有稳定 ID。
 - 任务状态使用原生 Markdown checkbox：
@@ -77,6 +96,49 @@
 - 每次任务完成后，再根据本次记忆或重新检查 `REQUIREMENTS.md`，把已经完成的需求、子需求或验收项勾选为完成。
 - 如果任务改变范围、状态、验收标准、优先级或阻塞条件，必须同步更新 `REQUIREMENTS.md`。
 - 具体需求、验收标准、任务拆分、优先级、阻塞状态和完成状态只写入 `REQUIREMENTS.md`，不要写入 `README.md` 或 `DESIGN.md`。
+- 修改 `REQUIREMENTS.md` 时，必须使用精准的局部修改，例如 patch、特定行替换或围绕目标 task 的小范围编辑。
+- 严禁为了整理格式、重新排序或“优化表达”而单次大范围重写未涉及的 Phase、feature 或 task 历史。
+- 除非用户明确要求重构需求文档，否则不得删除、合并、重编号或改写已有稳定 ID。
+- 当用户通过对话反馈或新增需求，且该需求需要进入核心实现（例如应用代码、业务逻辑、数据结构或界面流程）时，应先将其整理为一条 requirement，再开始执行。新增 requirement 应优先归入现有 Phase；如果适合挂在已有 feature 或已有任务下，应由 Agent 自行判断并归入，不需要额外确认。若需要新建 Phase，或新增三级 feature 标题会影响 branch/worktree 规划、项目范围或 Phase 结构，必须先征询用户确认；如果只是把用户已经明确提出的需求归入一个自然的新 feature，且不涉及实际创建分支或 worktree，可以先记录，并在日志中说明原因。
+- 条目的命名规则严格按照如下描述：
+  - # 一级标题总是用于区分大的段落，例如哪部份是真的任务，哪部份是示例；真正的任务记录内容总是在第一个一级标题 #任务清单 下
+    - 对于非任务清单下的内容，暂时不做特别约束，以项目为标准自行设计
+  - ## 二级标题总是以 Phase 为单位区分，格式形如 `## Phase - v0.1.0 - xxx`；其中 `xxx` 可以按照实际情况填写该 Phase 的核心内容。
+  - ### 三级标题总是以 feature 为单位区分，格式形如：`### branch-name: feature description`。
+    - `branch-name` 同时表示该 feature 对应的 branch/worktree 名称，应保持 `a/b` 的两段式格式。
+    - `a` 表示较稳定的大类、子系统、业务域或工作线；`b` 表示该大类下的具体分支名。
+    - 如果暂时无法明确 `b`，使用 `main`，例如 `sub/main`；这样可以保留后续扩展为 `sub/xxx` 的空间。
+    - 标题中的分隔符统一使用半角冒号加空格 `: `，不要使用中文全角冒号。
+    - 冒号后的 `feature description` 描述该 branch 大类下一个用户可感知的完整 feature 或工作主题，例如 `添加 codex 订阅支持`。
+    - feature 应描述用户、使用者或维护者能够感知到的能力、流程、页面、接口、内容包或交付物；不要用 `docs/main`、`qa/main` 这类任务分类替代 feature，除非项目本身的用户可感知功能就是文档、日志、测试报告等内容。
+    - 一个 branch/worktree 下可以包含多个 feature，因此同一 Phase 内可以出现多个相同 `branch-name` 的三级标题，但冒号后的 feature description 必须不同。
+    - 如果新增三级 feature 标题会影响 branch/worktree 规划、项目范围或 Phase 结构，必须先征询用户确认；如果只是把用户已经明确提出的需求归入一个自然的新 feature，且不涉及实际创建分支或 worktree，可以先记录，并在日志中说明原因。将新 task 归入已有 feature 时，由 Agent 根据语义自行判断即可。
+    - 示例：
+      - `### sub/main: 添加 codex 订阅支持`
+      - `### sub/main: 整理订阅状态展示`
+      - `### ui/profile: 重构用户页信息架构`
+  - 三级标题以下不再继续拆分标题；所有具体事项都以 task 形式记录。每条 task 必须使用稳定 ID，并保持如下结构：
+    - `[ ] \[0.1.0-DOC-A-001] 整理需求文档`
+  - task ID 中的 `DOC-A`、`FE-A` 等表示具体任务分类，不属于 feature name；一个 feature 下可以包含多个分类、多个 task。
+    - 分类前缀用于表达 task 的工作类型；字母后缀用于区分同一 feature 下相同分类的多组 task。
+    - 同一 feature 内，同一分类的字母后缀按出现顺序递增；不同 feature 可重新从 `A` 开始。即使某类 task 只有一组，也默认使用 `A` 后缀。
+    - 除非必要，否则不新增分类前缀；如果需要创建，咨询用户。可用分类前缀如下：
+      - DOC：文档、说明、协作规范、需求整理、知识库维护。
+      - PM：产品目标、范围定义、路线图、优先级、验收标准。
+      - UX：用户体验、信息架构、用户路径、交互流程、可用性。
+      - UI：界面视觉、设计系统、组件外观、响应式与可访问性。
+      - FE：前端应用、客户端界面、状态管理、前端工程化。
+      - BE：后端服务、业务逻辑、服务端接口、任务调度。
+      - API：对外或内部接口契约、协议、Schema、SDK 集成边界。
+      - DB：数据库、数据模型、迁移脚本、索引、查询与持久化。
+      - DATA：内容数据、配置数据、导入导出、数据清洗、数据质量。
+      - CONTENT：文案、素材、关卡、数值、运营内容等非代码内容资产。
+      - QA：测试策略、自动化测试、人工验收、质量检查、回归验证。
+      - OPS：部署、运维、监控、日志、告警、备份与恢复。
+      - CI：持续集成、构建流水线、发布流程、版本管理自动化。
+      - SEC：安全、权限、隐私、合规、密钥与敏感信息处理。
+      - ARCH：系统架构、技术选型、模块边界、跨模块约束。
+      - TOOL：开发工具、脚本、CLI、代码生成器、内部效率工具。
 
 ### 4. README.md 的维护纪律
 
@@ -89,13 +151,12 @@
 
 - `DESIGN.md` 不是系统整体设计文档；它是视觉规范和界面风格文档。
 - `DESIGN.md` 参考 Google Stitch / DESIGN.md 的语义：用 Markdown 描述 AI 和开发者可执行的视觉设计系统，包括颜色、字体、间距、布局、组件样式、视觉语气、响应式规则和可访问性约束。
-- 如果该文件在首次创建时仓库中已有内容、或者已有agent对话记录，则应该根据已有内容总结并创建符合实际情况的文件。
+- 如果该文件在首次创建时仓库中已有内容、或者已有 Agent 对话记录，则应该根据已有内容总结并创建符合实际情况的文件。
 - `DESIGN.md` 用于让 AI 在实现 UI 时不猜测视觉风格；它不记录系统架构、数据模型、产品路线图或任务列表。
 - 当品牌视觉、UI 风格、设计 token、组件外观、布局原则或可访问性规则变化时，同步更新 `DESIGN.md`。
 - 如果项目没有 UI 或视觉界面，`DESIGN.md` 可只记录“不适用”和原因。
 - 如果仓库中已有旧名 `DESIGNS.md` 且内容其实是系统/架构说明，后续整理时应迁移：系统/仓库/应用说明进入 `README.md`，视觉规范进入 `DESIGN.md`，具体需求进入 `REQUIREMENTS.md`。
-- 如果项目的设计风格发生了大幅度、颠覆性的改变，应该将老版本的内容创建为一个DESIGN-yyyymmddhhmmss.md的文件，保存到根目录/archive/design/的地址，如果改地址不存在，创建。
-- 针对更复杂的、存在“内容”和“系统”的项目，应当在agent-log下再创建2个文件夹，分别为agent-log/system和agent-log/content。每次实际执行任务时，应该针对性的记录log而非总是都记录。内容和系统改动任务的分类由ai自行判断，通常来说，web系统的数据、游戏的装备数值和技能等属于内容更新。
+- 如果项目的设计风格发生了大幅度、颠覆性的改变，应该将老版本的内容创建为一个 `DESIGN-yyyymmddhhmmss.md` 的文件，保存到根目录 `archive/design/`；如果该地址不存在，则创建。
 
 ### 6. 父子文档关系
 
@@ -121,6 +182,60 @@
 - 交付前运行相关验证命令；如果无法运行，说明原因并记录剩余风险。
 - 搜索优先使用 `rg`。
 - 手工编辑文件优先使用补丁方式，避免产生无关格式化或大范围重写。
+
+### 8. 目录命名规则
+
+- 顶层目录应优先按照“交付物 / 职责”命名，而不是按照技术栈命名。目录名应该先回答“这个目录是什么用途”，而不是“它使用什么语言或框架”。
+- 客户端形态应按交付平台或使用场景命名，例如：
+  - Swift 原生 iOS 应用命名为 `ios/`。
+  - macOS 原生应用命名为 `macos/`。
+  - `web/` 仅用于真正的 Web App，并与 `ios/`、`macos/` 等客户端形态并列。
+- 官网、宣传页、落地页应命名为 `site/`；管理后台应命名为 `admin/`；不要因为它们使用 TypeScript 就命名为 `ts/` 或 `ts-web/`。
+- 如果某个交付物内部同时包含前端和后端，应在该目录下继续做二级拆分，例如 `site/frontend/` 与 `site/backend/`，而不是在顶层直接按技术栈或服务类型拆散。
+- 只有当目录职责本身无法清楚表达，或者同一职责下存在多个技术实现时，才允许在名称中补充技术栈信息。
+- 目录名应保持小写，使用连字符 `-` 分隔单词，避免重复项目名，也避免使用 `project` 这类信息量较低的泛称。
+
+### 9. Worktree 工作目录模式
+
+- 对于使用 Git worktree 的项目，推荐采用“项目容器目录不直接开发，主仓库只保存 Git 元数据，所有分支都在 `worktrees/` 下开发”的目录结构：
+
+```text
+<project-name>/
+├── .repo/                 ← 主仓库目录，仅用于保存和管理 `.git`，不作为日常开发工作区
+│   └── .git/
+│
+└── worktrees/
+    ├── main/              ← main 分支的实际工作区
+    │   ├── ios/
+    │   ├── web/
+    │   ├── site/
+    │   ├── godot/
+    │   └── docs/
+    ├── <worktree-name>/
+    ├── <worktree-name>/
+    └── <worktree-name>/
+```
+
+- `<project-name>/` 是项目容器目录，只负责收纳 `.repo/` 和 `worktrees/`，不直接作为任何 branch 的开发工作区。
+- `.repo/` 用作主仓库和 worktree 管理入口；除非用户明确要求，不在 `.repo/` 中直接修改业务代码、文档或资源文件。
+- `worktrees/` 下的每个子目录对应一个实际工作区。`main` 分支也应使用独立 worktree，例如 `worktrees/main/`，不要让 `main` 直接占据项目容器根目录或 `.repo/`。
+- worktree 目录名应由用户或项目约定决定；当项目没有更具体规则时，推荐与 branch 名称保持一致。
+- branch/worktree 名称推荐保持 `a/b` 的两段式格式；如果 `b` 暂不明确，使用 `main`，例如 `sub/main`，以保留后续扩展性。
+- 仓库默认主分支 `main` 可作为特殊的稳定分支名保留，并对应 `worktrees/main/`。
+- 每个 worktree 应对应一个明确的 Git branch；除非用户或项目规则另有说明，不在多个 worktree 中复用同一个 branch 作为长期开发工作区。
+- 如果 branch 名称发生变更，关联的 worktree 本地目录名也应同步调整；如果 worktree 本地目录名发生变更，关联 branch 名称也应同步调整，以保持检索、定位和文档记录的一致性。
+- 上述示例强调的是目录组织方式；`<project-name>` 和 `<worktree-name>` 只是占位符，不是强制命名规范。
+- 如果示例或对话中出现 `feature-ui`、`fix-save`、`ai-experiment` 等名称，它们仅用于说明 worktree 目录层级，不表示 Agent 应按这些名称创建或命名 worktree；`main` 仅用于表示仓库默认主分支对应的独立 worktree。
+- 如果用户已经明确指定 feature、branch 或 worktree，且当前目录不匹配，Agent 可以按项目规则优先进入已有 worktree；如确需创建对应 branch/worktree，应确保不会覆盖现有路径，并在执行前说明将要创建的 branch/worktree。
+- 如果用户没有明确指定目标分支或 feature，Agent 不得自行猜测并切换分支、创建分支或创建 worktree；应在当前分支继续，或停止并询问用户。
+- 禁止在未获得用户明确授权的情况下执行 `git worktree remove`、`git worktree move` 等会破坏或重定位 worktree 的命令。
+
+### 10. 内容与系统任务日志拆分
+
+- 针对更复杂的、同时存在“内容”和“系统”的项目，应在 `agent-log/` 下再创建两个文件夹：`agent-log/system/` 和 `agent-log/content/`。
+- 每次实际执行任务时，应根据任务性质将日志记录到对应目录，而不是总是记录在同一个日志目录下。
+- 内容和系统改动任务的分类由 Agent 根据上下文判断；通常来说，Web 系统的数据、游戏的装备数值和技能等属于内容更新。
+- 如果一次任务同时涉及内容和系统，应优先记录在主要改动对应的目录，并在日志中说明另一类改动的范围。
 
 ## 项目专用内容
 
@@ -169,4 +284,3 @@
 - 架构限制：
 - 授权与引用边界：
 - 安全、隐私或合规要求：
-

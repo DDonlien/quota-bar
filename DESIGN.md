@@ -52,7 +52,7 @@
 
 ## 手动调参入口
 
-- dashboard 的宽高、padding、分隔线间距、行距、字号、字重、状态点轨道和进度条高度集中在 `drop-down-test/CodingPlanMenu/Sources/CodingPlanMenu/MenuView.swift` 的 `MenuDashboardStyle`。
+- dashboard 的宽高、padding、分隔线间距、行距、字号、字重、状态点轨道和进度条高度集中在 `macos/Sources/QuotaBar/MenuView.swift` 的 `MenuDashboardStyle`。
 - `MenuDashboardStyle.height` 调整 custom dashboard 的高度；如果底部内容被原生菜单项裁切，优先增加该值。
 - `MenuDashboardStyle.topPadding`、`horizontalPadding`、`bottomPadding` 调整 dashboard 内边距。
 - `MenuDashboardStyle.summaryWeight`、`planNameWeight`、`quotaTitleWeight` 调整主要文字粗细。
