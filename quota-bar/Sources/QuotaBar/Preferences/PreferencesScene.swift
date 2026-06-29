@@ -21,13 +21,13 @@ struct PreferencesScene: View {
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 760, minHeight: 540)
-        // 整个窗口加 glass 背景（macOS 26 系统设置风格）；
-        // NSWindow 已设 backgroundColor = .clear，这里覆盖玻璃材质让桌面透出来。
-        .background(.regularMaterial)
         // 隐藏 NavigationSplitView 默认的 sidebar toggle 工具栏按钮（用户反馈
         // 「收纳按钮没必要」）。`.windowToolbar` 覆盖 macOS 顶部整条 toolbar，
         // 隐藏后 sidebar 仍可通过拖拽调整宽度。
         .toolbar(.hidden, for: .windowToolbar)
+        // 注意：不再加 `.background(.regularMaterial)` —— glass 材质带阴影偏深，
+        // 系统设置「软件更新」页是极浅灰（`.windowBackgroundColor`），
+        // 整个窗口底色由 NSWindow `backgroundColor` 提供即可。
     }
 
     // MARK: - Sidebar

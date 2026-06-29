@@ -29,13 +29,14 @@ struct SettingsSection<Content: View>: View {
 
 // MARK: - SettingsGroup
 
-/// macOS 26 系统设置风格的「圆角矩形容器」。
+/// macOS 26 系统设置风格的「圆角矩形容器」（软件更新页那种极浅灰卡牌）。
 ///
 /// 视觉细节：
 /// - 10pt 圆角矩形
-/// - `.regularMaterial` 磨砂玻璃背景
+/// - `.background.secondary` 极浅灰填充（**不是** `.regularMaterial` 玻璃：
+///   glass 材质带阴影偏深；系统设置实际是几乎看不出玻璃的极浅灰）
 /// - 0.5pt `.separator` 描边
-/// - 内部 row 间用 `SettingsDivider` 隔开（不要在 row 上加 padding-bottom）
+/// - 内部 row 间用 `SettingsDivider` 隔开
 struct SettingsGroup<Content: View>: View {
     @ViewBuilder let content: Content
 
@@ -49,7 +50,7 @@ struct SettingsGroup<Content: View>: View {
         }
         .background {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(.regularMaterial)
+                .fill(.background.secondary)
         }
         .overlay {
             RoundedRectangle(cornerRadius: 10, style: .continuous)

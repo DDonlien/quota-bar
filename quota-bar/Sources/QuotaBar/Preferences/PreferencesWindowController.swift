@@ -25,15 +25,15 @@ final class PreferencesWindowController: NSWindowController {
             defer: false
         )
         window.title = "偏好设置"
-        // 视觉对齐 macOS 26 系统设置（参考 Vibe Island 复刻）：
+        // 视觉对齐 macOS 26 系统设置「软件更新」页：
         // - titlebar 透明 + fullSizeContentView：traffic light 浮在 sidebar 顶部
-        //   （不再有独立 titlebar 分割线）
         // - titleVisibility .hidden：把 title 让给 SwiftUI NavigationSplitView
-        //   的 inline toolbar title（`navigationTitle`）
-        // - backgroundColor .clear：让 SwiftUI 端 `.regularMaterial` 玻璃背景透出
+        // - backgroundColor = .windowBackgroundColor：极浅灰 / 纯白底（系统色），
+        //   **不是** `.regularMaterial` 玻璃 —— 玻璃材质带阴影会让整体偏深，
+        //   不符合系统设置的极浅风格
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.backgroundColor = .clear
+        window.backgroundColor = .windowBackgroundColor
         window.contentViewController = NSHostingController(rootView: PreferencesScene())
         window.isReleasedWhenClosed = false
         window.center()
