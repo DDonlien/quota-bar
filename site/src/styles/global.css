@@ -4,48 +4,118 @@
  * 节奏：参考 vibeisland.app（1060/960/640/380 容器宽度 + 80px section y + 12-16px 卡片圆角）
  * ============================================================ */
 
-/* —— 字体声明（自托管 woff2） —— */
+/* —— 字体声明（自托管 woff2，unicode-range 让浏览器按字符自动分流） ——
+ * JetBrains Mono 覆盖 ASCII 范围（拉丁字母 / 数字 / 标点）
+ * Maple Mono NL 覆盖 CJK + 全角符号范围
+ * 这样即使在中文页面里，"Antigravity" / "$9.99" 这种 ASCII 串也走 JetBrains Mono
+ */
 @font-face {
-  font-family: "JetBrains Mono";
+  font-family: "Mono Sans";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
   src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  unicode-range:
+    U+0000-007F,         /* Basic Latin (ASCII) */
+    U+0080-00FF,         /* Latin-1 Supplement */
+    U+0100-017F,         /* Latin Extended-A */
+    U+2000-206F,         /* General Punctuation */
+    U+2070-209F,         /* Superscripts/Subscripts */
+    U+20A0-20CF,         /* Currency Symbols */
+    U+2100-214F,         /* Letterlike Symbols */
+    U+2190-21FF,         /* Arrows */
+    U+2200-22FF,         /* Mathematical Operators */
+    U+2500-257F;         /* Box Drawing */
 }
 @font-face {
-  font-family: "JetBrains Mono";
+  font-family: "Mono Sans";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
   src: url("/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+  unicode-range:
+    U+0000-007F,
+    U+0080-00FF,
+    U+0100-017F,
+    U+2000-206F,
+    U+2070-209F,
+    U+20A0-20CF,
+    U+2100-214F,
+    U+2190-21FF,
+    U+2200-22FF,
+    U+2500-257F;
 }
 @font-face {
-  font-family: "JetBrains Mono";
+  font-family: "Mono Sans";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
   src: url("/fonts/JetBrainsMono-Bold.woff2") format("woff2");
+  unicode-range:
+    U+0000-007F,
+    U+0080-00FF,
+    U+0100-017F,
+    U+2000-206F,
+    U+2070-209F,
+    U+20A0-20CF,
+    U+2100-214F,
+    U+2190-21FF,
+    U+2200-22FF,
+    U+2500-257F;
 }
 @font-face {
-  font-family: "Maple Mono NL";
+  font-family: "Mono Sans";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
   src: url("/fonts/MapleMonoNL-Regular.woff2") format("woff2");
+  unicode-range:
+    U+3000-303F,         /* CJK Symbols and Punctuation */
+    U+3400-4DBF,         /* CJK Unified Ideographs Extension A */
+    U+4E00-9FFF,         /* CJK Unified Ideographs */
+    U+F900-FAFF,         /* CJK Compatibility Ideographs */
+    U+FE30-FE4F,         /* CJK Compatibility Forms */
+    U+FF00-FFEF,         /* Halfwidth and Fullwidth Forms */
+    U+20000-2A6DF,       /* CJK Unified Ideographs Extension B */
+    U+2A700-2B73F,       /* CJK Unified Ideographs Extension C */
+    U+2B740-2B81F,       /* CJK Unified Ideographs Extension D */
+    U+2B820-2CEAF;       /* CJK Unified Ideographs Extension E */
 }
 @font-face {
-  font-family: "Maple Mono NL";
+  font-family: "Mono Sans";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
   src: url("/fonts/MapleMonoNL-Medium.woff2") format("woff2");
+  unicode-range:
+    U+3000-303F,
+    U+3400-4DBF,
+    U+4E00-9FFF,
+    U+F900-FAFF,
+    U+FE30-FE4F,
+    U+FF00-FFEF,
+    U+20000-2A6DF,
+    U+2A700-2B73F,
+    U+2B740-2B81F,
+    U+2B820-2CEAF;
 }
 @font-face {
-  font-family: "Maple Mono NL";
+  font-family: "Mono Sans";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
   src: url("/fonts/MapleMonoNL-Bold.woff2") format("woff2");
+  unicode-range:
+    U+3000-303F,
+    U+3400-4DBF,
+    U+4E00-9FFF,
+    U+F900-FAFF,
+    U+FE30-FE4F,
+    U+FF00-FFEF,
+    U+20000-2A6DF,
+    U+2A700-2B73F,
+    U+2B740-2B81F,
+    U+2B820-2CEAF;
 }
 
 :root {
@@ -92,22 +162,24 @@
   --max-w-faq: 640px;
   --max-w-pricing: 380px;
 
-  /* —— 字体栈：英文用 JetBrains Mono，中文用 Maple Mono NL（自动按 lang 切换） —— */
-  /* 主栈：英文优先（en 页） */
-  --font-en: "JetBrains Mono", "Maple Mono NL", ui-monospace, monospace;
-  /* 中文优先栈（zh 页） */
-  --font-zh: "Maple Mono NL", "JetBrains Mono", ui-monospace, monospace;
+  /* —— 字体栈：单一栈 + unicode-range 自动按字符分流 —— */
+  /* "Mono Sans" 是上面 @font-face 声明的合成字体族：
+   *   - ASCII（拉丁字母 / 数字 / 符号）→ JetBrains Mono
+   *   - CJK（中文字符 / 全角符号）→ Maple Mono NL
+   * 浏览器按字符的 unicode-range 自动选对应字体，无需 JS / lang 切换。
+   */
+  --font-sans: "Mono Sans", ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* —— 字号层级（vibeisland 节奏：60/18/36/22/14/12/11/48） —— */
+  /* —— 字号层级 —— */
   --text-overline: 11px;   /* tag / label */
   --text-xs: 12px;         /* meta / footer */
   --text-sm: 13px;         /* nav / FAQ body / footer link */
   --text-base: 14px;       /* button / body */
   --text-md: 15px;         /* price label */
   --text-lg: 18px;         /* hero subtitle */
-  --text-xl: 22px;         /* section h3 / content h2 */
-  --text-2xl: 28px;        /* section h2 mobile */
-  --text-3xl: 36px;        /* section h2 desktop */
+  --text-xl: 22px;         /* 局部强调 */
+  --text-2xl: 24px;        /* section h2 desktop — 修饰用，介于 hero (60) 和 body (14) 之间 */
+  --text-3xl: 28px;        /* section h2 mobile — 略大些补偿视觉 */
   --text-4xl: 48px;        /* pricing big number */
   --text-5xl: 60px;        /* hero headline */
 
@@ -139,16 +211,11 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
-  font-family: var(--font-en);
+  font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.6;
   color: var(--text-primary);
   background-color: var(--bg);
-}
-
-html[lang="zh-CN"],
-html[lang="zh-Hans"] {
-  font-family: var(--font-zh);
 }
 
 body {
@@ -202,14 +269,14 @@ details > summary::-webkit-details-marker {
 }
 
 /* ============================================================
- * Section 节奏（vibeisland：80px y padding，24px x padding）
+ * Section 节奏：48px y padding（拉近相邻 section；之前 80px 显得空荡）
  * ============================================================ */
 .section {
-  padding-block: var(--space-10);  /* 80px */
+  padding-block: var(--space-8);  /* 48px */
 }
 @media (max-width: 768px) {
   .section {
-    padding-block: var(--space-9);  /* 64px 移动端 */
+    padding-block: var(--space-7);  /* 32px 移动端 */
   }
 }
 

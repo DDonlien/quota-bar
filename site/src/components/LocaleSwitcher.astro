@@ -195,14 +195,21 @@
     transform: rotate(180deg);
   }
 
-  /* Dropdown menu：默认 hidden，is-open 时显示 */
+  /* Dropdown menu：默认 hidden，is-open 时显示
+   * padding 8px 跟 option padding 8px 相同 → 顶部到首 option 的距离
+   * 跟 option 与 option 之间的距离一致；
+   * 选项之间再加 4px gap 让 hover 高亮色块不粘连
+   */
   .locale-switcher__menu {
     position: absolute;
     top: calc(100% + 6px);
     right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     min-width: 140px;
     margin: 0;
-    padding: 4px;
+    padding: 8px;
     list-style: none;
     background: #121214fa;
     border: 1px solid rgba(255, 255, 255, 0.1);

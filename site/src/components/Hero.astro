@@ -54,14 +54,15 @@ const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
 <!-- END: Hero Section -->
 
 <style>
-  /* vibeisland hero 节奏：180px top padding / 20px bottom / 60px 标题 / 18px 副标 */
+  /* Hero 节奏：120px top padding / 20px bottom / 60px 标题 / 18px 副标
+   * 120 = 60 (fixed nav) + 60 视觉留白；之前 180 偏空 */
   .hero {
-    padding-top: 180px;
+    padding-top: 120px;
     padding-bottom: var(--space-5);  /* 20px */
   }
   @media (max-width: 768px) {
     .hero {
-      padding-top: 120px;
+      padding-top: 96px;
       padding-bottom: var(--space-7);  /* 32px */
     }
   }
@@ -150,23 +151,8 @@ const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
     font-weight: 700;
   }
 
-  /* Maple Mono NL 渲染中文时字形偏宽，中文版 hero 整体缩 8% + 收紧字距 */
-  :lang(zh) .hero__title {
-    font-size: 56px;
-    line-height: 70px;
-    letter-spacing: -0.02em;
-  }
-  @media (max-width: 768px) {
-    :lang(zh) .hero__title {
-      font-size: 30px;
-      line-height: 40px;
-    }
-  }
-
-  /* 中文版副标题字号缩到 16px（Maple Mono NL 字距宽，18px 看着偏大） */
-  :lang(zh) .hero__subtitle {
-    font-size: 16px;
-  }
+  /* 字体已通过 unicode-range 自动按字符分流（ASCII→JetBrains Mono / CJK→Maple Mono NL），
+   * 这里不再需要 :lang(zh) 覆盖。hero 字号保持 60px，所有字符都用 Mono Sans。 */
 
   .typing-text::after {
     content: "|";

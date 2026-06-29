@@ -33,6 +33,10 @@ const en: Dict = {
   "product.tab.ask": "Ask",
   "product.tab.jump": "Jump",
   "product.heading": "All your quotas, at a glance.",
+  "product.heading.monitor": "All your quotas, at a glance.",
+  "product.heading.approve": "Approve permissions without leaving your flow.",
+  "product.heading.ask": "Answer your agent's questions with one click.",
+  "product.heading.jump": "Jump straight back to the terminal that needs you.",
 
   // Features (9 cards)
   "feature.1.title": "Multi-Service Support",
@@ -113,6 +117,10 @@ const zh: Dict = {
   "product.tab.ask": "提问",
   "product.tab.jump": "跳转",
   "product.heading": "一眼看清所有订阅配额。",
+  "product.heading.monitor": "一眼看清所有订阅配额。",
+  "product.heading.approve": "不离开工作流就能完成权限审批。",
+  "product.heading.ask": "Agent 提问时，点一下就给出答案。",
+  "product.heading.jump": "一步跳回那个需要你的终端标签。",
 
   // Features
   "feature.1.title": "多服务支持",

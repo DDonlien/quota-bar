@@ -46,18 +46,8 @@ const REPO = "DDonlien/quota-bar";
 <!-- END: MainHeader -->
 
 <style>
-  /* Container 不再固定 1060px max，改用 fluid：max-width 兜底 + clamp 收 padding */
-  .site-nav__inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    width: 100%;
-    max-width: var(--max-w-content);
-    margin-inline: auto;
-    padding: var(--space-3) clamp(16px, 4vw, 24px);
-  }
-
+  /* Header 真正两端对齐 viewport 边缘（不被 max-width 推到中间）：
+ * logo 紧贴左边、actions 紧贴右边，padding 跟下面 section 一致 */
   .site-nav {
     position: fixed;
     top: 0;
@@ -68,6 +58,14 @@ const REPO = "DDonlien/quota-bar";
     backdrop-filter: saturate(180%) blur(12px);
     -webkit-backdrop-filter: saturate(180%) blur(12px);
     border-bottom: 1px solid var(--border);
+  }
+
+  .site-nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) clamp(16px, 4vw, 24px);
   }
 
   .site-nav__logo {
