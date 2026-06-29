@@ -123,6 +123,19 @@ macos/build/
 
 ## 开发
 
+### 本地 worktree 布局
+
+本机协作环境保留 `main` 在项目根目录，其他长期分支放在单数 `worktree/` 目录下。GitHub Desktop、Codex、其他 Agent 和 IDE 默认打开项目根目录即可识别 repo、读取根文档，并看到其他 worktree。
+
+```text
+quota-bar/
+├── .git/           # Git 元数据
+├── macos/          # main 分支中的 macOS 应用
+├── site/           # main 分支中的营销主页
+└── worktree/
+    └── ...         # 其他分支工作区
+```
+
 ### 目录结构
 
 ```text

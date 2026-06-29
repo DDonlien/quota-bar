@@ -197,35 +197,30 @@
 
 ### 9. Worktree 工作目录模式
 
-- 对于使用 Git worktree 的项目，推荐采用“项目容器目录不直接开发，主仓库只保存 Git 元数据，所有分支都在 `worktrees/` 下开发”的目录结构：
+- 对于使用 Git worktree 且需要兼容 GitHub Desktop、IDE 和 AI Agent 的项目，推荐采用“`main` 保留在项目根目录，其他长期分支放入单数 `worktree/` 目录”的结构：
 
 ```text
-<project-name>/
-├── .repo/                 ← 主仓库目录，仅用于保存和管理 `.git`，不作为日常开发工作区
-│   └── .git/
-│
-└── worktrees/
-    ├── main/              ← main 分支的实际工作区
-    │   ├── ios/
-    │   ├── web/
-    │   ├── site/
-    │   ├── godot/
-    │   └── docs/
-    ├── <worktree-name>/
+<project-name>/              ← main 分支工作区，也是工具默认打开目录
+├── .git/                    ← Git 元数据
+├── AGENTS.md
+├── README.md
+├── REQUIREMENTS.md
+├── DESIGN.md
+├── <deliverable-dir>/       ← 例如 macos/、site/、ios/
+└── worktree/
+    ├── <worktree-name>/     ← 其他分支工作区
     ├── <worktree-name>/
     └── <worktree-name>/
 ```
 
-- `<project-name>/` 是项目容器目录，只负责收纳 `.repo/` 和 `worktrees/`，不直接作为任何 branch 的开发工作区。
-- `.repo/` 用作主仓库和 worktree 管理入口；除非用户明确要求，不在 `.repo/` 中直接修改业务代码、文档或资源文件。
-- `worktrees/` 下的每个子目录对应一个实际工作区。`main` 分支也应使用独立 worktree，例如 `worktrees/main/`，不要让 `main` 直接占据项目容器根目录或 `.repo/`。
-- worktree 目录名应由用户或项目约定决定；当项目没有更具体规则时，推荐与 branch 名称保持一致。
+- `<project-name>/` 默认对应 `main` 分支工作区；GitHub Desktop、Codex、其他 AI Agent 和 IDE 应优先打开这个根目录，以便识别 repo、读取根文档，并发现 `worktree/` 下的其他工作区。
+- `worktree/` 使用单数目录名，和其他职责目录一样保持单数形式。
+- `worktree/` 下的每个子目录对应一个非 `main` 分支的实际工作区。目录名应由用户或项目约定决定；当项目没有更具体规则时，推荐与 branch 名称保持一致。
 - branch/worktree 名称推荐保持 `a/b` 的两段式格式；如果 `b` 暂不明确，使用 `main`，例如 `sub/main`，以保留后续扩展性。
-- 仓库默认主分支 `main` 可作为特殊的稳定分支名保留，并对应 `worktrees/main/`。
+- 仓库默认主分支 `main` 是特殊稳定分支，默认不放入 `worktree/main/`，除非用户明确要求牺牲 GUI / Agent 发现能力以换取更严格的容器化布局。
 - 每个 worktree 应对应一个明确的 Git branch；除非用户或项目规则另有说明，不在多个 worktree 中复用同一个 branch 作为长期开发工作区。
 - 如果 branch 名称发生变更，关联的 worktree 本地目录名也应同步调整；如果 worktree 本地目录名发生变更，关联 branch 名称也应同步调整，以保持检索、定位和文档记录的一致性。
 - 上述示例强调的是目录组织方式；`<project-name>` 和 `<worktree-name>` 只是占位符，不是强制命名规范。
-- 如果示例或对话中出现 `feature-ui`、`fix-save`、`ai-experiment` 等名称，它们仅用于说明 worktree 目录层级，不表示 Agent 应按这些名称创建或命名 worktree；`main` 仅用于表示仓库默认主分支对应的独立 worktree。
 - 如果用户已经明确指定 feature、branch 或 worktree，且当前目录不匹配，Agent 可以按项目规则优先进入已有 worktree；如确需创建对应 branch/worktree，应确保不会覆盖现有路径，并在执行前说明将要创建的 branch/worktree。
 - 如果用户没有明确指定目标分支或 feature，Agent 不得自行猜测并切换分支、创建分支或创建 worktree；应在当前分支继续，或停止并询问用户。
 - 禁止在未获得用户明确授权的情况下执行 `git worktree remove`、`git worktree move` 等会破坏或重定位 worktree 的命令。

@@ -34,6 +34,6 @@ site/.vercel/
 /tmp/
 
 # Agent 工作的中间产物（保持 agent-log/ 干净）
-worktrees/
+worktree/
 reference/project/hidden/
 reference/project/Mos/
