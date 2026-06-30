@@ -9,7 +9,7 @@ const FEATURES: { titleKey: string; descKey: string; icon: string }[] = [
   { titleKey: "feature.4.title", descKey: "feature.4.desc", icon: "dollar" },
   { titleKey: "feature.5.title", descKey: "feature.5.desc", icon: "lock" },
   { titleKey: "feature.6.title", descKey: "feature.6.desc", icon: "refresh" },
-  { titleKey: "feature.7.title", descKey: "feature.7.desc", icon: "moon" },
+  { titleKey: "feature.7.title", descKey: "feature.7.desc", icon: "app-window" },
   { titleKey: "feature.3.title", descKey: "feature.3.desc", icon: "bell" },
 ];
 ---
@@ -58,6 +58,12 @@ const FEATURES: { titleKey: string; descKey: string; icon: string }[] = [
             {f.icon === "moon" && (
               <svg fill="none" height="20" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" width="20">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            )}
+            {f.icon === "app-window" && (
+              <svg fill="none" height="20" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" width="20" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
               </svg>
             )}
             {f.icon === "target" && (
