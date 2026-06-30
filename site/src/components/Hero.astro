@@ -96,6 +96,10 @@ const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
     margin: 0 auto var(--space-7);  /* 32px 下 */
     max-width: 480px;
   }
+  /* 英文版 subtitle 强制单行（与中文"提前掌握额度上限"对等，桌面下不换行） */
+  html[data-locale="en"] .hero__subtitle {
+    white-space: nowrap;
+  }
 
   .hero__ctas {
     display: inline-flex;

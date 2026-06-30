@@ -1,6 +1,11 @@
 ---
 // Product Preview — 16:9 大图（玻璃窗）+ 居中 tab + H2 标题
 // 4 个 tab 可点击切换 + 自动循环播放；h2 内容跟着当前 active tab 切换
+// 激活态视觉：
+//   - 绿色背景 + 绿色边框（segmented control 里 active pill 风格）
+//   - tab 内部左侧进度条 0%→100% 走 INTERVAL_MS 表达自动播放
+//   - 图标 / 文字切到高亮色
+// 上面 16:9 窗口里的图也跟着 active tab 切换（4 张 mockup，纯 CSS 占位）
 // 节奏：vibeisland 1060 宽 / 12px 圆角窗口 / pill segmented tab
 ---
 
@@ -8,19 +13,114 @@
 <section class="product-preview section">
   <div class="container-content">
     <div class="product-preview__window">
-      <img
-        alt="Quota Bar Interface Preview"
-        class="product-preview__image"
-        src="https://lh3.googleusercontent.com/aida/AP1WRLuvOC6LQmX85RdTgKI9xG6B5-NrIrfSR2PcBbOBXcTlAiBrurHCdGWbM0pn7a2jJ5Veq0WNqkRNigvZC99m_u0UtEq_EbMVG50IK4K5fyEZJbUymh1gXLNjzfx6iI2otO7w-aQJtUMMXLvUrjpb6AgHz-XqN8gM6QJiP5nqYqWzqulcFc8CciCwjvNODIpEyGHvkUNmKW-x6VPvG8SyWX14GLbnqcRi8LnYWsGQUaFFuzyJJrX-OSW_TDOl"
-      />
+      <!-- 4 张占位 mockup：根据 active tab 切换可见性 + fade -->
+      <div class="product-preview__image" data-tab-image="monitor" aria-hidden="false">
+        <div class="mockup mockup--monitor">
+          <div class="mockup__statusbar">
+            <span class="mockup__pill mockup__pill--green"></span>
+            <span class="mockup__line mockup__line--wide"></span>
+            <span class="mockup__line mockup__line--narrow"></span>
+          </div>
+          <div class="mockup__grid">
+            <div class="mockup__row mockup__row--3"><span></span><span></span><span></span></div>
+            <div class="mockup__row mockup__row--2"><span></span><span></span></div>
+            <div class="mockup__row mockup__row--2"><span></span><span></span></div>
+            <div class="mockup__row mockup__row--1"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-preview__image" data-tab-image="approve" aria-hidden="true">
+        <div class="mockup mockup--approve">
+          <div class="mockup__dialog">
+            <div class="mockup__dialog-head">
+              <span class="mockup__avatar mockup__avatar--green"></span>
+              <span class="mockup__line mockup__line--medium"></span>
+            </div>
+            <div class="mockup__dialog-body">
+              <span class="mockup__line mockup__line--full"></span>
+              <span class="mockup__line mockup__line--full"></span>
+              <span class="mockup__line mockup__line--narrow"></span>
+            </div>
+            <div class="mockup__dialog-actions">
+              <button class="mockup__btn mockup__btn--ghost" type="button" tabindex="-1">Deny</button>
+              <button class="mockup__btn mockup__btn--green" type="button" tabindex="-1">Approve</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-preview__image" data-tab-image="ask" aria-hidden="true">
+        <div class="mockup mockup--ask">
+          <div class="mockup__bubble mockup__bubble--bot">
+            <span class="mockup__line mockup__line--wide"></span>
+            <span class="mockup__line mockup__line--full"></span>
+            <span class="mockup__line mockup__line--narrow"></span>
+          </div>
+          <div class="mockup__bubble mockup__bubble--user">
+            <span class="mockup__line mockup__line--medium"></span>
+          </div>
+          <div class="mockup__bubble mockup__bubble--bot">
+            <span class="mockup__line mockup__line--wide"></span>
+            <span class="mockup__line mockup__line--full"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-preview__image" data-tab-image="jump" aria-hidden="true">
+        <div class="mockup mockup--jump">
+          <div class="mockup__terminal">
+            <div class="mockup__terminal-head">
+              <span class="mockup__dot mockup__dot--red"></span>
+              <span class="mockup__dot mockup__dot--yellow"></span>
+              <span class="mockup__dot mockup__dot--green"></span>
+              <span class="mockup__line mockup__line--medium"></span>
+            </div>
+            <div class="mockup__terminal-body">
+              <span class="mockup__line mockup__line--full"></span>
+              <span class="mockup__line mockup__line--wide"></span>
+              <span class="mockup__line mockup__line--full"></span>
+              <span class="mockup__cursor"></span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="product-preview__tabs-row">
       <div class="product-preview__tabs" data-product-tabs>
-        <button class="product-preview__tab is-active" type="button" data-tab="monitor" data-i18n="product.tab.monitor">Monitor</button>
-        <button class="product-preview__tab" type="button" data-tab="approve" data-i18n="product.tab.approve">Approve</button>
-        <button class="product-preview__tab" type="button" data-tab="ask" data-i18n="product.tab.ask">Ask</button>
-        <button class="product-preview__tab" type="button" data-tab="jump" data-i18n="product.tab.jump">Jump</button>
+        <button class="product-preview__tab is-active" type="button" data-tab="monitor">
+          <span class="product-preview__tab-progress" aria-hidden="true"></span>
+          <svg class="product-preview__tab-icon" fill="none" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" aria-hidden="true">
+            <rect height="14" rx="2" ry="2" width="20" x="2" y="3"></rect>
+            <line x1="8" x2="16" y1="21" y2="21"></line>
+            <line x1="12" x2="12" y1="17" y2="21"></line>
+          </svg>
+          <span class="product-preview__tab-label" data-i18n="product.tab.monitor">Monitor</span>
+        </button>
+        <button class="product-preview__tab" type="button" data-tab="approve">
+          <span class="product-preview__tab-progress" aria-hidden="true"></span>
+          <svg class="product-preview__tab-icon" fill="none" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" aria-hidden="true">
+            <path d="M9 12l2 2 4-4"></path>
+            <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.5 0 4.76 1.02 6.39 2.66"></path>
+          </svg>
+          <span class="product-preview__tab-label" data-i18n="product.tab.approve">Approve</span>
+        </button>
+        <button class="product-preview__tab" type="button" data-tab="ask">
+          <span class="product-preview__tab-progress" aria-hidden="true"></span>
+          <svg class="product-preview__tab-icon" fill="none" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" aria-hidden="true">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
+          <span class="product-preview__tab-label" data-i18n="product.tab.ask">Ask</span>
+        </button>
+        <button class="product-preview__tab" type="button" data-tab="jump">
+          <span class="product-preview__tab-progress" aria-hidden="true"></span>
+          <svg class="product-preview__tab-icon" fill="none" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" aria-hidden="true">
+            <path d="M5 12h14"></path>
+            <path d="M12 5l7 7-7 7"></path>
+          </svg>
+          <span class="product-preview__tab-label" data-i18n="product.tab.jump">Jump</span>
+        </button>
       </div>
     </div>
 
@@ -32,7 +132,14 @@
 <!-- END: Product Preview Section -->
 
 <style>
+  /* ===== 16:9 窗口 + 4 张 mockup 占位图 ===== */
+  .product-preview {
+    /* 进度条动画时长，跟 JS INTERVAL_MS 同步 */
+    --tab-progress-duration: 3500ms;
+  }
+
   .product-preview__window {
+    position: relative;
     aspect-ratio: 16 / 9;
     width: 100%;
     background: var(--bg-elevated);
@@ -44,14 +151,234 @@
   }
 
   .product-preview__image {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: center;
-    opacity: 0.92;
-    transition: opacity var(--duration-base) var(--ease-out);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-7);  /* 32px 给 mockup 留呼吸 */
+    opacity: 0;
+    transition: opacity 280ms var(--ease-out);
+    pointer-events: none;
+  }
+  .product-preview__image[aria-hidden="false"] {
+    opacity: 1;
   }
 
+  /* —— Mockup 占位骨架（深色 + 暖橙/绿高光；后续替换为真实截图） —— */
+  .mockup {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .mockup__line {
+    display: block;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.10);
+  }
+  .mockup__line--full { width: 100%; }
+  .mockup__line--wide { width: 70%; }
+  .mockup__line--medium { width: 50%; }
+  .mockup__line--narrow { width: 30%; }
+  .mockup__pill {
+    display: inline-block;
+    width: 36px;
+    height: 18px;
+    border-radius: 9px;
+    background: rgba(34, 197, 94, 0.6);
+  }
+
+  /* Monitor：状态栏 + 4 行进度条网格 */
+  .mockup--monitor {
+    background:
+      linear-gradient(135deg, rgba(34, 197, 94, 0.06), transparent 60%),
+      rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    padding: var(--space-5);
+    gap: var(--space-5);
+  }
+  .mockup__statusbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .mockup__grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .mockup__row {
+    display: grid;
+    gap: var(--space-3);
+  }
+  .mockup__row > span {
+    height: 24px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(
+      90deg,
+      rgba(34, 197, 94, 0.5) 0%,
+      rgba(34, 197, 94, 0.5) var(--w, 60%),
+      rgba(255, 255, 255, 0.08) var(--w, 60%),
+      rgba(255, 255, 255, 0.08) 100%
+    );
+  }
+  .mockup__row--1 { grid-template-columns: 1fr; }
+  .mockup__row--2 { grid-template-columns: 1fr 1fr; }
+  .mockup__row--3 { grid-template-columns: 1fr 1fr 1fr; }
+  .mockup__row--1 > span { --w: 80%; }
+  .mockup__row--2 > span:nth-child(1) { --w: 65%; }
+  .mockup__row--2 > span:nth-child(2) { --w: 40%; }
+  .mockup__row--3 > span:nth-child(1) { --w: 75%; }
+  .mockup__row--3 > span:nth-child(2) { --w: 50%; }
+  .mockup__row--3 > span:nth-child(3) { --w: 25%; }
+
+  /* Approve：居中对话框 */
+  .mockup--approve {
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(34, 197, 94, 0.05), transparent 70%);
+  }
+  .mockup__dialog {
+    width: min(420px, 80%);
+    background: rgba(20, 20, 24, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    box-shadow: var(--shadow-lg);
+  }
+  .mockup__dialog-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .mockup__avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.4);
+    flex-shrink: 0;
+  }
+  .mockup__dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .mockup__dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+  .mockup__btn {
+    font-family: inherit;
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .mockup__btn--green {
+    background: rgba(34, 197, 94, 0.85);
+    border-color: rgba(34, 197, 94, 0.85);
+    color: #0a0a0a;
+    font-weight: 600;
+  }
+
+  /* Ask：聊天气泡 */
+  .mockup--ask {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    padding: var(--space-5);
+    gap: var(--space-3);
+    justify-content: center;
+  }
+  .mockup__bubble {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 65%;
+  }
+  .mockup__bubble--bot {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .mockup__bubble--user {
+    align-self: flex-end;
+    background: rgba(34, 197, 94, 0.18);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+  }
+
+  /* Jump：终端窗口 */
+  .mockup--jump {
+    align-items: stretch;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--space-5);
+  }
+  .mockup__terminal {
+    width: 100%;
+    height: 100%;
+    background: #0a0a0c;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .mockup__terminal-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .mockup__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .mockup__dot--red { background: #ff5f57; }
+  .mockup__dot--yellow { background: #febc2e; }
+  .mockup__dot--green { background: #28c840; }
+  .mockup__terminal-head .mockup__line {
+    margin-left: var(--space-2);
+    height: 6px;
+  }
+  .mockup__terminal-body {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    justify-content: center;
+  }
+  .mockup__cursor {
+    display: inline-block;
+    width: 7px;
+    height: 14px;
+    background: var(--success);
+    animation: mockup-cursor 1s steps(1) infinite;
+  }
+  @keyframes mockup-cursor {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+
+  /* ===== Tab 行 ===== */
   .product-preview__tabs-row {
     display: flex;
     justify-content: center;
@@ -59,12 +386,12 @@
     margin-bottom: var(--space-4);  /* 16px — 拉近 heading */
   }
 
-  /* segmented control 风格（vibeisland）：单一玻璃底 + 内部 active 切色 */
+  /* segmented control 容器：单一玻璃底 + 内部 active 切色 */
   .product-preview__tabs {
     display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    background: rgba(255, 255, 255, 0.04);
+    align-items: stretch;
+    gap: 0;
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -72,30 +399,90 @@
     padding: 4px;
   }
 
+  /* —— Tab：未激活 —— */
   .product-preview__tab {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    padding: 6px 16px;
+    padding: 8px 18px;
     border-radius: var(--radius-pill);
     background: transparent;
     color: var(--text-tertiary);
     font-size: var(--text-sm);  /* 13px */
     font-weight: 500;
-    transition:
-      background var(--duration-fast) var(--ease-out),
-      color var(--duration-fast) var(--ease-out);
     cursor: pointer;
-  }
-  .product-preview__tab:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.04);
-  }
-  .product-preview__tab.is-active {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.1);
+    transition:
+      color var(--duration-fast) var(--ease-out),
+      background var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+    border: 1px solid transparent;
+    user-select: none;
+    isolation: isolate;  /* 建立 stacking context，文字稳定浮在进度条上 */
   }
 
+  /* —— Tab：hover（非激活态） —— */
+  .product-preview__tab:hover:not(.is-active) {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  /* —— 进度条：填充整个 tab 高度的色块，从 0% → 100% 表达自动播放 —— */
+  .product-preview__tab-progress {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(34, 197, 94, 0.16);  /* 浅绿兜底底色 */
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .product-preview__tab-progress::after {
+    content: "";
+    display: block;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(
+      90deg,
+      rgba(34, 197, 94, 0.92) 0%,
+      rgba(34, 197, 94, 0.78) 100%
+    );
+    border-radius: inherit;
+    transform-origin: left center;
+    transform: scaleX(0);
+  }
+
+  /* —— Tab：激活态 —— */
+  .product-preview__tab.is-active {
+    color: #052e16;             /* 深绿文字，在绿色填充条上始终清晰 */
+    border-color: rgba(34, 197, 94, 0.6);
+    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.35);
+  }
+  .product-preview__tab.is-active .product-preview__tab-progress::after {
+    animation: tab-progress var(--tab-progress-duration, 3500ms)
+      linear forwards;
+  }
+
+  /* —— icon / label：z-index 高于进度条 —— */
+  .product-preview__tab-icon,
+  .product-preview__tab-label {
+    position: relative;
+    z-index: 1;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  /* —— hover 激活态 —— */
+  .product-preview__tab.is-active:hover {
+    border-color: rgba(34, 197, 94, 0.85);
+  }
+
+  @keyframes tab-progress {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  /* —— 标题 —— */
   .product-preview__heading {
     font-size: var(--text-2xl);  /* 24px desktop — section 修饰标题 */
     font-weight: 700;
@@ -114,17 +501,37 @@
       font-size: var(--text-3xl);  /* 28px mobile — 略大补偿 */
     }
   }
+
+  /* —— 减弱动效：跳过进度条动画 —— */
+  @media (prefers-reduced-motion: reduce) {
+    .product-preview__tab.is-active .product-preview__tab-progress::after {
+      animation: none;
+      transform: scaleX(1);
+    }
+    .product-preview__image {
+      transition: none;
+    }
+    .mockup__cursor {
+      animation: none;
+      opacity: 1;
+    }
+  }
 </style>
 
 <script is:inline>
   (function () {
-    var INTERVAL_MS = 3500;  // 自动播放间隔
+    var INTERVAL_MS = 3500;  // 自动播放间隔（与进度条动画同步）
     var tabsRoot = document.querySelector("[data-product-tabs]");
     var headingEl = document.querySelector("[data-product-heading]");
     if (!tabsRoot || !headingEl) return;
 
     var tabs = Array.prototype.slice.call(tabsRoot.querySelectorAll("[data-tab]"));
     if (!tabs.length) return;
+
+    var imageMap = {};
+    document.querySelectorAll("[data-tab-image]").forEach(function (el) {
+      imageMap[el.getAttribute("data-tab-image")] = el;
+    });
 
     var currentIdx = 0;
     var timer = null;
@@ -137,11 +544,25 @@
       return (dict[lc] && dict[lc][key]) || (dict.en && dict.en[key]) || key;
     }
 
+    function restartProgress(idx) {
+      // 重置所有进度条：移除动画类 + 强制 reflow + 重新加
+      tabs.forEach(function (tab, i) {
+        var bar = tab.querySelector(".product-preview__tab-progress");
+        if (!bar) return;
+        if (i === idx) {
+          bar.style.animation = "none";
+          // 强制 reflow 触发重新计算
+          void bar.offsetWidth;
+          bar.style.animation = "";
+        }
+      });
+    }
+
     function show(idx, fromUser) {
       if (idx === currentIdx) return;
       var next = ((idx % tabs.length) + tabs.length) % tabs.length;
 
-      // fade out → swap text + active class → fade in
+      // fade out → swap text + active class + image → fade in
       headingEl.classList.add("is-fading");
       setTimeout(function () {
         tabs.forEach(function (el, i) {
@@ -151,6 +572,16 @@
         var tabName = tabs[next].getAttribute("data-tab");
         headingEl.textContent = t("product.heading." + tabName);
         headingEl.classList.remove("is-fading");
+
+        // 图片切换
+        Object.keys(imageMap).forEach(function (k) {
+          var el = imageMap[k];
+          el.setAttribute("aria-hidden", k === tabName ? "false" : "true");
+        });
+
+        // 重启动画进度条
+        restartProgress(next);
+
         currentIdx = next;
       }, 180);
 
@@ -177,15 +608,32 @@
 
     tabs.forEach(function (tab, i) {
       tab.addEventListener("click", function () {
+        // 点击立即切 + 重置进度条动画 + 重启 timer
         show(i, true);
+        // 用户主动点击：直接重置当前激活 tab 的进度条（让它重新走 3.5s）
+        restartProgress(i);
       });
     });
 
-    // 鼠标 hover 暂停自动播放
+    // 鼠标 hover 暂停自动播放 + 暂停进度条动画
     var section = tabsRoot.closest(".product-preview");
     if (section) {
-      section.addEventListener("mouseenter", stop);
-      section.addEventListener("mouseleave", start);
+      section.addEventListener("mouseenter", function () {
+        stop();
+        // 暂停所有进度条：把当前 animationPlayState 置 paused
+        tabs.forEach(function (tab) {
+          var bar = tab.querySelector(".product-preview__tab-progress");
+          if (bar) bar.style.animationPlayState = "paused";
+        });
+      });
+      section.addEventListener("mouseleave", function () {
+        // 恢复进度条动画
+        tabs.forEach(function (tab) {
+          var bar = tab.querySelector(".product-preview__tab-progress");
+          if (bar) bar.style.animationPlayState = "running";
+        });
+        start();
+      });
     }
 
     // 监听 locale 切换，重新翻译当前 heading

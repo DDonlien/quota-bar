@@ -23,7 +23,8 @@ const en: Dict = {
   "hero.title.line1": "Never lose track of",
   "hero.title.lead": "your",
   "hero.title.tail": "quotas",
-  "hero.subtitle": "Stay ahead of limits without breaking your workflow.",
+  // 英文版强制单行（mobile 除外）：与中文"提前掌握额度上限"语义对等
+  "hero.subtitle": "Stay ahead of every limit.",
   "hero.cta.download": "Download for Free",
   "hero.cta.docs": "View Documentation",
 
@@ -104,7 +105,7 @@ const zh: Dict = {
   "nav.download": "下载",
 
   // Hero
-  "hero.title.line1": "再也别错过",
+  "hero.title.line1": "始终掌握",
   "hero.title.lead": "你的",
   "hero.title.tail": "配额",
   "hero.subtitle": "提前掌握额度上限，不打断你的工作流。",
