@@ -29,9 +29,10 @@ const en: Dict = {
   "hero.cta.docs": "View Documentation",
 
   // ProductPreview (3 个 tab：总览 / 详情 / 调整)
-  "product.tab.monitor": "Overview",
-  "product.tab.approve": "Details",
-  "product.tab.adjust": "Adjust",
+  // 英文用单字短词 — 不换行 + 直接传达动作
+  "product.tab.monitor": "Glance",
+  "product.tab.approve": "Detail",
+  "product.tab.adjust": "Reorder",
   "product.heading.monitor": "Glance your quotas right from the menu bar — no windows, no clicks.",
   "product.heading.approve": "Drill into every model, every tier — all dimensions, one dropdown away.",
   "product.heading.adjust": "Reorder any asset by drag — the menu bar follows instantly.",
@@ -50,11 +51,15 @@ const en: Dict = {
   "feature.6.title": "Auto-Refresh",
   "feature.6.desc": "Real-time sync with your service usage data automatically.",
   "feature.7.title": "Native by Design",
-  "feature.7.desc": "Every component — menu bar, buttons, popovers — mirrors macOS native UI, pixel for pixel. Looks like part of the system.",
+  "feature.7.desc": "Mirrors macOS native UI — feels built into the system.",
   "feature.8.title": "One-Click Access",
   "feature.8.desc": "Detailed stats dropdown with a single click from the menu bar.",
   "feature.9.title": "Drag-to-Reorder",
   "feature.9.desc": "Drag any asset in the dropdown panel — the menu bar instantly follows your new order.",
+
+  // Supported Services — provider pills + app/web/cli 提示
+  "services.heading": "Supported Services",
+  "services.note": "Available quota data varies across app, web, and CLI.",
 
   // Pricing
   "pricing.heading": "Ready to upgrade your workflow?",
@@ -131,11 +136,15 @@ const zh: Dict = {
   "feature.6.title": "自动刷新",
   "feature.6.desc": "实时同步服务用量数据，无需手动刷新。",
   "feature.7.title": "原生样式呈现",
-  "feature.7.desc": "从菜单栏到下拉面板，全部组件对齐 macOS 原生规范，看上去就是系统的一部分。",
+  "feature.7.desc": "全部组件对齐 macOS 原生规范，跟系统浑然一体。",
   "feature.8.title": "一键查看详情",
   "feature.8.desc": "菜单栏单击即弹下拉面板，详细数据一目了然。",
   "feature.9.title": "自由排序",
   "feature.9.desc": "下拉面板里直接拖拽任意一项，菜单栏的顺序实时跟随。",
+
+  // Supported Services — provider pills + app/web/cli 提示
+  "services.heading": "支持哪些服务",
+  "services.note": "使用 app、web 和 cli 时，能获取到的额度信息会有所不同。",
 
   // Pricing
   "pricing.heading": "准备升级你的工作流？",

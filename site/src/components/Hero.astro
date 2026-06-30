@@ -54,15 +54,15 @@ const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
 <!-- END: Hero Section -->
 
 <style>
-  /* Hero 节奏：120px top padding / 20px bottom / 60px 标题 / 18px 副标
-   * 120 = 60 (fixed nav) + 60 视觉留白；之前 180 偏空 */
+  /* Hero 节奏：90px top padding / 20px bottom / 60px 标题 / 18px 副标
+   * 90 = 60 (fixed nav) + 30 视觉留白（之前 60 视觉留白偏空，减半） */
   .hero {
-    padding-top: 120px;
+    padding-top: 90px;
     padding-bottom: var(--space-5);  /* 20px */
   }
   @media (max-width: 768px) {
     .hero {
-      padding-top: 96px;
+      padding-top: 72px;
       padding-bottom: var(--space-7);  /* 32px */
     }
   }
@@ -142,7 +142,7 @@ const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
     border-color: rgba(255, 255, 255, 0.16);
   }
 
-  /* 打字机：暖橙渐变（vibeisland --accent #d97757 → 深色） */
+  /* 打字机：暖橙渐变（--accent #FF8C00 → --accent-deep #E07A00） */
   .typing-text {
     display: inline-block;
     background: linear-gradient(90deg, var(--accent) 0%, var(--accent-deep) 100%);
