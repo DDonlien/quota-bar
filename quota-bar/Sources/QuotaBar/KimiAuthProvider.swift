@@ -101,18 +101,25 @@ final class KimiAuthProvider: QuotaProvider, @unchecked Sendable {
         do {
             (data, response) = try await session.data(for: request)
         } catch {
+            #if DEBUG
             FileHandle.standardError.write(Data("PROBE-KIMI-STAT: error=\(error.localizedDescription)\n".utf8))
+            #endif
             return nil
         }
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-        // v0.7.0 探针：完整 dump 到 stderr，包含 status code + body
+        #if DEBUG
+        // v0.7.0 探针：完整 dump 到 stderr，包含 status code + body。
+        // ⚠️ RELEASE build 不输出：避免用户订阅数据落到 Console.app。
         FileHandle.standardError.write(Data("PROBE-KIMI-STAT: status=\(statusCode) body=\(String(data: data, encoding: .utf8) ?? "<binary>")\n".utf8))
+        #endif
         guard (200..<300).contains(statusCode) else {
             return nil
         }
         let parser = KimiSubscriptionStatParser()
         let expiresAt = parser.parseSubscriptionExpiresAt(data: data)
+        #if DEBUG
         FileHandle.standardError.write(Data("PROBE-KIMI-STAT: parsed expiresAt=\(expiresAt?.description ?? "nil")\n".utf8))
+        #endif
         return expiresAt
     }
 
@@ -253,8 +260,11 @@ final class KimiAuthProvider: QuotaProvider, @unchecked Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         let (data, response) = try await session.data(for: request)
-        // v0.7.0 探针：写到 stderr
+        #if DEBUG
+        // v0.7.0 探针：完整 dump 到 stderr。
+        // ⚠️ RELEASE build 不输出：避免用户用量数据落到 Console.app。
         FileHandle.standardError.write(Data("PROBE-KIMI-USAGES: \(String(data: data, encoding: .utf8) ?? "<binary>")\n".utf8))
+        #endif
         guard let http = response as? HTTPURLResponse else {
             throw QuotaFetchError.transient(detail: "Kimi usage 返回非 HTTP 响应")
         }
