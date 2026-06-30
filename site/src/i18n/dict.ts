@@ -34,7 +34,7 @@ const en: Dict = {
   "product.tab.approve": "Detail",
   "product.tab.adjust": "Reorder",
   "product.heading.monitor": "Glance your quotas right from the menu bar — no windows, no clicks.",
-  "product.heading.approve": "Drill into every model, every tier — all dimensions, one dropdown away.",
+  "product.heading.approve": "Every model, every tier — one dropdown away.",
   "product.heading.adjust": "Reorder any asset by drag — the menu bar follows instantly.",
 
   // Features (9 cards)
@@ -75,10 +75,8 @@ const en: Dict = {
   "pricing.support.hint": "Payment issues? hi@quotabar.app",
 
   // FAQ
+  // q1 「What services are supported?」已删除 — 与中段 SupportedServices section 重复
   "faq.heading": "Frequently Asked Questions",
-  "faq.q1": "What services are supported?",
-  "faq.a1":
-    "We currently support GitHub, OpenAI, Claude, Vercel, and many more out of the box. You can also configure custom endpoints to track virtually anything.",
   "faq.q2": "Is it secure?",
   "faq.a2":
     "Absolutely. Your API keys and data never leave your local machine. Quota Bar communicates directly with the service providers.",
@@ -160,10 +158,8 @@ const zh: Dict = {
   "pricing.support.hint": "付款问题请联系 hi@quotabar.app",
 
   // FAQ
+  // q1 「支持哪些服务？」已删除 — 与中段 SupportedServices section 重复
   "faq.heading": "常见问题",
-  "faq.q1": "支持哪些服务？",
-  "faq.a1":
-    "目前原生支持 GitHub、OpenAI、Claude、Vercel 等多项服务；你也可以配置自定义 endpoint 来追踪任何想要的内容。",
   "faq.q2": "数据安全吗？",
   "faq.a2":
     "绝对安全。API key 和数据都只存在本机，Quota Bar 直接与服务提供方通讯，不经第三方服务器。",
