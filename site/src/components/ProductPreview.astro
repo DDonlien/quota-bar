@@ -181,7 +181,7 @@
     justify-content: center;
     padding: var(--space-7);  /* 32px 给 mockup 留呼吸 */
     opacity: 0;
-    transition: opacity 280ms var(--ease-out);
+    transition: opacity 360ms var(--ease-out);
     pointer-events: none;
   }
   .product-preview__image[aria-hidden="false"] {
@@ -471,6 +471,17 @@
     transition: color var(--duration-fast) var(--ease-out);
   }
 
+  /* —— Tab 内容淡入：每次新激活 tab 时，icon + label 从 0.35 → 1，
+   *    + translateY(3px → 0)，让切换看起来像「推进来」而不是「硬切」。 */
+  .product-preview__tab.is-entering .product-preview__tab-icon,
+  .product-preview__tab.is-entering .product-preview__tab-label {
+    animation: tab-content-fade-in 280ms var(--ease-out);
+  }
+  @keyframes tab-content-fade-in {
+    from { opacity: 0.35; transform: translateY(3px); }
+    to   { opacity: 1;    transform: translateY(0); }
+  }
+
   /* —— Tab：active + hover（加浓橙色主题，hover 暂停读取） —— */
   .product-preview__tab.is-active:hover {
     color: #fff;
@@ -515,6 +526,10 @@
     .product-preview__image {
       transition: none;
     }
+    .product-preview__tab.is-entering .product-preview__tab-icon,
+    .product-preview__tab.is-entering .product-preview__tab-label {
+      animation: none;
+    }
   }
 </style>
 
@@ -537,7 +552,8 @@
     });
 
     var currentIdx = 0;
-    var timer = null;
+    var scheduledAt = null;        // 当前挂起的 setTimeout 句柄
+    var lastTickAt = Date.now();   // 上次 tick 的真实墙钟时间，用于 visibility 补偿
     var dict = window.QB_I18N || { en: {}, zh: {} };
     function locale() {
       return (document.documentElement.getAttribute("data-locale") || "en");
@@ -569,14 +585,27 @@
       headingEl.classList.add("is-fading");
       setTimeout(function () {
         tabs.forEach(function (el, i) {
-          if (i === next) el.classList.add("is-active");
-          else el.classList.remove("is-active");
+          if (i === next) {
+            el.classList.add("is-active");
+            // 重新触发 fade-in 动画：先移除、再下一帧加回
+            el.classList.remove("is-entering");
+            // 强制 reflow 让浏览器重新计算动画
+            void el.offsetWidth;
+            el.classList.add("is-entering");
+            // 动画结束后清理 class
+            setTimeout(function () {
+              el.classList.remove("is-entering");
+            }, 320);
+          } else {
+            el.classList.remove("is-active");
+            el.classList.remove("is-entering");
+          }
         });
         var tabName = tabs[next].getAttribute("data-tab");
         headingEl.textContent = t("product.heading." + tabName);
         headingEl.classList.remove("is-fading");
 
-        // 图片切换
+        // 图片切换（aria-hidden 触发 360ms opacity fade）
         Object.keys(imageMap).forEach(function (k) {
           var el = imageMap[k];
           el.setAttribute("aria-hidden", k === tabName ? "false" : "true");
@@ -593,16 +622,38 @@
 
     function tick() {
       show(currentIdx + 1, false);
+      // 重置参考时间戳：下次 scheduleNext 按「从这个 tick 开始」算 delay，
+      // 否则 visibility 触发的 tick 会因为 lastTickAt 还是 start() 的时间，
+      // 让 delay = max(0, INTERVAL_MS - huge_elapsed) = 0，导致连续 fire
+      lastTickAt = Date.now();
+      // 自调度：tick 完成后挂下一次 timer（之前 setInterval 自动续命，改 setTimeout 链要手动续）
+      scheduleNext();
     }
 
+    // —— 自调度定时器：用 Date.now() 记录真实墙钟时间，
+    //   切到其它桌面/最小化浏览器后回来（setInterval 会被节流）能精准补偿。
     function start() {
       stop();
-      timer = setInterval(tick, INTERVAL_MS);
+      lastTickAt = Date.now();
+      scheduleNext();
+    }
+    function scheduleNext() {
+      if (scheduledAt) {
+        clearTimeout(scheduledAt);
+        scheduledAt = null;
+      }
+      // 切到后台时不再调度（setTimeout 在 hidden tab 也可能被压到 1Hz，等回来时再补）
+      if (document.hidden) return;
+      var delay = Math.max(0, INTERVAL_MS - (Date.now() - lastTickAt));
+      scheduledAt = setTimeout(function () {
+        scheduledAt = null;
+        tick();
+      }, delay);
     }
     function stop() {
-      if (timer) {
-        clearInterval(timer);
-        timer = null;
+      if (scheduledAt) {
+        clearTimeout(scheduledAt);
+        scheduledAt = null;
       }
     }
     function restart() {
@@ -638,6 +689,25 @@
         start();
       });
     }
+
+    // —— visibilitychange：从后台回到前台时精准 resync
+    //   浏览器在 hidden tab 会把 setTimeout 节流到 ~1Hz，但 CSS animation 可能
+    //   仍继续走 — 用户回来会看到「进度条满了但 tab 没切」。
+    //   回来时：计算实际过了多久，过了 >= INTERVAL 就立刻 tick；并重置进度条动画，
+    //   让用户看到一次干净的 0 → 100 播放。
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) return;
+      // 前台了：重置当前激活 tab 的进度条 + resync 定时器
+      restartProgress(currentIdx);
+      var elapsed = Date.now() - lastTickAt;
+      if (elapsed >= INTERVAL_MS) {
+        // 至少错过了 1 次 tick — 立即推进
+        tick();
+      } else {
+        // 没到点，按剩余时间继续调度
+        scheduleNext();
+      }
+    });
 
     // 监听 locale 切换，重新翻译当前 heading
     document.addEventListener("qb:locale-change", function () {
