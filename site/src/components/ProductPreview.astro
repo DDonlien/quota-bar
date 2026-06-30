@@ -134,7 +134,8 @@
 <style>
   /* ===== 16:9 窗口 + 4 张 mockup 占位图 ===== */
   .product-preview {
-    /* 进度条动画时长，跟 JS INTERVAL_MS 同步 */
+    /* 进度条动画时长（读满后还会停留 HOLD_MS 再切下一个 tab），
+     * 必须跟 JS PROGRESS_MS 同步 */
     --tab-progress-duration: 3500ms;
   }
 
@@ -190,13 +191,13 @@
     width: 36px;
     height: 18px;
     border-radius: 9px;
-    background: rgba(34, 197, 94, 0.6);
+    background: rgba(217, 119, 87, 0.6);   /* 橙色 token — 与 tab 主题色一致 */
   }
 
   /* Monitor：状态栏 + 4 行进度条网格 */
   .mockup--monitor {
     background:
-      linear-gradient(135deg, rgba(34, 197, 94, 0.06), transparent 60%),
+      linear-gradient(135deg, rgba(217, 119, 87, 0.06), transparent 60%),
       rgba(255, 255, 255, 0.02);
     border-radius: var(--radius-md);
     padding: var(--space-5);
@@ -221,8 +222,8 @@
     border-radius: var(--radius-sm);
     background: linear-gradient(
       90deg,
-      rgba(34, 197, 94, 0.5) 0%,
-      rgba(34, 197, 94, 0.5) var(--w, 60%),
+      rgba(217, 119, 87, 0.55) 0%,
+      rgba(217, 119, 87, 0.55) var(--w, 60%),
       rgba(255, 255, 255, 0.08) var(--w, 60%),
       rgba(255, 255, 255, 0.08) 100%
     );
@@ -242,7 +243,7 @@
     align-items: center;
     justify-content: center;
     background:
-      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(34, 197, 94, 0.05), transparent 70%);
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(217, 119, 87, 0.05), transparent 70%);
   }
   .mockup__dialog {
     width: min(420px, 80%);
@@ -264,7 +265,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: rgba(34, 197, 94, 0.4);
+    background: rgba(217, 119, 87, 0.4);
     flex-shrink: 0;
   }
   .mockup__dialog-body {
@@ -287,8 +288,8 @@
     color: rgba(255, 255, 255, 0.7);
   }
   .mockup__btn--green {
-    background: rgba(34, 197, 94, 0.85);
-    border-color: rgba(34, 197, 94, 0.85);
+    background: rgba(217, 119, 87, 0.92);
+    border-color: rgba(217, 119, 87, 0.92);
     color: #0a0a0a;
     font-weight: 600;
   }
@@ -316,8 +317,8 @@
   }
   .mockup__bubble--user {
     align-self: flex-end;
-    background: rgba(34, 197, 94, 0.18);
-    border: 1px solid rgba(34, 197, 94, 0.4);
+    background: rgba(217, 119, 87, 0.18);
+    border: 1px solid rgba(217, 119, 87, 0.4);
   }
 
   /* Jump：终端窗口 */
@@ -370,7 +371,7 @@
     display: inline-block;
     width: 7px;
     height: 14px;
-    background: var(--success);
+    background: var(--accent);  /* 橙色光标 — 与 tab 主题色一致 */
     animation: mockup-cursor 1s steps(1) infinite;
   }
   @keyframes mockup-cursor {
@@ -386,20 +387,20 @@
     margin-bottom: var(--space-4);  /* 16px — 拉近 heading */
   }
 
-  /* segmented control 容器：单一玻璃底 + 内部 active 切色 */
+  /* segmented control 容器：透明 + 4 个 tab 之间留空隙（不要紧贴） */
   .product-preview__tabs {
     display: inline-flex;
     align-items: stretch;
-    gap: 0;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: var(--radius-pill);
-    padding: 4px;
+    gap: 6px;  /* tab 之间留空隙，未选中时是独立选项 */
+    background: transparent;
+    border: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-radius: 0;
+    padding: 0;
   }
 
-  /* —— Tab：未激活 —— */
+  /* —— Tab：未激活（idle，纯灰，无任何彩色） —— */
   .product-preview__tab {
     position: relative;
     display: inline-flex;
@@ -408,7 +409,7 @@
     padding: 8px 18px;
     border-radius: var(--radius-pill);
     background: transparent;
-    color: var(--text-tertiary);
+    color: var(--text-tertiary);   /* 纯灰文字 */
     font-size: var(--text-sm);  /* 13px */
     font-weight: 500;
     cursor: pointer;
@@ -416,27 +417,29 @@
       color var(--duration-fast) var(--ease-out),
       background var(--duration-fast) var(--ease-out),
       border-color var(--duration-fast) var(--ease-out);
-    border: 1px solid transparent;
+    border: 1px solid transparent;  /* 透明边框预留 */
     user-select: none;
-    isolation: isolate;  /* 建立 stacking context，文字稳定浮在进度条上 */
+    isolation: isolate;
   }
 
-  /* —— Tab：hover（非激活态） —— */
+  /* —— Tab：hover（非激活态，浅橙主题色） —— */
   .product-preview__tab:hover:not(.is-active) {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(217, 119, 87, 0.10);       /* 极淡橙 */
+    border-color: rgba(217, 119, 87, 0.30);     /* 淡橙边框 */
   }
 
-  /* —— 进度条：填充整个 tab 高度的色块，从 0% → 100% 表达自动播放 —— */
+  /* —— 进度条容器（默认 hidden，只在 active 态显示） —— */
   .product-preview__tab-progress {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: rgba(34, 197, 94, 0.16);  /* 浅绿兜底底色 */
+    background: transparent;
     overflow: hidden;
     pointer-events: none;
     z-index: 0;
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-out);
   }
   .product-preview__tab-progress::after {
     content: "";
@@ -445,19 +448,23 @@
     width: 100%;
     background: linear-gradient(
       90deg,
-      rgba(34, 197, 94, 0.92) 0%,
-      rgba(34, 197, 94, 0.78) 100%
+      rgba(217, 119, 87, 0.98) 0%,
+      rgba(217, 119, 87, 0.85) 100%
     );
     border-radius: inherit;
     transform-origin: left center;
     transform: scaleX(0);
   }
 
-  /* —— Tab：激活态 —— */
+  /* —— Tab：激活/读取中（橙色主题） —— */
   .product-preview__tab.is-active {
-    color: #052e16;             /* 深绿文字，在绿色填充条上始终清晰 */
-    border-color: rgba(34, 197, 94, 0.6);
-    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.35);
+    color: #f9efe9;             /* 暖白文字，在橙色填充条上读着舒服 */
+    border-color: rgba(217, 119, 87, 0.55);
+    box-shadow: 0 0 0 1px rgba(217, 119, 87, 0.25);
+  }
+  .product-preview__tab.is-active .product-preview__tab-progress {
+    opacity: 1;
+    background: rgba(217, 119, 87, 0.18);  /* 浅橙底兜底 */
   }
   .product-preview__tab.is-active .product-preview__tab-progress::after {
     animation: tab-progress var(--tab-progress-duration, 3500ms)
@@ -472,9 +479,14 @@
     transition: color var(--duration-fast) var(--ease-out);
   }
 
-  /* —— hover 激活态 —— */
+  /* —— Tab：active + hover（加浓橙色主题，hover 暂停读取） —— */
   .product-preview__tab.is-active:hover {
-    border-color: rgba(34, 197, 94, 0.85);
+    color: #fff;
+    border-color: rgba(217, 119, 87, 0.85);
+    box-shadow: 0 0 0 1px rgba(217, 119, 87, 0.45);
+  }
+  .product-preview__tab.is-active:hover .product-preview__tab-progress {
+    background: rgba(217, 119, 87, 0.30);  /* 加深的橙底 */
   }
 
   @keyframes tab-progress {
@@ -520,7 +532,10 @@
 
 <script is:inline>
   (function () {
-    var INTERVAL_MS = 3500;  // 自动播放间隔（与进度条动画同步）
+    // 进度条动画时长 + 读满后的视觉停留时长
+    var PROGRESS_MS = 3500;  // CSS 动画时长（--tab-progress-duration）
+    var HOLD_MS = 800;       // 进度条读满后多停留一会儿再切下一个
+    var INTERVAL_MS = 4300;  // = PROGRESS_MS + HOLD_MS
     var tabsRoot = document.querySelector("[data-product-tabs]");
     var headingEl = document.querySelector("[data-product-heading]");
     if (!tabsRoot || !headingEl) return;
