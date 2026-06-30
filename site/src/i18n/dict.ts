@@ -28,16 +28,13 @@ const en: Dict = {
   "hero.cta.download": "Download for Free",
   "hero.cta.docs": "View Documentation",
 
-  // ProductPreview
-  "product.tab.monitor": "Monitor",
-  "product.tab.approve": "Approve",
-  "product.tab.ask": "Ask",
-  "product.tab.jump": "Jump",
-  "product.heading": "All your quotas, at a glance.",
-  "product.heading.monitor": "All your quotas, at a glance.",
-  "product.heading.approve": "Approve permissions without leaving your flow.",
-  "product.heading.ask": "Answer your agent's questions with one click.",
-  "product.heading.jump": "Jump straight back to the terminal that needs you.",
+  // ProductPreview (3 个 tab：总览 / 详情 / 调整)
+  "product.tab.monitor": "Overview",
+  "product.tab.approve": "Details",
+  "product.tab.adjust": "Adjust",
+  "product.heading.monitor": "Glance your quotas right from the menu bar — no windows, no clicks.",
+  "product.heading.approve": "Drill into every model, every tier — all dimensions, one dropdown away.",
+  "product.heading.adjust": "Reorder any asset by drag — the menu bar follows instantly.",
 
   // Features (9 cards)
   "feature.1.title": "Multi-Service Support",
@@ -112,16 +109,13 @@ const zh: Dict = {
   "hero.cta.download": "免费下载",
   "hero.cta.docs": "查看文档",
 
-  // ProductPreview
-  "product.tab.monitor": "监控",
-  "product.tab.approve": "审批",
-  "product.tab.ask": "提问",
-  "product.tab.jump": "跳转",
-  "product.heading": "一眼看清所有订阅配额。",
-  "product.heading.monitor": "一眼看清所有订阅配额。",
-  "product.heading.approve": "不离开工作流就能完成权限审批。",
-  "product.heading.ask": "Agent 提问时，点一下就给出答案。",
-  "product.heading.jump": "一步跳回那个需要你的终端标签。",
+  // ProductPreview (3 个 tab：总览 / 详情 / 调整)
+  "product.tab.monitor": "总览",
+  "product.tab.approve": "详情",
+  "product.tab.adjust": "调整",
+  "product.heading.monitor": "不打开任何页面，在菜单栏直接看到你的额度。",
+  "product.heading.approve": "在下拉菜单里看清所有模型、不同分层的全部维度信息。",
+  "product.heading.adjust": "拖一拖就能调整额度显示顺序，菜单栏实时跟随。",
 
   // Features
   "feature.1.title": "多服务支持",

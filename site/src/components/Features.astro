@@ -1,20 +1,16 @@
 ---
-// 9 张 Feature 卡。结构 + 图标 → 数组循环渲染，避免 9 段重复 markup。
+// 6 张 Feature 卡。结构 + 图标 → 数组循环渲染，避免 6 段重复 markup。
 // 节奏：vibeisland 960 容器 / 20px 网格 gap / 24px 卡片 padding / 12px 圆角
 //
-// 渲染顺序与 stable ID 是解耦的：stable ID (feature.N) 绑定内容，数组位置决定展示顺序。
-// 这里的顺序是产品经理调整后的展示顺序（feature.3 / feature.8 交换位置），
-// dict.ts 里的 feature.N.title / feature.N.desc 保持不变。
+// 移除掉的 3 项（feature.2 菜单栏集成 / feature.8 一键查看详情 / feature.9 自由排序）
+// 都已经在 Product Preview 的 3 个 tab（总览 / 详情 / 调整）里覆盖了，所以这里不重复展示。
 const FEATURES: { titleKey: string; descKey: string; icon: string }[] = [
   { titleKey: "feature.1.title", descKey: "feature.1.desc", icon: "layers" },
-  { titleKey: "feature.2.title", descKey: "feature.2.desc", icon: "monitor" },
-  { titleKey: "feature.8.title", descKey: "feature.8.desc", icon: "target" },  // ← 第一行第三位
   { titleKey: "feature.4.title", descKey: "feature.4.desc", icon: "dollar" },
   { titleKey: "feature.5.title", descKey: "feature.5.desc", icon: "lock" },
   { titleKey: "feature.6.title", descKey: "feature.6.desc", icon: "refresh" },
   { titleKey: "feature.7.title", descKey: "feature.7.desc", icon: "moon" },
-  { titleKey: "feature.3.title", descKey: "feature.3.desc", icon: "bell" },    // ← 与 feature.8 交换位置
-  { titleKey: "feature.9.title", descKey: "feature.9.desc", icon: "grip" },    // ← icon: key → grip（拖拽手柄）
+  { titleKey: "feature.3.title", descKey: "feature.3.desc", icon: "bell" },
 ];
 ---
 
