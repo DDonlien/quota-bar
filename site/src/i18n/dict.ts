@@ -56,8 +56,8 @@ const en: Dict = {
   "feature.7.desc": "Perfect fit for the macOS aesthetic. Looks great day or night.",
   "feature.8.title": "One-Click Access",
   "feature.8.desc": "Detailed stats dropdown with a single click from the menu bar.",
-  "feature.9.title": "API Key Management",
-  "feature.9.desc": "Securely store and switch between multiple keys for various services.",
+  "feature.9.title": "Drag-to-Reorder",
+  "feature.9.desc": "Drag any asset in the dropdown panel — the menu bar instantly follows your new order.",
 
   // Pricing
   "pricing.heading": "Ready to upgrade your workflow?",
@@ -140,8 +140,8 @@ const zh: Dict = {
   "feature.7.desc": "贴合 macOS 视觉语言，昼夜都好看。",
   "feature.8.title": "一键查看详情",
   "feature.8.desc": "菜单栏单击即弹下拉面板，详细数据一目了然。",
-  "feature.9.title": "API Key 管理",
-  "feature.9.desc": "安全保存并在多个 key 之间快速切换。",
+  "feature.9.title": "自由排序",
+  "feature.9.desc": "下拉面板里直接拖拽任意一项，菜单栏的顺序实时跟随。",
 
   // Pricing
   "pricing.heading": "准备升级你的工作流？",

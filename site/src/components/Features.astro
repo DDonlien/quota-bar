@@ -1,16 +1,20 @@
 ---
 // 9 张 Feature 卡。结构 + 图标 → 数组循环渲染，避免 9 段重复 markup。
 // 节奏：vibeisland 960 容器 / 20px 网格 gap / 24px 卡片 padding / 12px 圆角
+//
+// 渲染顺序与 stable ID 是解耦的：stable ID (feature.N) 绑定内容，数组位置决定展示顺序。
+// 这里的顺序是产品经理调整后的展示顺序（feature.3 / feature.8 交换位置），
+// dict.ts 里的 feature.N.title / feature.N.desc 保持不变。
 const FEATURES: { titleKey: string; descKey: string; icon: string }[] = [
   { titleKey: "feature.1.title", descKey: "feature.1.desc", icon: "layers" },
   { titleKey: "feature.2.title", descKey: "feature.2.desc", icon: "monitor" },
-  { titleKey: "feature.3.title", descKey: "feature.3.desc", icon: "bell" },
+  { titleKey: "feature.8.title", descKey: "feature.8.desc", icon: "target" },  // ← 第一行第三位
   { titleKey: "feature.4.title", descKey: "feature.4.desc", icon: "dollar" },
   { titleKey: "feature.5.title", descKey: "feature.5.desc", icon: "lock" },
   { titleKey: "feature.6.title", descKey: "feature.6.desc", icon: "refresh" },
   { titleKey: "feature.7.title", descKey: "feature.7.desc", icon: "moon" },
-  { titleKey: "feature.8.title", descKey: "feature.8.desc", icon: "target" },
-  { titleKey: "feature.9.title", descKey: "feature.9.desc", icon: "key" },
+  { titleKey: "feature.3.title", descKey: "feature.3.desc", icon: "bell" },    // ← 与 feature.8 交换位置
+  { titleKey: "feature.9.title", descKey: "feature.9.desc", icon: "grip" },    // ← icon: key → grip（拖拽手柄）
 ];
 ---
 
@@ -69,6 +73,16 @@ const FEATURES: { titleKey: string; descKey: string; icon: string }[] = [
             {f.icon === "key" && (
               <svg fill="none" height="20" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" width="20">
                 <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+              </svg>
+            )}
+            {f.icon === "grip" && (
+              <svg fill="currentColor" height="20" viewBox="0 0 24 24" width="20" aria-hidden="true">
+                <circle cx="9" cy="6" r="1.4"></circle>
+                <circle cx="15" cy="6" r="1.4"></circle>
+                <circle cx="9" cy="12" r="1.4"></circle>
+                <circle cx="15" cy="12" r="1.4"></circle>
+                <circle cx="9" cy="18" r="1.4"></circle>
+                <circle cx="15" cy="18" r="1.4"></circle>
               </svg>
             )}
           </div>
