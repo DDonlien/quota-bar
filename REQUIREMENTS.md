@@ -183,12 +183,13 @@
 
 - [x] [0.3.0-PM-A-000] 偏好设置窗口骨架：macOS 26 系统设置风格 sidebar + detail，Liquid Glass，`NavigationSplitView` + `Form`；`CodingPlanMenuApp` 用 SwiftUI `Settings` scene 注册并自动接入 `Cmd+,` 快捷键 #P1
 - [x] [0.3.0-PM-A-001] sidebar 分组：默认组（无标题）放「通用」「模型」；「Quota Bar」组放「激活」「关于」；激活/关于项展示分组标题，未分组项不展示 #P1
-- [x] [0.3.0-PM-A-002] 「通用」页：刷新间隔（1-60 分钟 slider，默认 5 分钟）、浏览器 Cookie 来源（自动/Safari/Chrome/Firefox segmented）、菜单栏图标模式（单图标汇总/多图标分 Provider segmented）、登录时启动 toggle（落地后接入 LoginService / SMAppService）#P1
-- [x] [0.3.0-PM-A-003] 「模型」页：所有 `ProviderKind` 启用开关，关闭后 dropdown / status bar 不显示该 Provider；开关绑定 `PreferencesStore.setEnabled(_:for:)` #P1
-- [x] [0.3.0-PM-A-004] 「激活」页：当前激活状态 + 设备 ID（`PreferencesStore` 派生） + 引导文案（v0.3.0 阶段激活体系尚未上线，本页为占位骨架）#P1
-- [x] [0.3.0-PM-A-005] 「关于」页：应用名 + 版本号 + 构建号（`Bundle.main` 读取）+ GitHub repo 链接 + 版权 + 重置偏好按钮（绑定 `PreferencesStore.resetToDefaults()` + 二次确认）#P1
+- [x] [0.3.0-PM-A-002] 「通用」页：刷新间隔、浏览器 Cookie 来源、语言（中文 / English）、菜单栏图标模式（合并 / 拆分，说明随当前选项切换）、登录时启动 toggle（落地后接入 LoginService / SMAppService）#P1
+- [x] [0.3.0-PM-A-003] 「模型」页：展示当前可配置的核心模型开关（Codex / MiniMax / Kimi / Claude / GLM），每行按「名称」+「供应商 | 当前真实接入方式（App / CLI / Web / API / 待接入）」展示；更多 Provider 的订阅获取进入后续需求 #P1
+- [x] [0.3.0-PM-A-004] 「激活」页：展示未激活状态、激活邮箱输入和禁用态移除激活按钮；不展示占位设备 ID 或说明标题 #P1
+- [x] [0.3.0-PM-A-005] 「关于」页：应用名 + 版本号 + 构建号（`Bundle.main` 读取）+ 开发者 Taobe + 检查更新 + 重置偏好按钮；不展示许可、平台和维护标题 #P1
 - [x] [0.3.0-PM-A-006] 状态栏菜单恢复「偏好设置...」项（`Cmd+,`），点击触发 SwiftUI `Settings` scene；`openPreferences()` 方法从 NSSound.beep() stub 升级为 `NSApp.sendAction(Selector("showSettingsWindow:"), to: nil, from: nil)` #P1
 - [x] [0.3.0-PM-A-007] `PreferencesStore.QuotaPreferences` 新增 `launchAtLogin: Bool` 字段（Codable 向后兼容，旧配置自动获得 `false`）#P1
+- [x] [0.3.0-PM-A-012] 偏好设置视觉微调：左侧 sidebar 使用 macOS 26 原生 `NavigationSplitView` + `List(.sidebar)`，不手搓卡片背景；每页顶部使用固定 toolbar 标题（页面 icon + 标题，不显示返回/前进按钮）；说明小字与分割线遵循系统设置列表行样式，分割线保留左右 inset；Provider 等多对象列表收紧 padding 与开关尺寸；关于页保留应用信息、检查更新和重置入口；尽量移除侧边栏收起按钮 #P1
 - [ ] [0.3.0-PM-A-008] 手动添加/移除 Provider 入口（覆盖自动探测结果）#P2 #deferred — 本次仅做"关闭自动探测结果"，手动添加不在本轮范围
 - [ ] [0.3.0-PM-A-009] Provider 服务状态监控（incident 检测与展示）#P2 #deferred
 - [ ] [0.3.0-PM-A-010] WidgetKit 桌面小组件 #P2 #deferred
@@ -221,6 +222,17 @@
 ### DATA-C：新 Provider 接入通用流程
 
 - [ ] [0.4.0-DATA-C-000] 文档化新 Provider 接入流程（`AGENTS.md` 或 `quota-bar/AGENTS.md`）：从「确认安装位置 → 找 dashboard API → 写 parser → 接入 pipeline → UI 验证」5 步模板，供后续 Provider 接入参考 #P2
+- [ ] [0.4.0-DATA-C-001] Cursor 订阅/额度获取：确认 Cursor dashboard 或本地账号缓存来源，接入 parser 与 pipeline #P2
+- [ ] [0.4.0-DATA-C-002] OpenAI Platform 订阅/额度获取：确认 API key / billing dashboard 可用来源，接入 parser 与 pipeline #P2
+- [ ] [0.4.0-DATA-C-003] DeepSeek 订阅/额度获取：确认 dashboard endpoint / API key 用量接口，接入 parser 与 pipeline #P2
+- [ ] [0.4.0-DATA-C-004] GitHub Copilot 订阅/额度获取：确认 GitHub token / Copilot dashboard 可用来源，接入 parser 与 pipeline #P2
+- [ ] [0.4.0-DATA-C-005] OpenRouter 订阅/额度获取：确认 OpenRouter credits / usage API，接入 parser 与 pipeline #P2
+- [ ] [0.4.0-DATA-C-006] Perplexity 订阅/额度获取：确认账号订阅状态和额度来源，接入 parser 与 pipeline #P2
+- [ ] [0.4.0-DATA-C-007] Warp 订阅/额度获取：确认本地账号缓存或 dashboard 来源，接入 parser 与 pipeline #P2
+- [ ] [0.4.0-DATA-C-008] Trae 订阅/额度获取：确认 Trae / Trae Work dashboard 或本地接口来源，接入 parser 与 pipeline #P2
+- [ ] [0.4.0-DATA-C-009] Antigravity 订阅/额度获取：继续完善本地 dashboard probe，确认到期日/最后有效日和订阅组语义 #P2
+- [ ] [0.4.0-DATA-C-010] Gemini 遗留订阅/额度获取策略：若用户仍需要 Google Gemini 独立展示，明确与 Antigravity 的边界后再接入 #P2 #deferred
+- [ ] [0.4.0-DATA-C-011] GLM / 智谱 BigModel 订阅/额度获取：确认 BigModel / ChatGLM dashboard、API key 或本地配置来源，接入 parser 与 pipeline #P1
 
 ### QA-A：v0.4.0 完成定义
 
