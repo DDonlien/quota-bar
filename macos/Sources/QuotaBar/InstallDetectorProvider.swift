@@ -14,7 +14,7 @@ import AppKit
 ///
 /// 检测项：
 /// 1. **App Bundle**：用 `NSWorkspace` + 候选 App 名探测（沿用 `AppBundleProvider` 思路）；
-/// 2. **CLI 命令**：`kind.cliCommand` 指定的可执行命令是否在 PATH；
+/// 2. **CLI 命令**：`kind.cliCommands` 指定的可执行命令候选是否在 PATH；
 /// 3. **环境变量凭证**：`kind.envVarNames` 列出的环境变量是否有值。
 final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
 
@@ -38,8 +38,11 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
             reasons.append("App 已装（\(appPath)）")
         }
 
-        if let command = kind.cliCommand, let path = findCommand(command) {
-            reasons.append("CLI 已装（\(path)）")
+        for command in kind.cliCommands {
+            if let path = findCommand(command) {
+                reasons.append("CLI 已装（\(path)）")
+                break
+            }
         }
 
         for envName in kind.envVarNames {

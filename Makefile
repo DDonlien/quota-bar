@@ -8,7 +8,7 @@ help:
 	@echo "  make build  - swift build (debug)"
 	@echo "  make run    - swift run (启动菜单栏 app)"
 	@echo "  make test   - swift test (单元测试)"
-	@echo "  make app    - 打包 .app (build/<timestamp>/QuotaBar.app)"
+	@echo "  make app    - 打包 .app (build/<timestamp>/Quota Bar.app)"
 	@echo "  make site   - 构建 site 子项目 (Astro 站点)"
 	@echo "  make link   - 把 site/ 链接到 Vercel 项目（首次部署前跑一次）"
 	@echo "  make deploy - 用 Vercel CLI 部署 site 子项目到生产环境"

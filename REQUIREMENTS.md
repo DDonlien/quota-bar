@@ -175,15 +175,26 @@
 - [x] [0.3.0-FE-A-006] 拖拽订阅组后，菜单栏 bar 与当前可见状态灯立即按新的第一订阅组 worst quota 刷新；菜单打开期间 preferences 变化也触发 SwiftUI 重算 #P1
 - [ ] [0.3.0-UI-A-008] 多订阅组 provider 的每个子组状态灯显示该子组自身 worst quota #cut 用户明确不需要每个子组独立状态灯，改由 provider header 唯一灯显示第一组 worst quota
 
-### sub/main: 规划偏好设置与后续能力
+### sub/main: 偏好设置与后续能力
 
-- [ ] [0.3.0-PM-A-000] 偏好设置页面 / 窗口：Provider 开关、刷新间隔自定义、高级选项 #P2 #deferred
-- [ ] [0.3.0-PM-A-001] 支持手动添加/移除 Provider，覆盖自动探测结果 #P2 #deferred
-- [ ] [0.3.0-PM-A-002] 支持选择不同的浏览器作为 Cookie 来源（Safari / Chrome / Firefox）#P2 #deferred
-- [ ] [0.3.0-PM-A-003] 支持菜单栏图标合并模式（单图标汇总 vs 多图标分 Provider）#P2 #deferred
-- [ ] [0.3.0-PM-A-004] 支持 Provider 服务状态监控（incident 检测与展示）#P2 #deferred
-- [ ] [0.3.0-PM-A-005] 支持 WidgetKit 桌面小组件 #P2 #deferred
-- [ ] [0.3.0-PM-A-006] 支持 CLI 命令行工具（`quotabar status`）#P2 #deferred
+> **2026-07-01 更新**：`preferences/main` 已合并回 main，第一版偏好设置窗口落地为
+> AppKit `NSWindow` + SwiftUI 内容页，避免 accessory 菜单栏应用使用 SwiftUI `Settings`
+> scene 时启动弹空窗口或 `Cmd+,` 无响应。后续能力（手动添加 Provider / WidgetKit /
+> CLI 等）暂留 P2 deferred。
+
+- [x] [0.3.0-PM-A-000] 偏好设置窗口骨架：macOS 26 系统设置风格 sidebar + detail，Liquid Glass，AppKit `PreferencesWindowController` 承载 SwiftUI 设置页 #P1
+- [x] [0.3.0-PM-A-001] sidebar 分组：默认组（无标题）放「通用」「模型」；「Quota Bar」组放「激活」「关于」；激活/关于项展示分组标题，未分组项不展示 #P1
+- [x] [0.3.0-PM-A-002] 「通用」页：刷新间隔、浏览器 Cookie 来源、语言（中文 / English）、菜单栏图标模式（合并 / 拆分，说明随当前选项切换）、登录时启动 toggle（后续接入 LoginService / SMAppService）#P1
+- [x] [0.3.0-PM-A-003] 「模型」页：展示当前可配置的核心模型开关（Codex / MiniMax / Kimi / Claude / GLM），每行按「名称」+「供应商 | 当前真实接入方式（App / CLI / Web / API / 待接入）」展示；访问模式按现有 pipeline 支持情况显示 #P1
+- [x] [0.3.0-PM-A-004] 「激活」页：展示未激活状态、激活邮箱输入和禁用态移除激活按钮；不展示占位设备 ID 或说明标题 #P1
+- [x] [0.3.0-PM-A-005] 「关于」页：应用名 + 版本号 + 构建号（`Bundle.main` 读取）+ 开发者 Taobe + 检查更新 + 重置偏好按钮；不展示许可、平台和维护标题 #P1
+- [x] [0.3.0-PM-A-006] 状态栏菜单恢复「偏好设置...」项（`Cmd+,`），点击触发 `PreferencesWindowController.shared.show()`，不再保留 `NSSound.beep()` 占位 #P1
+- [x] [0.3.0-PM-A-007] `PreferencesStore.QuotaPreferences` 新增 `launchAtLogin: Bool` 字段（Codable 向后兼容，旧配置自动获得 `false`）#P1
+- [x] [0.3.0-PM-A-012] 偏好设置视觉微调：左侧 sidebar 使用 macOS 26 原生 `NavigationSplitView` + `List(.sidebar)`，不手搓卡片背景；每页顶部使用固定 toolbar 标题（页面 icon + 标题，不显示返回/前进按钮）；说明小字与分割线遵循系统设置列表行样式，分割线保留左右 inset；Provider 等多对象列表收紧 padding 与开关尺寸；关于页保留应用信息、检查更新和重置入口；尽量移除侧边栏收起按钮 #P1
+- [ ] [0.3.0-PM-A-008] 手动添加/移除 Provider 入口（覆盖自动探测结果）#P2 #deferred — 本次仅做"关闭自动探测结果"，手动添加不在本轮范围
+- [ ] [0.3.0-PM-A-009] Provider 服务状态监控（incident 检测与展示）#P2 #deferred
+- [ ] [0.3.0-PM-A-010] WidgetKit 桌面小组件 #P2 #deferred
+- [ ] [0.3.0-PM-A-011] CLI 命令行工具（`quotabar status`）#P2 #deferred
 
 ## Phase - v0.4.0 - 新 Provider 接入（zcode / 千问 / 其他）
 
@@ -258,6 +269,8 @@
 - [x] [0.5.0-ENG-A-001] `Makefile` 或 `scripts/dev.sh` 入口封装 `swift build` / `swift run` / `swift test` / `./scripts/build-app.sh` / `cd site && npm ci && npm run build`，README / AGENTS 里只引用这一个入口；用户/贡献者间接感知：上手命令更一致 #P2
 - [x] [0.5.0-ENG-A-002] 根 `.gitignore` 加 `site/node_modules/` / `site/dist/` / `site/.astro/` 双保险（当前靠 `site/.gitignore` 排除，但根 ignore 双保险更稳；上次 rsync 误把这些拷到了 worktree）#P1
 - [x] [0.5.0-ENG-A-003] `Package.swift` 加 `Tests/QuotaBarTests/` test target（测试用例本身作为各功能任务的 `<parent>-test` 子任务登记，不在 phase 顶层列具体测试）#P2
+- [x] [0.5.0-ENG-A-004] `macos/build/latest` 改为相对软链，并由 `build-app.sh` 扫描同级时间戳构建目录后指向最新目录，避免本地绝对路径污染 Git 状态 #P1
+- [x] [0.5.0-ENG-A-005] 打包产物使用用户可见名称 `Quota Bar.app`，并在 bundle 内接入最新圆角应用图标 `QuotaBar.icns` #P1
 
 ### sub/main: 完善用户可见文档入口
 
@@ -365,6 +378,7 @@
 - [ ] [0.7.0-DATA-A-002] 套餐映射：识别 `builtin:bigmodel-start-plan` / `builtin:bigmodel-coding-plan` / `builtin:zai-start-plan` / `builtin:zai-coding-plan` 4 种 plan，subscriptionGroup 按 plan 区分（每个 plan = 1 个订阅组）；价格映射到 `ProviderPricing` #P1
 - [ ] [0.7.0-DATA-A-003] `ZcodeLoginRunner` + `InstallDetectorProvider`：探测 `dev.zcode.app` bundle 安装和 `~/.zcode/v2/config.json` 存在性，驱动 pipeline 串接 #P1
 - [ ] [0.7.0-DATA-A-004] `Strategies.zcodePipeline()` 接入 `RefreshCoordinator`，凭证缺失时 fallback 到 Keychain / `needsConfiguration` 状态 #P1
+- [x] [0.7.0-DATA-A-006] 合并 `preferences/main` 的 GLM / 智谱基础展示骨架：`ProviderKind.glm`、颜色/图标、BigModel/智谱环境变量与凭证路径、偏好设置模型页待接入展示；完整 Z Code pipeline 仍由本组未完成任务推进 #P1
 - [ ] [0.7.0-DATA-A-005] site/DESIGN.md 中 `--provider-zcode` 的 brandColor 在 app DESIGN.md / QuotaModels 中同步落地（当前 web 占位 `#3866ff`，app 端选色待定）#P1
 
 ### feat/glm-provider: 集成 Z Code 菜单栏状态

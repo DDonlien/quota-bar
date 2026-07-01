@@ -86,10 +86,11 @@ jobs:
       - name: Build .dmg
         env:
           APP_NAME: QuotaBar
+          APP_BUNDLE_NAME: Quota Bar
           SHORT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          APP="$GITHUB_WORKSPACE/macos/build/latest/${APP_NAME}.app"
+          APP="$GITHUB_WORKSPACE/macos/build/latest/${APP_BUNDLE_NAME}.app"
           test -d "$APP" || { echo "build-app.sh did not produce $APP"; exit 1; }
           STAGE="$RUNNER_TEMP/dmg-stage"
           rm -rf "$STAGE"

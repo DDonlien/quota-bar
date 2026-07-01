@@ -332,6 +332,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         case .minimax: return NSColor(srgbRed: 0xFF/255, green: 0x45/255, blue: 0x3A/255, alpha: 1)
         case .kimi: return NSColor(srgbRed: 0xFF/255, green: 0x9F/255, blue: 0x0A/255, alpha: 1)
         case .claude: return NSColor(srgbRed: 0xD4/255, green: 0xA5/255, blue: 0x74/255, alpha: 1)
+        case .glm: return NSColor(srgbRed: 0x7C/255, green: 0x3A/255, blue: 0xED/255, alpha: 1)
         case .cursor: return NSColor(srgbRed: 0x5E/255, green: 0x6A/255, blue: 0xD2/255, alpha: 1)
         case .gemini: return NSColor(srgbRed: 0x42/255, green: 0x85/255, blue: 0xF4/255, alpha: 1)
         case .openai: return NSColor(srgbRed: 0x10/255, green: 0xA3/255, blue: 0x7F/255, alpha: 1)
@@ -443,10 +444,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         menu.addItem(timeItem)
 
-        // 偏好设置入口暂时隐藏 — v0.3.0-PM-A-000 偏好设置页/窗口已 deferred 到 P2，
-        // 且当前 openPreferences() 仅为 NSSound.beep() 占位。等偏好设置面板真正落地
-        // 再恢复菜单项（feat/hide-preferences branch 上做后续工作）。
-        // menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
+        // 偏好设置入口：由 PreferencesWindowController（NSWindow + NSHostingView）
+        // 负责显示/聚焦，避免 accessory 菜单栏 app 走 SwiftUI Settings scene 时弹空窗口。
+        menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(makeMenuItem(title: "退出", systemSymbolName: "xmark.square", action: #selector(quit), keyEquivalent: "q"))
     }
@@ -526,11 +526,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         coordinator.refreshNow()
     }
 
-    // openPreferences() 暂时禁用：偏好设置入口已隐藏（见 buildMenu 注释），
-    // 保留方法定义待偏好设置面板实现后复用。NSSound.beep() stub 一并注释避免编译警告。
-    // @objc private func openPreferences() {
-    //     NSSound.beep()
-    // }
+    @objc private func openPreferences() {
+        PreferencesWindowController.shared.show()
+    }
 
     @objc private func quit() {
         coordinator.stop()

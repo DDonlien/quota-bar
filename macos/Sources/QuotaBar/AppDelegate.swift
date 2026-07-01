@@ -1,17 +1,5 @@
-import SwiftUI
 import AppKit
 import SweetCookieKit
-
-@main
-struct CodingPlanMenuApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-
-    var body: some Scene {
-        Settings {
-            EmptyView()
-        }
-    }
-}
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {

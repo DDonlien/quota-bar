@@ -8,6 +8,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
     case minimax
     case kimi
     case claude
+    case glm
     case cursor
     case gemini
     case openai
@@ -27,6 +28,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .minimax: return "MiniMax"
         case .kimi: return "Kimi"
         case .claude: return "Claude"
+        case .glm: return "GLM"
         case .cursor: return "Cursor"
         case .gemini: return "Gemini"
         case .openai: return "OpenAI"
@@ -52,6 +54,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .minimax: return Color(hex: "#FF453A")
         case .kimi: return Color(hex: "#FF9F0A")
         case .claude: return Color(hex: "#D4A574")
+        case .glm: return Color(hex: "#7C3AED")
         case .cursor: return Color(hex: "#5E6AD2")
         case .gemini: return Color(hex: "#4285F4")
         case .openai: return Color(hex: "#10A37F")
@@ -70,6 +73,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         switch self {
         case .codex: return "terminal"
         case .claude: return "message"
+        case .glm: return "sparkles"
         case .cursor: return "cursorarrow"
         case .gemini: return "sparkles"
         case .kimi: return "moon"
@@ -90,13 +94,18 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
     /// 注意：`gemini` 已 deprecate —— Google 在用 `antigravity` CLI 取代它，
     /// 所以 Gemini 的检测不再依赖 gemini CLI（凭证也已迁移到 antigravity）。
     var cliCommand: String? {
+        cliCommands.first
+    }
+
+    /// 本机可执行的 CLI 命令候选。
+    var cliCommands: [String] {
         switch self {
-        case .codex: return "codex"
-        case .claude: return "claude"
-        case .kimi: return "kimi"
-        case .minimax: return "minimax"
-        case .antigravity: return "antigravity"
-        default: return nil
+        case .codex: return ["codex"]
+        case .claude: return ["claude"]
+        case .kimi: return ["kimi"]
+        case .minimax: return ["minimax"]
+        case .antigravity: return ["agy", "antigravity"]
+        default: return []
         }
     }
 
@@ -118,6 +127,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         switch self {
         case .openai: return ["OPENAI_API_KEY"]
         case .claude: return ["ANTHROPIC_API_KEY"]
+        case .glm: return ["ZHIPUAI_API_KEY", "BIGMODEL_API_KEY"]
         case .deepseek: return ["DEEPSEEK_API_KEY"]
         case .openrouter: return ["OPENROUTER_API_KEY"]
         case .copilot: return ["GITHUB_TOKEN", "GITHUB_COPILOT_TOKEN"]
@@ -133,6 +143,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .kimi: return ["~/.kimi-code/credentials/kimi-code.json"]
         case .minimax: return ["~/.mavis/config.yaml"]
         case .claude: return ["~/.claude/.credentials.json"]
+        case .glm: return ["~/.bigmodel/config.json", "~/.zhipu/config.json"]
         case .gemini: return ["~/.gemini/oauth_creds.json"]
         default: return []
         }
@@ -143,6 +154,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         switch self {
         case .codex, .openai: return ["openai.com", "chat.openai.com", "platform.openai.com", "chatgpt.com"]
         case .claude: return ["anthropic.com", "claude.ai"]
+        case .glm: return ["bigmodel.cn", "zhipuai.cn", "chatglm.cn"]
         case .cursor: return ["cursor.com", "cursor.sh"]
         case .gemini: return ["google.com", "gemini.google.com"]
         case .kimi: return ["kimi.moonshot.cn", "moonshot.cn", "kimi.com"]

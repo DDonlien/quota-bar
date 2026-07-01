@@ -66,6 +66,18 @@
 - 额度行：上方一行标签、刷新时间和百分比，下方一条进度。
 - 底部操作：使用原生 `NSMenuItem`，包含图标、标题、系统高亮和快捷键。
 
+## 偏好设置窗口
+
+- 整体参考 macOS 26 系统设置与 Vibe Island 设置页：左侧 sidebar 使用 SwiftUI/macOS 原生 `NavigationSplitView` + `List(.sidebar)` 绘制，不手搓卡片背景；系统负责侧边栏材质、圆角、选中态和 Liquid Glass 效果。右侧 detail 独立滚动，窗口底色使用系统 `windowBackgroundColor`。
+- 每个 detail 页面顶部使用系统设置风格 toolbar 行：左侧为当前页面彩色 icon，页面标题 17 pt semibold 与 icon 基线对齐；header 与下方内容使用同一水平 inset，icon 与标题保持紧凑间距；不显示返回/前进按钮。标题层覆盖在滚动内容之上，使用系统 `.bar` 材质和向下渐隐的 mask，避免滚动内容被实心遮罩硬切。
+- 设置分区使用 13 pt semibold 小标题 + 圆角矩形 group。group 内多行对象列表（例如 Provider 列表）保持紧凑行高，分割线从文本区域起始处对齐，不从卡片最左边贯穿。
+- 设置项标题和说明小字属于同一个内容块：标题用 13 pt primary，说明用 11 pt secondary，直接位于标题下方；分隔线只用于区分不同设置项或不同对象，不在标题与说明之间额外插入短线。
+- Provider 等多对象列表的图标控制在约 24 pt，开关使用更小的 `.mini` 控件尺寸，避免整行显得厚重。
+- 通用页这类单设置项说明较长的页面，允许在同一 row 内用横线把标题/控件行与说明行隔开；横线保留左右 inset，不顶到 group 边缘，并在上下保留足够 breathing room，避免说明文字贴线。
+- 通用页语言选项只提供「中文 / English」；菜单栏图标模式说明只描述当前选项，不在同一行同时解释合并和拆分。模型页 provider 行按「名称」+「供应商 | 当前真实接入方式」组织，访问模式从 App / CLI / Web / API / 待接入中按现有 pipeline 实际支持情况显示，不把未接入方式当作已支持能力展示。激活页只展示「未激活」状态、激活邮箱输入和禁用态「移除激活」按钮；不展示占位设备 ID、说明标题或本机标题。关于页不展示「应用」「链接」「维护」section 标题，不展示许可、平台、仓库/下载链接列表，只保留应用信息、开发者 Taobe、检查更新按钮与重置偏好入口。
+- 关于页 build 号优先读取 `QBDisplayBuild`，fallback 到 `CFBundleVersion`；打包脚本写入格式为 `yymmdd.hhmmss.<branchname>`，branch 名中的 `/` 统一替换为 `-`。
+- 偏好设置窗口尽量移除侧边栏收起按钮；sidebar 始终作为主要导航存在。若系统原生 sidebar 在特定 macOS 26 build 下强制显示控件，优先保留原生 sidebar 视觉，而不是改回自绘 sidebar。
+
 ## 动效
 
 - 当前原型不使用显式动效。

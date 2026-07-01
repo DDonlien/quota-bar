@@ -41,6 +41,9 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
     /// 浏览器 Cookie 来源偏好。
     var browserSource: BrowserSourcePreference
 
+    /// 界面语言偏好。
+    var language: LanguagePreference
+
     /// 菜单栏图标展示模式。
     var iconMode: IconModePreference
 
@@ -50,6 +53,14 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
     /// 高级选项。
     var advanced: AdvancedPreferences
 
+    /// 是否在用户登录 macOS 后自动启动 Quota Bar。
+    /// 通过 `SMAppService.mainApp.register()` / `.unregister()` 落地。
+    /// 字段新增于 v0.3.0-PM-A-007，向后兼容（旧配置反序列化时获得 `false`）。
+    var launchAtLogin: Bool
+
+    /// 激活邮箱。当前激活体系尚未接入后端，只持久化用户输入。
+    var activationEmail: String
+
     init(
         providerOverrides: [ProviderOverride] = [],
         quotaGroupOrder: [String: [String]] = [:],
@@ -58,9 +69,12 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         subscriptionGroupOrder: [String: [String]] = [:],
         refreshIntervalSeconds: TimeInterval = 5 * 60,
         browserSource: BrowserSourcePreference = .auto,
+        language: LanguagePreference = .chinese,
         iconMode: IconModePreference = .combined,
         incidentMonitoringEnabled: Bool = false,
-        advanced: AdvancedPreferences = AdvancedPreferences()
+        advanced: AdvancedPreferences = AdvancedPreferences(),
+        launchAtLogin: Bool = false,
+        activationEmail: String = ""
     ) {
         self.providerOverrides = providerOverrides
         self.quotaGroupOrder = quotaGroupOrder
@@ -69,9 +83,61 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         self.subscriptionGroupOrder = subscriptionGroupOrder
         self.refreshIntervalSeconds = refreshIntervalSeconds
         self.browserSource = browserSource
+        self.language = language
         self.iconMode = iconMode
         self.incidentMonitoringEnabled = incidentMonitoringEnabled
         self.advanced = advanced
+        self.launchAtLogin = launchAtLogin
+        self.activationEmail = activationEmail
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case providerOverrides
+        case quotaGroupOrder
+        case providerOrder
+        case quotaItemOrder
+        case subscriptionGroupOrder
+        case refreshIntervalSeconds
+        case browserSource
+        case language
+        case iconMode
+        case incidentMonitoringEnabled
+        case advanced
+        case launchAtLogin
+        case activationEmail
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            providerOverrides: try container.decodeIfPresent([ProviderOverride].self, forKey: .providerOverrides) ?? [],
+            quotaGroupOrder: try container.decodeIfPresent([String: [String]].self, forKey: .quotaGroupOrder) ?? [:],
+            providerOrder: try container.decodeIfPresent([String].self, forKey: .providerOrder) ?? [],
+            quotaItemOrder: try container.decodeIfPresent([String: [String]].self, forKey: .quotaItemOrder) ?? [:],
+            subscriptionGroupOrder: try container.decodeIfPresent([String: [String]].self, forKey: .subscriptionGroupOrder) ?? [:],
+            refreshIntervalSeconds: try container.decodeIfPresent(TimeInterval.self, forKey: .refreshIntervalSeconds) ?? 5 * 60,
+            browserSource: try container.decodeIfPresent(BrowserSourcePreference.self, forKey: .browserSource) ?? .auto,
+            language: try container.decodeIfPresent(LanguagePreference.self, forKey: .language) ?? .chinese,
+            iconMode: try container.decodeIfPresent(IconModePreference.self, forKey: .iconMode) ?? .combined,
+            incidentMonitoringEnabled: try container.decodeIfPresent(Bool.self, forKey: .incidentMonitoringEnabled) ?? false,
+            advanced: try container.decodeIfPresent(AdvancedPreferences.self, forKey: .advanced) ?? AdvancedPreferences(),
+            launchAtLogin: try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false,
+            activationEmail: try container.decodeIfPresent(String.self, forKey: .activationEmail) ?? ""
+        )
+    }
+}
+
+// MARK: - 语言
+
+enum LanguagePreference: String, Codable, CaseIterable, Sendable {
+    case chinese = "zh-Hans"
+    case english = "en"
+
+    var displayName: String {
+        switch self {
+        case .chinese: return "中文"
+        case .english: return "English"
+        }
     }
 }
 
@@ -124,9 +190,41 @@ enum IconModePreference: String, Codable, CaseIterable, Sendable {
 
     var displayName: String {
         switch self {
-        case .combined: return "单图标汇总"
-        case .perProvider: return "多图标分 Provider（预留）"
+        case .combined: return "合并"
+        case .perProvider: return "拆分"
         }
+    }
+}
+
+// MARK: - 刷新间隔
+
+/// 偏好窗口里「刷新间隔」下拉框的 4 个固定选项。
+///
+/// v0.3.0-PM-A-008 引入：从连续的 slider（1-60 分钟）改为离散下拉。
+/// 字段仍然存 `refreshIntervalSeconds: TimeInterval`（向后兼容老 JSON），
+/// `from(seconds:)` 用最接近法迁移老值。
+enum RefreshIntervalOption: Int, CaseIterable, Identifiable, Codable, Sendable {
+    case oneMinute = 60
+    case fiveMinutes = 300
+    case tenMinutes = 600
+    case thirtyMinutes = 1800
+
+    var id: Int { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .oneMinute: return "1 分钟"
+        case .fiveMinutes: return "5 分钟"
+        case .tenMinutes: return "10 分钟"
+        case .thirtyMinutes: return "30 分钟"
+        }
+    }
+
+    var seconds: TimeInterval { TimeInterval(rawValue) }
+
+    /// 从任意 seconds 找最近的 option（迁移老 slider 值到新 picker）。
+    static func nearest(to seconds: TimeInterval) -> RefreshIntervalOption {
+        allCases.min(by: { abs($0.seconds - seconds) < abs($1.seconds - seconds) }) ?? .fiveMinutes
     }
 }
 
@@ -231,8 +329,25 @@ final class PreferencesStore {
         _ = try? persist()
     }
 
+    /// v0.3.0-PM-A-008：用 RefreshIntervalOption 替代连续 slider。底层字段仍是
+    /// `refreshIntervalSeconds`，保持 preferences.json 向后兼容。
+    func setRefreshInterval(_ option: RefreshIntervalOption) {
+        setRefreshInterval(option.seconds)
+    }
+
+    /// 偏好窗口读取当前刷新间隔的最近 option。slider 时代（1-60 分钟连续）的
+    /// 老配置会被吸附到最接近的离散 option 上，UI 上不会出错。
+    var currentRefreshIntervalOption: RefreshIntervalOption {
+        RefreshIntervalOption.nearest(to: preferences.refreshIntervalSeconds)
+    }
+
     func setBrowserSource(_ source: BrowserSourcePreference) {
         preferences.browserSource = source
+        _ = try? persist()
+    }
+
+    func setLanguage(_ language: LanguagePreference) {
+        preferences.language = language
         _ = try? persist()
     }
 
@@ -248,6 +363,17 @@ final class PreferencesStore {
 
     func setAdvanced(_ advanced: AdvancedPreferences) {
         preferences.advanced = advanced
+        _ = try? persist()
+    }
+
+    /// 设置是否在登录时启动。落地逻辑由调用方负责（`SMAppService`），本方法只持久化。
+    func setLaunchAtLogin(_ enabled: Bool) {
+        preferences.launchAtLogin = enabled
+        _ = try? persist()
+    }
+
+    func setActivationEmail(_ email: String) {
+        preferences.activationEmail = email
         _ = try? persist()
     }
 
