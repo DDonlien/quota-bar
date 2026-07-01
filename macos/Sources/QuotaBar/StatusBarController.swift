@@ -87,6 +87,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 if case .loading = snap.availability {
                     return "\(snap.kind.displayName) 刷新中"
                 }
+                if case .subscriptionExpired = snap.availability {
+                    return "\(snap.kind.displayName) 已过期"
+                }
                 let pct = Int((Self.remainingFraction(for: snap) * 100).rounded())
                 return "\(snap.kind.displayName) \(pct)%"
             }.joined(separator: " · ")
@@ -96,7 +99,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     /// 画 N 个垂直 bar 的 NSImage（macOS 26 Liquid Glass menu bar widget 规范）。
     ///
-    /// 只绘制 `.available` / `.needsConfiguration` / `.loading` 的 snapshot；
+    /// 只绘制 `.available` / `.needsConfiguration` / `.loading` / `.subscriptionExpired` 的 snapshot；
     /// 高度取该订阅最近重置 quota 窗口的 `remainingFraction`，
     /// 与 dropdown 中最紧迫周期的读数一致。
     /// **`.loading` 画 dimmed 50% 占位 bar**，streaming refresh 时随着 provider 一个个
@@ -160,13 +163,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private static func drawableSnapshots(from snapshots: [ProviderSnapshot]) -> [ProviderSnapshot] {
-        // 显示：available（有 quota）/ needsConfiguration / loading
+        // 显示：available（有 quota）/ needsConfiguration / loading / subscriptionExpired
         // 隐藏：notInstalled / fetchFailed
         snapshots.filter { snapshot in
             switch snapshot.availability {
             case .available:
                 return !snapshot.quotas.isEmpty
-            case .needsConfiguration, .loading:
+            case .needsConfiguration, .loading, .subscriptionExpired:
                 return true
             case .notInstalled, .fetchFailed:
                 return false
@@ -179,6 +182,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         switch snapshot.availability {
         case .loading, .needsConfiguration:
             return 0.5
+        case .subscriptionExpired:
+            return 0
         default:
             break
         }
@@ -364,6 +369,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         let hasWarning = snapshots.contains { snapshot in
             if case .needsConfiguration = snapshot.availability { return true }
+            if case .subscriptionExpired = snapshot.availability { return true }
             return false
         }
         if hasWarning { return .warning }

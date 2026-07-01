@@ -294,6 +294,7 @@ enum ProviderAvailability: Hashable {
     /// `.fetchFailed` / `.notInstalled` 之一。
     case loading
     case available
+    case subscriptionExpired(plan: String?, expiredAt: Date?)
     case needsConfiguration(reason: String)
     case notInstalled
     case fetchFailed(reason: String)
@@ -322,6 +323,10 @@ struct ProviderSnapshot: Identifiable, Hashable {
     /// - `nil` → 暂无真实订阅到期日数据，UI 不展示日期（只展示价格）。
     /// - 显式传入时优先使用传入值。
     let subscriptionExpiresAt: Date?
+    /// 订阅日期来源类型，用于调试、后续持久化和解释 UI。
+    let subscriptionExpiresAtSource: SubscriptionExpirySourceKind?
+    /// 订阅日期可信度，用于调试、后续持久化和解释 UI。
+    let subscriptionExpiresAtConfidence: SubscriptionExpiryConfidence?
     let fetchedAt: Date
     let isStale: Bool
 
@@ -333,6 +338,8 @@ struct ProviderSnapshot: Identifiable, Hashable {
         quotas: [QuotaWindow],
         monthlyPrice: String?,
         subscriptionExpiresAt: Date? = nil,
+        subscriptionExpiresAtSource: SubscriptionExpirySourceKind? = nil,
+        subscriptionExpiresAtConfidence: SubscriptionExpiryConfidence? = nil,
         fetchedAt: Date,
         isStale: Bool = false
     ) {
@@ -346,6 +353,8 @@ struct ProviderSnapshot: Identifiable, Hashable {
         // max(resetsAt)。quota 窗口 resetsAt 是「下次重置时间」不是「订阅到期日」，
         // 之前那个 fallback 被用户实测为「完全乱写」。
         self.subscriptionExpiresAt = subscriptionExpiresAt
+        self.subscriptionExpiresAtSource = subscriptionExpiresAtSource
+        self.subscriptionExpiresAtConfidence = subscriptionExpiresAtConfidence
         self.fetchedAt = fetchedAt
         self.isStale = isStale
     }
@@ -432,6 +441,8 @@ struct ProviderSnapshot: Identifiable, Hashable {
             } else {
                 return Color.green
             }
+        case .subscriptionExpired:
+            return Color(hex: "#FF453A")
         case .needsConfiguration: return Color(hex: "#8E8E93")
         case .notInstalled: return Color(hex: "#8E8E93")
         case .fetchFailed: return Color(hex: "#FF9F0A")
@@ -576,12 +587,18 @@ enum QuotaFetchError: LocalizedError, Equatable {
     case missingCredentials(detail: String)
     case permissionRequired(detail: String)
     case sourceUnavailable(detail: String)
+    case subscriptionExpired(plan: String?, expiredAt: Date?)
     case transient(detail: String)
 
     var errorDescription: String? {
         switch self {
         case .missingCredentials(let d), .permissionRequired(let d), .sourceUnavailable(let d), .transient(let d):
             return d
+        case .subscriptionExpired(let plan, let expiredAt):
+            if let expiredAt {
+                return "\(plan ?? "订阅") 已于 \(expiredAt) 过期"
+            }
+            return "\(plan ?? "订阅") 已过期"
         }
     }
 
@@ -593,6 +610,8 @@ enum QuotaFetchError: LocalizedError, Equatable {
             return .needsConfiguration(reason: reason)
         case .sourceUnavailable:
             return .notInstalled
+        case .subscriptionExpired(let plan, let expiredAt):
+            return .subscriptionExpired(plan: plan, expiredAt: expiredAt)
         case .transient(let reason):
             return .fetchFailed(reason: reason)
         }
@@ -602,6 +621,7 @@ enum QuotaFetchError: LocalizedError, Equatable {
         switch self {
         case .permissionRequired: return 3
         case .missingCredentials: return 2
+        case .subscriptionExpired: return 2
         case .transient: return 1
         case .sourceUnavailable: return 0
         }

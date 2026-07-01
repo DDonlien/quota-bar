@@ -141,6 +141,7 @@ final class FetchPipeline {
             switch availability {
             case .available: return 4
             case .needsConfiguration: return 3
+            case .subscriptionExpired: return 3
             case .loading: return 2
             case .notInstalled: return 1
             case .fetchFailed: return 0

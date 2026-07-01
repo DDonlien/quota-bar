@@ -71,6 +71,22 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
     }
 
     private func fetchSnapshotImpl(endpoint: DashboardEndpoints.Endpoint, fetchedAt: Date, timeout: TimeInterval) async throws -> ProviderSnapshot {
+        if kind == .codex {
+            let status = CodexSubscriptionInspector().inspect()
+            if status.isEffectivelyExpired {
+                let (plan, expiredAt) = Self.extractExpiry(from: status)
+                NSLog("QuotaBar: [codex-cookie] subscription expired (plan=\(plan ?? "?"), until=\(expiredAt?.description ?? "?")) — skip dashboard")
+                return ProviderSnapshot(
+                    kind: .codex,
+                    subscriptionTier: ProviderPricing.normalizedTier(plan),
+                    availability: .subscriptionExpired(plan: plan, expiredAt: expiredAt),
+                    quotas: [],
+                    monthlyPrice: nil,
+                    fetchedAt: fetchedAt
+                )
+            }
+        }
+
         let domains = kind.dashboardCookieDomains
         let cookies: [HTTPCookie]
         do {
@@ -148,6 +164,8 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
             quotas: windows,
             monthlyPrice: monthlyPrice,
             subscriptionExpiresAt: subscriptionExpiresAt,
+            subscriptionExpiresAtSource: subscriptionExpiresAt == nil ? nil : .api,
+            subscriptionExpiresAtConfidence: subscriptionExpiresAt == nil ? nil : .high,
             fetchedAt: fetchedAt
         )
     }
@@ -221,10 +239,14 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
         } else {
             monthlyPrice = await ProviderPricing.localizedMonthlyPrice(kind: .kimi, tier: tier)
         }
-        // v0.6.0：Kimi 的 KimiSubscriptionStatParser 从 subscriptionBalance.expireTime
-        // 提取真实订阅到期日。
-        let subscriptionExpiresAt = quotaEndpoint.parser.parseSubscriptionExpiresAt(data: quotaData)
-        NSLog("QuotaBar: [kimi-cookie] final tier=\(tier ?? "<nil>"), price=\(monthlyPrice ?? "<nil>"), expiresAt=\(subscriptionExpiresAt?.description ?? "<nil>")")
+        let expirySource = SubscriptionExpirySource.browserAPI(
+            id: "kimi-subscription-stat-api",
+            confidence: .medium,
+            dateMeaning: .nextRenewalDate
+        )
+        let rawRenewalDate = quotaEndpoint.parser.parseSubscriptionExpiresAt(data: quotaData)
+        let subscriptionExpiresAt = rawRenewalDate.map { expirySource.lastValidDate(from: $0) }
+        QuotaBarDiagnostics.write("[kimi-cookie] final tier=\(tier ?? "<nil>"), price=\(monthlyPrice ?? "<nil>"), rawRenewalDate=\(String(describing: rawRenewalDate)), lastValidDate=\(String(describing: subscriptionExpiresAt))")
         return ProviderSnapshot(
             kind: .kimi,
             subscriptionTier: ProviderPricing.normalizedTier(tier),
@@ -232,6 +254,8 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
             quotas: windows,
             monthlyPrice: monthlyPrice,
             subscriptionExpiresAt: subscriptionExpiresAt,
+            subscriptionExpiresAtSource: subscriptionExpiresAt == nil ? nil : expirySource.kind,
+            subscriptionExpiresAtConfidence: subscriptionExpiresAt == nil ? nil : expirySource.confidence,
             fetchedAt: fetchedAt
         )
     }
@@ -288,6 +312,17 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
                 ?? user["tier"] as? String
         }
         return nil
+    }
+
+    private static func extractExpiry(from status: SubscriptionStatus) -> (String?, Date?) {
+        switch status {
+        case .expired(let lastPlan, let expiredAt):
+            return (lastPlan, expiredAt)
+        case .free:
+            return (nil, nil)
+        case .active, .unknown:
+            return (nil, nil)
+        }
     }
 
     private func performRequest(with cookies: [HTTPCookie], endpoint: DashboardEndpoints.Endpoint) async throws -> Data {

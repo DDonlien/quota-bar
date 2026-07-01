@@ -17,12 +17,15 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
     private let endpoint: URL
     private let session: URLSession
     private let dateProvider: () -> Date
+    /// 从 auth.json 的 id_token 读取 OpenAI 订阅元信息。
+    private let inspector: CodexSubscriptionInspector
 
     init(
         authPath: String? = nil,
         endpoint: URL = URL(string: "https://chatgpt.com/backend-api/wham/usage")!,
         session: URLSession = .shared,
-        dateProvider: @escaping () -> Date = Date.init
+        dateProvider: @escaping () -> Date = Date.init,
+        inspector: CodexSubscriptionInspector? = nil
     ) {
         if let authPath {
             self.authPath = authPath
@@ -34,10 +37,25 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
         self.endpoint = endpoint
         self.session = session
         self.dateProvider = dateProvider
+        self.inspector = inspector ?? CodexSubscriptionInspector(authPath: self.authPath, dateProvider: dateProvider)
     }
 
     func fetchSnapshot(timeout: TimeInterval) async throws -> ProviderSnapshot {
         let fetchedAt = dateProvider()
+
+        let subscriptionStatus = inspector.inspect()
+        if subscriptionStatus.isEffectivelyExpired {
+            let (plan, expiredAt) = Self.extractExpiry(from: subscriptionStatus)
+            return ProviderSnapshot(
+                kind: .codex,
+                subscriptionTier: ProviderPricing.normalizedTier(plan),
+                availability: .subscriptionExpired(plan: plan, expiredAt: expiredAt),
+                quotas: [],
+                monthlyPrice: nil,
+                fetchedAt: fetchedAt
+            )
+        }
+
         guard let creds = loadCredentials() else {
             throw QuotaFetchError.missingCredentials(detail: "未找到 ~/.codex/auth.json")
         }
@@ -84,6 +102,17 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
             monthlyPrice: await ProviderPricing.localizedMonthlyPrice(kind: .codex, tier: tier),
             fetchedAt: fetchedAt
         )
+    }
+
+    private static func extractExpiry(from status: SubscriptionStatus) -> (String?, Date?) {
+        switch status {
+        case .expired(let lastPlan, let expiredAt):
+            return (lastPlan, expiredAt)
+        case .free:
+            return (nil, nil)
+        case .active, .unknown:
+            return (nil, nil)
+        }
     }
 
     private struct Credentials {

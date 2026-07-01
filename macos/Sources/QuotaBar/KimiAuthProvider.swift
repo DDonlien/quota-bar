@@ -207,6 +207,11 @@ final class KimiAuthProvider: QuotaProvider, @unchecked Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         let (data, response) = try await session.data(for: request)
+        #if DEBUG
+        // v0.7.0 探针：完整 dump 到 stderr。
+        // RELEASE build 不输出，避免用户用量数据落到 Console.app。
+        FileHandle.standardError.write(Data("PROBE-KIMI-USAGES: \(String(data: data, encoding: .utf8) ?? "<binary>")\n".utf8))
+        #endif
         guard let http = response as? HTTPURLResponse else {
             throw QuotaFetchError.transient(detail: "Kimi usage 返回非 HTTP 响应")
         }

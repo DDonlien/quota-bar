@@ -28,6 +28,10 @@ final class RefreshCoordinator: ObservableObject {
     var refreshInterval: TimeInterval
     var providerTimeout: TimeInterval
 
+    private let cookieReader: BrowserCookieReader
+    /// 订阅过期日 source 管线超时。日期失败不影响额度展示。
+    private let harvesterTimeout: TimeInterval = 6.0
+
     private var autoRefreshTask: Task<Void, Never>?
     private var inFlightTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []
@@ -36,12 +40,14 @@ final class RefreshCoordinator: ObservableObject {
         providers: [QuotaProvider],
         installDetectors: [ProviderKind: InstallDetectorProvider] = [:],
         refreshInterval: TimeInterval = 5 * 60,
-        providerTimeout: TimeInterval = 10
+        providerTimeout: TimeInterval = 10,
+        cookieReader: BrowserCookieReader = FilesystemCookieReader()
     ) {
         self.providers = providers
         self.installDetectors = installDetectors
         self.refreshInterval = refreshInterval
         self.providerTimeout = providerTimeout
+        self.cookieReader = cookieReader
 
         NotificationCenter.default.publisher(for: .quotaPreferencesDidChange)
             .receive(on: RunLoop.main)
@@ -202,7 +208,8 @@ final class RefreshCoordinator: ObservableObject {
                         let tier = snapshot.subscriptionTier ?? "nil"
                         let price = snapshot.monthlyPrice ?? "nil"
                         NSLog("QuotaBar: ✅ \(kind.rawValue) done, tier=\(tier), price=\(price), avail=\(snapshot.availability), quotas=[\(quotasInfo)]")
-                        result = .success(snapshot)
+                        let enriched = await self.enrichWithSubscriptionExpiry(snapshot)
+                        result = .success(enriched)
                     } catch {
                         NSLog("QuotaBar: ❌ \(kind.rawValue) failed: \(error)")
                         result = .failure(error)
@@ -233,7 +240,7 @@ final class RefreshCoordinator: ObservableObject {
         let hasFailedKind = finalSnapshots.contains { snapshot in
             switch snapshot.availability {
             case .available, .loading: return false
-            case .needsConfiguration, .notInstalled, .fetchFailed: return true
+            case .subscriptionExpired, .needsConfiguration, .notInstalled, .fetchFailed: return true
             }
         }
         let hasAnyLoading = finalSnapshots.contains { $0.availability == .loading }
@@ -252,7 +259,7 @@ final class RefreshCoordinator: ObservableObject {
             case .needsConfiguration(let reason), .fetchFailed(let reason):
                 return reason.localizedCaseInsensitiveContains("Full Disk Access")
                     || reason.localizedCaseInsensitiveContains("完全磁盘访问")
-            case .available, .loading, .notInstalled:
+            case .available, .subscriptionExpired, .loading, .notInstalled:
                 return false
             }
         }
@@ -314,7 +321,7 @@ final class RefreshCoordinator: ObservableObject {
         switch newSnapshot.availability {
         case .available:
             keepAfterApply = !newSnapshot.quotas.isEmpty
-        case .needsConfiguration:
+        case .needsConfiguration, .subscriptionExpired:
             keepAfterApply = true
         case .loading, .notInstalled, .fetchFailed:
             keepAfterApply = false
@@ -371,6 +378,7 @@ final class RefreshCoordinator: ObservableObject {
         let priority: (ProviderAvailability) -> Int = { availability in
             switch availability {
             case .available: return 4
+            case .subscriptionExpired: return 3
             case .needsConfiguration: return 3
             case .loading: return 2
             case .notInstalled: return 1
@@ -388,6 +396,39 @@ final class RefreshCoordinator: ObservableObject {
         }
 
         return sorted.first
+    }
+
+    /// 订阅过期日独立 source 管线。
+    ///
+    /// 额度 pipeline 负责回答“还有多少可用额度”；这里负责补充“付费订阅什么时候到期”。
+    /// 找不到日期时保留原 snapshot，不把日期失败映射成额度失败。
+    private func enrichWithSubscriptionExpiry(_ snapshot: ProviderSnapshot) async -> ProviderSnapshot {
+        guard snapshot.availability == .available else {
+            QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] skip subscription expiry enrichment, availability=\(snapshot.availability)")
+            return snapshot
+        }
+
+        let resolver = SubscriptionExpiryResolver(cookieReader: cookieReader, timeout: harvesterTimeout)
+        QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] start subscription expiry enrichment")
+        guard let resolution = await resolver.resolve(for: snapshot) else {
+            QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry unresolved")
+            return snapshot
+        }
+
+        QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry resolved expiresAt=\(resolution.expiresAt), source=\(resolution.source.id), kind=\(resolution.source.kind.rawValue), confidence=\(resolution.source.confidence.rawValue)")
+        return ProviderSnapshot(
+            id: snapshot.id,
+            kind: snapshot.kind,
+            subscriptionTier: snapshot.subscriptionTier,
+            availability: snapshot.availability,
+            quotas: snapshot.quotas,
+            monthlyPrice: snapshot.monthlyPrice,
+            subscriptionExpiresAt: resolution.expiresAt,
+            subscriptionExpiresAtSource: resolution.source.kind,
+            subscriptionExpiresAtConfidence: resolution.source.confidence,
+            fetchedAt: snapshot.fetchedAt,
+            isStale: snapshot.isStale
+        )
     }
 
     // MARK: - 辅助

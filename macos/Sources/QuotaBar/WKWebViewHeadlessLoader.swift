@@ -47,9 +47,28 @@ final class WKWebViewHeadlessLoader {
         timeout: TimeInterval,
         identifier: String
     ) async throws -> String {
+        try await load(
+            url: url,
+            cookieDomains: kind.dashboardCookieDomains,
+            timeout: timeout,
+            identifier: identifier
+        )
+    }
+
+    /// 加载订阅管理页并返回 `document.documentElement.outerHTML`。
+    ///
+    /// 与 `load(url:kind:timeout:identifier:)` 相同，但 cookie 域由 caller 显式提供。
+    /// 订阅过期日 source 可能和额度 dashboard 使用不同域名，例如 MiniMax 额度来自
+    /// `minimax.chat`，订阅页在 `platform.minimaxi.com`。
+    func load(
+        url: URL,
+        cookieDomains: [String],
+        timeout: TimeInterval,
+        identifier: String
+    ) async throws -> String {
         let cookies: [HTTPCookie]
         do {
-            cookies = try await cookieReader.readCookies(matching: kind.dashboardCookieDomains)
+            cookies = try await cookieReader.readCookies(matching: cookieDomains)
         } catch let error as FilesystemCookieReader.ReaderError {
             switch error {
             case .privacyAccessDenied:

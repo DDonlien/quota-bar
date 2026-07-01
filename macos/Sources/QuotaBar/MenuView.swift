@@ -395,6 +395,8 @@ private struct PlanSection: View {
                     // 单订阅组 provider：保持现有 UI（一个 quota list，状态灯在 planHeader 上）
                     QuotaRows(snapshot: snapshot, quotas: subscriptionGroups.first?.items ?? [])
                 }
+            case .subscriptionExpired(let plan, let expiredAt):
+                StatusRow(text: Self.expiredHint(plan: plan, expiredAt: expiredAt))
             case .needsConfiguration(let reason):
                 if snapshot.kind == .minimax, let onSaveKey {
                     MiniMaxKeyInputField(
@@ -411,6 +413,21 @@ private struct PlanSection: View {
             }
         }
         .opacity(snapshot.isStale ? 0.7 : 1.0)
+    }
+
+    private static func expiredHint(plan: String?, expiredAt: Date?) -> String {
+        var parts: [String] = ["订阅已过期"]
+        if let plan, !plan.isEmpty {
+            parts.append(plan)
+        }
+        if let expiredAt {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone.current
+            formatter.dateFormat = "yyyy/M/d"
+            parts.append("到期 \(formatter.string(from: expiredAt))")
+        }
+        return parts.joined(separator: " · ")
     }
 }
 

@@ -302,52 +302,52 @@
 
 ### feat/subscription-expiry: 接入 Kimi 真实订阅到期日
 
-> Kimi 的 `GetSubscriptionStat` 响应里 `subscriptionBalance.expireTime` **就是真实的订阅到期日**，但当前代码把它错塞到 Work quota 窗口的 `resetsAt`。这是最快、最稳的 1 个 provider，先打通。
+> Kimi 的 `GetSubscriptionStat` 响应里 `subscriptionBalance.expireTime` 可作为订阅续费日原始值，但页面语义是「下一次续费日」，UI 需要转换成「最后有效日」。历史上这个值曾被错塞到 Work quota 窗口的 `resetsAt`，需要保持额度周期和订阅日期两条语义分离。
 
 - [x] [0.6.0-DATA-A-000] `KimiSubscriptionStatParser` 解析 `subscriptionBalance.expireTime` 后**不再塞给 Work quota 的 `resetsAt`**（Work 的 resetsAt 应该是月度窗口的滚动结束时间，跟 subscription 到期日是不同概念）#P1
-- [x] [0.6.0-DATA-A-001] `KimiSubscriptionStatParser.parseSubscriptionExpiresAt(data:)` 返回 `subscriptionBalance.expireTime`；`BrowserCookieProvider` 调 `parseSubscriptionExpiresAt` 拿到值后传给 `ProviderSnapshot.subscriptionExpiresAt` #P1
-- [x] [0.6.0-DATA-A-002] Work quota 窗口的 `resetsAt` 改为从 `subscriptionBalance.expireTime` 反推或保留为 nil（让 UI 不显示月度 quota 的"重置时间"——已经隐含在 subscriptionExpiresAt 里，避免双信息）；如需要月度窗口重置，则计算 `now + periodSeconds` 兜底 #P1
-- [x] [0.6.0-DATA-A-002-test] 单元测试：mock `GetSubscriptionStat` JSON 验证 `subscriptionExpiresAt == expireTime`，Work quota `resetsAt` 不再等于 expireTime #P1
+- [x] [0.6.0-DATA-A-001] `KimiSubscriptionStatParser.parseSubscriptionExpiresAt(data:)` 返回 `subscriptionBalance.expireTime` 原始续费日；`BrowserCookieProvider` 按 `.nextRenewalDate` 转换成最后有效日后传给 `ProviderSnapshot.subscriptionExpiresAt` #P1
+- [x] [0.6.0-DATA-A-002] Work quota 窗口的 `resetsAt` 保持 nil；`subscriptionBalance.expireTime` 仅用于 Work 行 refreshDescription，不进入额度窗口重置时间 #P1
+- [x] [0.6.0-DATA-A-002-test] 单元测试：mock `GetSubscriptionStat` JSON 验证原始续费日可解析、Work quota `resetsAt` 不再等于 expireTime、最后有效日换算由 source 层负责 #P1
 
 ### feat/subscription-expiry: 接入 Codex 真实订阅到期日
 
 > Codex (chatgpt.com) 的 `/backend-api/wham/usage` 只返回 quota 窗口，**不返回订阅到期日**。需要 headless 抓 `chatgpt.com/account/manage` 或 `chatgpt.com/settings/billing` 页面，提取「Next billing date」「Renewal date」之类 DOM 文本。
 
-- [ ] [0.6.0-DATA-B-000] `CodexHarvester` 实现：用 `WKWebViewHeadlessLoader` 加载 `https://chatgpt.com/account/manage`，DOM 提取续费日期；找不到返回 nil；超时/Cloudflare challenge 失败抛 `QuotaFetchError.transient` 让 pipeline 降级 #P1
-- [ ] [0.6.0-DATA-B-001] `CodexAuthProvider` / `BrowserCookieProvider` Codex 路径新增 strategy：headless 抓订阅页 → 拿 `subscriptionExpiresAt`；和现有 quota 抓取并行，结果合并到 `ProviderSnapshot` #P1
-- [ ] [0.6.0-DATA-B-001-test] 单元测试：mock HTML（含"Next billing on July 25, 2026"等常见模式）验证 `CodexHarvester` 解析出正确 `Date` #P1
+- [x] [0.6.0-DATA-B-000] `CodexHarvester` 实现：用 `WKWebViewHeadlessLoader` 加载 `https://chatgpt.com/#settings/Billing`，DOM 提取续费日期；找不到返回 nil；超时/Cloudflare challenge 失败时 source 管线降级 #P1
+- [x] [0.6.0-DATA-B-001] `RefreshCoordinator` 在 Codex quota snapshot 成功后通过独立 source 管线补 `subscriptionExpiresAt`；日期失败不影响额度展示 #P1
+- [x] [0.6.0-DATA-B-001-test] 单元测试：mock HTML（含"Next billing on July 25, 2026"等常见模式）验证 `CodexHarvester` 解析出正确 `Date` #P1
 
 ### feat/subscription-expiry: 接入 Claude 真实订阅到期日
 
 > Claude (claude.ai) 的 `/api/organizations/{uuid}/usage` 不返回订阅到期日。需要 headless 抓 `claude.ai/settings/plan` 或 `claude.ai/account/billing`，提取「Next billing」「Renews on」之类。
 
-- [ ] [0.6.0-DATA-C-000] `ClaudeHarvester` 实现：加载 `https://claude.ai/settings/plan`，DOM 提取续费日期 #P1
-- [ ] [0.6.0-DATA-C-001] 集成到 `BrowserCookieProvider` Claude 路径 #P1
-- [ ] [0.6.0-DATA-C-001-test] 单元测试：mock HTML 验证解析 #P1
+- [x] [0.6.0-DATA-C-000] `ClaudeHarvester` 实现：加载 `https://claude.ai/new#settings/billing`，DOM 提取续费日期 #P1
+- [x] [0.6.0-DATA-C-001] 通过独立 source 管线集成到 Claude snapshot enrichment #P1
+- [x] [0.6.0-DATA-C-001-test] 单元测试：mock HTML 验证解析 #P1
 
 ### feat/subscription-expiry: 接入 Cursor 真实订阅到期日
 
 > Cursor (cursor.com) 的 dashboard 走 `cursor.com/api/...`，但续费日通常在 `cursor.com/dashboard` 顶部"Plan"卡片里。需要 headless 抓页面。
 
-- [ ] [0.6.0-DATA-D-000] `CursorHarvester` 实现：加载 `https://cursor.com/dashboard`，提取"Pro plan renews on..."或类似 #P1
-- [ ] [0.6.0-DATA-D-001] 集成到 `BrowserCookieProvider` Cursor 路径 #P1
-- [ ] [0.6.0-DATA-D-001-test] 单元测试：mock HTML 验证解析 #P1
+- [x] [0.6.0-DATA-D-000] `CursorHarvester` 实现：加载 `https://cursor.com/dashboard`，提取"Pro plan renews on..."或类似 #P1
+- [x] [0.6.0-DATA-D-001] 通过独立 source 管线集成到 Cursor snapshot enrichment #P1
+- [x] [0.6.0-DATA-D-001-test] 单元测试：mock HTML 验证解析 #P1
 
 ### feat/subscription-expiry: 接入 MiniMax 真实订阅到期日
 
 > MiniMax Web (minimaxi.com / api.minimaxi.com) 的 `coding_plan/remains` 不返回订阅到期日。需要 headless 抓 `minimaxi.com/user-center/payment/balance` 或类似。
 
-- [ ] [0.6.0-DATA-E-000] `MiniMaxHarvester` 实现：定位 MiniMax 订阅管理页 URL，提取续费日期 #P1
-- [ ] [0.6.0-DATA-E-001] 集成到 `BrowserCookieProvider` MiniMax 路径 #P1
-- [ ] [0.6.0-DATA-E-001-test] 单元测试 #P1
+- [x] [0.6.0-DATA-E-000] `MiniMaxHarvester` 实现：定位 MiniMax 订阅管理页 URL，提取续费日期 #P1
+- [x] [0.6.0-DATA-E-001] 通过独立 source 管线集成到 MiniMax snapshot enrichment #P1
+- [x] [0.6.0-DATA-E-001-test] 单元测试 #P1
 
 ### feat/subscription-expiry: 接入 Antigravity 真实订阅到期日
 
 > Antigravity 是 Google 系的 IDE，订阅状态在 Google Cloud 控制台或 antigravity.google 域内。可能需要登录 Google account 后访问 antigravity.google/settings。
 
-- [ ] [0.6.0-DATA-F-000] `AntigravityHarvester` 实现：定位 Antigravity 订阅管理页 URL，提取续费日期；可能需要跟随重定向到 accounts.google.com 完成登录 #P1
-- [ ] [0.6.0-DATA-F-001] 集成到 `BrowserCookieProvider` / `AntigravityDashboardProvider` 路径 #P1
-- [ ] [0.6.0-DATA-F-001-test] 单元测试 #P1
+- [x] [0.6.0-DATA-F-000] `AntigravityHarvester` 实现：定位 Antigravity 订阅管理页 URL，提取续费日期；可能需要跟随重定向到 accounts.google.com 完成登录 #P1
+- [x] [0.6.0-DATA-F-001] 通过独立 source 管线集成到 Antigravity snapshot enrichment #P1
+- [x] [0.6.0-DATA-F-001-test] 单元测试 #P1
 
 ### feat/subscription-expiry: 调整订阅到期日展示规则
 
@@ -358,6 +358,15 @@
 
 - [x] [0.6.0-UI-A-000] 验证 `MenuView.PlanHeader.expiresAtText == nil` 时 HStack 收缩正常（价格仍居右、不留空隙）#P1
 - [x] [0.6.0-UI-A-001] 给 `expiresAtText` 加 `.help("...")` tooltip：显示「订阅续费日期」+ 完整 ISO 日期（让用户 hover 能看到精确时间）#P2
+
+### sub/expiry: 建立订阅过期日独立 source 管线
+
+> 用户补充：过期日和额度信息不冲突；本地安装但无付费订阅时仍可能有免费额度，应如实展示额度，同时过期日找不到就隐藏。订阅过期日不应只是额度 pipeline 的附属逻辑，而应有独立 source 层级和可追踪来源。
+
+- [x] [0.6.0-ARCH-B-000] 抽象 `SubscriptionExpirySource` / resolver：按 provider 定义过期日 source 顺序、来源类型（API / app cache / CLI / browser API / headless DOM）、confidence 与目标 URL #P1
+- [x] [0.6.0-ARCH-B-001] `RefreshCoordinator` 使用独立过期日 source resolver 补 `subscriptionExpiresAt`；即使额度 snapshot 来源是免费额度或本地安装路径，也不把“没有订阅过期日”视为额度失败 #P1
+- [x] [0.6.0-ARCH-B-002] headless DOM source 使用用户确认的订阅页入口：Claude `https://claude.ai/new#settings/billing`、Codex `https://chatgpt.com/#settings/Billing`、MiniMax `https://platform.minimaxi.com/console/plan`、Kimi `https://www.kimi.com/membership/subscription?tab=quota`；GLM 暂无订阅，不接入过期日 source #P1
+- [x] [0.6.0-ARCH-B-003-test] 单元测试覆盖 source registry 顺序、Kimi API 优先不走 headless、免费额度 snapshot 无过期日时仍保持 `.available` #P1
 
 ## Phase - v0.7.0 - 智谱 GLM Provider 接入（feat/glm-provider）
 
@@ -408,3 +417,62 @@
 - [x] [0.8.0-DOC-A-009] 同步 README、AGENTS、REQUIREMENTS、日志中的 `.repo/` + `worktree/` 结构说明 #docs #P1 #cut 已改为 main 根目录 + 单数 `worktree/` 结构说明
 - [x] [0.8.0-DOC-A-010] 将 `main` 分支恢复到项目根目录，保留其他分支在单数 `worktree/` 下，兼容 GitHub Desktop / Codex / Agent 发现模型 #docs #P1
 - [x] [0.8.0-DOC-A-011] 修改 `agent-template/AGENTS.md`：`main` 默认保留在根目录，非 `main` worktree 使用单数 `worktree/` #docs #P1
+
+## Phase - v0.9.0 - 持久化、来源索引与启动兜底
+
+> 来自 `sub/main` 的需求登记。本阶段只在本次合并中进入需求文档，代码实现后续单独推进。
+>
+> **持久化边界**：
+> - 可以持久化非敏感展示数据、来源索引和 last-known-good snapshot；
+> - 不持久化 token、cookie、API key、refresh token 或完整个人账号标识；
+> - 所有持久化文件放在 `~/Library/Application Support/QuotaBar/`。
+
+### sub/main: 建立安全持久化模型
+
+- [ ] [0.9.0-ARCH-A-000] 定义 Quota Bar 自有持久化目录：`~/Library/Application Support/QuotaBar/`；偏好、来源索引、last-known-good 快照都放在该目录下，不新增 `~/.quota-bar` 作为主路径 #P1
+- [ ] [0.9.0-ARCH-A-001] 设计持久化 schema version 与向后兼容策略；所有持久化文件必须带 `schemaVersion`，读取失败时安全丢弃并回到实时抓取，不阻塞 app 启动 #P1
+- [ ] [0.9.0-ARCH-A-002] 明确安全边界：持久化文件不得保存 token、cookie、API key、refresh token 或浏览器 Cookie 明文；敏感凭证仍只读取原始服务配置、浏览器 Cookie 或 macOS Keychain #P1
+
+### sub/main: 建立来源索引
+
+- [ ] [0.9.0-DATA-A-000] 新增 provider source-index 文件，记录每个 provider 最近成功的数据来源，用于下次启动优先尝试最可能成功的 source #P1
+- [ ] [0.9.0-DATA-A-001] 来源索引只保存非敏感元信息：providerKind、sourceKind、sourceId、成功时间、失败次数、最后错误摘要、相关本地路径或浏览器 profile 标识；不保存凭证内容 #P1
+- [ ] [0.9.0-DATA-A-002] source-index 写入必须发生在 source 成功返回后；失败次数和最后错误摘要可更新，但不得把失败 source 提升为默认来源 #P1
+
+### sub/main: 建立 last-known-good 快照
+
+- [ ] [0.9.0-DATA-B-000] 新增 last-known-good 快照文件，保存每个 provider 最近一次真实刷新成功的额度、订阅状态、订阅过期时间、价格、档位、fetchedAt、sourceKind 与是否 stale 等信息 #P1
+- [ ] [0.9.0-DATA-B-001] App 启动时先读取 last-known-good 快照作为 stale 初始展示，再异步刷新真实数据；UI 必须清晰标记 stale，避免误以为是最新数据 #P1
+- [ ] [0.9.0-DATA-B-002] 刷新失败时可以保留 last-known-good 展示，但必须保留失败状态或 stale 标记，不能把旧快照伪装成本次成功刷新 #P1
+- [ ] [0.9.0-DATA-B-003] last-known-good 快照写入前进行脱敏，不保存任何 token、cookie、API key、完整账号 ID 或浏览器 cookie 内容 #P1
+- [ ] [0.9.0-DATA-B-004] 快照写入只发生在真实刷新成功或明确订阅过期状态确认后；占位 loading、未安装、纯抓取失败不得覆盖 last-known-good 快照 #P1
+
+## Phase - v0.10.0 - 订阅过期识别与免费额度误判修正
+
+> `sub/main` 原本使用 v0.8.0 记录 Codex 订阅过期识别；当前 `main` 已经用 v0.8.0 记录仓库结构迁移，因此合并到 main 时改登记为 v0.10.0，避免稳定 ID 冲突。
+>
+> **触发 bug**：用户实测发现 `~/.codex/auth.json` 的 id_token 里 `chatgpt_subscription_active_until = 2026-06-25`，但 Codex.app 在订阅过期后调 `wham/usage` 仍能拿到 200 OK，响应里的 `plan_type` 跌成 `"free"`，`rate_limit.primary_window.limit_window_seconds` 跳到 30 天，被旧 parser 错误显示成“月额度”。这说明“用 quota 数值反推订阅状态”不可靠。
+>
+> **本次 merge 边界**：先并入 Codex 已落地实现，修复已知 bug；所有 AI provider 的统一订阅过期识别作为后续需求登记，不在本次 merge 中扩展实现。
+
+### sub/main: Codex 订阅过期识别
+
+- [x] [0.10.0-ARCH-A-000] `JWTPayloadDecoder` 工具：解 JWT payload 部分（不验签，只读 base64url+JSON），失败返回 nil #P1
+- [x] [0.10.0-ARCH-A-001] `OpenAIAuthPayload`：读取 `https://api.openai.com/auth` namespace 下的 planType、subscriptionActiveUntil、lastChecked、accountId、userId 等字段 #P1
+- [x] [0.10.0-ARCH-A-002] `SubscriptionStatus`：区分 `.active(expiresAt)` / `.expired(lastPlan, expiredAt)` / `.free` / `.unknown` #P1
+- [x] [0.10.0-ARCH-A-003] `CodexSubscriptionInspector`：从 `~/.codex/auth.json` 解 id_token → 映射成 `SubscriptionStatus`；失败一律返回 `.unknown`，不反推 #P1
+- [x] [0.10.0-DATA-A-000] `CodexAuthProvider.fetchSnapshot` 在发 wham/usage 前先调 `CodexSubscriptionInspector.inspect()`；过期 / free 时返回 `availability: .subscriptionExpired(plan, expiredAt)` 的 marker snapshot #P1
+- [x] [0.10.0-DATA-A-001] `CodexDashboardParser.parse` 对 `plan_type == "free"` 返回 nil，防止 free 月额度被解析成付费额度窗口 #P1
+- [x] [0.10.0-DATA-A-002] `BrowserCookieProvider.fetchSnapshotImpl` Codex 路径在发请求前先调 `CodexSubscriptionInspector`，过期 / free 时返回 marker snapshot #P1
+- [x] [0.10.0-DATA-A-003] `ProviderAvailability` / `QuotaFetchError` 新增 `.subscriptionExpired(plan, expiredAt)`，并在 UI / 状态栏 / fetch priority 中处理 #P1
+- [x] [0.10.0-DATA-A-004] `MenuView.PlanSection` 对 `.subscriptionExpired` 只显示灰标提示，不渲染 quota rows #P1
+- [x] [0.10.0-DATA-A-005] `StatusBarController` 对 `.subscriptionExpired` 显示 “已过期” tooltip，并以 0% bar 占位 #P1
+- [x] [0.10.0-QA-A-000] 单元测试覆盖 JWT decode、auth payload、active/expired/free/unknown 状态、Codex parser free 防御与 expired marker 行为 #P1
+
+### sub/main: 所有 AI Provider 统一订阅过期识别
+
+- [ ] [0.10.0-DATA-B-000] 梳理所有已接入 provider 的权威订阅状态来源优先级：本地 auth / app cache / CLI / browser API / headless DOM；不要只依赖 quota 数值反推订阅是否有效 #P1
+- [ ] [0.10.0-DATA-B-001] 为 Claude、Cursor、Kimi、MiniMax、Antigravity、GLM 等 provider 设计与 `CodexSubscriptionInspector` 等价的 inspector 或 source 规则；明确 free / expired / unknown / active 的判定边界 #P1
+- [ ] [0.10.0-DATA-B-002] 统一处理“免费额度仍可用但付费订阅已过期”的 UI 语义：区分免费额度展示、付费订阅过期提示、以及真正的抓取失败 #P1
+- [ ] [0.10.0-DATA-B-003] 为所有 provider 增加防御性 parser：当 dashboard 明确返回 free / expired / unpaid / trial-ended 等状态时，不把免费或降级额度误标成付费订阅额度 #P1
+- [ ] [0.10.0-QA-B-000] 为统一订阅过期识别补测试矩阵：active、expired、free、unknown、免费额度存在、dashboard 字段缺失、字段 schema 变化 #P1

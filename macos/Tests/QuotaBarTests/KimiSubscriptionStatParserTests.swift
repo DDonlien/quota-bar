@@ -2,15 +2,14 @@ import Foundation
 import Testing
 @testable import QuotaBar
 
-// MARK: - KimiSubscriptionStatParser 订阅到期日测试（v0.6.0 DATA-A）
+// MARK: - KimiSubscriptionStatParser 额度周期测试
 //
 // 覆盖：
-// 1. parseSubscriptionExpiresAt 正确返回 subscriptionBalance.expireTime
-// 2. Work quota 的 resetsAt 不再等于 expireTime（修复 v0.3.0 错塞 bug）
+// 1. subscriptionBalance.expireTime 可作为订阅续费日原始值
+// 2. Work quota 的 resetsAt 不等于 expireTime（修复 v0.3.0 错塞 bug）
 // 3. Code 5h / 周额度的 resetsAt 仍走 ratelimitCode5h.resetTime 等
-// 4. 边界：没 subscriptionBalance / expireTime 解析失败
 
-@Suite("KimiSubscriptionStatParser — 订阅到期日 (v0.6.0)")
+@Suite("KimiSubscriptionStatParser — 额度周期")
 struct KimiSubscriptionStatParserTests {
 
     private static func fixtureJSON() -> [String: Any] {
@@ -37,16 +36,21 @@ struct KimiSubscriptionStatParserTests {
         try! JSONSerialization.data(withJSONObject: json)
     }
 
-    @Test("parseSubscriptionExpiresAt 返回 subscriptionBalance.expireTime")
-    func extractsExpireTime() throws {
+    @Test("parseSubscriptionExpiresAt 返回 subscriptionBalance.expireTime 原始续费日")
+    func expireTimeIsSubscriptionRenewalDate() throws {
         let parser = KimiSubscriptionStatParser()
         let data = Self.makeData(Self.fixtureJSON())
-        let expiresAt = parser.parseSubscriptionExpiresAt(data: data)
-        #expect(expiresAt != nil)
-        let comps = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: try #require(expiresAt))
+        let date = try #require(parser.parseSubscriptionExpiresAt(data: data))
+        let comps = Calendar(identifier: .gregorian).dateComponents(
+            in: TimeZone(secondsFromGMT: 0)!,
+            from: date
+        )
+
         #expect(comps.year == 2026)
         #expect(comps.month == 8)
         #expect(comps.day == 15)
+        #expect(comps.hour == 10)
+        #expect(comps.minute == 30)
     }
 
     @Test("Work quota 的 resetsAt 不再等于 expireTime（v0.6.0 修复）")
@@ -82,7 +86,7 @@ struct KimiSubscriptionStatParserTests {
         #expect(parser.parseSubscriptionExpiresAt(data: data) == nil)
     }
 
-    @Test("expireTime 解析失败时 parseSubscriptionExpiresAt 返回 nil（不 throw）")
+    @Test("expireTime 存在但解析失败时 parseSubscriptionExpiresAt 返回 nil（不 throw）")
     func invalidExpireTime() {
         let parser = KimiSubscriptionStatParser()
         let json: [String: Any] = [
