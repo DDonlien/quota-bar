@@ -2,9 +2,11 @@
 import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Hero from "../components/Hero.astro";
-import ProviderGrid from "../components/ProviderGrid.astro";
+import ProductPreview from "../components/ProductPreview.astro";
 import Features from "../components/Features.astro";
-import Showcase from "../components/Showcase.astro";
+import SupportedServices from "../components/SupportedServices.astro";
+import Pricing from "../components/Pricing.astro";
+import FAQ from "../components/FAQ.astro";
 import Footer from "../components/Footer.astro";
 
 // GitHub 仓库（用于下载按钮动态取最新 nightly release）
@@ -13,11 +15,13 @@ const REPO = "DDonlien/quota-bar";
 
 <Layout>
   <Nav />
-  <main>
+  <main class="site-main">
     <Hero />
-    <ProviderGrid />
+    <ProductPreview />
     <Features />
-    <Showcase />
+    <SupportedServices />
+    <Pricing />
+    <FAQ />
   </main>
   <Footer />
 </Layout>
@@ -85,3 +89,11 @@ const REPO = "DDonlien/quota-bar";
     UPDATE_DOWNLOAD();
   }
 </script>
+
+<style>
+  .site-main {
+    /* 给 fixed nav 留出空间：nav 高度约 60px，加点 buffer */
+    padding-top: 8rem;     /* 128px */
+    padding-bottom: 6rem;  /* 96px */
+  }
+</style>

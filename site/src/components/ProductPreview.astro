@@ -1,0 +1,552 @@
+---
+// Product Preview — 16:9 大图（玻璃窗）+ 居中 tab + H2 标题
+// 3 个 tab 可点击切换 + 自动循环播放；h2 内容跟着当前 active tab 切换
+// 激活态视觉：
+//   - 橙色背景 + 橙色边框（segmented control 里 active pill 风格）
+//   - tab 内部左侧进度条 0%→100% 走 PROGRESS_MS 表达自动播放
+//   - 图标 / 文字切到高亮色
+// 上面 16:9 窗口里的图也跟着 active tab 切换（3 张 mockup，纯 CSS 占位）
+// 节奏：vibeisland 1060 宽 / 12px 圆角窗口 / pill segmented tab
+// 3 个 tab：monitor=总览（菜单栏查看）/ approve=详情（多模型多分层）/ adjust=调整（拖拽排序）
+---
+
+<!-- BEGIN: Product Preview Section -->
+<section class="product-preview section">
+  <div class="container-content">
+    <div class="product-preview__window">
+      <!-- 3 张占位 mockup：根据 active tab 切换可见性 + fade -->
+      <div class="product-preview__image" data-tab-image="monitor" aria-hidden="false">
+        <video
+          class="mockup mockup--video"
+          src="/preview.mp4"
+          autoplay
+          muted
+          playsinline
+          preload="metadata"
+          width="1662"
+          height="1080"
+          aria-label="Quota Bar overview: at-a-glance quota status from the menu bar"
+        ></video>
+      </div>
+
+      <div class="product-preview__image" data-tab-image="approve" aria-hidden="true">
+        <video
+          class="mockup mockup--video"
+          src="/detail.mp4"
+          autoplay
+          muted
+          playsinline
+          preload="metadata"
+          width="1662"
+          height="1080"
+          aria-label="Quota Bar details: drill down into per-model quota breakdowns"
+        ></video>
+      </div>
+
+      <div class="product-preview__image" data-tab-image="adjust" aria-hidden="true">
+        <video
+          class="mockup mockup--video"
+          src="/reorder.mp4"
+          autoplay
+          muted
+          playsinline
+          preload="metadata"
+          width="1662"
+          height="1080"
+          aria-label="Quota Bar reorder: drag a provider card or a quota row to rearrange its order in the menu bar dropdown"
+        ></video>
+      </div>
+    </div>
+
+    <div class="product-preview__tabs-row">
+      <div class="product-preview__tabs" data-product-tabs>
+        <button class="product-preview__tab is-active" type="button" data-tab="monitor">
+          <span class="product-preview__tab-progress" aria-hidden="true"></span>
+          <svg class="product-preview__tab-icon" fill="none" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" aria-hidden="true">
+            <rect height="14" rx="2" ry="2" width="20" x="2" y="3"></rect>
+            <line x1="8" x2="16" y1="21" y2="21"></line>
+            <line x1="12" x2="12" y1="17" y2="21"></line>
+          </svg>
+          <span class="product-preview__tab-label" data-i18n="product.tab.monitor">Overview</span>
+        </button>
+        <button class="product-preview__tab" type="button" data-tab="approve">
+          <span class="product-preview__tab-progress" aria-hidden="true"></span>
+          <!-- 详情：横线三档（5h / 周 / 月）切换的视觉隐喻 -->
+          <svg class="product-preview__tab-icon" fill="none" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" aria-hidden="true">
+            <path d="M3 6h18M3 12h18M3 18h18"></path>
+          </svg>
+          <span class="product-preview__tab-label" data-i18n="product.tab.approve">Details</span>
+        </button>
+        <button class="product-preview__tab" type="button" data-tab="adjust">
+          <span class="product-preview__tab-progress" aria-hidden="true"></span>
+          <!-- 调整：拖拽手柄 + 上下箭头 -->
+          <svg class="product-preview__tab-icon" fill="none" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" aria-hidden="true">
+            <circle cx="9" cy="6" r="1" fill="currentColor" stroke="none"></circle>
+            <circle cx="9" cy="12" r="1" fill="currentColor" stroke="none"></circle>
+            <circle cx="9" cy="18" r="1" fill="currentColor" stroke="none"></circle>
+            <circle cx="15" cy="6" r="1" fill="currentColor" stroke="none"></circle>
+            <circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"></circle>
+            <circle cx="15" cy="18" r="1" fill="currentColor" stroke="none"></circle>
+          </svg>
+          <span class="product-preview__tab-label" data-i18n="product.tab.adjust">Adjust</span>
+        </button>
+      </div>
+    </div>
+
+    <h2 class="product-preview__heading" data-product-heading data-i18n="product.heading.monitor">
+      All your quotas, at a glance.
+    </h2>
+  </div>
+</section>
+<!-- END: Product Preview Section -->
+
+<style>
+  /* ===== 16:9 窗口 + 3 张 mockup 占位图 ===== */
+  .product-preview {
+    /* 进度条走满的时长（读满后会再停留 HOLD_MS 再切下一个 tab），
+     * 必须跟 JS PROGRESS_MS 同步。
+     * 视频源都是 5 秒：PROGRESS_MS (3s) + HOLD_MS (2s) = 5s，刚好对齐视频时长 */
+    --tab-progress-duration: 3000ms;
+  }
+
+  .product-preview__window {
+    position: relative;
+    /* 视频源 1662x1080 = 1.538:1，容器对齐这个比例保证不被裁切 */
+    aspect-ratio: 1662 / 1080;
+    width: 100%;
+    /* 容器透明、无圆角、无阴影：圆角 / drop-shadow / 底部 fade
+     * 全部迁移到 video 元素自身，让视频看起来「溶」进页面背景
+     * 而不是被框在窗口里 */
+    background: transparent;
+    overflow: visible;  /* 让 video 的 drop-shadow 能透出来 */
+  }
+
+  .product-preview__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 不再有 padding：video 自身有圆角，不需要外层再留呼吸 */
+    opacity: 0;
+    /* cross-slide：hidden 默认在右偏 48px（~5% 容器宽），active 时滑到中心；
+     * 新 image 从右稍稍滑入 + fade in，旧的同时向右微移 + fade out，
+     * 掩盖 video seek 帧的瞬间突跳，又不会像 carousel 那么"大动作" */
+    transform: translateX(48px);
+    transition:
+      opacity 480ms cubic-bezier(0.33, 0, 0.2, 1),
+      transform 480ms cubic-bezier(0.33, 0, 0.2, 1);
+    pointer-events: none;
+    will-change: opacity, transform;
+  }
+  .product-preview__image[aria-hidden="false"] {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* —— Video 自己承担：圆角 + drop-shadow + 底部 fade mask ——
+   * mask 让 video 底部 65% 起渐隐到完全透明，配合深色页面背景
+   * 让视频看起来像「渗」进背景，而不是被框在窗口里。
+   * drop-shadow 跟随 mask 后的轮廓，所以阴影不会"伸"到透明区。 */
+  .mockup--video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 16px;
+    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.45));
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 65%,
+      rgba(0, 0, 0, 0.55) 85%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 65%,
+      rgba(0, 0, 0, 0.55) 85%,
+      transparent 100%
+    );
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+
+  /* ===== Tab 行 ===== */
+  .product-preview__tabs-row {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-7);  /* 32px */
+    margin-bottom: var(--space-4);  /* 16px — 拉近 heading */
+  }
+
+  /* segmented control 外胶囊：深色玻璃 + 1px 浅边框 + 圆角 + 内 padding；
+   * 3 个 tab 在胶囊里分布，未选中 tab 之间有 gap */
+  .product-preview__tabs {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 4px;
+    background: rgba(20, 20, 24, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-pill);
+    padding: 4px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* —— Tab：未激活（idle，纯灰，无任何彩色） —— */
+  .product-preview__tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 7px 16px;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text-tertiary);   /* 纯灰文字 */
+    font-size: var(--text-sm);  /* 13px */
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      color var(--duration-fast) var(--ease-out),
+      background var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+    border: 1px solid transparent;  /* 透明边框预留 */
+    user-select: none;
+    isolation: isolate;
+    white-space: nowrap;
+  }
+
+  /* —— Tab 文字不换行（即使外胶囊被压缩） —— */
+  .product-preview__tab-label {
+    white-space: nowrap;
+  }
+
+  /* —— Tab：hover（非激活态，浅橙主题色） —— */
+  .product-preview__tab:hover:not(.is-active) {
+    color: var(--text-primary);
+    background: rgba(255, 140, 0, 0.10);       /* 极淡橙 */
+    border-color: rgba(255, 140, 0, 0.30);     /* 淡橙边框 */
+  }
+
+  /* —— 进度条容器（默认 hidden，只在 active 态显示） —— */
+  .product-preview__tab-progress {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: transparent;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+  .product-preview__tab-progress::after {
+    content: "";
+    display: block;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 140, 0, 0.98) 0%,
+      rgba(255, 140, 0, 0.85) 100%
+    );
+    border-radius: inherit;
+    transform-origin: left center;
+    transform: scaleX(0);
+  }
+
+  /* —— Tab：激活/读取中（橙色主题） —— */
+  .product-preview__tab.is-active {
+    color: #f9efe9;             /* 暖白文字，在橙色填充条上读着舒服 */
+    border-color: rgba(255, 140, 0, 0.55);
+    box-shadow: 0 0 0 1px rgba(255, 140, 0, 0.25);
+  }
+  .product-preview__tab.is-active .product-preview__tab-progress {
+    opacity: 1;
+    background: rgba(255, 140, 0, 0.18);  /* 浅橙底兜底 */
+  }
+  .product-preview__tab.is-active .product-preview__tab-progress::after {
+    animation: tab-progress var(--tab-progress-duration, 3500ms)
+      linear forwards;
+  }
+
+  /* —— icon / label：z-index 高于进度条 —— */
+  .product-preview__tab-icon,
+  .product-preview__tab-label {
+    position: relative;
+    z-index: 1;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  /* —— Tab 内容淡入：每次新激活 tab 时，icon + label 从 0.35 → 1，
+   *    + translateY(3px → 0)，让切换看起来像「推进来」而不是「硬切」。 */
+  .product-preview__tab.is-entering .product-preview__tab-icon,
+  .product-preview__tab.is-entering .product-preview__tab-label {
+    animation: tab-content-fade-in 280ms var(--ease-out);
+  }
+  @keyframes tab-content-fade-in {
+    from { opacity: 0.35; transform: translateY(3px); }
+    to   { opacity: 1;    transform: translateY(0); }
+  }
+
+  /* —— Tab：active + hover（加浓橙色主题，hover 暂停读取） —— */
+  .product-preview__tab.is-active:hover {
+    color: #fff;
+    border-color: rgba(255, 140, 0, 0.85);
+    box-shadow: 0 0 0 1px rgba(255, 140, 0, 0.45);
+  }
+  .product-preview__tab.is-active:hover .product-preview__tab-progress {
+    background: rgba(255, 140, 0, 0.30);  /* 加深的橙底 */
+  }
+
+  @keyframes tab-progress {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  /* —— 标题 —— */
+  .product-preview__heading {
+    font-size: var(--text-2xl);  /* 24px desktop — section 修饰标题 */
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+    letter-spacing: -0.005em;
+    margin-top: 0;  /* 紧贴 tab 行 */
+    color: var(--text-primary);
+    transition: opacity var(--duration-base) var(--ease-out);
+  }
+  .product-preview__heading.is-fading {
+    opacity: 0;
+  }
+  @media (max-width: 768px) {
+    .product-preview__heading {
+      font-size: var(--text-3xl);  /* 28px mobile — 略大补偿 */
+    }
+  }
+
+  /* —— 减弱动效：跳过进度条动画 —— */
+  @media (prefers-reduced-motion: reduce) {
+    .product-preview__tab.is-active .product-preview__tab-progress::after {
+      animation: none;
+      transform: scaleX(1);
+    }
+    .product-preview__image {
+      transition: none;
+    }
+    .product-preview__tab.is-entering .product-preview__tab-icon,
+    .product-preview__tab.is-entering .product-preview__tab-label {
+      animation: none;
+    }
+    /* Adjust tab 是嵌入 GIF（自带循环），prefers-reduced-motion 不影响 */
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    // 进度条走满时长 + 读满后停顿时长；总和 = 视频时长（5s），让 tab 节奏对齐视频
+    var PROGRESS_MS = 3000;  // CSS 动画时长（--tab-progress-duration）
+    var HOLD_MS = 2000;      // 进度条读满后停留 2s 再切下一个
+    var INTERVAL_MS = 5000;  // = PROGRESS_MS + HOLD_MS，必须和视频时长一致
+    var tabsRoot = document.querySelector("[data-product-tabs]");
+    var headingEl = document.querySelector("[data-product-heading]");
+    if (!tabsRoot || !headingEl) return;
+
+    var tabs = Array.prototype.slice.call(tabsRoot.querySelectorAll("[data-tab]"));
+    if (!tabs.length) return;
+
+    var imageMap = {};
+    document.querySelectorAll("[data-tab-image]").forEach(function (el) {
+      imageMap[el.getAttribute("data-tab-image")] = el;
+    });
+
+    var currentIdx = 0;
+    var scheduledAt = null;        // 当前挂起的 setTimeout 句柄
+    var lastTickAt = Date.now();   // 上次 tick 的真实墙钟时间，用于 visibility 补偿
+    var dict = window.QB_I18N || { en: {}, zh: {} };
+    function locale() {
+      return (document.documentElement.getAttribute("data-locale") || "en");
+    }
+    function t(key) {
+      var lc = locale();
+      return (dict[lc] && dict[lc][key]) || (dict.en && dict.en[key]) || key;
+    }
+
+    function restartProgress(idx) {
+      // 重置所有进度条：移除动画类 + 强制 reflow + 重新加
+      tabs.forEach(function (tab, i) {
+        var bar = tab.querySelector(".product-preview__tab-progress");
+        if (!bar) return;
+        if (i === idx) {
+          bar.style.animation = "none";
+          // 强制 reflow 触发重新计算
+          void bar.offsetWidth;
+          bar.style.animation = "";
+        }
+      });
+    }
+
+    function show(idx, fromUser) {
+      if (idx === currentIdx) return;
+      var next = ((idx % tabs.length) + tabs.length) % tabs.length;
+
+      // fade out → swap text + active class + image → fade in
+      headingEl.classList.add("is-fading");
+      setTimeout(function () {
+        tabs.forEach(function (el, i) {
+          if (i === next) {
+            el.classList.add("is-active");
+            // 重新触发 fade-in 动画：先移除、再下一帧加回
+            el.classList.remove("is-entering");
+            // 强制 reflow 让浏览器重新计算动画
+            void el.offsetWidth;
+            el.classList.add("is-entering");
+            // 动画结束后清理 class
+            setTimeout(function () {
+              el.classList.remove("is-entering");
+            }, 320);
+          } else {
+            el.classList.remove("is-active");
+            el.classList.remove("is-entering");
+          }
+        });
+        var tabName = tabs[next].getAttribute("data-tab");
+        headingEl.textContent = t("product.heading." + tabName);
+        headingEl.classList.remove("is-fading");
+
+        // 图片切换（aria-hidden 触发 480ms cross-fade + scale）
+        Object.keys(imageMap).forEach(function (k) {
+          var el = imageMap[k];
+          var isActive = (k === tabName);
+          el.setAttribute("aria-hidden", isActive ? "false" : "true");
+          var vid = el.querySelector("video");
+          if (!vid) return;
+          if (isActive) {
+            // 80ms 后再 seek + play：让浏览器先解码第一帧，
+            // 否则 fade 启动瞬间 video 是黑屏/前帧残留，视觉上看是「生硬切换」
+            setTimeout(function () {
+              try { vid.currentTime = 0; } catch (_) {}
+              var p = vid.play();
+              if (p && typeof p.catch === "function") p.catch(function () {});
+            }, 80);
+          } else {
+            // hidden video 立即暂停：避免在 background 持续 loop、currentTime 漂移；
+            // 下次切回时只需 seek(0) + play()，不会再出现"突然跳帧"
+            vid.pause();
+          }
+        });
+
+        // 重启动画进度条
+        restartProgress(next);
+
+        currentIdx = next;
+      }, 180);
+
+      if (fromUser) restart();
+    }
+
+    function tick() {
+      show(currentIdx + 1, false);
+      // 重置参考时间戳：下次 scheduleNext 按「从这个 tick 开始」算 delay，
+      // 否则 visibility 触发的 tick 会因为 lastTickAt 还是 start() 的时间，
+      // 让 delay = max(0, INTERVAL_MS - huge_elapsed) = 0，导致连续 fire
+      lastTickAt = Date.now();
+      // 自调度：tick 完成后挂下一次 timer（之前 setInterval 自动续命，改 setTimeout 链要手动续）
+      scheduleNext();
+    }
+
+    // —— 自调度定时器：用 Date.now() 记录真实墙钟时间，
+    //   切到其它桌面/最小化浏览器后回来（setInterval 会被节流）能精准补偿。
+    function start() {
+      stop();
+      lastTickAt = Date.now();
+      scheduleNext();
+    }
+    function scheduleNext() {
+      if (scheduledAt) {
+        clearTimeout(scheduledAt);
+        scheduledAt = null;
+      }
+      // 切到后台时不再调度（setTimeout 在 hidden tab 也可能被压到 1Hz，等回来时再补）
+      if (document.hidden) return;
+      var delay = Math.max(0, INTERVAL_MS - (Date.now() - lastTickAt));
+      scheduledAt = setTimeout(function () {
+        scheduledAt = null;
+        tick();
+      }, delay);
+    }
+    function stop() {
+      if (scheduledAt) {
+        clearTimeout(scheduledAt);
+        scheduledAt = null;
+      }
+    }
+    function restart() {
+      start();
+    }
+
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener("click", function () {
+        // 点击立即切 + 重置进度条动画 + 重启 timer
+        show(i, true);
+        // 用户主动点击：直接重置当前激活 tab 的进度条（让它重新走 3s）
+        restartProgress(i);
+      });
+    });
+
+    // 鼠标 hover 暂停自动播放 + 暂停进度条动画
+    var section = tabsRoot.closest(".product-preview");
+    if (section) {
+      section.addEventListener("mouseenter", function () {
+        stop();
+        // 暂停所有进度条：把当前 animationPlayState 置 paused
+        tabs.forEach(function (tab) {
+          var bar = tab.querySelector(".product-preview__tab-progress");
+          if (bar) bar.style.animationPlayState = "paused";
+        });
+      });
+      section.addEventListener("mouseleave", function () {
+        // 恢复进度条动画
+        tabs.forEach(function (tab) {
+          var bar = tab.querySelector(".product-preview__tab-progress");
+          if (bar) bar.style.animationPlayState = "running";
+        });
+        start();
+      });
+    }
+
+    // —— visibilitychange：从后台回到前台时精准 resync
+    //   浏览器在 hidden tab 会把 setTimeout 节流到 ~1Hz，但 CSS animation 可能
+    //   仍继续走 — 用户回来会看到「进度条满了但 tab 没切」。
+    //   回来时：计算实际过了多久，过了 >= INTERVAL 就立刻 tick；并重置进度条动画，
+    //   让用户看到一次干净的 0 → 100 播放。
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) return;
+      // 前台了：重置当前激活 tab 的进度条 + resync 定时器
+      restartProgress(currentIdx);
+      var elapsed = Date.now() - lastTickAt;
+      if (elapsed >= INTERVAL_MS) {
+        // 至少错过了 1 次 tick — 立即推进
+        tick();
+      } else {
+        // 没到点，按剩余时间继续调度
+        scheduleNext();
+      }
+    });
+
+    // 监听 locale 切换，重新翻译当前 heading
+    document.addEventListener("qb:locale-change", function () {
+      var tabName = tabs[currentIdx].getAttribute("data-tab");
+      headingEl.textContent = t("product.heading." + tabName);
+    });
+
+    // 初始启动
+    start();
+  })();
+</script>

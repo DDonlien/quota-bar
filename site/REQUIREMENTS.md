@@ -69,7 +69,7 @@
 - [x] [0.1.0-QA-A-001] `npm run preview` 本地可访问，HTTP 200，标题正确 #QA
 - [x] [0.1.0-QA-A-002] 所有 section 正确渲染（HTML 含 35+ 处关键类名） #QA
 - [x] [0.1.0-QA-A-003] 相关文档已更新（site 子项目四件套 + 根目录索引） #QA
-- [ ] [0.1.0-QA-A-004] Vercel 部署成功并绑定 `quotabar.ddonlien.com` #QA #deferred — 部署动作由用户触发，命令已写入 README
+- [ ] [0.1.0-QA-A-004] Vercel 部署成功并绑定 `quotabar.ddonlien.com` #QA #blocked — Vercel 生产部署已 Ready，`quota-bar.vercel.app` 可访问；自定义域 DNS 当前解析到 `198.18.1.43`，需在 DNSPod 配置 `A quotabar.ddonlien.com 76.76.21.21`
 
 ## Phase - v0.2.0 - 视觉素材升级（延后）
 

@@ -1,175 +1,287 @@
 ---
-import MenuBarMockup from "./MenuBarMockup.astro";
-
 const REPO = "DDonlien/quota-bar";
+// Hero 标题里轮播的 agent 名字：用 | 分隔。
+//   - data-words-en / data-words-zh 是 i18n 的两条 fallback；当前两种语言都用同一组
+//     英文专有名词，但保留双属性以便未来扩展（比如本地化名称）。
+//   - data-typewords 由 Layout 在 locale 应用时动态设置（运行时中转属性）。
+const AGENTS_EN = ["Antigravity", "Codex", "Claude", "MiniMax", "Kimi", "Zcode"];
+const AGENTS_ZH = ["Antigravity", "Codex", "Claude", "MiniMax", "Kimi", "Zcode"];
+const AGENTS_EN_JOINED = AGENTS_EN.join("|");
+const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
 ---
 
+<!-- BEGIN: Hero Section (vibeisland 节奏：60px 标题 + 180px 上 padding) -->
 <section class="hero">
-  <div class="container hero__inner">
-    <div class="hero__copy">
-      <span class="hero__badge reveal">
-        <span class="hero__badge-dot"></span>
-        macOS 26 · 开源 · 本地优先
-      </span>
-
-      <h1 class="hero__title reveal">
-        AI 订阅额度<br />
-        <span class="hero__title-accent">一眼可见</span>
-      </h1>
-
-      <p class="hero__subtitle reveal">
-        Quota Bar 把你所有 AI 服务的剩余额度，做成菜单栏里的进度条。<br />
-        装上即用，免配置、免登录，无需打开任何窗口。
-      </p>
-
-      <div class="hero__cta reveal" id="download">
-        <a
-          class="btn btn--primary btn--lg"
-          href={`https://github.com/${REPO}/releases`}
-          data-download
+  <div class="hero__inner container-content">
+    <h1 class="hero__title">
+      <span data-i18n="hero.title.line1">Never lose track of</span><br />
+      <span data-i18n="hero.title.lead">your</span>
+      <span
+        class="typing-text"
+        data-typewriter="Antigravity"
+        data-words-en={AGENTS_EN_JOINED}
+        data-words-zh={AGENTS_ZH_JOINED}
+        aria-live="polite"
+      >Antigravity</span><span class="hero__tail" data-i18n="hero.title.tail">quotas</span>
+    </h1>
+    <p class="hero__subtitle">
+      <span data-i18n="hero.subtitle">Stay ahead of limits without breaking your workflow.</span>
+    </p>
+    <div class="hero__ctas">
+      <a
+        href={`https://github.com/${REPO}/releases`}
+        data-download
+        class="hero__cta hero__cta--primary"
+      >
+        <svg
+          class="hero__cta-icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 1v10m0 0L4 7m4 4l4-4M2 14h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>免费下载 Quota Bar</span>
-        </a>
-        <a
-          class="btn btn--ghost btn--lg"
-          href={`https://github.com/${REPO}`}
-          target="_blank"
-          rel="noopener"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-          </svg>
-          View on GitHub
-        </a>
-      </div>
-
-      <div class="hero__meta reveal">
-        <span>·  macOS 26+</span>
-        <span>·  Apple Silicon / Intel</span>
-        <span>·  开源免费</span>
-      </div>
-    </div>
-
-    <div class="hero__visual reveal">
-      <MenuBarMockup variant="hero" />
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" x2="12" y1="15" y2="3" />
+        </svg>
+        <span data-i18n="hero.cta.download">Download for Free</span>
+      </a>
+      <a
+        href={`https://github.com/${REPO}#readme`}
+        target="_blank"
+        rel="noopener"
+        class="hero__cta hero__cta--ghost"
+      >
+        <span data-i18n="hero.cta.docs">View Documentation</span>
+      </a>
     </div>
   </div>
 </section>
+<!-- END: Hero Section -->
 
 <style>
+  /* Hero 节奏：90px top padding / 20px bottom / 60px 标题 / 18px 副标
+   * 90 = 60 (fixed nav) + 30 视觉留白（之前 60 视觉留白偏空，减半） */
   .hero {
-    padding-top: var(--space-9);
-    padding-bottom: var(--space-8);
-    background:
-      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(10, 124, 255, 0.10), transparent 70%),
-      var(--bg);
-    overflow: hidden;
+    padding-top: 90px;
+    padding-bottom: var(--space-5);  /* 20px */
+  }
+  @media (max-width: 768px) {
+    .hero {
+      padding-top: 72px;
+      padding-bottom: var(--space-7);  /* 32px */
+    }
   }
 
   .hero__inner {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-8);
-    align-items: center;
-  }
-
-  .hero__badge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: 6px 14px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-pill);
-    font-size: var(--text-xs);
-    font-weight: 500;
-    color: var(--text-secondary);
-    box-shadow: var(--shadow-sm);
-    margin-bottom: var(--space-5);
-  }
-
-  .hero__badge-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--status-green);
-    box-shadow: 0 0 0 3px rgba(53, 200, 90, 0.2);
+    text-align: center;
   }
 
   .hero__title {
-    font-size: var(--text-5xl);
-    font-weight: 800;
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-    margin-bottom: var(--space-5);
+    /* mono 字体本身视觉够粗，weight 用 500；中英文混排自动按 lang 切换字体 */
+    font-weight: 500;
+    font-size: var(--text-5xl);  /* 60px */
+    line-height: 76px;
+    letter-spacing: -0.01em;
+    margin-bottom: var(--space-6);  /* 24px */
+    white-space: nowrap;
     color: var(--text-primary);
   }
-
-  .hero__title-accent {
-    background: linear-gradient(120deg, var(--brand), #6ec1ff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+  @media (max-width: 768px) {
+    .hero__title {
+      font-size: 32px;
+      line-height: 42px;
+      white-space: normal;
+    }
   }
 
   .hero__subtitle {
-    font-size: var(--text-lg);
-    line-height: 1.55;
+    font-size: var(--text-lg);  /* 18px */
+    line-height: 1.6;
     color: var(--text-secondary);
-    margin-bottom: var(--space-7);
+    margin: 0 auto var(--space-7);  /* 32px 下 */
     max-width: 480px;
+  }
+  /* 英文版 subtitle 强制单行（与中文"提前掌握额度上限"对等，桌面下不换行） */
+  html[data-locale="en"] .hero__subtitle {
+    white-space: nowrap;
+  }
+
+  .hero__ctas {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);  /* 12px */
+    flex-wrap: wrap;
   }
 
   .hero__cta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    margin-bottom: var(--space-5);
-  }
-
-  .btn--lg {
-    padding: var(--space-4) var(--space-6);
-    font-size: var(--text-lg);
-  }
-
-  .hero__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-4);
-    font-size: var(--text-xs);
-    color: var(--text-tertiary);
-  }
-
-  .hero__visual {
-    display: flex;
-    justify-content: center;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: 12px 28px;
+    border-radius: var(--radius-md);  /* 12px */
+    font-weight: 500;
+    font-size: var(--text-base);  /* 14px */
+    transition:
+      background var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
   }
 
-  @media (max-width: 960px) {
-    .hero__inner {
-      grid-template-columns: 1fr;
-      gap: var(--space-8);
-    }
+  .hero__cta--primary {
+    background: #ffffff;
+    color: #000000;
+  }
+  .hero__cta--primary:hover {
+    background: #f0f0f0;
+  }
+  /* download icon: 跟文字 currentColor 一致（黑），flex item 防 baseline 撑高 */
+  .hero__cta-icon { display: block; flex-shrink: 0; }
 
-    .hero__copy {
-      text-align: center;
-    }
+  .hero__cta--ghost {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+  }
+  .hero__cta--ghost:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
 
-    .hero__subtitle {
-      margin-inline: auto;
-    }
+  /* 打字机：暖橙渐变（--accent #FF8C00 → --accent-deep #E07A00） */
+  .typing-text {
+    display: inline-block;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-deep) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    vertical-align: baseline;
+    min-width: 1ch;
+    font-weight: 700;
+  }
 
-    .hero__cta,
-    .hero__meta {
-      justify-content: center;
-    }
+  /* 字体已通过 unicode-range 自动按字符分流（ASCII→JetBrains Mono / CJK→Maple Mono NL），
+   * 这里不再需要 :lang(zh) 覆盖。hero 字号保持 60px，所有字符都用 Mono Sans。 */
 
-    .hero__title {
-      font-size: var(--text-4xl);
+  .typing-text::after {
+    content: "|";
+    display: inline-block;
+    margin-left: 2px;
+    color: var(--accent);
+    -webkit-text-fill-color: var(--accent);
+    background: none;
+    font-weight: 400;
+    animation: typing-cursor 1s steps(1) infinite;
+  }
+
+  .hero__tail {
+    margin-left: 0.3em;
+  }
+
+  @keyframes typing-cursor {
+    0%, 50%   { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .typing-text::after {
+      animation: none;
+      opacity: 0;
     }
   }
 </style>
+
+<!-- 打字机动画（locale 切换时按新词重建） -->
+<script is:inline>
+  (function () {
+    var TYPING_SPEED = 90;
+    var DELETING_SPEED = 45;
+    var PAUSE_AFTER_TYPE = 1400;
+    var PAUSE_AFTER_DELETE = 300;
+
+    function pickWords(el, locale) {
+      var key = "words-" + (locale || "en");
+      var raw = el.getAttribute("data-" + key) || el.getAttribute("data-typewriter") || "";
+      return raw.split("|").filter(function (w) { return w.length > 0; });
+    }
+
+    function TypeWriter(el, words) {
+      this.el = el;
+      this.words = words;
+      this.wordIdx = 0;
+      this.charIdx = 0;
+      this.isDeleting = false;
+      this.alive = true;
+      this.timer = null;
+      this.el.textContent = "";
+      this.tick = this.tick.bind(this);
+      this.tick();
+    }
+    TypeWriter.prototype.tick = function () {
+      if (!this.alive) return;
+      var word = this.words[this.wordIdx];
+      if (this.isDeleting) {
+        this.charIdx--;
+      } else {
+        this.charIdx++;
+      }
+      this.el.textContent = word.slice(0, this.charIdx);
+      var delay = this.isDeleting ? DELETING_SPEED : TYPING_SPEED;
+      if (!this.isDeleting && this.charIdx === word.length) {
+        delay = PAUSE_AFTER_TYPE;
+        this.isDeleting = true;
+      } else if (this.isDeleting && this.charIdx === 0) {
+        this.isDeleting = false;
+        this.wordIdx = (this.wordIdx + 1) % this.words.length;
+        delay = PAUSE_AFTER_DELETE;
+      }
+      this.timer = setTimeout(this.tick, delay);
+    };
+    TypeWriter.prototype.destroy = function () {
+      this.alive = false;
+      if (this.timer) clearTimeout(this.timer);
+    };
+
+    function locale() {
+      return (document.documentElement.getAttribute("data-locale") || "en");
+    }
+
+    function spawn(el) {
+      var words = pickWords(el, locale());
+      if (!words.length) return;
+      if (el._qbTw) {
+        el._qbTw.destroy();
+      }
+      el.textContent = "";
+      el._qbTw = new TypeWriter(el, words);
+    }
+
+    function init() {
+      var els = document.querySelectorAll("[data-typewriter]");
+      for (var i = 0; i < els.length; i++) {
+        spawn(els[i]);
+      }
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
+
+    document.addEventListener("qb:locale-applied", function () {
+      var els = document.querySelectorAll("[data-typewriter]");
+      for (var i = 0; i < els.length; i++) {
+        spawn(els[i]);
+      }
+    });
+  })();
+</script>

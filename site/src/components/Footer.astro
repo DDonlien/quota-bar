@@ -1,123 +1,154 @@
 ---
-const REPO = "DDonlien/quota-bar";
+// Footer — 双列布局
+// 节奏：vibeisland 56px 上 padding / 28px 下 padding / 11px footer h4 overline
 const year = new Date().getFullYear();
 ---
 
-<footer class="footer">
-  <div class="container footer__inner">
-    <div class="footer__brand">
-      <span class="footer__logo" aria-hidden="true">
-        <img src="/logo-512-roundcorner.png" alt="" width="28" height="28" />
-      </span>
-      <div>
-        <p class="footer__name">Quota Bar</p>
-        <p class="footer__tagline">AI 订阅额度，一眼可见</p>
+<!-- BEGIN: Footer -->
+<footer class="site-footer">
+  <div class="site-footer__inner container-content">
+    <div class="site-footer__brand-col">
+      <div class="site-footer__brand">
+        <img
+          src="/logo-512.png"
+          alt=""
+          width="22"
+          height="22"
+          class="site-footer__logo-img"
+        />
+        <span class="site-footer__name">Quota Bar</span>
+      </div>
+      <p class="site-footer__tagline">
+        <span data-i18n="footer.tagline">Visualize your API Quotas in your Menu Bar</span>
+      </p>
+      <div class="site-footer__social">
+        <a href="https://github.com/DDonlien/quota-bar" target="_blank" rel="noopener" aria-label="GitHub">
+          <svg fill="currentColor" height="16" viewBox="0 0 24 24" width="16">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.05-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.82 1.1.82 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.22.7.83.58A12 12 0 0 0 12 0z"/>
+          </svg>
+        </a>
+        <a href="https://twitter.com/quotabar" target="_blank" rel="noopener" aria-label="X (Twitter)">
+          <svg fill="currentColor" height="16" viewBox="0 0 24 24" width="16">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+        </a>
       </div>
     </div>
 
-    <nav class="footer__links" aria-label="页脚导航">
-      <a href="#providers">支持的服务</a>
-      <a href="#features">特性</a>
-      <a href="#how-it-works">工作原理</a>
-      <a href={`https://github.com/${REPO}`} target="_blank" rel="noopener">GitHub</a>
-      <a href={`https://github.com/${REPO}/releases`} target="_blank" rel="noopener">下载</a>
-    </nav>
+    <div class="site-footer__cols">
+      <div class="site-footer__col">
+        <span class="site-footer__col-label" data-i18n="footer.col.product">PRODUCT</span>
+        <a href="#" data-i18n="footer.link.compare">Compare</a>
+        <a href="#" data-i18n="footer.link.manage">Manage License</a>
+        <a href="#" data-i18n="footer.link.affiliate">Affiliate</a>
+      </div>
+      <div class="site-footer__col">
+        <span class="site-footer__col-label" data-i18n="footer.col.legal">LEGAL</span>
+        <a href="#" data-i18n="footer.link.privacy">Privacy</a>
+        <a href="#" data-i18n="footer.link.terms">Terms</a>
+      </div>
+    </div>
   </div>
 
-  <div class="container footer__bottom">
-    <p class="footer__copy">© {year} Quota Bar · 开源项目，MIT License</p>
-    <p class="footer__disclaimer">
-      Quota Bar 是独立开源项目，与 Antigravity、Codex、Claude、MiniMax、Kimi、Zcode 及其它任何服务商均无隶属关系。
-      所有额度数据仅在本机读取和解析，不上传任何信息。
-    </p>
+  <div class="site-footer__copyright container-content">
+    © {year} Quota Bar · hi@quotabar.app
   </div>
 </footer>
+<!-- END: Footer -->
 
 <style>
-  .footer {
-    background: var(--bg-elevated);
+  .site-footer {
     border-top: 1px solid var(--border);
-    padding-top: var(--space-8);
-    padding-bottom: var(--space-6);
+    padding-top: var(--space-8);  /* 48px vibeisland — 偏紧 */
   }
 
-  .footer__inner {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-6);
-    justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: var(--space-6);
-    border-bottom: 1px solid var(--divider);
-  }
-
-  .footer__brand {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-  }
-
-  .footer__logo {
-    display: flex;
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-  }
-
-  .footer__logo img {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-
-  .footer__name {
-    font-weight: 700;
-    color: var(--text-primary);
-  }
-
-  .footer__tagline {
-    font-size: var(--text-sm);
-    color: var(--text-tertiary);
-  }
-
-  .footer__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-5);
-  }
-
-  .footer__links a {
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
-    transition: color var(--duration-fast) var(--ease-out);
-  }
-
-  .footer__links a:hover {
-    color: var(--text-primary);
-  }
-
-  .footer__bottom {
-    padding-top: var(--space-5);
+  .site-footer__inner {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    gap: var(--space-7);  /* 32px */
+    padding-bottom: var(--space-7);  /* 32px */
   }
-
-  .footer__copy {
-    font-size: var(--text-xs);
-    color: var(--text-tertiary);
-  }
-
-  .footer__disclaimer {
-    font-size: var(--text-xs);
-    line-height: 1.6;
-    color: var(--text-tertiary);
-    max-width: 720px;
-  }
-
-  @media (max-width: 640px) {
-    .footer__inner {
-      flex-direction: column;
+  @media (min-width: 768px) {
+    .site-footer__inner {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
     }
+  }
+
+  .site-footer__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .site-footer__logo-img {
+    width: 22px;
+    height: 22px;
+    display: block;
+    border-radius: 5px;
+  }
+
+  .site-footer__name {
+    font-weight: 500;
+    font-size: var(--text-base);  /* 14px */
+    color: var(--text-primary);
+  }
+
+  .site-footer__tagline {
+    font-size: var(--text-sm);  /* 13px */
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-5);  /* 20px */
+    max-width: 32ch;
+  }
+
+  .site-footer__social {
+    display: flex;
+    gap: var(--space-4);
+    color: var(--text-tertiary);
+  }
+  .site-footer__social a {
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+  .site-footer__social a:hover {
+    color: var(--text-primary);
+  }
+
+  .site-footer__cols {
+    display: flex;
+    gap: var(--space-8);  /* 48px */
+    font-size: var(--text-sm);  /* 13px */
+  }
+
+  .site-footer__col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);  /* 12px */
+  }
+
+  .site-footer__col-label {
+    font-size: var(--text-overline);  /* 11px */
+    font-weight: 600;
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .site-footer__col a {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+  .site-footer__col a:hover {
+    color: var(--text-primary);
+  }
+
+  .site-footer__copyright {
+    font-size: var(--text-xs);  /* 12px */
+    color: var(--text-muted);
+    padding-block: var(--space-5);  /* 20px */
+    padding-bottom: var(--space-7);  /* 32px 总下 padding */
   }
 </style>
