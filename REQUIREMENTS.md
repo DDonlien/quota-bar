@@ -435,3 +435,42 @@
 - [ ] [0.8.0-DATA-B-003] Antigravity 订阅到期日：走本地 language_server probe 不容易拿到订阅元信息，可能要抓 antigravity.google/settings 页面 #deferred
 - [ ] [0.8.0-DATA-B-004] Kimi 订阅到期日：已通过 `KimiSubscriptionStatParser.parseSubscriptionExpiresAt` 从 `subscriptionBalance.expireTime` 提取（v0.6.0 已落地）；但**没有过期判定**——只填 `subscriptionExpiresAt`，UI 仅在 `.available` 时显示日期，过期后会显示一个"很久以前"的到期日但不报红 #cut — 实际 Kimi 不会让订阅过期数据继续返回，过期后会跌到 free 不返 quota，行为自然
 
+## Phase - v0.9.0 - 持久化、来源索引与启动兜底
+
+> **目标**：Quota Bar 在重开、更新、重装或刷新期间不应出现“已知订阅突然消失 / 凭证来源丢失 / 数值短暂空白”的体验；同时刷新失败时也不能继续显示旧缓存假装可用。
+>
+> **持久化边界**：
+> - 额度、订阅状态、过期时间的最新实时值和用于渲染视觉的值，以内存中的 `DashboardState` 为准。
+> - 偏好继续保存到 `~/Library/Application Support/QuotaBar/preferences.json`。
+> - 凭证、浏览器 Cookie、CLI 配置仍然只读取原始来源，不复制、不缓存敏感内容。
+> - Quota Bar 只保存“来源索引 / 上次成功来源元信息”，用于下一次优先尝试；失败后回到完整规则重新抓取，并更新索引。
+> - 额度、订阅状态、过期时间允许保存 last-known-good 快照到 `~/Library/Application Support/QuotaBar/`，仅用于启动、更新、重装或刷新中的兜底展示；一旦刷新拿到新值，UI 立即以内存新值为准并覆盖快照。
+> - 刷新后某些服务不可用时，必须如实显示不可用 / 待配置 / 已过期 / 失败状态，不能把旧快照包装成 `.available`。
+
+### ARCH-A：持久化模型与目录约束
+
+- [ ] [0.9.0-ARCH-A-000] 定义 Quota Bar 自有持久化目录：`~/Library/Application Support/QuotaBar/`；偏好、来源索引、last-known-good 快照都放在该目录下，不新增 `~/.quota-bar` 作为主路径 #P1
+- [ ] [0.9.0-ARCH-A-001] 设计持久化 schema version 与向后兼容策略；所有持久化文件必须带 `schemaVersion`，读取失败时安全丢弃并回到实时抓取，不阻塞 app 启动 #P1
+- [ ] [0.9.0-ARCH-A-002] 明确安全边界：持久化文件不得保存 token、cookie、API key、refresh token 或浏览器 Cookie 明文；敏感凭证仍只读取原始服务配置、浏览器 Cookie 或 macOS Keychain #P1
+
+### DATA-A：来源索引缓存
+
+- [ ] [0.9.0-DATA-A-000] 新增 provider 来源索引缓存，记录每个 Provider 上次成功的数据来源优先值（如 auth file / browser profile / CLI config / local RPC / Keychain 探测），用于下一次启动、更新、重装或刷新时优先尝试 #P1
+- [ ] [0.9.0-DATA-A-001] 来源索引只保存非敏感元信息：providerKind、sourceKind、sourceId、成功时间、失败次数、最后错误摘要、相关本地路径或浏览器 profile 标识；不保存凭证内容 #P1
+- [ ] [0.9.0-DATA-A-002] 当优先来源失败时，Provider pipeline 必须回到完整 fallback 规则继续抓取；若其他来源成功，更新来源索引；若全部失败，如实返回失败 / 待配置状态 #P1
+- [ ] [0.9.0-DATA-A-003] 浏览器 Cookie 和 CLI 配置与凭证使用同一来源索引机制：保存“上次哪个浏览器 / profile / CLI 配置路径有效”，不复制 Cookie 或配置文件内容 #P1
+
+### DATA-B：额度与订阅快照
+
+- [ ] [0.9.0-DATA-B-000] 新增 last-known-good 快照文件，保存每个 provider 最近一次真实刷新成功的额度、订阅状态、订阅过期时间、价格、档位、fetchedAt、sourceKind 与是否 stale 等信息 #P1
+- [ ] [0.9.0-DATA-B-001] App 启动、更新、重装后，在首次实时刷新完成前可用 last-known-good 快照填充 UI，避免已知数值短暂消失；展示时必须标记为上次可用数据 / stale，而不是实时成功 #P1
+- [ ] [0.9.0-DATA-B-002] 手动或自动刷新期间，如果 provider 尚未返回新值，可继续展示旧快照作为过渡；一旦该 provider 返回成功结果，立即用内存新值替换显示并覆盖快照 #P1
+- [ ] [0.9.0-DATA-B-003] 如果刷新后 provider 明确不可用、待配置、已过期或抓取失败，UI 必须切到对应真实状态；旧快照只能作为“上次成功值”辅助信息，不得让服务继续显示为可用 #P1
+- [ ] [0.9.0-DATA-B-004] 快照写入只发生在真实刷新成功或明确订阅过期状态确认后；占位 loading、未安装、纯抓取失败不得覆盖 last-known-good 快照 #P1
+- [ ] [0.9.0-DATA-B-005] 为快照读写补测试：schema 兼容、坏文件丢弃、成功刷新覆盖、失败刷新不覆盖、stale 标记与 UI 状态分离 #P1
+
+### UI-A：缓存兜底的显示语义
+
+- [ ] [0.9.0-UI-A-000] 使用 last-known-good 快照渲染时，菜单栏和 dropdown 必须有明确 stale/上次更新语义，避免用户把缓存值误认为刚刚刷新成功 #P1
+- [ ] [0.9.0-UI-A-001] 刷新失败但存在旧快照时，服务区块优先表达当前失败原因，同时可展示上次成功额度作为参考；状态灯、可用订阅计数和菜单栏 bar 不得按旧快照算“可用” #P1
+- [ ] [0.9.0-UI-A-002] 移除主路径中的样例数据 provider；抓取失败、没有抓取到任何对象、无权限、未登录、无订阅、已过期等状态后续由标准状态 UI 承接，不再用 Codex/MiniMax/Kimi 假数据兜底 #P1
