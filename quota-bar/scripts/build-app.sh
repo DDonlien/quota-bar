@@ -16,6 +16,8 @@ if [ -z "$BRANCH" ] || [ "$BRANCH" = "HEAD" ]; then
 fi
 # sanitize：把 branch 名里的 `/` 替换成 `-`，避免影响目录层级（例如 `feat/preferences` → `feat-preferences`）
 BRANCH_SAFE="$(echo "$BRANCH" | tr '/' '-')"
+BUNDLE_VERSION="$(date +%y%m%d.%H%M%S)"
+DISPLAY_BUILD="${BUNDLE_VERSION}.${BRANCH_SAFE}"
 BUILD_DIR="$PROJECT/build/${TIMESTAMP}-${BRANCH_SAFE}"
 APP_DIR="$BUILD_DIR/${APP_NAME}.app"
 LATEST_LINK="$PROJECT/build/latest"
@@ -34,21 +36,14 @@ mkdir -p "$APP_DIR/Contents/Resources"
 BIN_PATH="$(swift build --show-bin-path)/QuotaBar"
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/QuotaBar"
 
-# 4. 用稳定 identifier 重签名
-# Swift toolchain 默认的 ad-hoc 签名 identifier 是 CodingPlanMenu-<hash>，
-# 每次 build hash 都会变，导致 macOS keychain 的"始终允许"失效（被当成另一个 app）。
-# 用固定的 identifier 重签一次，让 macOS 始终认它是同一个 app。
-echo "Signing with stable identifier..."
-codesign --force --deep --sign - --identifier com.taobe.quotabar "$APP_DIR"
-
-# 5. 写入 Info.plist
-cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
+# 4. 写入 Info.plist
+cat > "$APP_DIR/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>com.example.QuotaBar</string>
+    <string>com.taobe.quotabar</string>
     <key>CFBundleName</key>
     <string>QuotaBar</string>
     <key>CFBundleDisplayName</key>
@@ -60,7 +55,9 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleVersion</key>
-    <string>1</key>
+    <string>$BUNDLE_VERSION</string>
+    <key>QBDisplayBuild</key>
+    <string>$DISPLAY_BUILD</string>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
     <key>LSUIElement</key>
@@ -68,6 +65,13 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
 </dict>
 </plist>
 PLIST
+
+# 5. 用稳定 identifier 重签名
+# Swift toolchain 默认的 ad-hoc 签名 identifier 是 CodingPlanMenu-<hash>，
+# 每次 build hash 都会变，导致 macOS keychain 的"始终允许"失效（被当成另一个 app）。
+# 用固定的 identifier 重签一次，让 macOS 始终认它是同一个 app。
+echo "Signing with stable identifier..."
+codesign --force --deep --sign - --identifier com.taobe.quotabar "$APP_DIR"
 
 # 6. 更新 latest 软链到本次构建
 rm -f "$LATEST_LINK"
