@@ -38,8 +38,11 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
             reasons.append("App 已装（\(appPath)）")
         }
 
-        if let command = kind.cliCommand, let path = findCommand(command) {
-            reasons.append("CLI 已装（\(path)）")
+        for command in kind.cliCommands {
+            if let path = findCommand(command) {
+                reasons.append("CLI 已装（\(path)）")
+                break
+            }
         }
 
         for envName in kind.envVarNames {
