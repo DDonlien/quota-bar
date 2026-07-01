@@ -10,22 +10,20 @@ import SwiftUI
 /// （具体落到 `PreferencesStore.isEnabled(kind:)`，由调用方决定如何在 pipeline 中过滤）。
 struct ModelsSettingsView: View {
     @State private var store = PreferencesStore.shared
+    private let visibleProviders: [ProviderKind] = [.codex, .minimax, .kimi, .claude, .glm]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+        SettingsPage(.models) {
+            VStack(alignment: .leading, spacing: 18) {
                 providersSection
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 20)
         }
-        .navigationTitle("模型")
     }
 
     private var providersSection: some View {
         SettingsSection("Provider") {
             SettingsGroup {
-                ForEach(Array(ProviderKind.allCases.enumerated()), id: \.element.id) { index, kind in
+                ForEach(Array(visibleProviders.enumerated()), id: \.element.id) { index, kind in
                     if index > 0 { SettingsDivider() }
                     providerRow(kind)
                 }
@@ -40,9 +38,9 @@ struct ModelsSettingsView: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
                             .fill(kind.brandColor.opacity(0.18))
-                            .frame(width: 28, height: 28)
+                            .frame(width: 24, height: 24)
                         Image(systemName: kind.iconSymbol)
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(kind.brandColor)
                     }
                     Text(kind.displayName)
@@ -50,30 +48,57 @@ struct ModelsSettingsView: View {
                 }
             },
             subtitle: providerSubtitle(kind),
+            subtitleLeading: 36,
+            verticalPadding: 6,
             trailing: {
                 Toggle("", isOn: bindingEnabled(kind))
                     .labelsHidden()
                     .toggleStyle(.switch)
+                    .controlSize(.mini)
             }
         )
     }
 
     private func providerSubtitle(_ kind: ProviderKind) -> String {
+        "\(providerVendor(kind)) | \(providerAccessModes(kind).joined(separator: ", "))"
+    }
+
+    private func providerVendor(_ kind: ProviderKind) -> String {
         switch kind {
-        case .codex: return "OpenAI Codex CLI / ChatGPT Plus"
-        case .minimax: return "MiniMax 开放平台 / Coding Plan"
-        case .kimi: return "Moonshot Kimi"
-        case .claude: return "Anthropic Claude"
-        case .cursor: return "Cursor IDE"
-        case .gemini: return "Google Gemini（已被 Antigravity 取代）"
-        case .openai: return "OpenAI Platform"
+        case .codex: return "OpenAI"
+        case .minimax: return "MiniMax"
+        case .kimi: return "Moonshot"
+        case .claude: return "Anthropic"
+        case .glm: return "智谱"
+        case .cursor: return "Anysphere"
+        case .gemini, .antigravity: return "Google"
+        case .openai: return "OpenAI"
         case .deepseek: return "DeepSeek"
-        case .copilot: return "GitHub Copilot"
+        case .copilot: return "GitHub"
         case .openrouter: return "OpenRouter"
         case .perplexity: return "Perplexity"
-        case .warp: return "Warp Terminal"
-        case .trae: return "Trae IDE"
-        case .antigravity: return "Google Antigravity"
+        case .warp: return "Warp"
+        case .trae: return "ByteDance"
+        }
+    }
+
+    private func providerAccessModes(_ kind: ProviderKind) -> [String] {
+        switch kind {
+        case .codex: return ["CLI", "Web"]
+        case .minimax: return ["CLI", "Web", "API"]
+        case .kimi: return ["CLI", "Web"]
+        case .claude: return ["Web"]
+        case .glm: return ["API（待接入）"]
+        case .cursor: return ["待接入"]
+        case .gemini: return ["待接入"]
+        case .openai: return ["待接入"]
+        case .deepseek: return ["待接入"]
+        case .copilot: return ["待接入"]
+        case .openrouter: return ["待接入"]
+        case .perplexity: return ["待接入"]
+        case .warp: return ["待接入"]
+        case .trae: return ["待接入"]
+        case .antigravity: return ["App", "CLI"]
         }
     }
 

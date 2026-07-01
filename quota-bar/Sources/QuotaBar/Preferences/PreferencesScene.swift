@@ -3,27 +3,30 @@ import SwiftUI
 /// Quota Bar 偏好设置窗口主场景。
 ///
 /// 视觉风格对齐 macOS 26 系统设置（参考 Vibe Island 复刻）：
-/// - Sidebar 列表彩色 SF Symbol icon + 选中行 system glass 高亮
-/// - 顶部 toolbar-style title（NavigationSplitView 自动渲染）
+/// - Sidebar 交给 `NavigationSplitView` + `List(.sidebar)` 原生组件绘制，
+///   使用系统侧边栏材质、圆角、选中态和 Liquid Glass 效果
+/// - 右侧 detail 自绘固定 toolbar-style title
 /// - Detail 用 `SettingsSection` + `SettingsGroup` + `SettingsRow` 组件拼装
-/// - 整个窗口用 `.regularMaterial` 玻璃背景（由 `PreferencesWindowController` 设置）
 ///
 /// Sidebar 布局：默认组（无标题）→ 通用 / 模型；Quota Bar 组 → 激活 / 关于。
 struct PreferencesScene: View {
     @State private var selection: PreferencesSection = .general
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             sidebar
-                .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
+                .navigationSplitViewColumnWidth(min: 220, ideal: 240, max: 280)
         } detail: {
             detailView
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 760, minHeight: 540)
-        // 隐藏 NavigationSplitView 默认的 sidebar toggle 工具栏按钮（用户反馈
-        // 「收纳按钮没必要」）。`.windowToolbar` 覆盖 macOS 顶部整条 toolbar，
-        // 隐藏后 sidebar 仍可通过拖拽调整宽度。
+        .onChange(of: columnVisibility) { _, _ in
+            columnVisibility = .all
+        }
+        .toolbar(removing: .sidebarToggle)
         .toolbar(.hidden, for: .windowToolbar)
         // 注意：不再加 `.background(.regularMaterial)` —— glass 材质带阴影偏深，
         // 系统设置「软件更新」页是极浅灰（`.windowBackgroundColor`），
