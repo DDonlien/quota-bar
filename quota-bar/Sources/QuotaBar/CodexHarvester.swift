@@ -2,7 +2,7 @@ import Foundation
 
 /// Codex (chatgpt.com / openai.com) 订阅管理页 harvester。
 ///
-/// 目标页：`https://chatgpt.com/account/manage`
+/// 目标页：`https://chatgpt.com/#settings/Billing`
 ///
 /// 已知 DOM 文本模式（按优先级）：
 /// 1. `Next billing on July 25, 2026`（ChatGPT Plus/Pro 订阅管理页主标题）
@@ -15,7 +15,7 @@ import Foundation
 /// 找不到时返回 nil（UI hide），不 throw，不 fallback 到无关日期。
 struct CodexHarvester: SubscriptionDateHarvester {
     let identifier = "codex-harvester"
-    let pageURL = URL(string: "https://chatgpt.com/account/manage")!
+    let pageURL = URL(string: "https://chatgpt.com/#settings/Billing")!
 
     /// 续费相关关键词（按优先级）。
     private let keywords = [

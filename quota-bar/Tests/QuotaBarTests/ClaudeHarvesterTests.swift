@@ -43,9 +43,9 @@ struct ClaudeHarvesterTests {
         #expect(ClaudeHarvester().extract(from: html) == nil)
     }
 
-    @Test("pageURL 指向 claude.ai/settings/plan")
+    @Test("pageURL 指向 claude.ai settings billing")
     func pageURLValue() {
-        #expect(ClaudeHarvester().pageURL.absoluteString == "https://claude.ai/settings/plan")
+        #expect(ClaudeHarvester().pageURL.absoluteString == "https://claude.ai/new#settings/billing")
         #expect(ClaudeHarvester().identifier == "claude-harvester")
     }
 }

@@ -2,18 +2,17 @@ import Foundation
 
 /// Claude (claude.ai / anthropic.com) 订阅管理页 harvester。
 ///
-/// 目标页：`https://claude.ai/settings/plan`
+/// 目标页：`https://claude.ai/new#settings/billing`
 ///
 /// 已知 DOM 文本模式（按优先级）：
 /// 1. `Next billing on July 25, 2026`
 /// 2. `Renews on Jul 25, 2026`
 /// 3. `Subscription renewal: 2026-07-25`
 ///
-/// 备选路径：`https://claude.ai/account/billing`（如果 settings/plan 没有续费日）。
-/// 当前实现只抓 settings/plan，因为 Anthropic 把续费日主要放在 settings/plan。
+/// 用户确认入口：`https://claude.ai/new#settings/billing`。
 struct ClaudeHarvester: SubscriptionDateHarvester {
     let identifier = "claude-harvester"
-    let pageURL = URL(string: "https://claude.ai/settings/plan")!
+    let pageURL = URL(string: "https://claude.ai/new#settings/billing")!
 
     private let keywords = [
         "Next billing",

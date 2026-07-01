@@ -148,6 +148,8 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
             quotas: windows,
             monthlyPrice: monthlyPrice,
             subscriptionExpiresAt: subscriptionExpiresAt,
+            subscriptionExpiresAtSource: subscriptionExpiresAt == nil ? nil : .api,
+            subscriptionExpiresAtConfidence: subscriptionExpiresAt == nil ? nil : .high,
             fetchedAt: fetchedAt
         )
     }
@@ -221,10 +223,14 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
         } else {
             monthlyPrice = await ProviderPricing.localizedMonthlyPrice(kind: .kimi, tier: tier)
         }
-        // v0.6.0：Kimi 的 KimiSubscriptionStatParser 从 subscriptionBalance.expireTime
-        // 提取真实订阅到期日。
-        let subscriptionExpiresAt = quotaEndpoint.parser.parseSubscriptionExpiresAt(data: quotaData)
-        NSLog("QuotaBar: [kimi-cookie] final tier=\(tier ?? "<nil>"), price=\(monthlyPrice ?? "<nil>"), expiresAt=\(subscriptionExpiresAt?.description ?? "<nil>")")
+        let expirySource = SubscriptionExpirySource.browserAPI(
+            id: "kimi-subscription-stat-api",
+            confidence: .medium,
+            dateMeaning: .nextRenewalDate
+        )
+        let rawRenewalDate = quotaEndpoint.parser.parseSubscriptionExpiresAt(data: quotaData)
+        let subscriptionExpiresAt = rawRenewalDate.map { expirySource.lastValidDate(from: $0) }
+        QuotaBarDiagnostics.write("[kimi-cookie] final tier=\(tier ?? "<nil>"), price=\(monthlyPrice ?? "<nil>"), rawRenewalDate=\(String(describing: rawRenewalDate)), lastValidDate=\(String(describing: subscriptionExpiresAt))")
         return ProviderSnapshot(
             kind: .kimi,
             subscriptionTier: ProviderPricing.normalizedTier(tier),
@@ -232,6 +238,8 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
             quotas: windows,
             monthlyPrice: monthlyPrice,
             subscriptionExpiresAt: subscriptionExpiresAt,
+            subscriptionExpiresAtSource: subscriptionExpiresAt == nil ? nil : expirySource.kind,
+            subscriptionExpiresAtConfidence: subscriptionExpiresAt == nil ? nil : expirySource.confidence,
             fetchedAt: fetchedAt
         )
     }

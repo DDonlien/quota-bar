@@ -2,7 +2,7 @@ import Foundation
 
 /// MiniMax (minimaxi.com) 订阅管理页 harvester。
 ///
-/// 目标页：`https://minimaxi.com/user-center/payment/balance`
+/// 目标页：`https://platform.minimaxi.com/console/plan`
 ///
 /// 已知 DOM 文本模式（按优先级）：
 /// 1. `到期日：2026年7月25日`（中文管理页主标签）
@@ -10,10 +10,11 @@ import Foundation
 /// 3. `下次扣费：Jul 25, 2026`
 /// 4. `Next billing on July 25, 2026`（英文 i18n 切换时）
 ///
-/// 注意：MiniMax 域名是 `minimaxi.com`（不是 minimax.com），cookies 域也对应调整。
+/// 注意：用户确认的订阅入口在 `platform.minimaxi.com`；额度 API 仍可能来自
+/// `minimax.chat` / `minimax.com`。
 struct MiniMaxHarvester: SubscriptionDateHarvester {
     let identifier = "minimax-harvester"
-    let pageURL = URL(string: "https://minimaxi.com/user-center/payment/balance")!
+    let pageURL = URL(string: "https://platform.minimaxi.com/console/plan")!
 
     private let keywords = [
         "到期日",

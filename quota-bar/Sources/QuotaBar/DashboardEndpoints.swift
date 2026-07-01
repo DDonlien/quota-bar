@@ -76,14 +76,14 @@ protocol DashboardParser: Sendable {
     func parseTier(data: Data) -> String?
     /// 从响应数据提取已知订阅价格；默认 nil，避免无依据地猜价格。
     func parseMonthlyPrice(data: Data) -> String?
-    /// 从响应数据提取**真实订阅到期日**（续费日 / 会员到期日）。
+    /// 从响应数据提取可用于订阅过期日的原始日期（续费日 / 会员到期日）。
     ///
     /// v0.6.0 起用来填 `ProviderSnapshot.subscriptionExpiresAt`。**不是** quota
     /// 窗口的「下次重置时间」——那应该走 `QuotaWindow.resetsAt`。
     ///
     /// 默认实现返回 nil（找不到真实到期日时 UI hide，不 fallback 到
-    /// max(resetsAt)）。Kimi 的 `KimiSubscriptionStatParser` 实现从
-    /// `subscriptionBalance.expireTime` 提取。
+    /// max(resetsAt)）。不同 provider 的日期语义由 `SubscriptionExpirySource`
+    /// 统一换算成 UI 展示的「最后有效日」。
     func parseSubscriptionExpiresAt(data: Data) -> Date?
 }
 
@@ -385,10 +385,9 @@ struct KimiSubscriptionStatParser: DashboardParser {
         if let balance = json["subscriptionBalance"] as? [String: Any],
            let amountUsedRatio = parseNum(balance["amountUsedRatio"]) {
             let remainingFraction = max(0, min(1, 1 - amountUsedRatio))
-            // v0.6.0 起：subscriptionBalance.expireTime 是**订阅到期日**，不再塞给
-            // Work quota 的 resetsAt（Work 是月度窗口，跟 subscription 到期日是
-            // 不同概念）。订阅到期日走 `parseSubscriptionExpiresAt` 提取到
-            // `ProviderSnapshot.subscriptionExpiresAt`。
+            // subscriptionBalance.expireTime 是 Work 余额/周期的截止时间，不是
+            // 付费订阅续费日；用于 Work 行的倒计时文案，但不进入
+            // ProviderSnapshot.subscriptionExpiresAt。
             let expireTime = parseDate(balance["expireTime"])
             let refreshText = expireTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
             windows.append(QuotaWindow(
@@ -450,19 +449,16 @@ struct KimiSubscriptionStatParser: DashboardParser {
         return nil
     }
 
-    /// v0.6.0 起：从 `subscriptionBalance.expireTime` 提取 Kimi 订阅的真实到期日。
+    /// Kimi 的 `subscriptionBalance.expireTime` 不是 quota reset 时间。
     ///
-    /// 历史背景：之前这个值被错塞到 Work quota 的 `resetsAt`，被 `max(resetsAt)`
-    /// fallback 误以为是「最晚重置时间」，导致 dropdown 价格旁灰色标签显示
-    /// 「续费日」但实际是 Work 月度窗口重置。修复后：
-    /// - Work quota 的 `resetsAt` 改 `nil`（月度窗口重置日跟 subscription 到期日重叠，
-    ///   信息冗余，干脆不显示）
-    /// - `expireTime` 走 `parseSubscriptionExpiresAt` 提取到
-    ///   `ProviderSnapshot.subscriptionExpiresAt`，UI 价格旁才显示真实续费日
+    /// 用户实测 membership 页展示的是「下一次续费日」；当前该 API 字段与页面
+    /// 订阅日一致，因此作为 browser API source 的原始日期返回。调用方负责按
+    /// `.nextRenewalDate` 转成 UI 所需的「最后有效日」。
     func parseSubscriptionExpiresAt(data: Data) -> Date? {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let balance = json["subscriptionBalance"] as? [String: Any]
-        else { return nil }
+              let balance = json["subscriptionBalance"] as? [String: Any] else {
+            return nil
+        }
         return parseDate(balance["expireTime"])
     }
 

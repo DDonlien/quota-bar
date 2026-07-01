@@ -22,7 +22,7 @@ struct WKWebViewHeadlessLoaderEntryTests {
         let loader = WKWebViewHeadlessLoader(cookieReader: InMemoryCookieReader(cookies: []))
         do {
             _ = try await loader.load(
-                url: URL(string: "https://chatgpt.com/account/manage")!,
+                url: URL(string: "https://chatgpt.com/#settings/Billing")!,
                 kind: .codex,
                 timeout: 5,
                 identifier: "test-empty"
@@ -49,7 +49,7 @@ struct WKWebViewHeadlessLoaderEntryTests {
         let loader = WKWebViewHeadlessLoader(cookieReader: denyingReader)
         do {
             _ = try await loader.load(
-                url: URL(string: "https://chatgpt.com/account/manage")!,
+                url: URL(string: "https://chatgpt.com/#settings/Billing")!,
                 kind: .codex,
                 timeout: 5,
                 identifier: "test-perm"
@@ -75,7 +75,7 @@ struct WKWebViewHeadlessLoaderEntryTests {
         let loader = WKWebViewHeadlessLoader(cookieReader: denyingReader)
         do {
             _ = try await loader.load(
-                url: URL(string: "https://chatgpt.com/account/manage")!,
+                url: URL(string: "https://chatgpt.com/#settings/Billing")!,
                 kind: .codex,
                 timeout: 5,
                 identifier: "test-no-store"

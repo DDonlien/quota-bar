@@ -53,9 +53,9 @@ struct MiniMaxHarvesterTests {
         #expect(MiniMaxHarvester().extract(from: html) == nil)
     }
 
-    @Test("pageURL 指向 minimaxi.com user-center")
+    @Test("pageURL 指向 platform.minimaxi.com console plan")
     func pageURLValue() {
-        #expect(MiniMaxHarvester().pageURL.absoluteString == "https://minimaxi.com/user-center/payment/balance")
+        #expect(MiniMaxHarvester().pageURL.absoluteString == "https://platform.minimaxi.com/console/plan")
         #expect(MiniMaxHarvester().identifier == "minimax-harvester")
     }
 }

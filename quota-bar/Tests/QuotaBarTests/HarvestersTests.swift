@@ -6,7 +6,7 @@ import Testing
 //
 // 验证 ProviderKind → SubscriptionDateHarvester 映射正确：
 // 1. 5 个 provider（Codex / Claude / Cursor / MiniMax / Antigravity）有对应 harvester；
-// 2. Kimi 用 API 路径，不走 headless（harvester 返回 nil）；
+// 2. Kimi 保留 membership 页 headless 兜底；
 // 3. 其它 provider（Gemini / DeepSeek 等）暂未接入，返回 nil；
 // 4. supportedKinds 包含全部已注册 provider。
 
@@ -54,9 +54,11 @@ struct HarvestersTests {
         #expect(harvester?.identifier == "antigravity-harvester")
     }
 
-    @Test("Kimi 走 API 路径，harvester 返回 nil")
-    func kimiAPI() {
-        #expect(Harvesters.harvester(for: .kimi) == nil)
+    @Test("Kimi → KimiHarvester（membership 页 headless 兜底）")
+    func kimiHarvesterFallback() {
+        let harvester = Harvesters.harvester(for: .kimi)
+        #expect(harvester is KimiHarvester)
+        #expect(harvester?.identifier == "kimi-harvester")
     }
 
     @Test("暂未接入的 provider 返回 nil")
@@ -70,7 +72,7 @@ struct HarvestersTests {
         #expect(Harvesters.harvester(for: .trae) == nil)
     }
 
-    @Test("supportedKinds 包含 6 个 v0.6.0 第二批 provider（含 openai 共享）")
+    @Test("supportedKinds 包含 7 个过期日 headless provider（含 openai 共享和 Kimi）")
     func supportedKinds() {
         let kinds = Set(Harvesters.supportedKinds)
         #expect(kinds.contains(.codex))
@@ -79,8 +81,8 @@ struct HarvestersTests {
         #expect(kinds.contains(.cursor))
         #expect(kinds.contains(.minimax))
         #expect(kinds.contains(.antigravity))
-        // 6 个（Kimi 走 API，不算 headless）
-        #expect(kinds.count == 6)
+        #expect(kinds.contains(.kimi))
+        #expect(kinds.count == 7)
     }
 
     @Test("每个 harvester 的 pageURL 是 https URL")

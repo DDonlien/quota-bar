@@ -310,6 +310,10 @@ struct ProviderSnapshot: Identifiable, Hashable {
     /// - `nil` → 暂无真实订阅到期日数据，UI 不展示日期（只展示价格）。
     /// - 显式传入时优先使用传入值。
     let subscriptionExpiresAt: Date?
+    /// 订阅过期日来源类型。用于调试和后续 UI 解释，不参与当前展示文案。
+    let subscriptionExpiresAtSource: SubscriptionExpirySourceKind?
+    /// 订阅过期日可信度。API / browser API 高于 headless DOM；找不到日期时为 nil。
+    let subscriptionExpiresAtConfidence: SubscriptionExpiryConfidence?
     let fetchedAt: Date
     let isStale: Bool
 
@@ -321,6 +325,8 @@ struct ProviderSnapshot: Identifiable, Hashable {
         quotas: [QuotaWindow],
         monthlyPrice: String?,
         subscriptionExpiresAt: Date? = nil,
+        subscriptionExpiresAtSource: SubscriptionExpirySourceKind? = nil,
+        subscriptionExpiresAtConfidence: SubscriptionExpiryConfidence? = nil,
         fetchedAt: Date,
         isStale: Bool = false
     ) {
@@ -334,6 +340,8 @@ struct ProviderSnapshot: Identifiable, Hashable {
         // max(resetsAt)。quota 窗口 resetsAt 是「下次重置时间」不是「订阅到期日」，
         // 之前那个 fallback 被用户实测为「完全乱写」。
         self.subscriptionExpiresAt = subscriptionExpiresAt
+        self.subscriptionExpiresAtSource = subscriptionExpiresAtSource
+        self.subscriptionExpiresAtConfidence = subscriptionExpiresAtConfidence
         self.fetchedAt = fetchedAt
         self.isStale = isStale
     }

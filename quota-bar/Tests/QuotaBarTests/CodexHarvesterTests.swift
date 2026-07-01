@@ -49,9 +49,9 @@ struct CodexHarvesterTests {
         #expect(CodexHarvester().extract(from: "") == nil)
     }
 
-    @Test("pageURL 指向 chatgpt.com/account/manage")
+    @Test("pageURL 指向 chatgpt.com settings Billing")
     func pageURLValue() {
-        #expect(CodexHarvester().pageURL.absoluteString == "https://chatgpt.com/account/manage")
+        #expect(CodexHarvester().pageURL.absoluteString == "https://chatgpt.com/#settings/Billing")
         #expect(CodexHarvester().identifier == "codex-harvester")
     }
 }

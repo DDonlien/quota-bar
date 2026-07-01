@@ -211,15 +211,10 @@ final class RefreshCoordinator: ObservableObject {
                         let tier = snapshot.subscriptionTier ?? "nil"
                         let price = snapshot.monthlyPrice ?? "nil"
                         NSLog("QuotaBar: ✅ \(kind.rawValue) done, tier=\(tier), price=\(price), avail=\(snapshot.availability), quotas=[\(quotasInfo)]")
-                        // v0.6.0 第二批：snapshot 已有 subscriptionExpiresAt（未来扩展
-                        // — 例如其他 provider 走订阅 API 拿到）时跳过 headless；否则
-                        // 并行跑 harvester（短超时）拿真实订阅到期日。失败 / 超时 /
-                        // 找不到 → nil，UI hide。
-                        //
-                        // 注意：v0.6.0 第一批 Kimi 路径只在 BrowserCookieProvider 里
-                        // 塞了 expiresAt，KimiAuthProvider (CLI OAuth) 路径由 v0.7.0
-                        // 方案 A 在 fetchSnapshot 内部追加 GetSubscriptionStat 拿。
-                        let enriched = await self.enrichWithHarvester(snapshot, kind: kind)
+                        // 订阅过期日有独立 source pipeline：API 字段优先，后续可插入
+                        // app cache / CLI / browser API，最后用 headless DOM 兜底。
+                        // 日期失败不影响额度展示：免费额度或无订阅场景仍保持 available。
+                        let enriched = await self.enrichWithSubscriptionExpiry(snapshot)
                         result = .success(enriched)
                     } catch {
                         NSLog("QuotaBar: ❌ \(kind.rawValue) failed: \(error)")
@@ -408,60 +403,38 @@ final class RefreshCoordinator: ObservableObject {
         return sorted.first
     }
 
-    // MARK: - v0.6.0 第二批：订阅到期日 headless enrich
+    // MARK: - v0.6.0 ARCH-B：订阅过期日独立 source pipeline
 
-    /// 给 snapshot 补上真实订阅到期日（如果已有则跳过；没有则并行跑 harvester）。
+    /// 给 snapshot 补上真实订阅过期日。
     ///
-    /// 调用约定：
-    /// - `snapshot.subscriptionExpiresAt != nil`（如 Kimi API 路径已拿到）→ 直接返回原 snapshot；
-    /// - `Harvesters.harvester(for: kind) == nil` → 该 provider 无 headless 路径，原样返回；
-    /// - availability 不是 `.available`（如 `.needsConfiguration` / `.fetchFailed`）→ 跳过 harvester
-    ///   （没登录态时没必要抓订阅页）；
-    /// - 其它 → 用 `WKWebViewHeadlessLoader` 加载 harvester 的目标页 + 注入 cookie + 跑 extract。
-    ///
-    /// **失败兜底**：harvester 任何错误（cookie 读不到 / permission / transient / 超时 / 找不到日期）
-    /// 都返回原 snapshot，UI hide subscriptionExpiresAt。不污染主 pipeline。
-    private func enrichWithHarvester(
-        _ snapshot: ProviderSnapshot,
-        kind: ProviderKind
-    ) async -> ProviderSnapshot {
-        // 已经有过期日（API 路径）→ 跳过
-        guard snapshot.subscriptionExpiresAt == nil else { return snapshot }
-        // 只有 available 状态才有意义抓订阅页
-        guard case .available = snapshot.availability else { return snapshot }
-        // 没有 harvester → 原样返回
-        guard let harvester = Harvesters.harvester(for: kind) else { return snapshot }
-
-        NSLog("QuotaBar: [\(harvester.identifier)] starting headless harvest")
-        let loader = WKWebViewHeadlessLoader(cookieReader: cookieReader)
-        do {
-            let html = try await loader.load(
-                url: harvester.pageURL,
-                kind: kind,
-                timeout: harvesterTimeout,
-                identifier: harvester.identifier
-            )
-            guard let expiresAt = harvester.extract(from: html) else {
-                NSLog("QuotaBar: [\(harvester.identifier)] extract returned nil, UI will hide")
-                return snapshot
-            }
-            NSLog("QuotaBar: [\(harvester.identifier)] ✅ parsed expiresAt=\(expiresAt)")
-            // 用新 expiresAt 重建 snapshot（ProviderSnapshot 当前不是 mutable，构造新实例）
-            return ProviderSnapshot(
-                id: snapshot.id,
-                kind: snapshot.kind,
-                subscriptionTier: snapshot.subscriptionTier,
-                availability: snapshot.availability,
-                quotas: snapshot.quotas,
-                monthlyPrice: snapshot.monthlyPrice,
-                subscriptionExpiresAt: expiresAt,
-                fetchedAt: snapshot.fetchedAt,
-                isStale: snapshot.isStale
-            )
-        } catch {
-            NSLog("QuotaBar: [\(harvester.identifier)] failed: \(error)")
+    /// 额度和订阅过期日彼此独立：本地安装但没有付费订阅时仍可有免费额度，过期日
+    /// 找不到只隐藏日期，不改变 `availability` / `quotas`。
+    private func enrichWithSubscriptionExpiry(_ snapshot: ProviderSnapshot) async -> ProviderSnapshot {
+        guard case .available = snapshot.availability else {
+            QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry skipped: availability=\(snapshot.availability)")
             return snapshot
         }
+        QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry resolve begin tier=\(snapshot.subscriptionTier ?? "<nil>") price=\(snapshot.monthlyPrice ?? "<nil>") existing=\(String(describing: snapshot.subscriptionExpiresAt))")
+        let resolver = SubscriptionExpiryResolver(cookieReader: cookieReader, timeout: harvesterTimeout)
+        guard let resolution = await resolver.resolve(for: snapshot) else {
+            QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry unresolved")
+            return snapshot
+        }
+        QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry resolved source=\(resolution.source.id) kind=\(resolution.source.kind.rawValue) confidence=\(resolution.source.confidence.rawValue) lastValidDate=\(resolution.expiresAt)")
+
+        return ProviderSnapshot(
+            id: snapshot.id,
+            kind: snapshot.kind,
+            subscriptionTier: snapshot.subscriptionTier,
+            availability: snapshot.availability,
+            quotas: snapshot.quotas,
+            monthlyPrice: snapshot.monthlyPrice,
+            subscriptionExpiresAt: resolution.expiresAt,
+            subscriptionExpiresAtSource: resolution.source.kind,
+            subscriptionExpiresAtConfidence: resolution.source.confidence,
+            fetchedAt: snapshot.fetchedAt,
+            isStale: snapshot.isStale
+        )
     }
 
     // MARK: - 辅助
