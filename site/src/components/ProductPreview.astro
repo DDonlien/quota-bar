@@ -16,73 +16,45 @@
     <div class="product-preview__window">
       <!-- 3 张占位 mockup：根据 active tab 切换可见性 + fade -->
       <div class="product-preview__image" data-tab-image="monitor" aria-hidden="false">
-        <div class="mockup mockup--monitor">
-          <div class="mockup__statusbar">
-            <span class="mockup__pill mockup__pill--green"></span>
-            <span class="mockup__line mockup__line--wide"></span>
-            <span class="mockup__line mockup__line--narrow"></span>
-          </div>
-          <div class="mockup__grid">
-            <div class="mockup__row mockup__row--3"><span></span><span></span><span></span></div>
-            <div class="mockup__row mockup__row--2"><span></span><span></span></div>
-            <div class="mockup__row mockup__row--2"><span></span><span></span></div>
-            <div class="mockup__row mockup__row--1"></div>
-          </div>
-        </div>
+        <video
+          class="mockup mockup--video"
+          src="/preview.mp4"
+          autoplay
+          muted
+          playsinline
+          preload="metadata"
+          width="1662"
+          height="1080"
+          aria-label="Quota Bar overview: at-a-glance quota status from the menu bar"
+        ></video>
       </div>
 
       <div class="product-preview__image" data-tab-image="approve" aria-hidden="true">
-        <div class="mockup mockup--approve">
-          <!-- 详情：多模型 × 多分层（5h / 周 / 月）的分组列表 -->
-          <div class="mockup__detail">
-            <div class="mockup__detail-row">
-              <span class="mockup__avatar mockup__avatar--green"></span>
-              <span class="mockup__line mockup__line--medium"></span>
-              <span class="mockup__chip">5h</span>
-            </div>
-            <div class="mockup__detail-row">
-              <span class="mockup__avatar mockup__avatar--green"></span>
-              <span class="mockup__line mockup__line--medium"></span>
-              <span class="mockup__chip">周</span>
-            </div>
-            <div class="mockup__detail-row">
-              <span class="mockup__avatar mockup__avatar--green"></span>
-              <span class="mockup__line mockup__line--medium"></span>
-              <span class="mockup__chip">月</span>
-            </div>
-            <div class="mockup__detail-row">
-              <span class="mockup__avatar mockup__avatar--green"></span>
-              <span class="mockup__line mockup__line--medium"></span>
-              <span class="mockup__chip">5h</span>
-            </div>
-            <div class="mockup__detail-row">
-              <span class="mockup__avatar mockup__avatar--green"></span>
-              <span class="mockup__line mockup__line--medium"></span>
-              <span class="mockup__chip">周</span>
-            </div>
-          </div>
-        </div>
+        <video
+          class="mockup mockup--video"
+          src="/detail.mp4"
+          autoplay
+          muted
+          playsinline
+          preload="metadata"
+          width="1662"
+          height="1080"
+          aria-label="Quota Bar details: drill down into per-model quota breakdowns"
+        ></video>
       </div>
 
       <div class="product-preview__image" data-tab-image="adjust" aria-hidden="true">
-        <!--
-          Adjust tab：直接嵌入 quota-bar app 第 3 个 tab 的真实录屏。
-          源文件：/Users/taobe/Movies/reorder.gif（1662×1080, 153 帧, 4.6s 循环）
-          已 copy 到 site/public/reorder.gif。GIF 自带 loop=infinite，
-          tab 切换时靠外层 `.product-preview__image` 的 opacity 360ms fade。
-          注意：GIF 22MB 偏大，仅用于本地调试；上线前应转 mp4/webm（~1-3MB）。
-        -->
-        <div class="mockup mockup--adjust">
-          <img
-            src="/reorder.gif"
-            alt="Quota Bar reorder demonstration: drag a provider card or a quota row to rearrange its order in the menu bar dropdown."
-            class="mockup__gif"
-            width="1662"
-            height="1080"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
+        <video
+          class="mockup mockup--video"
+          src="/reorder.mp4"
+          autoplay
+          muted
+          playsinline
+          preload="metadata"
+          width="1662"
+          height="1080"
+          aria-label="Quota Bar reorder: drag a provider card or a quota row to rearrange its order in the menu bar dropdown"
+        ></video>
       </div>
     </div>
 
@@ -131,21 +103,22 @@
 <style>
   /* ===== 16:9 窗口 + 3 张 mockup 占位图 ===== */
   .product-preview {
-    /* 进度条动画时长（读满后还会停留 HOLD_MS 再切下一个 tab），
-     * 必须跟 JS PROGRESS_MS 同步 */
-    --tab-progress-duration: 3500ms;
+    /* 进度条走满的时长（读满后会再停留 HOLD_MS 再切下一个 tab），
+     * 必须跟 JS PROGRESS_MS 同步。
+     * 视频源都是 5 秒：PROGRESS_MS (3s) + HOLD_MS (2s) = 5s，刚好对齐视频时长 */
+    --tab-progress-duration: 3000ms;
   }
 
   .product-preview__window {
     position: relative;
-    aspect-ratio: 16 / 9;
+    /* 视频源 1662x1080 = 1.538:1，容器对齐这个比例保证不被裁切 */
+    aspect-ratio: 1662 / 1080;
     width: 100%;
-    background: var(--bg-elevated);
-    box-shadow:
-      0 25px 50px -12px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-md);  /* 12px */
-    overflow: hidden;
+    /* 容器透明、无圆角、无阴影：圆角 / drop-shadow / 底部 fade
+     * 全部迁移到 video 元素自身，让视频看起来「溶」进页面背景
+     * 而不是被框在窗口里 */
+    background: transparent;
+    overflow: visible;  /* 让 video 的 drop-shadow 能透出来 */
   }
 
   .product-preview__image {
@@ -156,144 +129,53 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--space-7);  /* 32px 给 mockup 留呼吸 */
+    /* 不再有 padding：video 自身有圆角，不需要外层再留呼吸 */
     opacity: 0;
-    transition: opacity 360ms var(--ease-out);
+    /* cross-slide：hidden 默认在右偏 48px（~5% 容器宽），active 时滑到中心；
+     * 新 image 从右稍稍滑入 + fade in，旧的同时向右微移 + fade out，
+     * 掩盖 video seek 帧的瞬间突跳，又不会像 carousel 那么"大动作" */
+    transform: translateX(48px);
+    transition:
+      opacity 480ms cubic-bezier(0.33, 0, 0.2, 1),
+      transform 480ms cubic-bezier(0.33, 0, 0.2, 1);
     pointer-events: none;
+    will-change: opacity, transform;
   }
   .product-preview__image[aria-hidden="false"] {
     opacity: 1;
+    transform: translateX(0);
   }
 
-  /* —— Mockup 占位骨架（深色 + 暖橙/绿高光；后续替换为真实截图） —— */
-  .mockup {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-  }
-  .mockup__line {
+  /* —— Video 自己承担：圆角 + drop-shadow + 底部 fade mask ——
+   * mask 让 video 底部 65% 起渐隐到完全透明，配合深色页面背景
+   * 让视频看起来像「渗」进背景，而不是被框在窗口里。
+   * drop-shadow 跟随 mask 后的轮廓，所以阴影不会"伸"到透明区。 */
+  .mockup--video {
     display: block;
-    height: 8px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.10);
-  }
-  .mockup__line--full { width: 100%; }
-  .mockup__line--wide { width: 70%; }
-  .mockup__line--medium { width: 50%; }
-  .mockup__line--narrow { width: 30%; }
-  .mockup__pill {
-    display: inline-block;
-    width: 36px;
-    height: 18px;
-    border-radius: 9px;
-    background: rgba(255, 140, 0, 0.6);   /* 橙色 token — 与 tab 主题色一致 */
-  }
-
-  /* Monitor：状态栏 + 4 行进度条网格 */
-  .mockup--monitor {
-    background:
-      linear-gradient(135deg, rgba(255, 140, 0, 0.06), transparent 60%),
-      rgba(255, 255, 255, 0.02);
-    border-radius: var(--radius-md);
-    padding: var(--space-5);
-    gap: var(--space-5);
-  }
-  .mockup__statusbar {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-  }
-  .mockup__grid {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-  }
-  .mockup__row {
-    display: grid;
-    gap: var(--space-3);
-  }
-  .mockup__row > span {
-    height: 24px;
-    border-radius: var(--radius-sm);
-    background: linear-gradient(
-      90deg,
-      rgba(255, 140, 0, 0.55) 0%,
-      rgba(255, 140, 0, 0.55) var(--w, 60%),
-      rgba(255, 255, 255, 0.08) var(--w, 60%),
-      rgba(255, 255, 255, 0.08) 100%
-    );
-  }
-  .mockup__row--1 { grid-template-columns: 1fr; }
-  .mockup__row--2 { grid-template-columns: 1fr 1fr; }
-  .mockup__row--3 { grid-template-columns: 1fr 1fr 1fr; }
-  .mockup__row--1 > span { --w: 80%; }
-  .mockup__row--2 > span:nth-child(1) { --w: 65%; }
-  .mockup__row--2 > span:nth-child(2) { --w: 40%; }
-  .mockup__row--3 > span:nth-child(1) { --w: 75%; }
-  .mockup__row--3 > span:nth-child(2) { --w: 50%; }
-  .mockup__row--3 > span:nth-child(3) { --w: 25%; }
-
-  /* Approve（详情）：多模型 × 多分层的分组列表 */
-  .mockup--approve {
-    align-items: stretch;
-    justify-content: center;
-    background:
-      radial-gradient(ellipse 60% 60% at 50% 50%, rgba(255, 140, 0, 0.04), transparent 70%);
-    padding: var(--space-5);
-  }
-  .mockup__detail {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4);
-    background: rgba(20, 20, 24, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-md);
-  }
-  .mockup__detail-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: 6px 4px;
-  }
-  .mockup__chip {
-    margin-left: auto;
-    font-family: inherit;
-    font-size: 10px;
-    padding: 3px 8px;
-    border-radius: 6px;
-    background: rgba(255, 140, 0, 0.18);
-    border: 1px solid rgba(255, 140, 0, 0.35);
-    color: rgba(255, 140, 0, 0.95);
-    font-weight: 500;
-    flex-shrink: 0;
-  }
-  .mockup__avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(255, 140, 0, 0.4);
-    flex-shrink: 0;
-  }
-
-  /* Adjust（调整）：直接嵌入 quota-bar app 第 3 个 tab 真实录屏。
-   *   - GIF 1662x1080 → 16:9 窗口里 object-fit: cover 裁掉桌面背景外多余区域
-   *   - 让 GIF 视觉上跟其他两个 tab mockup 占位风格一致
-   *   - 像素级一致；体积权衡靠 GIF → mp4/webm 之后做
-   */
-  .mockup--adjust {
-    padding: 0;
-    overflow: hidden;
-  }
-  .mockup__gif {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center;
-    display: block;
-    border-radius: inherit;
+    border-radius: 16px;
+    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.45));
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 65%,
+      rgba(0, 0, 0, 0.55) 85%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 65%,
+      rgba(0, 0, 0, 0.55) 85%,
+      transparent 100%
+    );
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
   }
 
   /* ===== Tab 行 ===== */
@@ -468,10 +350,10 @@
 
 <script is:inline>
   (function () {
-    // 进度条动画时长 + 读满后的视觉停留时长
-    var PROGRESS_MS = 3500;  // CSS 动画时长（--tab-progress-duration）
-    var HOLD_MS = 800;       // 进度条读满后多停留一会儿再切下一个
-    var INTERVAL_MS = 4300;  // = PROGRESS_MS + HOLD_MS
+    // 进度条走满时长 + 读满后停顿时长；总和 = 视频时长（5s），让 tab 节奏对齐视频
+    var PROGRESS_MS = 3000;  // CSS 动画时长（--tab-progress-duration）
+    var HOLD_MS = 2000;      // 进度条读满后停留 2s 再切下一个
+    var INTERVAL_MS = 5000;  // = PROGRESS_MS + HOLD_MS，必须和视频时长一致
     var tabsRoot = document.querySelector("[data-product-tabs]");
     var headingEl = document.querySelector("[data-product-heading]");
     if (!tabsRoot || !headingEl) return;
@@ -538,10 +420,26 @@
         headingEl.textContent = t("product.heading." + tabName);
         headingEl.classList.remove("is-fading");
 
-        // 图片切换（aria-hidden 触发 360ms opacity fade）
+        // 图片切换（aria-hidden 触发 480ms cross-fade + scale）
         Object.keys(imageMap).forEach(function (k) {
           var el = imageMap[k];
-          el.setAttribute("aria-hidden", k === tabName ? "false" : "true");
+          var isActive = (k === tabName);
+          el.setAttribute("aria-hidden", isActive ? "false" : "true");
+          var vid = el.querySelector("video");
+          if (!vid) return;
+          if (isActive) {
+            // 80ms 后再 seek + play：让浏览器先解码第一帧，
+            // 否则 fade 启动瞬间 video 是黑屏/前帧残留，视觉上看是「生硬切换」
+            setTimeout(function () {
+              try { vid.currentTime = 0; } catch (_) {}
+              var p = vid.play();
+              if (p && typeof p.catch === "function") p.catch(function () {});
+            }, 80);
+          } else {
+            // hidden video 立即暂停：避免在 background 持续 loop、currentTime 漂移；
+            // 下次切回时只需 seek(0) + play()，不会再出现"突然跳帧"
+            vid.pause();
+          }
         });
 
         // 重启动画进度条
@@ -597,7 +495,7 @@
       tab.addEventListener("click", function () {
         // 点击立即切 + 重置进度条动画 + 重启 timer
         show(i, true);
-        // 用户主动点击：直接重置当前激活 tab 的进度条（让它重新走 3.5s）
+        // 用户主动点击：直接重置当前激活 tab 的进度条（让它重新走 3s）
         restartProgress(i);
       });
     });
