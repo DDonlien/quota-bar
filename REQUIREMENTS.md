@@ -435,6 +435,31 @@
 - [ ] [0.8.0-DATA-B-003] Antigravity 订阅到期日：走本地 language_server probe 不容易拿到订阅元信息，可能要抓 antigravity.google/settings 页面 #deferred
 - [ ] [0.8.0-DATA-B-004] Kimi 订阅到期日：已通过 `KimiSubscriptionStatParser.parseSubscriptionExpiresAt` 从 `subscriptionBalance.expireTime` 提取（v0.6.0 已落地）；但**没有过期判定**——只填 `subscriptionExpiresAt`，UI 仅在 `.available` 时显示日期，过期后会显示一个"很久以前"的到期日但不报红 #cut — 实际 Kimi 不会让订阅过期数据继续返回，过期后会跌到 free 不返 quota，行为自然
 
+### DATA-C：Codex pipeline 不短路 inspector（v0.8.1 修订）
+
+> **修订原因**：v0.8.0 把 inspector 短路写在 `CodexAuthProvider` + `BrowserCookieProvider` Codex 路径两处，
+> user 实测反馈：昨天 web 续费后 `~/.codex/auth.json` 没刷新（Codex.app 自己写本地缓存，web 续费不触发 OAuth flow），
+> inspector 看到陈旧 `chatgpt_subscription_active_until` → 误判过期 → 但 BrowserCookie 路径用浏览器已登录会话
+> 能拿到真实 plus quota。v0.8.0 行为把 inspector 当"绝对权威"短路所有 strategy，结果活跃订阅被错标过期。
+>
+> v0.8.1 调整：inspector 仍然是「权威」（不是完全抛弃），但**只在 CodexAuthProvider 一处检测**，
+> 检测到过期时**throw** 让 pipeline 继续走 BrowserCookie / CLILog / Keychain。BrowserCookie 路径信任
+> `CodexDashboardParser.plan_type=free → nil` 的 parser 层防御，不在入口再次拦截。
+> 续费后 Codex.app 重新 OAuth refresh → auth.json 写入新 id_token → inspector 看到新到期日 → 回到正常路径。
+>
+> 这与 user 的优先级「app 授权信息 > CLI 指令 > Web 抓取」一致：app 授权信息（OAuth → wham/usage）
+> 是主路径，Web（BrowserCookie）只是兜底；inspector 检测应该让 OAuth + Web 都有机会尝试，而不是
+> 在第一道就堵死。
+
+- [x] [0.8.0-DATA-C-000] `CodexAuthProvider.fetchSnapshot`：inspector 报 `.expired` / `.free` 时**throw** `QuotaFetchError.subscriptionExpired(plan, expiredAt)`（替换 v0.8.0-DATA-A-000 的"直接 return marker"行为），让 pipeline 继续走 BrowserCookie / CLILog / Keychain fallback #P1
+- [x] [0.8.0-DATA-C-001] `BrowserCookieProvider.fetchSnapshotImpl` Codex 路径：移除 v0.8.0-DATA-A-002 加的 inspector 调用；信任 `CodexDashboardParser.plan_type=free → nil` 的 parser 层防御（parser 拒绝 free 用户的"月额度"窗口，让 BrowserCookie 也能 fallback 到 inspector 没看到的活跃订阅）#P1
+- [x] [0.8.0-DATA-C-002] `RefreshCoordinator.applyProviderResult`：当 `error as? QuotaFetchError` 是 `.subscriptionExpired` 时，优先用 `qe.availabilityFallback`（=`.subscriptionExpired(plan, expiredAt)`），不被 `installDetail` 覆盖成 `.needsConfiguration`（防止 Codex.app 已装时把"订阅已过期"误显示为"待配置"）#P1
+- [x] [0.8.0-DATA-C-003] `RefreshCoordinator.applyProviderResult`：其他 error type（`.missingCredentials` / `.permissionRequired` / `.transient` / `.sourceUnavailable`）仍走 installDetail fallback（保留 install 检测信号）#P1
+- [x] [0.8.0-DATA-C-000-test] 单元测试：`CodexAuthProvider.fetchSnapshot` 在 inspector 报 `.expired(plus, ...)` 时 throw `.subscriptionExpired(plan: "plus", expiredAt)`；在 inspector 报 `.free` 时 throw `.subscriptionExpired(plan: nil, expiredAt: nil)`；不会向 endpoint 发请求（endpoint 用 `https://example.invalid/never-called`）#P1
+- [x] [0.8.0-DATA-C-001-test] 单元测试：`BrowserCookieProvider` Codex 路径在 inspector expired 的 auth.json 存在 + cookie reader 为空时，**不再** throw `.subscriptionExpired`，而是走 `missingCredentials` / `sourceUnavailable` 路径（验证 v0.8.0 的 inspector 二次短路被移除）#P1
+- [x] [0.8.0-DATA-C-002-test] 单元测试：`ProviderPipelines.makePipelines` 的 Codex pipeline 顺序仍是 `[codex-auth, codex-cookie, codex-cli, codex-keychain]`，`runMode == .sequential`（确保 inspector throw 后真能走到 BrowserCookie / CLILog / Keychain）#P1
+- [x] [0.8.0-DATA-C-004-test] 单元测试：`QuotaFetchError.subscriptionExpired(plan, expiredAt).availabilityFallback` 返回 `.subscriptionExpired(plan, expiredAt)`（契约）；`.subscriptionExpired(plan: nil, expiredAt: nil)` 也正常 fallback（用于 .free 状态）#P1
+
 ## Phase - v0.9.0 - 持久化、来源索引与启动兜底
 
 > **目标**：Quota Bar 在重开、更新、重装或刷新期间不应出现“已知订阅突然消失 / 凭证来源丢失 / 数值短暂空白”的体验；同时刷新失败时也不能继续显示旧缓存假装可用。
