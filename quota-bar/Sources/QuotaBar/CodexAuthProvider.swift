@@ -45,23 +45,27 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
     func fetchSnapshot(timeout: TimeInterval) async throws -> ProviderSnapshot {
         let fetchedAt = dateProvider()
 
-        // v0.8.0：先用 CodexSubscriptionInspector 检查订阅状态（"权威 > API 反推"模型）。
-        // - 订阅已过期 / 已跌成 free → **返回** availability=.subscriptionExpired 的 marker
-        //   snapshot（不是 throw！），让 pipeline 立即返回，**不**让后续 BrowserCookie / CLILog
-        //   strategy 用 free 用户的"月额度" primary_window 覆盖掉正确状态
+        // v0.8.0 + v0.8.1：先用 CodexSubscriptionInspector 检查订阅状态（"权威 > API 反推"模型）。
+        // - 订阅已过期 / 已跌成 free → **throw** `.subscriptionExpired(plan, expiredAt)`，让 pipeline
+        //   继续走 BrowserCookieProvider / CLILogProvider / KeychainProvider 兜底：
+        //     · BrowserCookie 路径能用浏览器已登录会话拿真实 quota（用户昨天 web 续费后这条路径最有效）
+        //     · CLILog 路径能从本地 sessions/*.jsonl 估算粗略 session+weekly
+        //   —— **不要**直接 return marker 短路，否则 inspector 数据陈旧（auth.json 未刷新）
+        //   会把活跃订阅也错标成过期。
         // - .active / .unknown → 继续走原流程，让 wham/usage 拿真实 quota
         // 失败读不到 auth.json 时跳过检查（保持向后兼容：旧用户/CLI 模式 → 走原路径）
         let subscriptionStatus = inspector.inspect()
         if subscriptionStatus.isEffectivelyExpired {
-            let (plan, expiredAt) = Self.extractExpiry(from: subscriptionStatus)
-            return ProviderSnapshot(
-                kind: .codex,
-                subscriptionTier: ProviderPricing.normalizedTier(plan),
-                availability: .subscriptionExpired(plan: plan, expiredAt: expiredAt),
-                quotas: [],
-                monthlyPrice: nil,
-                fetchedAt: fetchedAt
-            )
+            let (plan, expiredAt): (String?, Date?)
+            if case .expired(let lastPlan, let until) = subscriptionStatus {
+                plan = lastPlan
+                expiredAt = until
+            } else {
+                // .free 状态：planType 是 "free"（OpenAI 自己标），lastPlan 历史 plan 是 nil
+                plan = nil
+                expiredAt = nil
+            }
+            throw QuotaFetchError.subscriptionExpired(plan: plan, expiredAt: expiredAt)
         }
 
         guard let creds = loadCredentials() else {
@@ -110,19 +114,6 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
             monthlyPrice: await ProviderPricing.localizedMonthlyPrice(kind: .codex, tier: tier),
             fetchedAt: fetchedAt
         )
-    }
-
-    /// 从 `SubscriptionStatus` 中提取 `(plan, expiredAt)` 给错误用。
-    private static func extractExpiry(from status: SubscriptionStatus) -> (String?, Date?) {
-        switch status {
-        case .expired(let lastPlan, let expiredAt):
-            return (lastPlan, expiredAt)
-        case .free:
-            // free 状态：planType 是 "free"（OpenAI 自己标），但 lastPlan 历史 plan 是 nil
-            return (nil, nil)
-        case .active, .unknown:
-            return (nil, nil)
-        }
     }
 
     private struct Credentials {

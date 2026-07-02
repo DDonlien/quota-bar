@@ -71,25 +71,13 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
     }
 
     private func fetchSnapshotImpl(endpoint: DashboardEndpoints.Endpoint, fetchedAt: Date, timeout: TimeInterval) async throws -> ProviderSnapshot {
-        // v0.8.0：Codex 路径在发请求前先检查订阅状态（与 CodexAuthProvider 一致的"权威"
-        // 模型）。如果订阅已过期，直接返回 marker snapshot，不让 free 用户的"月额度"窗口
-        // 渲染到 UI。失败读不到 auth.json 时跳过（与 CodexAuthProvider 行为一致）。
-        if kind == .codex {
-            let inspector = CodexSubscriptionInspector()
-            let status = inspector.inspect()
-            if status.isEffectivelyExpired {
-                let (plan, expiredAt) = Self.extractExpiry(from: status)
-                NSLog("QuotaBar: [codex-cookie] subscription expired (plan=\(plan ?? "?"), until=\(expiredAt?.description ?? "?")) — skip dashboard")
-                return ProviderSnapshot(
-                    kind: .codex,
-                    subscriptionTier: ProviderPricing.normalizedTier(plan),
-                    availability: .subscriptionExpired(plan: plan, expiredAt: expiredAt),
-                    quotas: [],
-                    monthlyPrice: nil,
-                    fetchedAt: fetchedAt
-                )
-            }
-        }
+        // v0.8.0 + v0.8.1 修订：Codex 路径**不再**在 BrowserCookie 入口短路订阅过期。
+        // 原因：inspector 数据来自 ~/.codex/auth.json 的 id_token（陈旧缓存）——用户 web 续费后
+        // 该字段可能滞后。如果 BrowserCookie 也按 inspector 短路，就完全拿不到真实 quota。
+        // 现在 CodexAuthProvider 在 inspector 过期时 throw `.subscriptionExpired`，
+        // pipeline 会走到这里直接调 dashboard API；plan_type=free 时由 CodexDashboardParser
+        // 在解析层 return nil（不渲染免费档的"月额度"窗口）。
+        // —— Inspector 仍由 CodexAuthProvider 调一次（"权威"端），此处 BrowserCookie 信任 API。
 
         let domains = kind.dashboardCookieDomains
         let cookies: [HTTPCookie]
@@ -308,18 +296,6 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
                 ?? user["tier"] as? String
         }
         return nil
-    }
-
-    /// v0.8.0：从 `SubscriptionStatus` 中提取 `(plan, expiredAt)` 给 snapshot 用。
-    private static func extractExpiry(from status: SubscriptionStatus) -> (String?, Date?) {
-        switch status {
-        case .expired(let lastPlan, let expiredAt):
-            return (lastPlan, expiredAt)
-        case .free:
-            return (nil, nil)
-        case .active, .unknown:
-            return (nil, nil)
-        }
     }
 
     private func performRequest(with cookies: [HTTPCookie], endpoint: DashboardEndpoints.Endpoint) async throws -> Data {

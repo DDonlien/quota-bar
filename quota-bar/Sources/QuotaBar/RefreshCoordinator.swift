@@ -285,7 +285,11 @@ final class RefreshCoordinator: ObservableObject {
         case .failure(let error):
             if let qe = error as? QuotaFetchError {
                 let availability: ProviderAvailability
-                if let installDetail {
+                // v0.8.1：subscriptionExpired 是比 installDetail 更具体的信号（说明订阅确实
+                // 过期而不是"未配置"），优先用它；其他 error type 才退回到 needsConfiguration。
+                if case .subscriptionExpired = qe {
+                    availability = qe.availabilityFallback
+                } else if let installDetail {
                     availability = .needsConfiguration(reason: installDetail)
                 } else {
                     availability = qe.availabilityFallback
