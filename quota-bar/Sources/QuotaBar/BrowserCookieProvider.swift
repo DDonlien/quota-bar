@@ -229,9 +229,11 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
         } else {
             monthlyPrice = await ProviderPricing.localizedMonthlyPrice(kind: .kimi, tier: tier)
         }
-        // v0.6.0：Kimi 的 KimiSubscriptionStatParser 从 subscriptionBalance.expireTime
-        // 提取真实订阅到期日。
-        let subscriptionExpiresAt = quotaEndpoint.parser.parseSubscriptionExpiresAt(data: quotaData)
+        // Kimi 的展示日期来自 GetSubscription.nextBillingTime（下一次续费日）
+        // 转换出的最后有效日；GetSubscriptionStat.expireTime/currentEndTime 不直接展示。
+        let subscriptionExpiresAt = subscriptionData.flatMap {
+            KimiSubscriptionParser().parseSubscriptionExpiresAt(data: $0)
+        }
         NSLog("QuotaBar: [kimi-cookie] final tier=\(tier ?? "<nil>"), price=\(monthlyPrice ?? "<nil>"), expiresAt=\(subscriptionExpiresAt?.description ?? "<nil>")")
         return ProviderSnapshot(
             kind: .kimi,

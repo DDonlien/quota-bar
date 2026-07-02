@@ -136,7 +136,10 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
     var credentialFiles: [String] {
         switch self {
         case .codex: return ["~/.codex/auth.json"]
-        case .kimi: return ["~/.kimi-code/credentials/kimi-code.json"]
+        case .kimi: return [
+            "~/Library/Application Support/kimi-desktop/bridge-store/token-store.json",
+            "~/.kimi-code/credentials/kimi-code.json",
+        ]
         case .minimax: return ["~/.mmx/config.json", "~/.mavis/config.yaml"]
         case .claude: return ["~/.claude/.credentials.json"]
         case .gemini: return ["~/.gemini/oauth_creds.json"]
@@ -753,6 +756,10 @@ enum ProviderPricing {
         case "builtin:bigmodel-coding-plan": return "BigModel Coding"
         case "builtin:zai-start-plan": return "Z.ai Start"
         case "builtin:zai-coding-plan": return "Z.ai Coding"
+        case let value where value.contains("zcode") && value.contains("start"):
+            return "ZCode Start"
+        case let value where value.contains("zcode") && value.contains("coding"):
+            return "ZCode Coding"
         default:
             return rawTier.prefix(1).uppercased() + rawTier.dropFirst()
         }

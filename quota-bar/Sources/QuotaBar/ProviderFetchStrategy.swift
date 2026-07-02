@@ -152,17 +152,34 @@ final class FetchPipeline {
         }
         guard !preferredIds.isEmpty else { return strategies }
 
+        let requestedLayers = Set(layers)
         var ordered: [ProviderFetchStrategy] = []
         var seen = Set<String>()
-        for preferredId in preferredIds {
-            guard let strategy = strategies.first(where: { $0.id == preferredId }),
-                  seen.insert(strategy.id).inserted else {
-                continue
-            }
+
+        func hasFullCoverage(_ strategy: ProviderFetchStrategy) -> Bool {
+            requestedLayers.isSubset(of: strategy.supportedLayers)
+        }
+
+        func append(_ strategy: ProviderFetchStrategy) {
+            guard seen.insert(strategy.id).inserted else { return }
             ordered.append(strategy)
         }
-        for strategy in strategies where seen.insert(strategy.id).inserted {
-            ordered.append(strategy)
+
+        let preferredStrategies = preferredIds.compactMap { preferredId in
+            strategies.first { $0.id == preferredId }
+        }
+
+        for strategy in preferredStrategies where hasFullCoverage(strategy) {
+            append(strategy)
+        }
+        for strategy in strategies where hasFullCoverage(strategy) {
+            append(strategy)
+        }
+        for strategy in preferredStrategies {
+            append(strategy)
+        }
+        for strategy in strategies {
+            append(strategy)
         }
         return ordered
     }

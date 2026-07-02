@@ -93,6 +93,8 @@
 - [x] [0.2.0-DATA-B-023] Codex 额度必须优先以真实 `wham/usage` 响应为准；`auth.json` 的 `id_token` 过期日只能作为真实请求失败后的辅助状态，不能在请求前短路；本地日志估算不得冒充真实额度显示为 100% #P1
 - [x] [0.2.0-DATA-B-024] Kimi 默认优先使用本地 OAuth 凭证路径，浏览器 Cookie 只能作为显式启用后的补充，避免 Kimi 刷新慢时先触发浏览器权限弹窗 #P1
 - [x] [0.2.0-DATA-B-025] Kimi 默认优先读取 Kimi Desktop `bridge-store/token-store.json` 中的 Web access token 调 `GetSubscriptionStat`，在不读取浏览器 Cookie 的前提下获取 Work 月额度、Code 5h/周额度、订阅档位和到期日；CLI OAuth 仅作为 Code-only fallback #P1
+- [x] [0.2.0-DATA-B-026] Kimi Desktop 数据源必须同时调用 `GetSubscriptionStat`（Work + Code + 到期日）和 `GetSubscription`（订阅名 + 价格），并在 `subscriptionBalance` 缺少 `amountUsedRatio` 时支持 used/total 或 remaining/total 形式解析 Work 月额度 #P1
+- [x] [0.2.0-DATA-B-027] Kimi `GetSubscriptionStat` 在 `ratelimitCode5h/7d` 不返回独立 ratio 时，必须使用 `subscriptionBalance.kimiCodeUsedRatio` 计算 Code 5 小时和周额度，避免误显示 100% #P1
 
 ### FE-A：刷新机制
 
@@ -207,6 +209,8 @@
 - [x] [0.4.0-DATA-A-004] `Strategies.zcodePipeline()` 接入 `RefreshCoordinator`，凭证缺失时 fallback 到 Keychain / `needsConfiguration` 状态 #P1
 - [x] [0.4.0-DATA-A-005] Z Code 刷新失败时 UI 必须保留真实失败原因（如 API key 无效、plan 未开通、quota endpoint 不可用），不能被安装探测文案覆盖成只有“App 已装” #P1
 - [x] [0.4.0-DATA-A-006] Z Code quota API 未返回可渲染额度时读取 `~/.zcode/v2/coding-plan-cache.json`，展示可用 plan 与 `coding_plan_not_entitled` 等本地真实状态；该缓存不包含额度数值时不得伪造 quota bar #P1
+- [x] [0.4.0-DATA-A-007] Z Code `builtin:bigmodel-start-plan` 优先从 `https://zcode.z.ai/api/v1/zcode-plan/billing/balance?app_version=...` 读取 `balances[]`，按 GLM-5.2 / GLM-5-Turbo 解析每日 token 额度、重置时间和 plan 名；旧 `api/monitor/usage/quota/limit` 仅作兼容 fallback #P1
+- [x] [0.4.0-DATA-A-008] 当 Z Code `billing/balance` 或 `billing/current` 返回 `plans: []` / `balances: []` 时，UI 必须如实显示“服务端未返回可渲染额度”，不得把本地 plan-cache 的“available”误当作额度成功 #P1
 
 ### DATA-B：阿里通义千问桌面 App
 
@@ -289,7 +293,7 @@
 - [x] [0.6.0-ARCH-A-000] 设计 `SubscriptionDateHarvester` 协议：每个 provider 实现 `harvest(from data: Data) async throws -> Date?`，输入是抓到的页面 Data（或 WKWebView handle），输出是订阅到期日；找不到返回 nil #P1
 - [x] [0.6.0-ARCH-A-001] `WKWebViewHeadlessLoader` 实现：注入 `WKHTTPCookieStore` cookie → 加载 URL → 等 `network idle` / 特定 DOM 节点出现 → 回调 `Data` 或 `String`；可在 `FetchPipeline` strategy 中复用，超时与现有 strategy 一致 #P1
 - [x] [0.6.0-ARCH-A-002] 删 `ProviderSnapshot.init` 里 `quotas.compactMap(\.resetsAt).max()` fallback：找不到真实到期日时 `subscriptionExpiresAt = nil`（UI 自动不显示）；同时把 `subscriptionExpiresAt` 文档从"默认从 max(resetsAt) 推断"改成"nil = 不展示" #P1
-- [x] [0.6.0-ARCH-A-003] `DashboardParser` 协议加 `parseSubscriptionExpiresAt(data: Date = Date()) -> Date?`，默认实现返回 nil；Kimi `KimiSubscriptionStatParser` 实现从 `subscriptionBalance.expireTime` 提取（这一改动给 Kimi 顺带补上）#P1
+- [x] [0.6.0-ARCH-A-003] `DashboardParser` 协议加 `parseSubscriptionExpiresAt(data: Date = Date()) -> Date?`，默认实现返回 nil；Kimi 展示日期必须来自明确的订阅/续费来源，不能把 quota reset 或无法确认语义的字段当作到期日 #P1
 - [x] [0.6.0-ARCH-A-003-test] 给 harvester 协议 + fallback 改 hide 写单元测试：mock HTML feed 解析，验证 `subscriptionExpiresAt` 正确 / 不正确两种路径 #P1
 - [x] [0.6.0-ARCH-A-001-test] `WKWebViewHeadlessLoader` 集成测试：mock URLProtocol 喂 HTML，验证 cookie 注入 + DOM ready 等待 + 超时降级 #P1
 
@@ -298,9 +302,9 @@
 > Kimi 的 `GetSubscriptionStat` 响应里 `subscriptionBalance.expireTime` **就是真实的订阅到期日**，但当前代码把它错塞到 Work quota 窗口的 `resetsAt`。这是最快、最稳的 1 个 provider，先打通。
 
 - [x] [0.6.0-DATA-A-000] `KimiSubscriptionStatParser` 解析 `subscriptionBalance.expireTime` 后**不再塞给 Work quota 的 `resetsAt`**（Work 的 resetsAt 应该是月度窗口的滚动结束时间，跟 subscription 到期日是不同概念）#P1
-- [x] [0.6.0-DATA-A-001] `KimiSubscriptionStatParser.parseSubscriptionExpiresAt(data:)` 返回 `subscriptionBalance.expireTime`；`BrowserCookieProvider` 调 `parseSubscriptionExpiresAt` 拿到值后传给 `ProviderSnapshot.subscriptionExpiresAt` #P1
+- [x] [0.6.0-DATA-A-001] Kimi `ProviderSnapshot.subscriptionExpiresAt` 使用 `GetSubscription.nextBillingTime` 作为“下一次续费日”来源，转换为本地自然日的前一天作为“最后有效日”；不再使用 `subscriptionBalance.expireTime` / `currentEndTime` 直接展示，避免把续费日或服务端结束时间错显示为 7/10 #P1
 - [x] [0.6.0-DATA-A-002] Work quota 窗口的 `resetsAt` 改为从 `subscriptionBalance.expireTime` 反推或保留为 nil（让 UI 不显示月度 quota 的"重置时间"——已经隐含在 subscriptionExpiresAt 里，避免双信息）；如需要月度窗口重置，则计算 `now + periodSeconds` 兜底 #P1
-- [x] [0.6.0-DATA-A-002-test] 单元测试：mock `GetSubscriptionStat` JSON 验证 `subscriptionExpiresAt == expireTime`，Work quota `resetsAt` 不再等于 expireTime #P1
+- [x] [0.6.0-DATA-A-002-test] 单元测试：mock `GetSubscriptionStat` JSON 验证 stat parser 不再输出展示到期日，mock `GetSubscription.nextBillingTime` 验证续费日前一天会显示为最后有效日；Work quota `resetsAt` 不再等于 expireTime #P1
 
 ### DATA-B：Codex 真实订阅到期日（headless 抓订阅页）
 
@@ -308,6 +312,7 @@
 
 - [ ] [0.6.0-DATA-B-000] `CodexHarvester` 实现：用 `WKWebViewHeadlessLoader` 加载 `https://chatgpt.com/account/manage`，DOM 提取续费日期；找不到返回 nil；超时/Cloudflare challenge 失败抛 `QuotaFetchError.transient` 让 pipeline 降级 #P1
 - [ ] [0.6.0-DATA-B-001] `CodexAuthProvider` / `BrowserCookieProvider` Codex 路径新增 strategy：headless 抓订阅页 → 拿 `subscriptionExpiresAt`；和现有 quota 抓取并行，结果合并到 `ProviderSnapshot` #P1
+- [ ] [0.6.0-DATA-B-002] Codex 到期日不能使用过期 `id_token` 的 `chatgpt_subscription_active_until` 继续展示；本地 auth 元数据 stale 但 quota 仍成功时，应隐藏日期或通过后续 WebView/DOM 授权源拿真实日期 #P1
 - [ ] [0.6.0-DATA-B-001-test] 单元测试：mock HTML（含"Next billing on July 25, 2026"等常见模式）验证 `CodexHarvester` 解析出正确 `Date` #P1
 
 ### DATA-C：Claude 真实订阅到期日（headless 抓订阅页）
@@ -351,6 +356,7 @@
 
 - [x] [0.6.0-UI-A-000] 验证 `MenuView.PlanHeader.expiresAtText == nil` 时 HStack 收缩正常（价格仍居右、不留空隙）#P1
 - [x] [0.6.0-UI-A-001] 给 `expiresAtText` 加 `.help("...")` tooltip：显示「订阅续费日期」+ 完整 ISO 日期（让用户 hover 能看到精确时间）#P2
+- [x] [0.6.0-UI-A-002] `expiresAtText` tooltip 文案统一为「最后有效日期」，和 UI 日期语义一致；续费日只作为 provider 原始来源，不直接对用户展示 #P2
 
 ## Phase - v0.7.0 - 智谱 GLM Provider 接入（feat/glm-provider）
 
@@ -502,6 +508,8 @@
 - [x] [0.9.0-DATA-A-001] 来源索引只保存非敏感元信息：providerKind、sourceKind、sourceId、成功时间、失败次数、最后错误摘要、相关本地路径或浏览器 profile 标识；不保存凭证内容 #P1
 - [x] [0.9.0-DATA-A-002] 当优先来源失败时，Provider pipeline 必须回到完整 fallback 规则继续抓取；若其他来源成功，更新来源索引；若全部失败，如实返回失败 / 待配置状态 #P1
 - [x] [0.9.0-DATA-A-003] 浏览器 Cookie 和 CLI 配置与凭证使用同一来源索引机制：保存“上次哪个浏览器 / profile / CLI 配置路径有效”，不复制 Cookie 或配置文件内容 #P1
+- [x] [0.9.0-DATA-A-004] 来源索引优先级必须尊重层覆盖范围：在一次刷新同时需要额度/档位/过期日时，完整来源优先于只覆盖单层的来源；例如 Kimi Desktop 不应被 Kimi CLI 的 Code-only 成功缓存遮蔽，Z Code auth 不应被 plan-cache 遮蔽 #P1
+- [ ] [0.9.0-DATA-A-005] App 内 WebView 授权容器：用户显式点击登录/修复后打开 provider 专属 WebView，复用 WKWebsiteDataStore 持久 session；后续刷新可隐式读取该 WebView session 发 dashboard 请求，避免反复触发系统 Cookie/Keychain 弹窗 #P1
 
 ### DATA-B：额度与订阅快照
 

@@ -59,7 +59,7 @@ final class ZCodeAuthProvider: QuotaProvider, @unchecked Sendable {
             fallbackPlanName: config.planName
         )
         guard !parsed.quotas.isEmpty else {
-            throw QuotaFetchError.transient(detail: "Z Code quota 响应里没有可识别额度")
+            throw QuotaFetchError.sourceUnavailable(detail: "Z Code 服务端未返回可渲染额度数值")
         }
         let tier = ProviderPricing.normalizedTier(parsed.planName ?? config.planName)
         return ProviderSnapshot(
@@ -127,6 +127,10 @@ final class ZCodeAuthProvider: QuotaProvider, @unchecked Sendable {
         if let quotaURL = config.quotaURL,
            let url = URL(string: quotaURL) {
             return url
+        }
+
+        if let balanceURL = Self.zcodePlanBalanceURL(from: config.baseURL) {
+            return balanceURL
         }
 
         let base = Self.quotaBaseURL(for: config) ?? Self.defaultBaseURL(for: config.planName)
@@ -295,6 +299,21 @@ final class ZCodeAuthProvider: QuotaProvider, @unchecked Sendable {
         return root
     }
 
+    private static func zcodePlanBalanceURL(from raw: String?) -> URL? {
+        guard let raw,
+              let url = URL(string: raw),
+              let scheme = url.scheme,
+              let host = url.host?.lowercased(),
+              host.contains("zcode.z.ai") else {
+            return nil
+        }
+        var root = "\(scheme)://\(host)"
+        if let port = url.port {
+            root += ":\(port)"
+        }
+        return URL(string: "\(root)/api/v1/zcode-plan/billing/balance?app_version=3.1.5")
+    }
+
     private static func flattenStrings(_ value: Any, prefix: String = "") -> [(keyPath: String, value: String)] {
         if let dict = value as? [String: Any] {
             return dict.flatMap { key, child in
@@ -328,6 +347,14 @@ final class ZCodeAuthProvider: QuotaProvider, @unchecked Sendable {
         now: Date = Date(),
         fallbackPlanName: String? = nil
     ) throws -> ParsedQuotaResponse {
+        if let balance = try? parseBillingBalanceResponse(
+            data: data,
+            now: now,
+            fallbackPlanName: fallbackPlanName
+        ), !balance.quotas.isEmpty {
+            return balance
+        }
+
         let response: QuotaLimitResponse
         do {
             response = try JSONDecoder().decode(QuotaLimitResponse.self, from: data)
@@ -373,6 +400,69 @@ final class ZCodeAuthProvider: QuotaProvider, @unchecked Sendable {
             },
             planName: planName,
             monthlyPrice: response.data?.monthlyPrice
+        )
+    }
+
+    static func parseBillingBalanceResponse(
+        data: Data,
+        now: Date = Date(),
+        fallbackPlanName: String? = nil
+    ) throws -> ParsedQuotaResponse {
+        let response: ZCodeBillingBalanceResponse
+        do {
+            response = try JSONDecoder().decode(ZCodeBillingBalanceResponse.self, from: data)
+        } catch {
+            throw QuotaFetchError.transient(detail: "Z Code billing balance JSON 解析失败")
+        }
+        if let code = response.code, code != 0 {
+            throw QuotaFetchError.transient(detail: response.msg ?? "Z Code billing balance API 返回失败")
+        }
+        guard let payload = response.data else {
+            throw QuotaFetchError.transient(detail: "Z Code billing balance 响应无 data")
+        }
+        guard let balances = payload.balances, !balances.isEmpty else {
+            let plans = payload.plans ?? []
+            if plans.isEmpty {
+                throw QuotaFetchError.sourceUnavailable(detail: "Z Code billing balance 返回空 plans/balances")
+            }
+            throw QuotaFetchError.sourceUnavailable(detail: "Z Code billing balance 有 plan 但没有 balances")
+        }
+
+        let planName = fallbackPlanName
+            ?? balances.compactMap(\.planId).first
+        let subscriptionGroup = planName?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+            ?? ProviderKind.zcode.rawValue
+
+        let quotas = balances.compactMap { balance -> QuotaWindow? in
+            guard let total = balance.totalUnits, total > 0 else { return nil }
+            let remaining = balance.availableUnits ?? balance.remainingUnits ?? max(0, total - (balance.usedUnits ?? 0))
+            let remainingFraction = max(0, min(1, Double(remaining) / Double(total)))
+            let resetsAt = balance.expiresAt.map { Date(timeIntervalSince1970: TimeInterval($0)) }
+            let periodSeconds: TimeInterval? = {
+                guard let start = balance.periodStart,
+                      let end = balance.periodEnd,
+                      end > start else {
+                    return nil
+                }
+                return TimeInterval(end - start + 1)
+            }()
+            return QuotaWindow(
+                title: balance.showName ?? "GLM",
+                remainingFraction: remainingFraction,
+                refreshDescription: resetsAt.map { QuotaResetText.description(for: $0, relativeTo: now) } ?? "—",
+                resetsAt: resetsAt,
+                periodSeconds: periodSeconds,
+                scope: balance.entitlementId,
+                subscriptionGroup: subscriptionGroup
+            )
+        }
+
+        return ParsedQuotaResponse(
+            quotas: quotas.sorted {
+                ($0.periodSeconds ?? .greatestFiniteMagnitude) < ($1.periodSeconds ?? .greatestFiniteMagnitude)
+            },
+            planName: planName,
+            monthlyPrice: nil
         )
     }
 
@@ -448,6 +538,45 @@ private struct QuotaLimitResponse: Decodable {
     let msg: String?
     let success: Bool?
     let data: QuotaLimitData?
+}
+
+private struct ZCodeBillingBalanceResponse: Decodable {
+    let code: Int?
+    let msg: String?
+    let data: DataPayload?
+
+    struct DataPayload: Decodable {
+        let balances: [Balance]?
+        let plans: [Plan]?
+    }
+
+    struct Plan: Decodable {}
+
+    struct Balance: Decodable {
+        let planId: String?
+        let entitlementId: String?
+        let showName: String?
+        let totalUnits: Int?
+        let usedUnits: Int?
+        let remainingUnits: Int?
+        let availableUnits: Int?
+        let periodStart: Int?
+        let periodEnd: Int?
+        let expiresAt: Int?
+
+        private enum CodingKeys: String, CodingKey {
+            case planId = "plan_id"
+            case entitlementId = "entitlement_id"
+            case showName = "show_name"
+            case totalUnits = "total_units"
+            case usedUnits = "used_units"
+            case remainingUnits = "remaining_units"
+            case availableUnits = "available_units"
+            case periodStart = "period_start"
+            case periodEnd = "period_end"
+            case expiresAt = "expires_at"
+        }
+    }
 }
 
 private struct QuotaLimitData: Decodable {

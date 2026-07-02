@@ -966,7 +966,7 @@ private struct PlanHeader: View {
                             .foregroundStyle(Palette.secondary)
                             .lineLimit(1)
                             .monospacedDigit()
-                            .help("订阅续费日期：\(preciseExpiresAtText ?? expiresAtText)")
+                            .help("最后有效日期：\(preciseExpiresAtText ?? expiresAtText)")
                     }
                     Text(snapshot.monthlyPrice ?? "—")
                         .font(.system(size: MenuDashboardStyle.planPriceFontSize, weight: .regular))

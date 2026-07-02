@@ -86,6 +86,59 @@ struct ZCodeAuthProviderTests {
         #expect(weekly.remainingFraction == 0.25)
     }
 
+    @Test("billing balance parser returns daily model token quotas")
+    func billingBalanceParserReturnsModelQuotas() throws {
+        let json = """
+        {
+          "code": 0,
+          "msg": "",
+          "data": {
+            "server_time": 1782399411,
+            "balances": [
+              {
+                "plan_id": "zcode-v3-start-plan-0615",
+                "entitlement_id": "ent_start_public_glm_5p2",
+                "show_name": "GLM-5.2",
+                "total_units": 3000000,
+                "used_units": 3000000,
+                "remaining_units": 0,
+                "available_units": 0,
+                "period_start": 1782316800,
+                "period_end": 1782403199,
+                "expires_at": 1782403199
+              },
+              {
+                "plan_id": "zcode-v3-start-plan-0615",
+                "entitlement_id": "ent_start_public_glm_5turbo",
+                "show_name": "GLM-5-Turbo",
+                "total_units": 2000000,
+                "used_units": 276828,
+                "remaining_units": 1723172,
+                "available_units": 1723172,
+                "period_start": 1782316800,
+                "period_end": 1782403199,
+                "expires_at": 1782403199
+              }
+            ]
+          }
+        }
+        """
+
+        let parsed = try ZCodeAuthProvider.parseQuotaLimitResponse(
+            data: Data(json.utf8),
+            now: Date(timeIntervalSince1970: 1_782_319_000),
+            fallbackPlanName: "builtin:bigmodel-start-plan"
+        )
+
+        #expect(parsed.quotas.count == 2)
+        #expect(parsed.planName == "builtin:bigmodel-start-plan")
+        let turbo = try #require(parsed.quotas.first { $0.title == "GLM-5-Turbo" })
+        #expect(turbo.remainingFraction > 0.86)
+        #expect(turbo.remainingFraction < 0.87)
+        #expect(turbo.periodSeconds == TimeInterval(24 * 60 * 60))
+        #expect(turbo.scope == "ent_start_public_glm_5turbo")
+    }
+
     @Test("plan cache provider reports available start plan without faking quotas")
     func planCacheReportsAvailablePlanWithoutFakeQuotas() async throws {
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())

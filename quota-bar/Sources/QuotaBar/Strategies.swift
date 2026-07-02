@@ -39,6 +39,12 @@ struct QuotaProviderStrategy: ProviderFetchStrategy {
         if id == "codex-cli" {
             return [.quota]
         }
+        if id == "kimi-auth" {
+            return [.quota]
+        }
+        if id == "zcode-plan-cache" {
+            return [.provider, .plan]
+        }
         return [.quota, .expiration, .plan]
     }
 
