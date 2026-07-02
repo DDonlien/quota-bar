@@ -478,6 +478,18 @@
 - [ ] [0.9.0-ARCH-A-001] 设计持久化 schema version 与向后兼容策略；所有持久化文件必须带 `schemaVersion`，读取失败时安全丢弃并回到实时抓取，不阻塞 app 启动 #P1
 - [ ] [0.9.0-ARCH-A-002] 明确安全边界：持久化文件不得保存 token、cookie、API key、refresh token 或浏览器 Cookie 明文；敏感凭证仍只读取原始服务配置、浏览器 Cookie 或 macOS Keychain #P1
 
+### ARCH-B：三层获取链路与 Provider 能力矩阵
+
+- [ ] [0.9.0-ARCH-B-000] 将获取体系拆为三层独立链路：Provider 获取、额度获取、过期日获取；三层分别维护来源索引、跳过规则、失败语义和 last-known-good 写入资格 #P1
+- [ ] [0.9.0-ARCH-B-001] Provider 获取层支持 App Bundle、配置/凭证文件、CLI 命令、API Key/环境变量、浏览器登录痕迹等发现手段；刷新时先用上次成功手段复查已知 provider，成功则跳过其余发现手段，再跑完整发现链查找新增或丢失的 provider #P1
+- [ ] [0.9.0-ARCH-B-002] 额度获取层支持配置文件读 token/API key 后调用 usage API、CLI 指令、HTTP API 指令、本地 RPC、浏览器 dashboard、手动 token/header、App 内 WebView 登录 session、最后可选自然语言问询；刷新时先用上次成功额度手段，失败后再按能力矩阵全量 fallback #P1
+- [ ] [0.9.0-ARCH-B-003] 过期日获取层复用额度层的来源索引机制，但允许使用不同 endpoint、CLI 指令、DOM 抽取或账号页 API；过期日结果不得阻塞额度刷新，且必须标记来源可靠性 #P1
+- [ ] [0.9.0-ARCH-B-004] 为每个 Provider 定义三张能力矩阵，分别记录 Provider 获取、额度获取、过期日获取的可用节点、优先级、跳过条件、权限风险、交互成本、失败后 fallback 规则和是否允许写入快照 #P1
+- [ ] [0.9.0-ARCH-B-005] Provider 能力矩阵必须覆盖明确接入范围：Codex、Claude、Kimi、MiniMax、Antigravity、GLM/Z Code；不再登记“其他 provider”占位，新增 provider 必须先明确具体名称、安装/凭证/额度/过期日来源后再进入矩阵 #P1
+- [ ] [0.9.0-ARCH-B-006] CLI/RPC 节点必须显式登记每个 provider 的命令、交互输入、输出格式和 parser；已验证命令与未验证猜测必须分开记录，未知命令不得执行 #P1
+- [ ] [0.9.0-ARCH-B-007] Browser 节点必须显式登记每个 provider 的登录域名、cookie 名称、dashboard URL、HTTP 方法、必要 header、follow-up 请求、parser 和是否可能触发 Keychain/Full Disk Access；默认不扫描所有浏览器，优先使用来源索引或用户选择的浏览器/profile #P1
+- [ ] [0.9.0-ARCH-B-008] 订阅状态归一化必须区分「可用」「已过期」「未订阅」「待配置」「抓取失败」「未安装」；只有可靠过期日距离当前时间在一个自然周内时显示已过期，超过一周或从未订阅显示未订阅 #P1
+
 ### DATA-A：来源索引缓存
 
 - [ ] [0.9.0-DATA-A-000] 新增 provider 来源索引缓存，记录每个 Provider 上次成功的数据来源优先值（如 auth file / browser profile / CLI config / local RPC / Keychain 探测），用于下一次启动、更新、重装或刷新时优先尝试 #P1
