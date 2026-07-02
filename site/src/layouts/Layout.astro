@@ -28,6 +28,13 @@ const {
     <title>{title}</title>
     <meta name="description" content={description} />
 
+    <!-- Canonical & hreflang — i18n 是客户端按 locale 切字典，没有独立 URL；
+         统一指向规范 URL 即可（避免 http/https / 带不带 index.html 这类变体分权重）。 -->
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />
+    <link rel="alternate" hreflang="x-default" href={new URL(Astro.url.pathname, Astro.site).href} />
+    <link rel="alternate" hreflang="zh-CN" href={new URL(Astro.url.pathname, Astro.site).href} />
+    <link rel="alternate" hreflang="en" href={new URL(Astro.url.pathname, Astro.site).href} />
+
     <!-- Open Graph -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />

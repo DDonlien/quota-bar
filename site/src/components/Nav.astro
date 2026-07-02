@@ -1,6 +1,11 @@
 ---
 import LocaleSwitcher from "./LocaleSwitcher.astro";
 const REPO = "DDonlien/quota-bar";
+// 静态 fallback href：build 时 hardcode 当前最新 nightly release 的 .dmg URL。
+// 这样无 JS / 首屏加载前的点击也会直击 .dmg 而不是落到 /releases 列表页。
+// 客户端 <script> 后续会在 fetch 出更新的 release 时再覆盖一次（`UPDATE_DOWNLOAD` in index.astro）。
+const LATEST_DMG_URL =
+  "https://github.com/DDonlien/quota-bar/releases/download/nightly-c6317d05cfe8217aef54324ce193070a5dc29d84/QuotaBar-c6317d0.dmg";
 ---
 
 <!-- BEGIN: MainHeader (logo 左 / lang + download 右，窄屏不堆叠) -->
@@ -28,7 +33,7 @@ const REPO = "DDonlien/quota-bar";
       <LocaleSwitcher />
       <a
         class="site-nav__download"
-        href={`https://github.com/${REPO}/releases`}
+        href={LATEST_DMG_URL}
         target="_blank"
         rel="noopener"
         data-download

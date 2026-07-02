@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
@@ -11,4 +12,12 @@ export default defineConfig({
   build: {
     inlineStylesheets: 'auto',
   },
+  integrations: [
+    sitemap({
+      // i18n 是客户端 JS 切换的：所有语言版本都指向同一个 URL，
+      // hreflang 留给 Layout.astro 手动声明，这里不加。
+      changefreq: 'weekly',
+      priority: 0.8,
+    }),
+  ],
 });

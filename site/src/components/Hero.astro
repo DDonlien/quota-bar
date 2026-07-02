@@ -1,5 +1,10 @@
 ---
 const REPO = "DDonlien/quota-bar";
+// 静态 fallback href：build 时 hardcode 当前最新 nightly release 的 .dmg URL。
+// 无 JS / 首屏加载前的点击也会直击 .dmg 而不是落到 /releases 列表页；
+// 客户端 <script>（`UPDATE_DOWNLOAD` in index.astro）会在 fetch 出更新的 release 时再覆盖一次。
+const LATEST_DMG_URL =
+  "https://github.com/DDonlien/quota-bar/releases/download/nightly-c6317d05cfe8217aef54324ce193070a5dc29d84/QuotaBar-c6317d0.dmg";
 // Hero 标题里轮播的 agent 名字：用 | 分隔。
 //   - data-words-en / data-words-zh 是 i18n 的两条 fallback；当前两种语言都用同一组
 //     英文专有名词，但保留双属性以便未来扩展（比如本地化名称）。
@@ -29,7 +34,7 @@ const AGENTS_ZH_JOINED = AGENTS_ZH.join("|");
     </p>
     <div class="hero__ctas">
       <a
-        href={`https://github.com/${REPO}/releases`}
+        href={LATEST_DMG_URL}
         data-download
         class="hero__cta hero__cta--primary"
       >

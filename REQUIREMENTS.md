@@ -476,3 +476,175 @@
 - [ ] [0.10.0-DATA-B-002] 统一处理“免费额度仍可用但付费订阅已过期”的 UI 语义：区分免费额度展示、付费订阅过期提示、以及真正的抓取失败 #P1
 - [ ] [0.10.0-DATA-B-003] 为所有 provider 增加防御性 parser：当 dashboard 明确返回 free / expired / unpaid / trial-ended 等状态时，不把免费或降级额度误标成付费订阅额度 #P1
 - [ ] [0.10.0-QA-B-000] 为统一订阅过期识别补测试矩阵：active、expired、free、unknown、免费额度存在、dashboard 字段缺失、字段 schema 变化 #P1
+
+## Phase - v0.11.0 - 真实自动更新（ad-hoc 预开发版）+ semver 发版
+
+> **现状**：
+> - `AboutSettingsView` 的「检查更新」是占位（点击只跳 GitHub Releases 页面）
+> - `release.yml` 打的 tag 是 `nightly-<sha>`，`CFBundleShortVersionString` 硬编码成 `"1.0"`
+> - `.app` 产物 `unsigned and not notarized`（`release.yml:124`），用户首次打开要「右键 → 打开」
+> - 没有 helper 脚本，更新替换无任何实现
+>
+> **本 phase 目标**（在没有 Apple Developer Program 的前提下，把 update 机制全部跑通）：
+> 1. 「检查更新」变真：调 GitHub Releases API → 解析 semver + nightly 两种 tag → 比版本 → 后台下载 → helper 替换。
+> 2. 引入 semver 发版路径，保留 nightly 作为常规 push 自动打包。
+> 3. helper 脚本和主 .app 都用 ad-hoc 签名（`--sign -`），先把更新流程本身打透。
+>
+> **本 phase 关键立场**（**延续到 v0.12.0** 的设计边界）：
+> - **不引入 cert 改动**：build script 维持 `--sign -` ad-hoc 签名，**无 notarize** 步骤；首次打开仍需「右键 → 打开」（本机用一次后 macOS 记住）。
+> - **TCC 权限保留为 best-effort**：ad-hoc 签名下 macOS 可能把替换后的 .app 当成新 app，正式形式化保障要等 v0.12.0 切到 Developer ID。
+> - **helper 脚本也用 ad-hoc**：本机使用可接受；v0.12.0 同步升级为 Developer ID。
+> - **本 phase 内任何签名相关改动都 defer 到 v0.12.0**。
+>
+> **与 v0.12.0 的关系**（这是关键的「延续性」设计）：
+> - v0.11.0 是 v0.12.0 的**预开发版**，**不重写 update 流程**。v0.12.0 在 v0.11.0 已落地的 update 机制上**仅升级签名链 + notarize**。
+> - v0.12.0 的具体差异（v0.11.0 已经完成、v0.12.0 不动的部分）：UpdateChecker / 状态机 / UI / semver workflow / helper 替换逻辑。
+> - v0.12.0 唯一改的是：build script 签名身份、notarize 步骤、helper 脚本签名、cert 一致性断言、相关文档。
+> - 共享资产：bundle identifier `com.taobe.quotabar` 在 v0.11.0 阶段就锁死，v0.12.0 升级 cert 时直接复用，避免 TCC 权限被清。
+>
+> **worktree 拆分**：所有任务在 `update/main` 单 worktree 推进；v0.12.0 在同一 worktree 继续。
+
+### update/main: 引入 semver 发版路径
+
+> 保留 nightly 作为默认 push 自动打包路径；新增 `workflow_dispatch` 触发的 semver 发版路径。
+> 引入 semver 并不意味着丢弃 nightly —— nightly 仍是 dev 日常节奏，semver 是「对外稳定版」标记。
+
+- [ ] [0.11.0-CI-A-000] `release.yml` 新增 `workflow_dispatch` 输入项 `version`（形如 `v0.11.0`），触发 semver 发版；main 自动 push 路径继续产出 `nightly-<sha>` 不变 #P1
+- [ ] [0.11.0-CI-A-001] semver 发版路径 tag = `version` 输入值（如 `v0.11.0`）、`prerelease: false`；产物上传到同名 GitHub Release；DMG 名称 `QuotaBar-<version>.dmg`；macOS `CFBundleShortVersionString` 同步写入 `0.11.0`（去前导 `v`）#P1
+- [ ] [0.11.0-CI-A-002] `build-app.sh` 接受 `VERSION` 环境变量：默认空时走 nightly 行为（`CFBundleShortVersionString = "1.0"` 保持），传入 `v0.11.0` 时写入 `CFBundleShortVersionString = "0.11.0"`；脚本内对 `VERSION` 走严格 `vX.Y.Z` 校验，非合法格式立即 fail，不静默回退 #P1
+- [ ] [0.11.0-CI-A-003] `CFBundleVersion` / `QBDisplayBuild` 统一日期戳 `YYMMDD.HHMMSS.branch`（当前已部分实现，验证 nightly 与 semver 两条路径都走同一逻辑）#P1
+- [ ] [0.11.0-CI-A-004] `release.yml` 注释维持 `unsigned and not notarized`，与本 phase ad-hoc 实际行为一致；v0.12.0 升级 cert 时再更新注释为实际签名 + notarize 步骤（升级版见 [0.12.0-SEC-A-005]）#P1
+- [ ] [0.11.0-CI-A-002-test] 测试 `build-app.sh` 在 `VERSION=v0.11.0` / `VERSION=` / `VERSION=garbage` 三种情况下 Info.plist 写入行为分别正确 #P1
+
+### update/main: 维持 ad-hoc 签名 + 无 notarize 立场（预开发版）
+
+> 本 phase **不引入任何 cert 改动**；build script 维持 `--sign -` ad-hoc 签名，无 notarize、无 `--options runtime`、无 .p8 API Key。
+> 正式升级到 Developer ID 签名 + notarize 在 v0.12.0 完成（phase header 已说明两者关系）。
+> 本段落的 ARCH 任务是**为 v0.12.0 提前锁定资产**：bundle id 在 v0.11.0 阶段就锁死，v0.12.0 升级 cert 时直接复用，避免 TCC 权限被清。
+
+- [ ] [0.11.0-ARCH-A-000] 保持 bundle identifier `com.taobe.quotabar` 在所有 build 中不变；`build-app.sh` 内已 hardcode，本 phase 任何修改都不允许触碰该值（v0.12.0 升级 cert 时这是 TCC 权限保留的形式化前置条件）#P1
+- [ ] [0.11.0-ARCH-A-001] 保持 `--identifier com.taobe.quotabar` 重签名参数与 Info.plist 的 `CFBundleIdentifier` 一致；ad-hoc 模式下该参数是 macOS 识别「同一 app」的最重要依据，本 phase 不允许改动 #P1
+- [ ] [0.11.0-ARCH-A-002] build script 在本 phase 维持 `--sign -` ad-hoc 签名；**不引入** `--options runtime` / `xcrun notarytool` / .p8 API Key 任一项；v0.11.0 范围内任何与签名相关的改动都 defer 到 v0.12.0 #P1
+- [ ] [0.11.0-ARCH-A-003] helper 脚本 `install-update.sh` 同样 ad-hoc 签名；本机使用可接受，Gatekeeper 首次会拦截，本机授权一次后记住；v0.12.0 同步升级为 Developer ID 签名（见 [0.12.0-SEC-A-006]）#P1
+- [ ] [0.11.0-ARCH-A-000-test] 测试每次 `build-app.sh` 跑完后，生成的 .app 的 `Info.plist.CFBundleIdentifier` == `--identifier` 参数值 == `com.taobe.quotabar`（断言三个值一致，防止 v0.12.0 升级 cert 时出现签名 identifier 与 bundle id 漂移）#P1
+
+### update/main: 写轻量 helper 替换脚本
+
+> 选 B 方案：app 后台下载 dmg → 提示用户重启 → helper 挂载 dmg → 替换 `/Applications/Quota Bar.app` → 重启 app。
+> 本 phase helper 用 ad-hoc 签名（依赖 [0.11.0-ARCH-A-003]）；v0.12.0 同步升级为 Developer ID（见 [0.12.0-SEC-A-006]）。
+> ad-hoc 签名下 `spctl --assess` 会拒绝（因为 macOS 不认 ad-hoc 为有效签名），所以 v0.11.0 阶段只跑 `codesign --verify`，跳过 spctl；v0.12.0 起两者都跑。
+
+- [ ] [0.11.0-TOOL-A-000] 新增 `macos/scripts/install-update.sh`：接受 dmg 路径参数 → 挂载 dmg → 复制 .app 到 `/Applications/Quota Bar.app`（覆盖现有）→ 卸载 dmg → 退出码反映成功 / 失败 #P1
+- [ ] [0.11.0-TOOL-A-001] `install-update.sh` 替换前 verify 签名：`codesign --verify --verbose=2 <.app>`；ad-hoc 签名下**跳过** `spctl --assess`（ad-hoc 永远被拒，跳过不视为不通过）；任一失败立即终止，避免安装未签名包导致 TCC 权限被清。v0.12.0 升级 Developer ID 后强制加 `spctl --assess --type execute --verbose=2` 检查（见 [0.12.0-SEC-A-006]）#P1
+- [ ] [0.11.0-TOOL-A-002] `install-update.sh` 走 `build-app.sh` 同一签名流程（v0.11.0 是 ad-hoc，v0.12.0 升级为 Developer ID + notarize）；产物 `install-update` 与主 .app 一起打包进 dmg 内的 `tools/` 目录（dmg 用户从 Applications 拖到 Applications 的常规用法不会暴露它，仅 app 启动时通过 `Bundle.main.bundleURL.deletingLastPathComponent()` 等方式定位）#P1
+- [ ] [0.11.0-TOOL-A-003] `install-update.sh` 在替换前等主 app 进程退出（`pkill -x "QuotaBar"` + 短暂 sleep 等待进程清理），避免 file lock；超时 5s 后强杀 #P1
+- [ ] [0.11.0-TOOL-A-004] 替换失败时（disk full / 权限不足 / 签名 verify 失败）回滚：保留旧 .app，把失败原因写 `~/Library/Application Support/QuotaBar/update-error.log`；主 app 启动时检测该文件并弹「上次更新失败」通知 #P1
+- [ ] [0.11.0-TOOL-A-005] `install-update.sh` 支持 `--dry-run` 模式：不实际替换，仅打印将要执行的操作；CI / 开发调试使用 #P1
+- [ ] [0.11.0-TOOL-A-000-test] helper 集成测试：mock dmg 挂载 + 写一个 .app stub，验证 dry-run 不写盘、正常模式正确复制、失败模式回滚 + 写 error log #P1
+- [ ] [0.11.0-TOOL-A-001-test] helper 拒绝未签名 / 签名错误的 dmg，给出明确错误码 #P1
+
+### update/main: 实现 UpdateChecker（GitHub Releases API）
+
+> 调公开 API，无需鉴权（60 req/IP/h 限流单用户自用足够）。解析 semver + nightly 两种 tag，取「当前 channel 视角下的最新可用版本」。
+
+- [ ] [0.11.0-FE-A-000] 新增 `macos/Sources/QuotaBar/UpdateChecker.swift`：使用 `URLSession` 调 `https://api.github.com/repos/DDonlien/quota-bar/releases?per_page=30`，不鉴权 #P1
+- [ ] [0.11.0-FE-A-001] `UpdateChecker` 解析 release list：semver tag 用 `^v\d+\.\d+\.\d+$` 正则匹配（不匹配 prerelease 如 `v0.11.0-rc1`），nightly tag 用 `^nightly-[0-9a-f]{7,40}$` 匹配 #P1
+- [ ] [0.11.0-FE-A-002] `UpdateChecker` 状态机：`idle` / `checking` / `updateAvailable(remoteVersion, channel, releaseURL, assetURL, releaseNotes)` / `upToDate(currentVersion)` / `error(message)`；使用 `@MainActor @Published` 暴露给 SwiftUI #P1
+- [ ] [0.11.0-FE-A-003] 版本比较：semver 段按三段数字比（`v0.10.0` < `v0.11.0` < `v0.2.0` 不成立）；nightly 之间用日期戳 `YYMMDD.HHMMSS.branch` 字符串字典序比（等价于时间序）；semver stable 永远优先于 nightly 推荐 #P1
+- [ ] [0.11.0-FE-A-004] `UpdateChecker` 暴露 `currentVersion: String`（`Bundle.main.CFBundleShortVersionString`）和 `currentBuild: String`（`Bundle.main.CFBundleVersion`）便于比较 #P1
+- [ ] [0.11.0-FE-A-005] 检查默认在「关于」页打开时后台触发一次；用户也可手动点「检查更新」按钮触发；触发时 `idle` → `checking` → 终态 #P1
+- [ ] [0.11.0-FE-A-006] 网络超时 10s；错误状态展示中文友好提示（「无法连接到 GitHub，请检查网络」），不暴露原始 API 错误；限流命中（403 with X-RateLimit-Remaining: 0）时显示「检查过于频繁，请稍后重试」#P1
+- [ ] [0.11.0-FE-A-007] `UpdateChecker` 缓存上次检查结果到 `PreferencesStore.QuotaPreferences.lastUpdateCheck: Date?`；同一 session 内 `AboutSettingsView` 重新打开时若 5min 内已查过不重复请求 #P1
+- [ ] [0.11.0-FE-A-000-test] mock `URLProtocol` 喂各种 release JSON：纯 nightly / 纯 semver / 混合 / prerelease / 空 list / 限流 403 / 网络超时；验证 state machine 正确转移 #P1
+- [ ] [0.11.0-FE-A-003-test] 版本比较单元测试：`v0.2.0 < v0.10.0`（数字比）、`v0.2.0-rc1 < v0.2.0`（prerelease 不进 stable 比）、`v0.2.0 stable > nightly-<sha>`（stable 优先）、`nightly-260701 < nightly-260702`（日期戳字典序）#P1
+
+### update/main: 后台下载 + 提示重启安装
+
+> 选 B 方案的下半段：检查到更新 → 提示 → 后台下载 → 签名 verify → 调 helper 替换 → 重启 app。
+> 状态机在 v0.11.0-FE-A-002 基础上扩展。
+
+- [ ] [0.11.0-FE-A-008] 检测到更新后展示 banner：「v0.11.0 已发布」+ 变更摘要（`body` 字段截前 500 字，去掉 markdown 强调符号）+ 三个按钮：稍后提醒 / 查看 GitHub Release / 立即下载并安装 #P1
+- [ ] [0.11.0-FE-A-009] 选「立即下载并安装」→ 后台下载 dmg 到 `~/Library/Application Support/QuotaBar/updates/QuotaBar-<ver>.dmg`；进度通过 `URLSessionTaskDelegate.urlSession(_:didWriteData:totalBytesWritten:totalBytesExpectedToWrite:)` 反馈百分比 #P1
+- [ ] [0.11.0-FE-A-010] 下载完成 + 签名 verify 通过 → 弹「更新已下载，立即重启并安装？」对话框；用户确认后调 `Process.run` 启动 dmg 内 `tools/install-update.sh`；helper 退出后用同一 `Process.run` 启动 `/Applications/Quota Bar.app` 重新拉起主程序 #P1
+- [ ] [0.11.0-FE-A-011] 状态机扩展：`idle` / `checking` / `updateAvailable` / `downloading(progress: Double)` / `verifying` / `downloaded` / `installing` / `upToDate` / `error(message)`；每个状态都有对应 UI 展示 #P1
+- [ ] [0.11.0-FE-A-012] 同一版本 24h 内「稍后提醒」不重复提示；用户可在「关于」页点「重置忽略」清空 ignoredVersions #P1
+- [ ] [0.11.0-FE-A-008-test] mock 下载失败 / 签名 verify 失败的 dmg，验证状态机正确转 `error` 且不调 helper；mock 重复触发同版本，验证 24h 抑制逻辑 #P1
+- [ ] [0.11.0-FE-A-010-test] 启动 helper 失败时回退到「请手动从 GitHub 下载」提示，不卡死 #P1
+
+### update/main: 更新检查 UI 改造
+
+- [ ] [0.11.0-UI-A-000] `AboutSettingsView` 的「检查更新」按钮接 `UpdateChecker` state machine：点击 → `checking` 转圈；新版本 → banner 展示 release notes + 下载按钮；最新 → 「已是最新版本 v0.11.0」提示 #P1
+- [ ] [0.11.0-UI-A-001] 下载中显示百分比进度条（`ProgressView(value:)`）+ 取消按钮；下载完成显示「立即重启并安装」+「稍后」#P1
+- [ ] [0.11.0-UI-A-002] 「稍后提醒」把版本号写到 `PreferencesStore.QuotaPreferences.ignoredVersions: [String]`（Codable 向后兼容，旧配置自动获得 `[]`）；下次检查该版本不再提示 #P1
+- [ ] [0.11.0-UI-A-003] 「关于」页加一行小字（ad-hoc 版文案）：「macOS 权限设置（Accessibility 等）更新后通常会保留；正式形式化保障将在 v0.12.0 升级签名后落地」让用户知情当前 TCC 保留是 best-effort，不做过度承诺 #P1
+- [ ] [0.11.0-UI-A-004] 移除当前「检查更新」按钮的占位行为（旧实现是直接打开 GitHub Releases 页面 URL），改为触发 `UpdateChecker` #P1
+- [ ] [0.11.0-UI-A-000-test] UI 状态切换测试：检查 → 找到新版本 → 下载中 → 下载完成 → 安装中 → 完成全流程；error 状态展示中文友好提示 #P1
+
+### update/main: 更新流程文档与验收
+
+- [ ] [0.11.0-DOC-A-000] `macos/AGENTS.md` 加一节「发版流程（ad-hoc 预开发版）」：本地 `make app`（ad-hoc 签名）→ 推 main → 自动 nightly（ad-hoc DMG，首次打开需「右键 → 打开」）；需要发版时用 GitHub Actions 手动触发 `workflow_dispatch` 传 `vX.Y.Z`。v0.12.0 升级 cert 后本节再扩展签名 + notarize 步骤（见 [0.12.0-DOC-A-001]）#P1
+- [ ] [0.11.0-DOC-A-001] `README.md` 加「更新策略（ad-hoc 预开发版）」段：自动更新如何工作 + 哪些 macOS 权限**通常会保留（best-effort）** + 如何手动重置忽略的版本。v0.12.0 升级后正式改写为「Developer ID 签名后形式化保障」（见 [0.12.0-DOC-A-002]）#P1
+- [ ] [0.11.0-DOC-A-002] 写 `macos/scripts/cert-bootstrap.md`：用户首次配签名环境的 step-by-step（enroll / 生成 cert / 配 API Key / 验证）#deferred v0.12.0 — 本 phase 不引入 cert，文档先不写；v0.12.0 升级时落地（见 [0.12.0-DOC-A-000]）
+- [ ] [0.11.0-QA-A-000] 端到端冒烟（ad-hoc 路径）：从空本地 checkout → `make app` 成功生成 ad-hoc 签名的 dmg → 推 main → 自动生成 nightly release → 在 app 内检查到。Gatekeeper 首次拦截预期内、本机授权一次后记住 #P1
+- [ ] [0.11.0-QA-A-001] 手动触发 semver workflow → 生成 `v0.11.0` release → 旧版 app 启动后能正确识别为新版本 → 走完下载 + 替换流程 → 新版 app 启动 → Accessibility 权限**通常仍在**（best-effort，不保证；ad-hoc 签名下 macOS 可能把它当新 app，UI 文案已在 [0.11.0-UI-A-003] 明确告知）#P1
+- [ ] [0.11.0-QA-A-002] DMG 首次下载后 Gatekeeper 行为符合 ad-hoc 预期：双击有「无法验证开发者」警告，需「右键 → 打开」或「系统设置 → 仍要打开」；本机授权后不再拦截 #deferred v0.12.0 — v0.11.0 维持 ad-hoc，Gatekeeper 不拦截是 v0.12.0 目标（见 [0.12.0-QA-A-002]）
+- [ ] [0.11.0-QA-A-003] 重复运行「检查更新」不会刷屏 / 不会重复下载同版本 / 不会忽略用户主动重置 #P1
+- [ ] [0.11.0-QA-A-004] 60 次/小时限流边界：mock API 返回 `403 X-RateLimit-Remaining: 0` 时 app 提示「检查过于频繁，请稍后重试」而非永久拒服务 #P1
+- [ ] [0.11.0-QA-A-005] helper 失败路径：mock 替换失败 → 主 app 检测到 `update-error.log` → 启动时弹「上次更新失败」通知，旧版继续运行不崩 #P1
+
+## Phase - v0.12.0 - 升级到 Developer ID 签名 + notarize
+
+> **承接 v0.11.0**：v0.11.0 已完成 update 机制全部建设（UpdateChecker / helper / UI / 状态机 / semver / ad-hoc 签名），bundle identifier 在 v0.11.0 阶段锁死为 `com.taobe.quotabar`。
+> v0.12.0 在 v0.11.0 基础上**仅升级签名链 + notarize**，**不重写 update 流程本身**。v0.11.0 的所有 FE / UI / TOOL / CI / 部分 DOC / QA 任务保持不动，本 phase 只追加签名相关任务。
+>
+> **v0.11.0 → v0.12.0 的具体 delta**（延续性边界，越小越好）：
+> - **改的**：`build-app.sh` 签名身份（`--sign -` → `Developer ID Application: <Name> (<TEAMID>)` + `--options runtime`）、新增 `xcrun notarytool submit` + `xcrun stapler staple`、helper 脚本同步升级签名、`release.yml` 注释更新、cert 一致性断言、相关文档。
+> - **不改的**：UpdateChecker / 状态机 / 版本比较 / UI / 偏好设置 / semver workflow / GitHub Actions `workflow_dispatch` 触发逻辑。
+> - **共享资产**：`com.taobe.quotabar` bundle id（v0.11.0-ARCH-A-000 锁死）+ 状态机 + helper 替换逻辑（v0.11.0-TOOL-A-000/003/004/005）。
+>
+> **与 v0.11.0 任务的交叉引用**：
+> - v0.11.0-ARCH-A-000 锁定的 bundle id → v0.12.0-SEC-A-001 升级签名时直接复用
+> - v0.11.0-ARCH-A-002 不引入 cert 改动的承诺 → v0.12.0 解除，签名相关任务落地
+> - v0.11.0-ARCH-A-003 helper ad-hoc 签名 → v0.12.0-SEC-A-006 同步升级
+> - v0.11.0-TOOL-A-001 跳过 spctl → v0.12.0-SEC-A-006 强制加 spctl
+> - v0.11.0-UI-A-003 best-effort 文案 → v0.12.0-UI-A-XXX 改写为「正式形式化保障」
+> - v0.11.0-CI-A-004 维持注释 → v0.12.0-SEC-A-005 更新注释
+> - v0.11.0-DOC-A-002 cert-bootstrap.md #deferred → v0.12.0-DOC-A-000 落地
+> - v0.11.0-QA-A-002 Gatekeeper #deferred → v0.12.0-QA-A-002 实现
+>
+> **前置依赖（用户侧）**：enroll Apple Developer Program（$99/年）→ 审批通过 → 本地 Keychain 生成 Developer ID Application cert → 在 App Store Connect 创建 API Key（`.p8`）用于 `xcrun notarytool`。enroll + 审批是用户侧操作，agent 仅提供操作指引。
+>
+> **worktree 拆分**：仍在 `update/main` worktree 推进（与 v0.11.0 同一分支，避免反复创建 worktree）。
+
+### update/main: 升级 build script 签名 + notarize
+
+> v0.12.0 的核心 SEC 任务：从 ad-hoc 升级到 Developer ID 签名 + notarize。
+> 共享 v0.11.0 已锁定的 bundle id（`com.taobe.quotabar`），不重复声明。
+
+- [ ] [0.12.0-SEC-A-000] 用户完成 Apple Developer Program enroll 并在本地 Keychain 生成 Developer ID Application cert；enroll + 审批是用户侧操作，agent 仅提供操作指引 #blocked — 用户前置操作，agent 不直接代执行（继承自原 v0.11.0 设计稿，2026-07-02 拆分）
+- [ ] [0.12.0-SEC-A-001] `build-app.sh` 将 `--sign -` 改为 `--sign "Developer ID Application: <Name> (<TEAMID>)"`，并加 `--options runtime`（启用 Hardened Runtime，notarize 前置条件）；bundle id 沿用 v0.11.0-ARCH-A-000 锁定的 `com.taobe.quotabar`，不重新声明 #P1
+- [ ] [0.12.0-SEC-A-002] `build-app.sh` 加 notarize 步骤：使用 App Store Connect API Key（.p8 文件）调 `xcrun notarytool submit`，等公证通过后 `xcrun stapler staple` 钉到 dmg；公证失败时 build script 立即 fail，产物不发出去 #P1
+- [ ] [0.12.0-SEC-A-003] App Store Connect API Key（.p8 + Key ID + Issuer ID）写入本地 `macos/.env`（不进 Git，加入 `.gitignore`），build-app.sh 读 `.env` 注入 notarytool；`macos/.env.example` 提供模板；macos/AGENTS.md 写明 .env 字段含义 #P1
+- [ ] [0.12.0-SEC-A-004] 在 v0.11.0-ARCH-A-000 已有 bundle id 稳定性测试基础上，扩展为 cert identifier 双重断言：`codesign -d --identifier` 输出 == `Info.plist.CFBundleIdentifier` == `--identifier` 参数（防止 Developer ID 签名时 identifier 漂移导致 TCC 权限被清）#P1
+- [ ] [0.12.0-SEC-A-005] `release.yml` 注释从 `unsigned and not notarized` 更新为实际签名 + notarize 步骤（继承自 v0.11.0-CI-A-004 #deferred）#P1
+- [ ] [0.12.0-SEC-A-006] helper 脚本 `install-update.sh` 同步升级为 Developer ID 签名 + notarize：v0.11.0-ARCH-A-003 解除、v0.11.0-TOOL-A-002 ad-hoc 路径替换为 Developer ID 路径、v0.11.0-TOOL-A-001 跳过 spctl 改为强制 verify（`codesign --verify` + `spctl --assess --type execute`）#P1
+- [ ] [0.12.0-SEC-A-001-test] 测试 `build-app.sh` 在 cert 缺失时给出清晰错误并退出非零，不静默 fallback 到 ad-hoc #P1
+- [ ] [0.12.0-SEC-A-002-test] 测试 notarize 失败的 dmg 不被 release.yml 误发到 GitHub Release（CI 步骤必须等公证通过；mock notarytool 返回非零）#P1
+- [ ] [0.12.0-SEC-A-004-test] 测试 cert identifier 一致性：脚本生成的 `.app` 实际签名的 identifier 与 Info.plist `CFBundleIdentifier` 完全匹配 #P1
+
+### update/main: 升级 UI 文案（best-effort → 形式化保障）
+
+- [ ] [0.12.0-UI-A-000] 「关于」页文案从 v0.11.0-UI-A-003 的 best-effort 改写为正式形式化保障：「macOS 权限设置（Accessibility 等）将在更新后自动保留（Developer ID 签名 + bundle id 稳定性已形式化保障）」#P1
+
+### update/main: 升级文档与验收
+
+- [ ] [0.12.0-DOC-A-000] 写 `macos/scripts/cert-bootstrap.md`：用户首次配签名环境的 step-by-step（enroll / 生成 cert / 配 API Key / 验证），agent 后续 onboarding 流程直接引用（继承自 v0.11.0-DOC-A-002 #deferred）#P1
+- [ ] [0.12.0-DOC-A-001] `macos/AGENTS.md` 的「发版流程」节从 v0.11.0-DOC-A-000 的 ad-hoc 版升级为 cert 版：本地 `make app`（Developer ID + notarize）→ `spctl --assess` 通过 → 推 main → 自动 nightly；需要发版时用 GitHub Actions 手动触发 `workflow_dispatch` 传 `vX.Y.Z` #P1
+- [ ] [0.12.0-DOC-A-002] `README.md` 的「更新策略」节从 v0.11.0-DOC-A-001 的 best-effort 版升级为正式版：Developer ID 签名 + notarize 后 macOS TCC 权限（Accessibility / Screen Recording / Automation 等）更新后**形式化保留** + 如何手动重置忽略的版本 #P1
+- [ ] [0.12.0-QA-A-000] 端到端冒烟（Developer ID 路径）：从空本地 checkout → enroll + 生成 cert + 配 API Key → `make app` 成功生成 Developer ID 签名 + notarize 的 dmg → `spctl --assess` 通过 → 推 main → 自动生成 nightly release → 在 app 内检查到 #P1
+- [ ] [0.12.0-QA-A-001] 手动触发 semver workflow → 生成 `v0.12.0` release → 旧版 app 启动后能正确识别为新版本 → 走完下载 + 替换流程 → 新版 app 启动 → Accessibility 权限**形式化保留**（系统设置里仍显示已授权，可通过 `tccutil` 或 `sqlite3 ~/Library/Application Support/com.apple.TCC/TCC.db` 验证）#P1
+- [ ] [0.12.0-QA-A-002] DMG 首次下载后 Gatekeeper 不拦截（双击直接打开，非「右键 → 打开」），继承自 v0.11.0-QA-A-002 #deferred #P1
+- [ ] [0.12.0-QA-A-003] 重复运行「检查更新」不会刷屏 / 不会重复下载同版本 / 不会忽略用户主动重置（v0.11.0-QA-A-003 regression check，签名升级不影响此行为）#P1
+- [ ] [0.12.0-QA-A-004] 60 次/小时限流边界：mock API 返回 `403 X-RateLimit-Remaining: 0` 时 app 提示「检查过于频繁，请稍后重试」而非永久拒服务（v0.11.0-QA-A-004 regression check）#P1
+- [ ] [0.12.0-QA-A-005] helper 失败路径：mock 替换失败 → 主 app 检测到 `update-error.log` → 启动时弹「上次更新失败」通知，旧版继续运行不崩（v0.11.0-QA-A-005 regression check；helper 现在 Developer ID 签名，失败处理路径不变）#P1
+- [ ] [0.12.0-QA-A-006] TCC 权限形式化断言（v0.12.0 验收核心）：旧版 app 已授权 Accessibility → 触发更新 → 安装新版 → 通过 `tccutil` / `sqlite3 ~/Library/Application Support/com.apple.TCC/TCC.db` 查新版 app 的授权状态（service = kTCCServiceAccessibility / kTCCServiceScreenCapture / kTCCServicePostEvent，client = `com.taobe.quotabar`），断言 auth_value = 2（allowed）而非 0（denied）#P1

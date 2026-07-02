@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Platform: macOS 26](https://img.shields.io/badge/Platform-macOS%2026-blueviolet)](#requirements)
 [![Swift: 6](https://img.shields.io/badge/Swift-6.2-orange)](#requirements)
+[![Site](https://img.shields.io/website?url=https%3A%2F%2Fquotabar.ddonlien.com&logo=safari&label=quotabar.ddonlien.com)](https://quotabar.ddonlien.com)
 
 Quota Bar 把 Codex、Claude、Antigravity、MiniMax、Kimi 等多家 AI 服务的剩余额度、刷新时间、订阅费用集中到一个紧凑的菜单栏下拉面板里，不需要切浏览器、查收件箱、记 cycle 时间。
 
