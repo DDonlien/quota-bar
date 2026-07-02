@@ -15,31 +15,26 @@ echo "Building $APP_NAME into $BUILD_DIR..."
 
 # 1. 编译
 cd "$PROJECT"
-swift build
+export CLANG_MODULE_CACHE_PATH="$PROJECT/.build/clang-module-cache"
+export SWIFT_MODULE_CACHE_PATH="$PROJECT/.build/swift-module-cache"
+swift build --disable-sandbox
 
 # 2. 创建本次构建目录
 mkdir -p "$APP_DIR/Contents/MacOS"
 mkdir -p "$APP_DIR/Contents/Resources"
 
 # 3. 复制二进制（SwiftPM 6 输出到 arch-specific 路径，用 --show-bin-path 动态拿）
-BIN_PATH="$(swift build --show-bin-path)/QuotaBar"
+BIN_PATH="$(swift build --disable-sandbox --show-bin-path)/QuotaBar"
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/QuotaBar"
 
-# 4. 用稳定 identifier 重签名
-# Swift toolchain 默认的 ad-hoc 签名 identifier 是 CodingPlanMenu-<hash>，
-# 每次 build hash 都会变，导致 macOS keychain 的"始终允许"失效（被当成另一个 app）。
-# 用固定的 identifier 重签一次，让 macOS 始终认它是同一个 app。
-echo "Signing with stable identifier..."
-codesign --force --deep --sign - --identifier com.taobe.quotabar "$APP_DIR"
-
-# 5. 写入 Info.plist
+# 4. 写入 Info.plist
 cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>com.example.QuotaBar</string>
+    <string>com.taobe.quotabar</string>
     <key>CFBundleName</key>
     <string>QuotaBar</string>
     <key>CFBundleDisplayName</key>
@@ -51,7 +46,7 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleVersion</key>
-    <string>1</key>
+    <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
     <key>LSUIElement</key>
@@ -59,6 +54,13 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
 </dict>
 </plist>
 PLIST
+
+# 5. 用稳定 identifier 重签名
+# Swift toolchain 默认的 ad-hoc 签名 identifier 是 CodingPlanMenu-<hash>，
+# 每次 build hash 都会变，导致 macOS keychain 的"始终允许"失效（被当成另一个 app）。
+# 用固定的 identifier 重签一次，让 macOS 始终认它是同一个 app。
+echo "Signing with stable identifier..."
+codesign --force --deep --sign - --identifier com.taobe.quotabar "$APP_DIR"
 
 # 6. 更新 latest 软链到本次构建
 rm -f "$LATEST_LINK"

@@ -45,33 +45,28 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
     func fetchSnapshot(timeout: TimeInterval) async throws -> ProviderSnapshot {
         let fetchedAt = dateProvider()
 
-        // v0.8.0 + v0.8.1：先用 CodexSubscriptionInspector 检查订阅状态（"权威 > API 反推"模型）。
-        // - 订阅已过期 / 已跌成 free → **throw** `.subscriptionExpired(plan, expiredAt)`，让 pipeline
-        //   继续走 BrowserCookieProvider / CLILogProvider / KeychainProvider 兜底：
-        //     · BrowserCookie 路径能用浏览器已登录会话拿真实 quota（用户昨天 web 续费后这条路径最有效）
-        //     · CLILog 路径能从本地 sessions/*.jsonl 估算粗略 session+weekly
-        //   —— **不要**直接 return marker 短路，否则 inspector 数据陈旧（auth.json 未刷新）
-        //   会把活跃订阅也错标成过期。
-        // - .active / .unknown → 继续走原流程，让 wham/usage 拿真实 quota
-        // 失败读不到 auth.json 时跳过检查（保持向后兼容：旧用户/CLI 模式 → 走原路径）
+        // `id_token` 里的 subscription metadata 可能比 access_token 更陈旧：
+        // 用户在 Web 续费后，auth.json 里的 active_until 可能仍停在旧日期。
+        // 因此这里**不能**在请求 wham/usage 前用 inspector 短路；只把它作为
+        // 真实 usage 请求失败后的状态辅助，以及请求成功时的 future expiry 展示值。
         let subscriptionStatus = inspector.inspect()
-        if subscriptionStatus.isEffectivelyExpired {
-            let (plan, expiredAt): (String?, Date?)
-            if case .expired(let lastPlan, let until) = subscriptionStatus {
-                plan = lastPlan
-                expiredAt = until
-            } else {
-                // .free 状态：planType 是 "free"（OpenAI 自己标），lastPlan 历史 plan 是 nil
-                plan = nil
-                expiredAt = nil
+        let authoritativeExpiresAt: Date? = {
+            if case .active(let expiresAt) = subscriptionStatus {
+                return expiresAt
             }
-            throw QuotaFetchError.subscriptionExpired(plan: plan, expiredAt: expiredAt)
-        }
+            return nil
+        }()
 
         guard let creds = loadCredentials() else {
+            if let error = Self.statusFallbackError(from: subscriptionStatus, now: fetchedAt) {
+                throw error
+            }
             throw QuotaFetchError.missingCredentials(detail: "未找到 ~/.codex/auth.json")
         }
         guard !creds.accessToken.isEmpty else {
+            if let error = Self.statusFallbackError(from: subscriptionStatus, now: fetchedAt) {
+                throw error
+            }
             throw QuotaFetchError.missingCredentials(detail: "auth.json 缺少 access_token")
         }
 
@@ -95,6 +90,9 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
         case 200..<300:
             break
         case 401, 403:
+            if let error = Self.statusFallbackError(from: subscriptionStatus, now: fetchedAt) {
+                throw error
+            }
             throw QuotaFetchError.missingCredentials(detail: "OAuth token 已过期，请重新 codex login")
         default:
             throw QuotaFetchError.transient(detail: "wham/usage HTTP \(http.statusCode)")
@@ -102,6 +100,9 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
 
         let parser = CodexDashboardParser()
         guard let windows = parser.parse(data: data), !windows.isEmpty else {
+            if let error = Self.statusFallbackError(from: subscriptionStatus, now: fetchedAt) {
+                throw error
+            }
             throw QuotaFetchError.transient(detail: "无法解析 Codex usage 响应")
         }
         let tier = parsePlanType(from: data)
@@ -112,8 +113,29 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
             availability: .available,
             quotas: windows,
             monthlyPrice: await ProviderPricing.localizedMonthlyPrice(kind: .codex, tier: tier),
+            subscriptionExpiresAt: authoritativeExpiresAt,
             fetchedAt: fetchedAt
         )
+    }
+
+    private static func shouldDisplayAsRecentlyExpired(expiredAt: Date?, now: Date) -> Bool {
+        guard let expiredAt else { return false }
+        let oneNaturalWeek: TimeInterval = 7 * 24 * 60 * 60
+        return expiredAt <= now && now.timeIntervalSince(expiredAt) <= oneNaturalWeek
+    }
+
+    private static func statusFallbackError(from status: SubscriptionStatus, now: Date) -> QuotaFetchError? {
+        switch status {
+        case .active, .unknown:
+            return nil
+        case .expired(let lastPlan, let until):
+            if shouldDisplayAsRecentlyExpired(expiredAt: until, now: now) {
+                return .subscriptionExpired(plan: lastPlan, expiredAt: until)
+            }
+            return .notSubscribed(detail: "未订阅")
+        case .free:
+            return .notSubscribed(detail: "未订阅")
+        }
     }
 
     private struct Credentials {

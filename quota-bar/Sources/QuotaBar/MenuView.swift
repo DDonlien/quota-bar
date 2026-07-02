@@ -400,6 +400,8 @@ private struct PlanSection: View {
                 // primary_window 误导成有效付费额度），只展示一行灰标 hint，让用户知道
                 // 1) 账号在 2) 上次付费档位 3) 到期日
                 StatusRow(text: Self.expiredHint(plan: plan, expiredAt: expiredAt))
+            case .notSubscribed(let reason):
+                StatusRow(text: "未订阅 · \(reason)")
             case .needsConfiguration(let reason):
                 if snapshot.kind == .minimax, let onSaveKey {
                     MiniMaxKeyInputField(

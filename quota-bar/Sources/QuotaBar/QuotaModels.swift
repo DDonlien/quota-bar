@@ -18,6 +18,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
     case warp
     case trae
     case antigravity
+    case zcode
 
     var id: String { rawValue }
 
@@ -37,6 +38,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .warp: return "Warp"
         case .trae: return "Trae"
         case .antigravity: return "Antigravity"
+        case .zcode: return "Z Code"
         }
     }
 
@@ -62,6 +64,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .warp: return Color(hex: "#5E6AD2")
         case .trae: return Color(hex: "#3D7CFF")
         case .antigravity: return Color(hex: "#1A73E8")
+        case .zcode: return Color(hex: "#3866FF")
         }
     }
 
@@ -82,6 +85,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .warp: return "arrow.right.circle"
         case .trae: return "hammer"
         case .antigravity: return "paperplane"
+        case .zcode: return "shippingbox"
         }
     }
 
@@ -96,6 +100,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .kimi: return "kimi"
         case .minimax: return "minimax"
         case .antigravity: return "antigravity"
+        case .zcode: return "zcode-cli"
         default: return nil
         }
     }
@@ -109,6 +114,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .antigravity: return "com.google.antigravity"
         case .kimi: return "com.moonshot.kimichat"
         case .minimax: return "com.minimax.agent.cn"
+        case .zcode: return "dev.zcode.app"
         default: return nil
         }
     }
@@ -131,9 +137,10 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         switch self {
         case .codex: return ["~/.codex/auth.json"]
         case .kimi: return ["~/.kimi-code/credentials/kimi-code.json"]
-        case .minimax: return ["~/.mavis/config.yaml"]
+        case .minimax: return ["~/.mmx/config.json", "~/.mavis/config.yaml"]
         case .claude: return ["~/.claude/.credentials.json"]
         case .gemini: return ["~/.gemini/oauth_creds.json"]
+        case .zcode: return ["~/.zcode/v2/config.json", "~/.zcode/v2/credentials.json"]
         default: return []
         }
     }
@@ -151,14 +158,14 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .copilot: return ["github.com", "copilot.github.com"]
         case .openrouter: return ["openrouter.ai"]
         case .perplexity: return ["perplexity.ai"]
-        case .warp, .trae, .antigravity: return []
+        case .warp, .trae, .antigravity, .zcode: return []
         }
     }
 }
 
 // MARK: - 额度窗口
 
-struct QuotaWindow: Identifiable, Hashable {
+struct QuotaWindow: Identifiable, Hashable, Sendable {
     let id: UUID
     /// 额度名称（如 "Code"、"Work"、"General"、"Video"、"Gemini"、"Other"）。
     /// 不包含周期信息，周期由 `periodLabel` 根据 `periodSeconds` 自动生成。
@@ -274,7 +281,7 @@ struct QuotaWindow: Identifiable, Hashable {
 
 // MARK: - Provider 可用性
 
-enum ProviderAvailability: Hashable {
+enum ProviderAvailability: Hashable, Sendable {
     /// 探测到已安装、正在刷新中（pipeline 尚未返回真实数据）。
     /// UI 展示「订阅组名 + 状态灯（灰色）+ 骨架占位」，直到真实数据回填。
     /// 与 `available` 的区别：loading 状态下没有真实 quota 窗口，只有骨架；
@@ -297,13 +304,19 @@ enum ProviderAvailability: Hashable {
     /// - 不展示任何 quota window（避免被 free 用户的"月额度"误导成付费额度）
     /// - 菜单栏 bar 仍画（红色或最小占位）以保持"已知订阅存在"信号
     case subscriptionExpired(plan: String?, expiredAt: Date?)
+    /// 已确认未订阅。
+    ///
+    /// 与 `.subscriptionExpired` 的差异：
+    /// - `.subscriptionExpired` 只用于最近一个自然周内的明确到期记录，告诉用户“刚过期”；
+    /// - `.notSubscribed` 用于从未订阅、免费账号，或到期日已经超过一个自然周的旧记录。
+    case notSubscribed(reason: String)
     case notInstalled
     case fetchFailed(reason: String)
 }
 
 // MARK: - Provider 快照
 
-struct ProviderSnapshot: Identifiable, Hashable {
+struct ProviderSnapshot: Identifiable, Hashable, Sendable {
     let id: UUID
     let kind: ProviderKind
     let subscriptionTier: String?
@@ -374,6 +387,20 @@ struct ProviderSnapshot: Identifiable, Hashable {
         )
     }
 
+    func withStaleFlag(_ isStale: Bool) -> ProviderSnapshot {
+        ProviderSnapshot(
+            id: id,
+            kind: kind,
+            subscriptionTier: subscriptionTier,
+            availability: availability,
+            quotas: quotas,
+            monthlyPrice: monthlyPrice,
+            subscriptionExpiresAt: subscriptionExpiresAt,
+            fetchedAt: fetchedAt,
+            isStale: isStale
+        )
+    }
+
     /// 按 `title` 分组排序后的 quotas：
     /// 1. 保持 `title` 首次出现的顺序（子服务顺序不变）
     /// 2. 每组内按 `periodSeconds` 升序（最短周期优先）
@@ -437,6 +464,8 @@ struct ProviderSnapshot: Identifiable, Hashable {
         case .subscriptionExpired:
             // v0.8.0：订阅已过期用红色灯，区别于 needsConfiguration 灰 / fetchFailed 橙。
             return Color(hex: "#FF453A")
+        case .notSubscribed:
+            return Color(hex: "#8E8E93")
         case .needsConfiguration: return Color(hex: "#8E8E93")
         case .notInstalled: return Color(hex: "#8E8E93")
         case .fetchFailed: return Color(hex: "#FF9F0A")
@@ -591,6 +620,7 @@ enum QuotaFetchError: LocalizedError, Equatable {
     /// 由 Codex `CodexAuthProvider` 在调用 `CodexSubscriptionInspector` 后判定：
     /// `chatgpt_subscription_active_until < now` 或 `plan_type == "free"` → 抛此错。
     case subscriptionExpired(plan: String?, expiredAt: Date?)
+    case notSubscribed(detail: String)
 
     var errorDescription: String? {
         switch self {
@@ -604,6 +634,8 @@ enum QuotaFetchError: LocalizedError, Equatable {
             } else {
                 return "订阅已过期"
             }
+        case .notSubscribed(let detail):
+            return detail
         }
     }
 
@@ -619,6 +651,8 @@ enum QuotaFetchError: LocalizedError, Equatable {
             return .fetchFailed(reason: reason)
         case .subscriptionExpired(let plan, let expiredAt):
             return .subscriptionExpired(plan: plan, expiredAt: expiredAt)
+        case .notSubscribed(let detail):
+            return .notSubscribed(reason: detail)
         }
     }
 
@@ -629,6 +663,7 @@ enum QuotaFetchError: LocalizedError, Equatable {
         case .transient: return 1
         case .sourceUnavailable: return 0
         case .subscriptionExpired: return 2  // 与 missingCredentials 同级（都是"配置相关"问题）
+        case .notSubscribed: return 2
         }
     }
 }
@@ -714,6 +749,10 @@ enum ProviderPricing {
         case "pro": return "Pro"
         case "max": return "Max"
         case "ultra": return "Ultra"
+        case "builtin:bigmodel-start-plan": return "BigModel Start"
+        case "builtin:bigmodel-coding-plan": return "BigModel Coding"
+        case "builtin:zai-start-plan": return "Z.ai Start"
+        case "builtin:zai-coding-plan": return "Z.ai Coding"
         default:
             return rawTier.prefix(1).uppercased() + rawTier.dropFirst()
         }

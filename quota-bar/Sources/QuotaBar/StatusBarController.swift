@@ -165,7 +165,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     private static func drawableSnapshots(from snapshots: [ProviderSnapshot]) -> [ProviderSnapshot] {
         // 显示：available（有 quota）/ needsConfiguration / loading / subscriptionExpired
-        // 隐藏：notInstalled / fetchFailed
+        // 隐藏：notSubscribed / notInstalled / fetchFailed
         // v0.8.0：subscriptionExpired 仍画 bar（0% 高度，最小占位），让用户看到
         // "我知道这个订阅存在但已过期"——区别于 notInstalled（直接不画）。
         snapshots.filter { snapshot in
@@ -174,7 +174,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 return !snapshot.quotas.isEmpty
             case .needsConfiguration, .loading, .subscriptionExpired:
                 return true
-            case .notInstalled, .fetchFailed:
+            case .notSubscribed, .notInstalled, .fetchFailed:
                 return false
             }
         }
@@ -188,6 +188,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         case .subscriptionExpired:
             // v0.8.0：订阅已过期 → bar 高度 0%（与其他"用完"视觉一致），但仍画最小 bar
             // 占位以让用户知道订阅存在。
+            return 0
+        case .notSubscribed:
             return 0
         default:
             break
@@ -352,6 +354,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         case .warp: return NSColor(srgbRed: 0x5E/255, green: 0x6A/255, blue: 0xD2/255, alpha: 1)
         case .trae: return NSColor(srgbRed: 0x3D/255, green: 0x7C/255, blue: 0xFF/255, alpha: 1)
         case .antigravity: return NSColor(srgbRed: 0x1A/255, green: 0x73/255, blue: 0xE8/255, alpha: 1)
+        case .zcode: return NSColor(srgbRed: 0x38/255, green: 0x66/255, blue: 0xFF/255, alpha: 1)
         }
     }
 

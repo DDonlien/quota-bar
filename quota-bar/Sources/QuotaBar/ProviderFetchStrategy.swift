@@ -13,8 +13,17 @@ protocol ProviderFetchStrategy: Sendable {
     var id: String { get }
     var displayName: String { get }
     var kind: ProviderKind { get }
+    var sourceKind: ProviderSourceKind { get }
+    var supportedLayers: Set<ProviderFetchLayer> { get }
+    var sourceMetadata: [String: String] { get }
 
     func fetch(timeout: TimeInterval) async throws -> ProviderSnapshot
+}
+
+extension ProviderFetchStrategy {
+    var sourceKind: ProviderSourceKind { .unknown }
+    var supportedLayers: Set<ProviderFetchLayer> { [.quota, .expiration, .plan] }
+    var sourceMetadata: [String: String] { [:] }
 }
 
 // MARK: - Pipeline
@@ -38,6 +47,7 @@ final class FetchPipeline {
     let providerKind: ProviderKind
     private(set) var strategies: [ProviderFetchStrategy]
     var runMode: RunMode
+    private let sourceIndexStore: ProviderSourceIndexStore
 
     private(set) var lastSnapshots: [String: ProviderSnapshot] = [:]
     private(set) var lastErrors: [String: QuotaFetchError] = [:]
@@ -45,11 +55,13 @@ final class FetchPipeline {
     init(
         kind: ProviderKind,
         strategies: [ProviderFetchStrategy],
-        runMode: RunMode = .parallel
+        runMode: RunMode = .parallel,
+        sourceIndexStore: ProviderSourceIndexStore = .shared
     ) {
         self.providerKind = kind
         self.strategies = strategies
         self.runMode = runMode
+        self.sourceIndexStore = sourceIndexStore
     }
 
     func run(timeout: TimeInterval) async throws -> ProviderSnapshot {
@@ -63,18 +75,21 @@ final class FetchPipeline {
 
     private func runSequential(timeout: TimeInterval) async throws -> ProviderSnapshot {
         var fallbackError: QuotaFetchError?
-        for strategy in strategies {
+        for strategy in orderedStrategies(for: [.quota, .expiration, .plan]) {
             do {
                 let snapshot = try await strategy.fetch(timeout: timeout)
                 lastSnapshots[strategy.id] = snapshot
+                recordSuccess(strategy: strategy, snapshot: snapshot)
                 return snapshot
             } catch let error as QuotaFetchError {
                 lastErrors[strategy.id] = error
+                recordError(error, strategy: strategy)
 
                 fallbackError = preferredFallbackError(current: fallbackError, new: error)
             } catch {
                 let transient = QuotaFetchError.transient(detail: error.localizedDescription)
                 lastErrors[strategy.id] = transient
+                recordError(transient, strategy: strategy)
                 fallbackError = preferredFallbackError(current: fallbackError, new: transient)
             }
         }
@@ -108,7 +123,9 @@ final class FetchPipeline {
             results: collected,
             snapshots: &lastSnapshots,
             errors: &lastErrors,
-            fallback: fallbackSnapshot(error: nil)
+            fallback: fallbackSnapshot(error: nil),
+            sourceIndexStore: sourceIndexStore,
+            strategiesById: Dictionary(uniqueKeysWithValues: strategies.map { ($0.id, $0) })
         )
     }
 
@@ -129,20 +146,127 @@ final class FetchPipeline {
         return new.fallbackPriority > current.fallbackPriority ? new : current
     }
 
+    private func orderedStrategies(for layers: [ProviderFetchLayer]) -> [ProviderFetchStrategy] {
+        let preferredIds = layers.compactMap { layer in
+            sourceIndexStore.preferredSourceID(for: providerKind, layer: layer)
+        }
+        guard !preferredIds.isEmpty else { return strategies }
+
+        var ordered: [ProviderFetchStrategy] = []
+        var seen = Set<String>()
+        for preferredId in preferredIds {
+            guard let strategy = strategies.first(where: { $0.id == preferredId }),
+                  seen.insert(strategy.id).inserted else {
+                continue
+            }
+            ordered.append(strategy)
+        }
+        for strategy in strategies where seen.insert(strategy.id).inserted {
+            ordered.append(strategy)
+        }
+        return ordered
+    }
+
+    private func recordSuccess(strategy: ProviderFetchStrategy, snapshot: ProviderSnapshot) {
+        for layer in successfulLayers(from: snapshot).intersection(strategy.supportedLayers) {
+            sourceIndexStore.recordSuccess(
+                kind: providerKind,
+                layer: layer,
+                sourceKind: strategy.sourceKind,
+                sourceId: strategy.id,
+                metadata: strategy.sourceMetadata,
+                at: snapshot.fetchedAt
+            )
+        }
+    }
+
+    private func recordError(_ error: QuotaFetchError, strategy: ProviderFetchStrategy) {
+        let semanticLayers = successfulLayers(from: error).intersection(strategy.supportedLayers)
+        if semanticLayers.isEmpty {
+            for layer in strategy.supportedLayers {
+                sourceIndexStore.recordFailure(
+                    kind: providerKind,
+                    layer: layer,
+                    sourceKind: strategy.sourceKind,
+                    sourceId: strategy.id,
+                    error: error.localizedDescription,
+                    metadata: strategy.sourceMetadata
+                )
+            }
+        } else {
+            for layer in semanticLayers {
+                sourceIndexStore.recordSuccess(
+                    kind: providerKind,
+                    layer: layer,
+                    sourceKind: strategy.sourceKind,
+                    sourceId: strategy.id,
+                    metadata: strategy.sourceMetadata
+                )
+            }
+        }
+    }
+
+    private func successfulLayers(from snapshot: ProviderSnapshot) -> Set<ProviderFetchLayer> {
+        var layers: Set<ProviderFetchLayer> = [.provider]
+        switch snapshot.availability {
+        case .available:
+            if !snapshot.quotas.isEmpty {
+                layers.insert(.quota)
+            }
+            if snapshot.subscriptionTier != nil || snapshot.monthlyPrice != nil {
+                layers.insert(.plan)
+            }
+            if snapshot.subscriptionExpiresAt != nil {
+                layers.insert(.expiration)
+            }
+        case .subscriptionExpired(let plan, let expiredAt):
+            layers.insert(.expiration)
+            if plan != nil {
+                layers.insert(.plan)
+            }
+            if expiredAt != nil {
+                layers.insert(.expiration)
+            }
+        case .notSubscribed:
+            layers.insert(.expiration)
+        case .needsConfiguration, .loading, .notInstalled, .fetchFailed:
+            break
+        }
+        return layers
+    }
+
+    private func successfulLayers(from error: QuotaFetchError) -> Set<ProviderFetchLayer> {
+        switch error {
+        case .subscriptionExpired(let plan, let expiredAt):
+            var layers: Set<ProviderFetchLayer> = [.expiration]
+            if plan != nil || expiredAt != nil {
+                layers.insert(.plan)
+            }
+            return layers
+        case .notSubscribed:
+            return [.expiration]
+        case .missingCredentials, .permissionRequired, .sourceUnavailable, .transient:
+            return []
+        }
+    }
+
     // MARK: - 合并
 
     private static func merge(
         results: [(String, Result<ProviderSnapshot, Error>)],
         snapshots: inout [String: ProviderSnapshot],
         errors: inout [String: QuotaFetchError],
-        fallback: ProviderSnapshot
+        fallback: ProviderSnapshot,
+        sourceIndexStore: ProviderSourceIndexStore,
+        strategiesById: [String: ProviderFetchStrategy]
     ) -> ProviderSnapshot {
         let priority: (ProviderAvailability) -> Int = { availability in
             switch availability {
-            case .available: return 4
+            case .available: return 5
+            case .subscriptionExpired: return 4
+            case .notSubscribed: return 4
             case .needsConfiguration: return 3
             // v0.8.0：subscriptionExpired 优先级与 needsConfiguration 同级（都是"配置相关"问题）
-            case .subscriptionExpired: return 3
             case .loading: return 2
             case .notInstalled: return 1
             case .fetchFailed: return 0
@@ -155,6 +279,19 @@ final class FetchPipeline {
             switch result {
             case .success(let snapshot):
                 snapshots[id] = snapshot
+                if let strategy = strategiesById[id] {
+                    let layers = successfulLayersForMerge(from: snapshot).intersection(strategy.supportedLayers)
+                    for layer in layers {
+                        sourceIndexStore.recordSuccess(
+                            kind: snapshot.kind,
+                            layer: layer,
+                            sourceKind: strategy.sourceKind,
+                            sourceId: strategy.id,
+                            metadata: strategy.sourceMetadata,
+                            at: snapshot.fetchedAt
+                        )
+                    }
+                }
                 if let current = best {
                     let pa = priority(snapshot.availability)
                     let pb = priority(current.availability)
@@ -167,12 +304,63 @@ final class FetchPipeline {
             case .failure(let error):
                 if let qe = error as? QuotaFetchError {
                     errors[id] = qe
+                    if let strategy = strategiesById[id] {
+                        for layer in strategy.supportedLayers {
+                            sourceIndexStore.recordFailure(
+                                kind: strategy.kind,
+                                layer: layer,
+                                sourceKind: strategy.sourceKind,
+                                sourceId: strategy.id,
+                                error: qe.localizedDescription,
+                                metadata: strategy.sourceMetadata
+                            )
+                        }
+                    }
                 } else {
-                    errors[id] = .transient(detail: error.localizedDescription)
+                    let transient = QuotaFetchError.transient(detail: error.localizedDescription)
+                    errors[id] = transient
+                    if let strategy = strategiesById[id] {
+                        for layer in strategy.supportedLayers {
+                            sourceIndexStore.recordFailure(
+                                kind: strategy.kind,
+                                layer: layer,
+                                sourceKind: strategy.sourceKind,
+                                sourceId: strategy.id,
+                                error: transient.localizedDescription,
+                                metadata: strategy.sourceMetadata
+                            )
+                        }
+                    }
                 }
             }
         }
         return best ?? fallback
+    }
+
+    private static func successfulLayersForMerge(from snapshot: ProviderSnapshot) -> Set<ProviderFetchLayer> {
+        var layers: Set<ProviderFetchLayer> = [.provider]
+        switch snapshot.availability {
+        case .available:
+            if !snapshot.quotas.isEmpty {
+                layers.insert(.quota)
+            }
+            if snapshot.subscriptionTier != nil || snapshot.monthlyPrice != nil {
+                layers.insert(.plan)
+            }
+            if snapshot.subscriptionExpiresAt != nil {
+                layers.insert(.expiration)
+            }
+        case .subscriptionExpired(let plan, let expiredAt):
+            layers.insert(.expiration)
+            if plan != nil || expiredAt != nil {
+                layers.insert(.plan)
+            }
+        case .notSubscribed:
+            layers.insert(.expiration)
+        case .needsConfiguration, .loading, .notInstalled, .fetchFailed:
+            break
+        }
+        return layers
     }
 }
 

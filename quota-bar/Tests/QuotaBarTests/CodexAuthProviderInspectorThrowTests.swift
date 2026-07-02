@@ -2,16 +2,13 @@ import Foundation
 import Testing
 @testable import QuotaBar
 
-// MARK: - CodexAuthProvider: inspector expired 时 throw（v0.8.1）
+// MARK: - CodexAuthProvider: inspector 只能作为真实请求失败后的辅助信号
 
-/// v0.8.1 修订：inspector 检测到 `.expired` / `.free` 时**不再**直接 return marker snapshot，
-/// 而是 throw `QuotaFetchError.subscriptionExpired`，让 pipeline 真走完 BrowserCookieProvider
-/// / CLILogProvider / KeychainProvider fallback。
-///
-/// 触发场景：用户 web 续费后 `~/.codex/auth.json` 未刷新，inspector 看到陈旧
-/// `chatgpt_subscription_active_until` → 误判过期 → 但 BrowserCookie 路径用浏览器已登录
-/// 会话能拿到真实 plus quota。
-@Suite("CodexAuthProvider — inspector expired throw (v0.8.1)")
+/// `auth.json` 里的 id_token 可能比 access_token / 服务端 usage 状态更陈旧。
+/// 用户在 Web 续费后，`chatgpt_subscription_active_until` 仍可能停在旧日期；
+/// 因此 CodexAuthProvider 必须先尝试真实 `wham/usage`，不能让 inspector
+/// 在请求前短路到 expired/free。
+@Suite("CodexAuthProvider — stale inspector does not short-circuit usage", .serialized)
 struct CodexAuthProviderInspectorThrowTests {
 
     private static func makeAuthJSON(idToken: String) -> String {
@@ -80,8 +77,47 @@ struct CodexAuthProviderInspectorThrowTests {
         try content.write(to: url, atomically: true, encoding: .utf8)
     }
 
-    @Test("inspector 报 .expired(plus, ...) → CodexAuthProvider throw .subscriptionExpired（不 return marker）")
-    func inspectorExpiredThrows() async throws {
+    private static func makeUsageJSON(
+        planType: String = "plus",
+        primaryUsed: Double = 40,
+        secondaryUsed: Double = 60,
+        now: Date
+    ) -> Data {
+        let payload: [String: Any] = [
+            "plan_type": planType,
+            "rate_limit": [
+                "primary_window": [
+                    "used_percent": primaryUsed,
+                    "reset_at": now.addingTimeInterval(5 * 60 * 60).timeIntervalSince1970,
+                    "limit_window_seconds": 5 * 60 * 60,
+                ],
+                "secondary_window": [
+                    "used_percent": secondaryUsed,
+                    "reset_at": now.addingTimeInterval(7 * 24 * 60 * 60).timeIntervalSince1970,
+                    "limit_window_seconds": 7 * 24 * 60 * 60,
+                ],
+            ],
+        ]
+        return try! JSONSerialization.data(withJSONObject: payload)
+    }
+
+    private static func makeSession(statusCode: Int, data: Data) -> URLSession {
+        MockURLProtocol.responseHandler = { request in
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: statusCode,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, data)
+        }
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [MockURLProtocol.self]
+        return URLSession(configuration: config)
+    }
+
+    @Test("inspector 过期但 wham/usage 成功时返回真实额度")
+    func inspectorExpiredStillUsesWhamUsage() async throws {
         let now = Date()
         let token = Self.makeExpiredJWT(planType: "plus", until: now.addingTimeInterval(-86400))
         let path = "/tmp/quota-bar-test-auth-\(UUID().uuidString).json"
@@ -89,12 +125,59 @@ struct CodexAuthProviderInspectorThrowTests {
         defer { try? FileManager.default.removeItem(atPath: path) }
 
         let inspector = CodexSubscriptionInspector(authPath: path, dateProvider: { now })
-        // 用一个永远不该被 hit 的 endpoint：如果 fetchSnapshot 错误地走 return-marker 路径，
-        // 它根本不会发请求；如果是 throw 路径，也不会发请求（wham/usage 调用前已 throw）。
         let provider = CodexAuthProvider(
             authPath: path,
-            endpoint: URL(string: "https://example.invalid/never-called")!,
-            session: URLSession(configuration: .ephemeral),
+            endpoint: URL(string: "https://chatgpt.test/backend-api/wham/usage")!,
+            session: Self.makeSession(statusCode: 200, data: Self.makeUsageJSON(now: now)),
+            dateProvider: { now },
+            inspector: inspector
+        )
+
+        let snapshot = try await provider.fetchSnapshot(timeout: 1)
+        #expect(snapshot.availability == .available)
+        #expect(snapshot.subscriptionTier == "Plus")
+        #expect(snapshot.quotas.count == 2)
+        #expect(snapshot.quotas[0].remainingFraction == 0.6)
+        #expect(snapshot.quotas[1].remainingFraction == 0.4)
+        #expect(snapshot.subscriptionExpiresAt == nil)
+    }
+
+    @Test("inspector free 但 wham/usage 成功时仍以真实 usage 为准")
+    func inspectorFreeStillUsesWhamUsage() async throws {
+        let now = Date()
+        let token = Self.makeFreeJWT()
+        let path = "/tmp/quota-bar-test-auth-\(UUID().uuidString).json"
+        try Self.writeAuthFile(at: path, content: Self.makeAuthJSON(idToken: token))
+        defer { try? FileManager.default.removeItem(atPath: path) }
+
+        let inspector = CodexSubscriptionInspector(authPath: path, dateProvider: { now })
+        let provider = CodexAuthProvider(
+            authPath: path,
+            endpoint: URL(string: "https://chatgpt.test/backend-api/wham/usage")!,
+            session: Self.makeSession(statusCode: 200, data: Self.makeUsageJSON(primaryUsed: 25, secondaryUsed: 75, now: now)),
+            dateProvider: { now },
+            inspector: inspector
+        )
+
+        let snapshot = try await provider.fetchSnapshot(timeout: 1)
+        #expect(snapshot.availability == .available)
+        #expect(snapshot.quotas[0].remainingFraction == 0.75)
+        #expect(snapshot.quotas[1].remainingFraction == 0.25)
+    }
+
+    @Test("wham/usage 401 且 inspector 最近过期时显示已过期")
+    func usageUnauthorizedFallsBackToRecentExpiredStatus() async throws {
+        let now = Date()
+        let token = Self.makeExpiredJWT(planType: "plus", until: now.addingTimeInterval(-86400))
+        let path = "/tmp/quota-bar-test-auth-\(UUID().uuidString).json"
+        try Self.writeAuthFile(at: path, content: Self.makeAuthJSON(idToken: token))
+        defer { try? FileManager.default.removeItem(atPath: path) }
+
+        let inspector = CodexSubscriptionInspector(authPath: path, dateProvider: { now })
+        let provider = CodexAuthProvider(
+            authPath: path,
+            endpoint: URL(string: "https://chatgpt.test/backend-api/wham/usage")!,
+            session: Self.makeSession(statusCode: 401, data: Data("{}".utf8)),
             dateProvider: { now },
             inspector: inspector
         )
@@ -110,31 +193,30 @@ struct CodexAuthProviderInspectorThrowTests {
         }
     }
 
-    @Test("inspector 报 .free → CodexAuthProvider throw .subscriptionExpired(plan: nil, expiredAt: nil)")
-    func inspectorFreeThrows() async throws {
-        let token = Self.makeFreeJWT()
+    @Test("wham/usage 401 且 inspector 超过一周过期时显示未订阅")
+    func usageUnauthorizedFallsBackToOldExpiredNotSubscribed() async throws {
+        let now = Date()
+        let token = Self.makeExpiredJWT(planType: "plus", until: now.addingTimeInterval(-9 * 86400))
         let path = "/tmp/quota-bar-test-auth-\(UUID().uuidString).json"
         try Self.writeAuthFile(at: path, content: Self.makeAuthJSON(idToken: token))
         defer { try? FileManager.default.removeItem(atPath: path) }
 
-        let inspector = CodexSubscriptionInspector(authPath: path)
+        let inspector = CodexSubscriptionInspector(authPath: path, dateProvider: { now })
         let provider = CodexAuthProvider(
             authPath: path,
-            endpoint: URL(string: "https://example.invalid/never-called")!,
-            session: URLSession(configuration: .ephemeral),
-            dateProvider: Date.init,
+            endpoint: URL(string: "https://chatgpt.test/backend-api/wham/usage")!,
+            session: Self.makeSession(statusCode: 401, data: Data("{}".utf8)),
+            dateProvider: { now },
             inspector: inspector
         )
 
         do {
             _ = try await provider.fetchSnapshot(timeout: 1)
-            Issue.record("expected throw .subscriptionExpired, but fetchSnapshot returned")
-        } catch let QuotaFetchError.subscriptionExpired(plan, expiredAt) {
-            // .free 状态：plan 和 expiredAt 都应该是 nil
-            #expect(plan == nil)
-            #expect(expiredAt == nil)
+            Issue.record("expected throw .notSubscribed, but fetchSnapshot returned")
+        } catch let QuotaFetchError.notSubscribed(detail) {
+            #expect(detail == "未订阅")
         } catch {
-            Issue.record("expected .subscriptionExpired, got \(error)")
+            Issue.record("expected .notSubscribed, got \(error)")
         }
     }
 }
@@ -167,6 +249,16 @@ struct QuotaFetchErrorAvailabilityFallbackTests {
         }
     }
 
+    @Test(".notSubscribed 的 availabilityFallback 是 .notSubscribed")
+    func notSubscribedAvailabilityFallback() {
+        let err = QuotaFetchError.notSubscribed(detail: "未订阅")
+        if case .notSubscribed(let reason) = err.availabilityFallback {
+            #expect(reason == "未订阅")
+        } else {
+            Issue.record("expected .notSubscribed, got \(err.availabilityFallback)")
+        }
+    }
+
     @Test(".transient 的 availabilityFallback 是 .fetchFailed")
     func transientAvailabilityFallback() {
         let err = QuotaFetchError.transient(detail: "x")
@@ -180,15 +272,16 @@ struct QuotaFetchErrorAvailabilityFallbackTests {
 
 // MARK: - Codex pipeline strategies 顺序（v0.8.1）
 
-/// v0.8.1 验证：Codex pipeline 顺序仍然是
-///   CodexAuthProvider → BrowserCookieProvider → CLILogProvider → KeychainProvider
-/// 且 inspector 过期时第一个 strategy throw `.subscriptionExpired`，pipeline 真走完剩余 strategy。
-@Suite("Codex pipeline — strategy 顺序 (v0.8.1)")
+/// 默认刷新不能主动触发浏览器 Cookie 权限，也不能用本地日志估算冒充真实额度。
+/// 浏览器 Cookie 和 Codex 日志估算只在显式环境开关下加入 pipeline。
+@Suite("Codex pipeline — default strategy order")
 struct CodexPipelineStrategyOrderTests {
 
-    @Test("codexPipeline strategies 顺序包含 4 个 strategy，依次为 auth → cookie → cli → keychain")
+    @Test("codexPipeline 默认只有 auth → keychain，不包含 cookie / cli log")
     @MainActor
     func strategiesOrder() {
+        unsetenv("QUOTABAR_ENABLE_BROWSER_COOKIE")
+        unsetenv("QUOTABAR_ENABLE_CODEX_LOG_ESTIMATE")
         // 触发 makePipelines（不需要 cookieReader 真读）
         let pipelines = ProviderPipelines.makePipelines(
             cookieReader: FilesystemCookieReader(),
@@ -201,11 +294,11 @@ struct CodexPipelineStrategyOrderTests {
 
         // strategies 是 private(set) var，可以读
         let strategyIds = codexPipeline.strategies.map { $0.id }
-        #expect(strategyIds.count == 4, "expected 4 strategies, got \(strategyIds.count)")
+        #expect(strategyIds.count == 2, "expected 2 strategies, got \(strategyIds.count)")
         #expect(strategyIds[0].contains("codex-auth"))
-        #expect(strategyIds[1].contains("codex-cookie"))
-        #expect(strategyIds[2].contains("codex-cli"))
-        #expect(strategyIds[3].contains("codex-keychain"))
+        #expect(strategyIds[1].contains("codex-keychain"))
+        #expect(!strategyIds.contains { $0.contains("codex-cookie") })
+        #expect(!strategyIds.contains { $0.contains("codex-cli") })
     }
 
     @Test("codexPipeline runMode 是 sequential（不是 parallel）—— 第一个成功就停")
@@ -219,7 +312,7 @@ struct CodexPipelineStrategyOrderTests {
             Issue.record("codex pipeline not found")
             return
         }
-        // sequential 是关键：inspector expired throw 后必须走到 BrowserCookie
+        // sequential 是关键：auth 失败后才走到 keychain，不并发触发敏感来源。
         if case .sequential = codexPipeline.runMode {
             // pass
         } else {
@@ -327,6 +420,36 @@ private final class EmptyCookieReader: BrowserCookieReader, @unchecked Sendable 
     func readCookies(matching domains: [String]) async throws -> [HTTPCookie] {
         return []
     }
+}
+
+private final class MockURLProtocol: URLProtocol, @unchecked Sendable {
+    nonisolated(unsafe) static var responseHandler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        guard let handler = Self.responseHandler else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
+            return
+        }
+
+        do {
+            let (response, data) = try handler(request)
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch {
+            client?.urlProtocol(self, didFailWithError: error)
+        }
+    }
+
+    override func stopLoading() {}
 }
 
 // MARK: - Data 扩展（base64URL helper，与现有测试复用）

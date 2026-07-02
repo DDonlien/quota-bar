@@ -89,6 +89,10 @@
 - [x] [0.2.0-DATA-B-019] Provider pipeline 在首个数据源缺凭证时继续尝试后续数据源，避免 MiniMax/Kimi/Codex 因 API key 或 OAuth 缺失而跳过 Cookie/CLI fallback #P1
 - [x] [0.2.0-DATA-B-020] Cookie dashboard 响应中的订阅档位/费用信息传递到 UI，MiniMax Web 路径支持 `current_package_name` 和已知 Coding Plan 价格映射 #P1
 - [ ] [0.2.0-DATA-B-021] Trae Work 是否独立接入 #P2 #deferred — 官方已有 TRAE Work 与用量/订阅概念，值得作为独立 provider 继续调研；当前缺少已验证本地 CLI、App 或 dashboard endpoint，不并入 P1 核心
+- [x] [0.2.0-DATA-B-022] 默认自动刷新不得主动执行浏览器 Cookie 数据源，避免未明确授权前弹出系统密码或 Full Disk Access 相关弹窗；浏览器来源只保留为后续显式启用/调试路径 #P1
+- [x] [0.2.0-DATA-B-023] Codex 额度必须优先以真实 `wham/usage` 响应为准；`auth.json` 的 `id_token` 过期日只能作为真实请求失败后的辅助状态，不能在请求前短路；本地日志估算不得冒充真实额度显示为 100% #P1
+- [x] [0.2.0-DATA-B-024] Kimi 默认优先使用本地 OAuth 凭证路径，浏览器 Cookie 只能作为显式启用后的补充，避免 Kimi 刷新慢时先触发浏览器权限弹窗 #P1
+- [x] [0.2.0-DATA-B-025] Kimi 默认优先读取 Kimi Desktop `bridge-store/token-store.json` 中的 Web access token 调 `GetSubscriptionStat`，在不读取浏览器 Cookie 的前提下获取 Work 月额度、Code 5h/周额度、订阅档位和到期日；CLI OAuth 仅作为 Code-only fallback #P1
 
 ### FE-A：刷新机制
 
@@ -196,11 +200,13 @@
 
 ### DATA-A：智谱 BigModel Z Code (zcode)
 
-- [ ] [0.4.0-DATA-A-000] 在 `ProviderKind` enum 新增 `.zcode` 枚举值，`displayName = "Z Code"`、`brandColor`、`iconSymbol`、`bundleIdentifier = "dev.zcode.app"`、`credentialFiles = ["~/.zcode/v2/credentials.json"]`、`envVarNames = []` 等元数据补齐 #P1
-- [ ] [0.4.0-DATA-A-001] `ZCodeAuthProvider` 实现：从 `~/.zcode/v2/config.json` 读启用 plan 的 API key + baseURL，对 plan endpoint 发 anthropic 兼容 API 拉 usage；解析剩余额度到 `[QuotaWindow]` #P1
+- [x] [0.4.0-DATA-A-000] 在 `ProviderKind` enum 新增 `.zcode` 枚举值，`displayName = "Z Code"`、`brandColor`、`iconSymbol`、`bundleIdentifier = "dev.zcode.app"`、`credentialFiles = ["~/.zcode/v2/credentials.json"]`、`envVarNames = []` 等元数据补齐 #P1
+- [x] [0.4.0-DATA-A-001] `ZCodeAuthProvider` 实现：从 `~/.zcode/v2/config.json` 读启用 plan 的 API key + baseURL，对 plan endpoint 发 anthropic 兼容 API 拉 usage；解析剩余额度到 `[QuotaWindow]` #P1
 - [ ] [0.4.0-DATA-A-002] 套餐映射：识别 `builtin:bigmodel-start-plan` / `builtin:bigmodel-coding-plan` / `builtin:zai-start-plan` / `builtin:zai-coding-plan` 4 种 plan，subscriptionGroup 按 plan 区分（每个 plan = 1 个订阅组）；价格映射到 `ProviderPricing` #P1
 - [ ] [0.4.0-DATA-A-003] `ZcodeLoginRunner` + `InstallDetectorProvider`：探测 `dev.zcode.app` bundle 安装和 `~/.zcode/v2/config.json` 存在性，驱动 pipeline 串接 #P1
-- [ ] [0.4.0-DATA-A-004] `Strategies.zcodePipeline()` 接入 `RefreshCoordinator`，凭证缺失时 fallback 到 Keychain / `needsConfiguration` 状态 #P1
+- [x] [0.4.0-DATA-A-004] `Strategies.zcodePipeline()` 接入 `RefreshCoordinator`，凭证缺失时 fallback 到 Keychain / `needsConfiguration` 状态 #P1
+- [x] [0.4.0-DATA-A-005] Z Code 刷新失败时 UI 必须保留真实失败原因（如 API key 无效、plan 未开通、quota endpoint 不可用），不能被安装探测文案覆盖成只有“App 已装” #P1
+- [x] [0.4.0-DATA-A-006] Z Code quota API 未返回可渲染额度时读取 `~/.zcode/v2/coding-plan-cache.json`，展示可用 plan 与 `coding_plan_not_entitled` 等本地真实状态；该缓存不包含额度数值时不得伪造 quota bar #P1
 
 ### DATA-B：阿里通义千问桌面 App
 
@@ -217,7 +223,7 @@
 
 - [ ] [0.4.0-QA-A-001] Z Code Provider：登录态正常时能在 dropdown 展示至少 1 个订阅组，下拉面板数字 / 状态灯 / bar 与其他 Provider 一致；未登录时降级到 `needsConfiguration` 不卡死
 - [ ] [0.4.0-QA-A-002] 千问 Provider（实现后）：同上 #blocked — 依赖 [0.4.0-DATA-B-000]
-- [ ] [0.4.0-QA-A-003] 文档已更新（README 列出已支持 Provider 清单 + 各 Provider 接入说明）
+- [x] [0.4.0-QA-A-003] 文档已更新（README 列出已支持 Provider 清单 + 各 Provider 接入说明）
 - [ ] [0.4.0-QA-A-004] `cd quota-bar && swift build` / `swift run` 通过
 
 ### UI-B：可用订阅计数反映实际可用性
@@ -360,12 +366,12 @@
 
 > 任务继承自 v0.4.0 phase 的 `### DATA-A：智谱 BigModel Z Code (zcode)`（4 项），但每项提升到 v0.7.0 phase 顶层，确保 `feat/glm-provider` branch 推进时有稳定的 v0.7.0 编号。
 
-- [ ] [0.7.0-DATA-A-000] 在 `ProviderKind` enum 新增 `.zcode` 枚举值，`displayName = "Z Code"`、`brandColor`、`iconSymbol`、`bundleIdentifier = "dev.zcode.app"`、`credentialFiles = ["~/.zcode/v2/credentials.json"]`、`envVarNames = []` 等元数据补齐 #P1
-- [ ] [0.7.0-DATA-A-001] `ZCodeAuthProvider` 实现：从 `~/.zcode/v2/config.json` 读启用 plan 的 API key + baseURL，对 plan endpoint 发 anthropic 兼容 API 拉 usage；解析剩余额度到 `[QuotaWindow]` #P1
+- [x] [0.7.0-DATA-A-000] 在 `ProviderKind` enum 新增 `.zcode` 枚举值，`displayName = "Z Code"`、`brandColor`、`iconSymbol`、`bundleIdentifier = "dev.zcode.app"`、`credentialFiles = ["~/.zcode/v2/credentials.json"]`、`envVarNames = []` 等元数据补齐 #P1
+- [x] [0.7.0-DATA-A-001] `ZCodeAuthProvider` 实现：从 `~/.zcode/v2/config.json` 读启用 plan 的 API key + baseURL，对 plan endpoint 发 anthropic 兼容 API 拉 usage；解析剩余额度到 `[QuotaWindow]` #P1
 - [ ] [0.7.0-DATA-A-002] 套餐映射：识别 `builtin:bigmodel-start-plan` / `builtin:bigmodel-coding-plan` / `builtin:zai-start-plan` / `builtin:zai-coding-plan` 4 种 plan，subscriptionGroup 按 plan 区分（每个 plan = 1 个订阅组）；价格映射到 `ProviderPricing` #P1
 - [ ] [0.7.0-DATA-A-003] `ZcodeLoginRunner` + `InstallDetectorProvider`：探测 `dev.zcode.app` bundle 安装和 `~/.zcode/v2/config.json` 存在性，驱动 pipeline 串接 #P1
-- [ ] [0.7.0-DATA-A-004] `Strategies.zcodePipeline()` 接入 `RefreshCoordinator`，凭证缺失时 fallback 到 Keychain / `needsConfiguration` 状态 #P1
-- [ ] [0.7.0-DATA-A-005] web/DESIGN.md 中 `--provider-zcode` 的 brandColor 在 app DESIGN.md / QuotaModels 中同步落地（当前 web 占位 `#3866ff`，app 端选色待定）#P1
+- [x] [0.7.0-DATA-A-004] `Strategies.zcodePipeline()` 接入 `RefreshCoordinator`，凭证缺失时 fallback 到 Keychain / `needsConfiguration` 状态 #P1
+- [x] [0.7.0-DATA-A-005] web/DESIGN.md 中 `--provider-zcode` 的 brandColor 在 app DESIGN.md / QuotaModels 中同步落地（当前 web 占位 `#3866ff`，app 端选色待定）#P1
 
 ### FE-A：菜单栏 bar 集成
 
@@ -376,7 +382,7 @@
 
 ### DOC-A：用户可见文档
 
-- [ ] [0.7.0-DOC-A-000] README.md 的「已支持 Provider」列表追加 Z Code（含 4 种 plan 简要说明 + 安装路径）#P1
+- [x] [0.7.0-DOC-A-000] README.md 的「已支持 Provider」列表追加 Z Code（含 4 种 plan 简要说明 + 安装路径）#P1
 
 ## Phase - v0.8.0 - 订阅过期识别（"权威 > API 反推"模型）
 
@@ -474,40 +480,40 @@
 
 ### ARCH-A：持久化模型与目录约束
 
-- [ ] [0.9.0-ARCH-A-000] 定义 Quota Bar 自有持久化目录：`~/Library/Application Support/QuotaBar/`；偏好、来源索引、last-known-good 快照都放在该目录下，不新增 `~/.quota-bar` 作为主路径 #P1
-- [ ] [0.9.0-ARCH-A-001] 设计持久化 schema version 与向后兼容策略；所有持久化文件必须带 `schemaVersion`，读取失败时安全丢弃并回到实时抓取，不阻塞 app 启动 #P1
-- [ ] [0.9.0-ARCH-A-002] 明确安全边界：持久化文件不得保存 token、cookie、API key、refresh token 或浏览器 Cookie 明文；敏感凭证仍只读取原始服务配置、浏览器 Cookie 或 macOS Keychain #P1
+- [x] [0.9.0-ARCH-A-000] 定义 Quota Bar 自有持久化目录：`~/Library/Application Support/QuotaBar/`；偏好、来源索引、last-known-good 快照都放在该目录下，不新增 `~/.quota-bar` 作为主路径 #P1
+- [x] [0.9.0-ARCH-A-001] 设计持久化 schema version 与向后兼容策略；所有持久化文件必须带 `schemaVersion`，读取失败时安全丢弃并回到实时抓取，不阻塞 app 启动 #P1
+- [x] [0.9.0-ARCH-A-002] 明确安全边界：持久化文件不得保存 token、cookie、API key、refresh token 或浏览器 Cookie 明文；敏感凭证仍只读取原始服务配置、浏览器 Cookie 或 macOS Keychain #P1
 
-### ARCH-B：三层获取链路与 Provider 能力矩阵
+### ARCH-B：四层获取链路与 Provider 能力矩阵
 
-- [ ] [0.9.0-ARCH-B-000] 将获取体系拆为三层独立链路：Provider 获取、额度获取、过期日获取；三层分别维护来源索引、跳过规则、失败语义和 last-known-good 写入资格 #P1
+- [x] [0.9.0-ARCH-B-000] 将获取体系拆为四层独立链路：Provider 获取、额度获取、过期日获取、档位/费用获取；四层分别维护来源索引、跳过规则、失败语义和 last-known-good 写入资格 #P1
 - [ ] [0.9.0-ARCH-B-001] Provider 获取层支持 App Bundle、配置/凭证文件、CLI 命令、API Key/环境变量、浏览器登录痕迹等发现手段；刷新时先用上次成功手段复查已知 provider，成功则跳过其余发现手段，再跑完整发现链查找新增或丢失的 provider #P1
 - [ ] [0.9.0-ARCH-B-002] 额度获取层支持配置文件读 token/API key 后调用 usage API、CLI 指令、HTTP API 指令、本地 RPC、浏览器 dashboard、手动 token/header、App 内 WebView 登录 session、最后可选自然语言问询；刷新时先用上次成功额度手段，失败后再按能力矩阵全量 fallback #P1
 - [ ] [0.9.0-ARCH-B-003] 过期日获取层复用额度层的来源索引机制，但允许使用不同 endpoint、CLI 指令、DOM 抽取或账号页 API；过期日结果不得阻塞额度刷新，且必须标记来源可靠性 #P1
-- [ ] [0.9.0-ARCH-B-004] 为每个 Provider 定义三张能力矩阵，分别记录 Provider 获取、额度获取、过期日获取的可用节点、优先级、跳过条件、权限风险、交互成本、失败后 fallback 规则和是否允许写入快照 #P1
-- [ ] [0.9.0-ARCH-B-005] Provider 能力矩阵必须覆盖明确接入范围：Codex、Claude、Kimi、MiniMax、Antigravity、GLM/Z Code；不再登记“其他 provider”占位，新增 provider 必须先明确具体名称、安装/凭证/额度/过期日来源后再进入矩阵 #P1
+- [x] [0.9.0-ARCH-B-004] 为每个 Provider 定义四张能力矩阵，分别记录 Provider 获取、额度获取、过期日获取、档位/费用获取的可用节点、优先级、跳过条件、权限风险、交互成本、失败后 fallback 规则和是否允许写入快照 #P1
+- [x] [0.9.0-ARCH-B-005] Provider 能力矩阵必须覆盖明确接入范围：Codex、Claude、Kimi、MiniMax、Antigravity、GLM/Z Code；不再登记“其他 provider”占位，新增 provider 必须先明确具体名称、安装/凭证/额度/过期日来源后再进入矩阵 #P1
 - [ ] [0.9.0-ARCH-B-006] CLI/RPC 节点必须显式登记每个 provider 的命令、交互输入、输出格式和 parser；已验证命令与未验证猜测必须分开记录，未知命令不得执行 #P1
 - [ ] [0.9.0-ARCH-B-007] Browser 节点必须显式登记每个 provider 的登录域名、cookie 名称、dashboard URL、HTTP 方法、必要 header、follow-up 请求、parser 和是否可能触发 Keychain/Full Disk Access；默认不扫描所有浏览器，优先使用来源索引或用户选择的浏览器/profile #P1
 - [ ] [0.9.0-ARCH-B-008] 订阅状态归一化必须区分「可用」「已过期」「未订阅」「待配置」「抓取失败」「未安装」；只有可靠过期日距离当前时间在一个自然周内时显示已过期，超过一周或从未订阅显示未订阅 #P1
 
 ### DATA-A：来源索引缓存
 
-- [ ] [0.9.0-DATA-A-000] 新增 provider 来源索引缓存，记录每个 Provider 上次成功的数据来源优先值（如 auth file / browser profile / CLI config / local RPC / Keychain 探测），用于下一次启动、更新、重装或刷新时优先尝试 #P1
-- [ ] [0.9.0-DATA-A-001] 来源索引只保存非敏感元信息：providerKind、sourceKind、sourceId、成功时间、失败次数、最后错误摘要、相关本地路径或浏览器 profile 标识；不保存凭证内容 #P1
-- [ ] [0.9.0-DATA-A-002] 当优先来源失败时，Provider pipeline 必须回到完整 fallback 规则继续抓取；若其他来源成功，更新来源索引；若全部失败，如实返回失败 / 待配置状态 #P1
-- [ ] [0.9.0-DATA-A-003] 浏览器 Cookie 和 CLI 配置与凭证使用同一来源索引机制：保存“上次哪个浏览器 / profile / CLI 配置路径有效”，不复制 Cookie 或配置文件内容 #P1
+- [x] [0.9.0-DATA-A-000] 新增 provider 来源索引缓存，记录每个 Provider 上次成功的数据来源优先值（如 auth file / browser profile / CLI config / local RPC / Keychain 探测），用于下一次启动、更新、重装或刷新时优先尝试 #P1
+- [x] [0.9.0-DATA-A-001] 来源索引只保存非敏感元信息：providerKind、sourceKind、sourceId、成功时间、失败次数、最后错误摘要、相关本地路径或浏览器 profile 标识；不保存凭证内容 #P1
+- [x] [0.9.0-DATA-A-002] 当优先来源失败时，Provider pipeline 必须回到完整 fallback 规则继续抓取；若其他来源成功，更新来源索引；若全部失败，如实返回失败 / 待配置状态 #P1
+- [x] [0.9.0-DATA-A-003] 浏览器 Cookie 和 CLI 配置与凭证使用同一来源索引机制：保存“上次哪个浏览器 / profile / CLI 配置路径有效”，不复制 Cookie 或配置文件内容 #P1
 
 ### DATA-B：额度与订阅快照
 
-- [ ] [0.9.0-DATA-B-000] 新增 last-known-good 快照文件，保存每个 provider 最近一次真实刷新成功的额度、订阅状态、订阅过期时间、价格、档位、fetchedAt、sourceKind 与是否 stale 等信息 #P1
-- [ ] [0.9.0-DATA-B-001] App 启动、更新、重装后，在首次实时刷新完成前可用 last-known-good 快照填充 UI，避免已知数值短暂消失；展示时必须标记为上次可用数据 / stale，而不是实时成功 #P1
-- [ ] [0.9.0-DATA-B-002] 手动或自动刷新期间，如果 provider 尚未返回新值，可继续展示旧快照作为过渡；一旦该 provider 返回成功结果，立即用内存新值替换显示并覆盖快照 #P1
-- [ ] [0.9.0-DATA-B-003] 如果刷新后 provider 明确不可用、待配置、已过期或抓取失败，UI 必须切到对应真实状态；旧快照只能作为“上次成功值”辅助信息，不得让服务继续显示为可用 #P1
-- [ ] [0.9.0-DATA-B-004] 快照写入只发生在真实刷新成功或明确订阅过期状态确认后；占位 loading、未安装、纯抓取失败不得覆盖 last-known-good 快照 #P1
-- [ ] [0.9.0-DATA-B-005] 为快照读写补测试：schema 兼容、坏文件丢弃、成功刷新覆盖、失败刷新不覆盖、stale 标记与 UI 状态分离 #P1
+- [x] [0.9.0-DATA-B-000] 新增 last-known-good 快照文件，保存每个 provider 最近一次真实刷新成功的额度、订阅状态、订阅过期时间、价格、档位、fetchedAt、sourceKind 与是否 stale 等信息 #P1
+- [x] [0.9.0-DATA-B-001] App 启动、更新、重装后，在首次实时刷新完成前可用 last-known-good 快照填充 UI，避免已知数值短暂消失；展示时必须标记为上次可用数据 / stale，而不是实时成功 #P1
+- [x] [0.9.0-DATA-B-002] 手动或自动刷新期间，如果 provider 尚未返回新值，可继续展示旧快照作为过渡；一旦该 provider 返回成功结果，立即用内存新值替换显示并覆盖快照 #P1
+- [x] [0.9.0-DATA-B-003] 如果刷新后 provider 明确不可用、待配置、已过期或抓取失败，UI 必须切到对应真实状态；旧快照只能作为“上次成功值”辅助信息，不得让服务继续显示为可用 #P1
+- [x] [0.9.0-DATA-B-004] 快照写入只发生在真实刷新成功或明确订阅过期状态确认后；占位 loading、未安装、纯抓取失败不得覆盖 last-known-good 快照 #P1
+- [x] [0.9.0-DATA-B-005] 为快照读写补测试：schema 兼容、坏文件丢弃、成功刷新覆盖、失败刷新不覆盖、stale 标记与 UI 状态分离 #P1
 
 ### UI-A：缓存兜底的显示语义
 
-- [ ] [0.9.0-UI-A-000] 使用 last-known-good 快照渲染时，菜单栏和 dropdown 必须有明确 stale/上次更新语义，避免用户把缓存值误认为刚刚刷新成功 #P1
-- [ ] [0.9.0-UI-A-001] 刷新失败但存在旧快照时，服务区块优先表达当前失败原因，同时可展示上次成功额度作为参考；状态灯、可用订阅计数和菜单栏 bar 不得按旧快照算“可用” #P1
-- [ ] [0.9.0-UI-A-002] 移除主路径中的样例数据 provider；抓取失败、没有抓取到任何对象、无权限、未登录、无订阅、已过期等状态后续由标准状态 UI 承接，不再用 Codex/MiniMax/Kimi 假数据兜底 #P1
+- [x] [0.9.0-UI-A-000] 使用 last-known-good 快照渲染时，菜单栏和 dropdown 必须有明确 stale/上次更新语义，避免用户把缓存值误认为刚刚刷新成功 #P1
+- [x] [0.9.0-UI-A-001] 刷新失败但存在旧快照时，服务区块优先表达当前失败原因，同时可展示上次成功额度作为参考；状态灯、可用订阅计数和菜单栏 bar 不得按旧快照算“可用” #P1
+- [x] [0.9.0-UI-A-002] 移除主路径中的样例数据 provider；抓取失败、没有抓取到任何对象、无权限、未登录、无订阅、已过期等状态后续由标准状态 UI 承接，不再用 Codex/MiniMax/Kimi 假数据兜底 #P1
