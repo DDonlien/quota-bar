@@ -84,6 +84,7 @@
 - [x] [0.2.0-DATA-B-014] Kimi Web 端点 Cookie 模式（`kimi-auth` cookie → GetSubscriptionStat）— `BrowserCookieProvider` POST `www.kimi.com/apiv2/kimi.gateway.membership.v2.MembershipService/GetSubscriptionStat`，支持 Bearer Token 认证和 `KimiSubscriptionStatParser` 解析 Work + Code 额度 #P1
 - [x] [0.2.0-DATA-B-015] MiniMax Web 端点 Cookie 模式（`minimax.chat` cookie → coding_plan/remains）— Cookie 路径接入 `api.minimax.chat/v1/api/openplatform/coding_plan/remains`，Cloudflare/签名失败时安全降级
 - [x] [0.2.0-DATA-B-016] Antigravity dashboard 端点（Antigravity 用 localhost probe，需本地运行）— `AntigravityDashboardProvider` 探测 language_server 端口和 csrf 后调用本地 GetUserStatus
+- [x] [0.2.0-DATA-B-028] Antigravity 额度 fallback 顺序必须是本地 IDE/RPC → `agy` CLI 运行时本地 RPC → 其他低优先级兜底；WebView 不是额度主链路，只能作为最后的账号/订阅页兜底入口 #P1
 - [ ] [0.2.0-DATA-B-017] 同一服务多身份合并/拆分（如 Kimi Code / Kimi Work、work + personal 账号）#P2 #deferred — 当前架构每个 ProviderKind 只返一条 snapshot
 - [x] [0.2.0-DATA-B-018] 移除 Gemini 主动采集 pipeline，Google 系额度由 Antigravity 接替 #P1
 - [x] [0.2.0-DATA-B-019] Provider pipeline 在首个数据源缺凭证时继续尝试后续数据源，避免 MiniMax/Kimi/Codex 因 API key 或 OAuth 缺失而跳过 Cookie/CLI fallback #P1
@@ -108,6 +109,7 @@
 - [x] [0.2.0-FE-A-007] 修正菜单栏图标绘制宽度与实际占位宽度不一致的问题，避免截图中 bar 图标视觉宽度较窄但 status item 点击/占位区域明显过宽 #P1
 - [x] [0.2.0-FE-A-008] 校准菜单栏多 bar 的数值来源和高度映射，确保每个 bar 真实反映对应服务当前额度状态，而不是使用与实际剩余额度不匹配的占位或无效数值 #P1
 - [x] [0.2.0-FE-A-009] 修正菜单栏 bar 绘制样式：当前 bar 圆角没有按预期绘制，应参考此前参考图恢复圆角外观，并确保高低不同的 bar 在小尺寸菜单栏图标中仍清晰可辨 #P1
+- [x] [0.2.0-FE-A-010] 菜单栏多 bar 只表达真实可用额度、刷新占位或明确过期状态；`needsConfiguration` / `notSubscribed` / `notInstalled` / `fetchFailed` 不得绘制 50% 占位 bar，避免下拉显示未配置但菜单栏像有额度 #P1
 
 ### UI-A：动态数据展示
 
@@ -510,6 +512,7 @@
 - [x] [0.9.0-DATA-A-003] 浏览器 Cookie 和 CLI 配置与凭证使用同一来源索引机制：保存“上次哪个浏览器 / profile / CLI 配置路径有效”，不复制 Cookie 或配置文件内容 #P1
 - [x] [0.9.0-DATA-A-004] 来源索引优先级必须尊重层覆盖范围：在一次刷新同时需要额度/档位/过期日时，完整来源优先于只覆盖单层的来源；例如 Kimi Desktop 不应被 Kimi CLI 的 Code-only 成功缓存遮蔽，Z Code auth 不应被 plan-cache 遮蔽 #P1
 - [ ] [0.9.0-DATA-A-005] App 内 WebView 授权容器：用户显式点击登录/修复后打开 provider 专属 WebView，复用 WKWebsiteDataStore 持久 session；后续刷新可隐式读取该 WebView session 发 dashboard 请求，避免反复触发系统 Cookie/Keychain 弹窗 #P1
+- [ ] [0.9.0-DATA-A-006] 下拉里支持 WebView 授权的 provider 在未获取到数据 / 待配置时，按 provider 链路顺序显示最后优先级的可点击文本「打开 WebView 授权」或「备用：打开 WebView 授权」；点击后打开 provider 专属登录页并持久化 WebView session，后续 Web dashboard strategy 可复用该 session #P1
 
 ### DATA-B：额度与订阅快照
 

@@ -253,8 +253,11 @@ enum ProviderPipelines {
             kind: .antigravity,
             strategies: [
                 // 首选：Antigravity IDE 本地 language_server gRPC-Web endpoint
-                QuotaProviderStrategy(AntigravityDashboardProvider()),
-                // 兜底：Keychain
+                QuotaProviderStrategy(AntigravityDashboardProvider(id: "antigravity-rpc", processMode: .languageServer)),
+                // 第二：agy CLI 进程暴露的本地 gRPC-Web endpoint。它不是自然语言问询，
+                // 而是 CLI 运行时本地 RPC，仍然返回结构化 quota JSON。
+                QuotaProviderStrategy(AntigravityDashboardProvider(id: "antigravity-cli", processMode: .cli)),
+                // 最后兜底：Keychain 只能证明有凭证，不能生成额度。
                 QuotaProviderStrategy(KeychainProvider(id: "antigravity-keychain", kind: .antigravity)),
             ],
             runMode: .sequential

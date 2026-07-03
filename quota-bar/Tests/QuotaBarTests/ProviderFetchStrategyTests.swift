@@ -32,6 +32,17 @@ struct ProviderFetchStrategyTests {
         #expect(snapshot.subscriptionTier == "Full")
     }
 
+    @Test("Antigravity pipeline order is RPC then CLI then keychain")
+    @MainActor
+    func antigravityPipelineOrder() {
+        let pipeline = try! #require(ProviderPipelines.makePipelines().first { $0.providerKind == .antigravity })
+        #expect(pipeline.strategies.map(\.id) == [
+            "antigravity-rpc",
+            "antigravity-cli",
+            "antigravity-keychain",
+        ])
+    }
+
     private static func makeTempDirectory() -> URL {
         URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("quota-bar-provider-fetch-tests-\(UUID().uuidString)", isDirectory: true)

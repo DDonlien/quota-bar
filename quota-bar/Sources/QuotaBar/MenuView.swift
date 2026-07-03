@@ -409,7 +409,13 @@ private struct PlanSection: View {
                         onSave: { key in onSaveKey(snapshot.kind, key) }
                     )
                 } else {
-                    StatusRow(text: "待配置 · \(reason)")
+                    StatusRow(
+                        text: "待配置 · \(reason)",
+                        actionTitle: snapshot.kind.webAuthorizationURL == nil ? nil : Self.webAuthorizationTitle(for: snapshot.kind),
+                        action: snapshot.kind.webAuthorizationURL == nil ? nil : {
+                            WebAuthorizationController.shared.openAuthorization(for: snapshot.kind)
+                        }
+                    )
                 }
             case .notInstalled:
                 StatusRow(text: "未安装")
@@ -436,6 +442,15 @@ private struct PlanSection: View {
             parts.append("到期 \(f.string(from: expiredAt))")
         }
         return parts.joined(separator: " · ")
+    }
+
+    private static func webAuthorizationTitle(for kind: ProviderKind) -> String {
+        switch kind {
+        case .antigravity:
+            return "备用：打开 WebView 授权"
+        default:
+            return "打开 WebView 授权"
+        }
     }
 }
 
@@ -1220,15 +1235,61 @@ private struct SkeletonRow: View {
 
 private struct StatusRow: View {
     let text: String
+    var actionTitle: String?
+    var action: (() -> Void)?
 
     var body: some View {
-        Text(text)
-            .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
-            .foregroundStyle(Palette.secondary)
-            .lineLimit(2)
-            .minimumScaleFactor(0.85)
-            .padding(.top, MenuDashboardStyle.quotaRowTop)
-            .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(text)
+                .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
+                .foregroundStyle(Palette.secondary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+            if let actionTitle, let action {
+                InlineActionButton(title: actionTitle, action: action)
+                    .frame(height: 16)
+            }
+        }
+        .padding(.top, MenuDashboardStyle.quotaRowTop)
+        .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
+    }
+}
+
+private struct InlineActionButton: NSViewRepresentable {
+    let title: String
+    let action: () -> Void
+
+    func makeNSView(context: Context) -> NSButton {
+        let button = NSButton(title: title, target: context.coordinator, action: #selector(Coordinator.tapped))
+        button.isBordered = false
+        button.bezelStyle = .inline
+        button.alignment = .left
+        button.font = NSFont.systemFont(ofSize: MenuDashboardStyle.quotaFontSize, weight: .medium)
+        button.contentTintColor = NSColor.controlAccentColor
+        button.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }
+
+    func updateNSView(_ nsView: NSButton, context: Context) {
+        nsView.title = title
+        context.coordinator.action = action
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(action: action)
+    }
+
+    final class Coordinator: NSObject {
+        var action: () -> Void
+
+        init(action: @escaping () -> Void) {
+            self.action = action
+        }
+
+        @objc func tapped() {
+            action()
+        }
     }
 }
 
