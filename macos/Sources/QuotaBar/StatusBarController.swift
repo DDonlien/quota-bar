@@ -88,6 +88,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                     return "\(snap.kind.displayName) 刷新中"
                 }
                 if case .subscriptionExpired = snap.availability {
+                    // v0.8.0：tooltip 提示"已过期"，区别于正常的 0% / 30% 数字
                     return "\(snap.kind.displayName) 已过期"
                 }
                 let pct = Int((Self.remainingFraction(for: snap) * 100).rounded())
@@ -99,7 +100,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     /// 画 N 个垂直 bar 的 NSImage（macOS 26 Liquid Glass menu bar widget 规范）。
     ///
-    /// 只绘制 `.available` / `.needsConfiguration` / `.loading` / `.subscriptionExpired` 的 snapshot；
+    /// 只绘制 `.available` / `.loading` / `.subscriptionExpired` 的 snapshot；
     /// 高度取该订阅最近重置 quota 窗口的 `remainingFraction`，
     /// 与 dropdown 中最紧迫周期的读数一致。
     /// **`.loading` 画 dimmed 50% 占位 bar**，streaming refresh 时随着 provider 一个个
@@ -162,16 +163,18 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         return ceil(image.size.width)
     }
 
-    private static func drawableSnapshots(from snapshots: [ProviderSnapshot]) -> [ProviderSnapshot] {
-        // 显示：available（有 quota）/ needsConfiguration / loading / subscriptionExpired
-        // 隐藏：notInstalled / fetchFailed
+    static func drawableSnapshots(from snapshots: [ProviderSnapshot]) -> [ProviderSnapshot] {
+        // 显示：available（有 quota）/ loading / subscriptionExpired
+        // 隐藏：needsConfiguration / notSubscribed / notInstalled / fetchFailed
+        // v0.8.0：subscriptionExpired 仍画 bar（0% 高度，最小占位），让用户看到
+        // "我知道这个订阅存在但已过期"——区别于 notInstalled（直接不画）。
         snapshots.filter { snapshot in
             switch snapshot.availability {
             case .available:
                 return !snapshot.quotas.isEmpty
-            case .needsConfiguration, .loading, .subscriptionExpired:
+            case .loading, .subscriptionExpired:
                 return true
-            case .notInstalled, .fetchFailed:
+            case .needsConfiguration, .notSubscribed, .notInstalled, .fetchFailed:
                 return false
             }
         }
@@ -183,6 +186,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         case .loading, .needsConfiguration:
             return 0.5
         case .subscriptionExpired:
+            // v0.8.0：订阅已过期 → bar 高度 0%（与其他"用完"视觉一致），但仍画最小 bar
+            // 占位以让用户知道订阅存在。
+            return 0
+        case .notSubscribed:
             return 0
         default:
             break
@@ -348,6 +355,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         case .warp: return NSColor(srgbRed: 0x5E/255, green: 0x6A/255, blue: 0xD2/255, alpha: 1)
         case .trae: return NSColor(srgbRed: 0x3D/255, green: 0x7C/255, blue: 0xFF/255, alpha: 1)
         case .antigravity: return NSColor(srgbRed: 0x1A/255, green: 0x73/255, blue: 0xE8/255, alpha: 1)
+        case .zcode: return NSColor(srgbRed: 0x38/255, green: 0x66/255, blue: 0xFF/255, alpha: 1)
         }
     }
 
@@ -369,7 +377,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         let hasWarning = snapshots.contains { snapshot in
             if case .needsConfiguration = snapshot.availability { return true }
-            if case .subscriptionExpired = snapshot.availability { return true }
             return false
         }
         if hasWarning { return .warning }
@@ -450,9 +457,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         menu.addItem(timeItem)
 
-        // 偏好设置入口：由 PreferencesWindowController（NSWindow + NSHostingView）
-        // 负责显示/聚焦，避免 accessory 菜单栏 app 走 SwiftUI Settings scene 时弹空窗口。
-        menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
+        // 偏好设置入口暂时隐藏 — v0.3.0-PM-A-000 偏好设置页/窗口已 deferred 到 P2，
+        // 且当前 openPreferences() 仅为 NSSound.beep() 占位。等偏好设置面板真正落地
+        // 再恢复菜单项（feat/hide-preferences branch 上做后续工作）。
+        // menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(makeMenuItem(title: "退出", systemSymbolName: "xmark.square", action: #selector(quit), keyEquivalent: "q"))
     }
@@ -532,9 +540,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         coordinator.refreshNow()
     }
 
-    @objc private func openPreferences() {
-        PreferencesWindowController.shared.show()
-    }
+    // openPreferences() 暂时禁用：偏好设置入口已隐藏（见 buildMenu 注释），
+    // 保留方法定义待偏好设置面板实现后复用。NSSound.beep() stub 一并注释避免编译警告。
+    // @objc private func openPreferences() {
+    //     NSSound.beep()
+    // }
 
     @objc private func quit() {
         coordinator.stop()

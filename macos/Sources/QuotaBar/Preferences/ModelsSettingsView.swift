@@ -70,6 +70,7 @@ struct ModelsSettingsView: View {
         case .kimi: return "Moonshot"
         case .claude: return "Anthropic"
         case .glm: return "智谱"
+        case .zcode: return "Z Code"
         case .cursor: return "Anysphere"
         case .gemini, .antigravity: return "Google"
         case .openai: return "OpenAI"
@@ -89,6 +90,7 @@ struct ModelsSettingsView: View {
         case .kimi: return ["CLI", "Web"]
         case .claude: return ["Web"]
         case .glm: return ["API（待接入）"]
+        case .zcode: return ["Config", "Keychain"]
         case .cursor: return ["待接入"]
         case .gemini: return ["待接入"]
         case .openai: return ["待接入"]

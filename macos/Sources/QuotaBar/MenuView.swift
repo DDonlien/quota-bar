@@ -396,7 +396,12 @@ private struct PlanSection: View {
                     QuotaRows(snapshot: snapshot, quotas: subscriptionGroups.first?.items ?? [])
                 }
             case .subscriptionExpired(let plan, let expiredAt):
+                // v0.8.0：订阅已过期。不渲染任何 quota window（避免被 free 用户的"月额度"
+                // primary_window 误导成有效付费额度），只展示一行灰标 hint，让用户知道
+                // 1) 账号在 2) 上次付费档位 3) 到期日
                 StatusRow(text: Self.expiredHint(plan: plan, expiredAt: expiredAt))
+            case .notSubscribed(let reason):
+                StatusRow(text: "未订阅 · \(reason)")
             case .needsConfiguration(let reason):
                 if snapshot.kind == .minimax, let onSaveKey {
                     MiniMaxKeyInputField(
@@ -404,7 +409,13 @@ private struct PlanSection: View {
                         onSave: { key in onSaveKey(snapshot.kind, key) }
                     )
                 } else {
-                    StatusRow(text: "待配置 · \(reason)")
+                    StatusRow(
+                        text: "待配置 · \(reason)",
+                        actionTitle: snapshot.kind.webAuthorizationURL == nil ? nil : Self.webAuthorizationTitle(for: snapshot.kind),
+                        action: snapshot.kind.webAuthorizationURL == nil ? nil : {
+                            WebAuthorizationController.shared.openAuthorization(for: snapshot.kind)
+                        }
+                    )
                 }
             case .notInstalled:
                 StatusRow(text: "未安装")
@@ -415,19 +426,31 @@ private struct PlanSection: View {
         .opacity(snapshot.isStale ? 0.7 : 1.0)
     }
 
+    /// v0.8.0：把 `.subscriptionExpired(plan, expiredAt)` 拼成一行用户可读的灰标 hint。
+    /// 例：`订阅已过期 · Plus · 到期 2026/6/25`，`订阅已过期 · Plus`（无到期日），
+    /// 或 `订阅已过期`（都没有）。
     private static func expiredHint(plan: String?, expiredAt: Date?) -> String {
         var parts: [String] = ["订阅已过期"]
         if let plan, !plan.isEmpty {
             parts.append(plan)
         }
         if let expiredAt {
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            formatter.timeZone = TimeZone.current
-            formatter.dateFormat = "yyyy/M/d"
-            parts.append("到期 \(formatter.string(from: expiredAt))")
+            let f = DateFormatter()
+            f.locale = Locale(identifier: "en_US_POSIX")
+            f.timeZone = TimeZone.current
+            f.dateFormat = "yyyy/M/d"
+            parts.append("到期 \(f.string(from: expiredAt))")
         }
         return parts.joined(separator: " · ")
+    }
+
+    private static func webAuthorizationTitle(for kind: ProviderKind) -> String {
+        switch kind {
+        case .antigravity:
+            return "备用：打开 WebView 授权"
+        default:
+            return "打开 WebView 授权"
+        }
     }
 }
 
@@ -958,7 +981,7 @@ private struct PlanHeader: View {
                             .foregroundStyle(Palette.secondary)
                             .lineLimit(1)
                             .monospacedDigit()
-                            .help("订阅续费日期：\(preciseExpiresAtText ?? expiresAtText)")
+                            .help("最后有效日期：\(preciseExpiresAtText ?? expiresAtText)")
                     }
                     Text(snapshot.monthlyPrice ?? "—")
                         .font(.system(size: MenuDashboardStyle.planPriceFontSize, weight: .regular))
@@ -1212,15 +1235,61 @@ private struct SkeletonRow: View {
 
 private struct StatusRow: View {
     let text: String
+    var actionTitle: String?
+    var action: (() -> Void)?
 
     var body: some View {
-        Text(text)
-            .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
-            .foregroundStyle(Palette.secondary)
-            .lineLimit(2)
-            .minimumScaleFactor(0.85)
-            .padding(.top, MenuDashboardStyle.quotaRowTop)
-            .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(text)
+                .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
+                .foregroundStyle(Palette.secondary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+            if let actionTitle, let action {
+                InlineActionButton(title: actionTitle, action: action)
+                    .frame(height: 16)
+            }
+        }
+        .padding(.top, MenuDashboardStyle.quotaRowTop)
+        .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
+    }
+}
+
+private struct InlineActionButton: NSViewRepresentable {
+    let title: String
+    let action: () -> Void
+
+    func makeNSView(context: Context) -> NSButton {
+        let button = NSButton(title: title, target: context.coordinator, action: #selector(Coordinator.tapped))
+        button.isBordered = false
+        button.bezelStyle = .inline
+        button.alignment = .left
+        button.font = NSFont.systemFont(ofSize: MenuDashboardStyle.quotaFontSize, weight: .medium)
+        button.contentTintColor = NSColor.controlAccentColor
+        button.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }
+
+    func updateNSView(_ nsView: NSButton, context: Context) {
+        nsView.title = title
+        context.coordinator.action = action
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(action: action)
+    }
+
+    final class Coordinator: NSObject {
+        var action: () -> Void
+
+        init(action: @escaping () -> Void) {
+            self.action = action
+        }
+
+        @objc func tapped() {
+            action()
+        }
     }
 }
 

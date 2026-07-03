@@ -76,14 +76,14 @@ protocol DashboardParser: Sendable {
     func parseTier(data: Data) -> String?
     /// 从响应数据提取已知订阅价格；默认 nil，避免无依据地猜价格。
     func parseMonthlyPrice(data: Data) -> String?
-    /// 从响应数据提取可用于订阅过期日的原始日期（续费日 / 会员到期日）。
+    /// 从响应数据提取**真实订阅到期日**（续费日 / 会员到期日）。
     ///
     /// v0.6.0 起用来填 `ProviderSnapshot.subscriptionExpiresAt`。**不是** quota
     /// 窗口的「下次重置时间」——那应该走 `QuotaWindow.resetsAt`。
     ///
     /// 默认实现返回 nil（找不到真实到期日时 UI hide，不 fallback 到
-    /// max(resetsAt)）。不同 provider 的日期语义由 `SubscriptionExpirySource`
-    /// 统一换算成 UI 展示的「最后有效日」。
+    /// max(resetsAt)）。Kimi 的 `KimiSubscriptionStatParser` 实现从
+    /// `subscriptionBalance.expireTime` 提取。
     func parseSubscriptionExpiresAt(data: Data) -> Date?
 }
 
@@ -110,9 +110,16 @@ struct CodexDashboardParser: DashboardParser {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return nil
         }
-        let planType = (json["plan_type"] as? String)
-            ?? (json["planType"] as? String)
-        if planType?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "free" {
+
+        // v0.8.0：Codex 在订阅过期后会跌成 free 用户，响应里 `plan_type == "free"`。
+        // 这种情况下 `rate_limit.primary_window` 的 `limit_window_seconds` 是 2592000
+        // （30 天），被 UI 推断为"月额度"——但实际上是 free 用户的月度窗口，**不是**
+        // 付费 Plus 档位的真实额度。直接返回 nil，让 CodexAuthProvider 路径之外的
+        // strategy（BrowserCookie / CLILog）也走 fallback 而不是显示误导数据。
+        if let planType = (json["plan_type"] as? String ?? json["planType"] as? String)?
+            .trimmingCharacters(in: .whitespaces).lowercased(),
+           planType == "free"
+        {
             return nil
         }
 
@@ -389,11 +396,12 @@ struct KimiSubscriptionStatParser: DashboardParser {
 
         // Work 月度额度：从 subscriptionBalance.amountUsedRatio 推算
         if let balance = json["subscriptionBalance"] as? [String: Any],
-           let amountUsedRatio = parseNum(balance["amountUsedRatio"]) {
+           let amountUsedRatio = parseWorkUsedRatio(balance) {
             let remainingFraction = max(0, min(1, 1 - amountUsedRatio))
-            // subscriptionBalance.expireTime 是 Work 余额/周期的截止时间，不是
-            // 付费订阅续费日；用于 Work 行的倒计时文案，但不进入
-            // ProviderSnapshot.subscriptionExpiresAt。
+            // v0.6.0 起：subscriptionBalance.expireTime 是**订阅到期日**，不再塞给
+            // Work quota 的 resetsAt（Work 是月度窗口，跟 subscription 到期日是
+            // 不同概念）。订阅到期日走 `parseSubscriptionExpiresAt` 提取到
+            // `ProviderSnapshot.subscriptionExpiresAt`。
             let expireTime = parseDate(balance["expireTime"])
             let refreshText = expireTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
             windows.append(QuotaWindow(
@@ -408,10 +416,12 @@ struct KimiSubscriptionStatParser: DashboardParser {
             ))
         }
 
+        let codeUsedRatio = (json["subscriptionBalance"] as? [String: Any])
+            .flatMap { parseUsedRatio($0["kimiCodeUsedRatio"]) }
+
         // Code 7天额度
         if let ratelimitCode7d = json["ratelimitCode7d"] as? [String: Any],
-           let ratio = parseNum(ratelimitCode7d["ratio"]) {
-            let remainingFraction = max(0, min(1, 1 - ratio))
+           let remainingFraction = parseRemainingFraction(from: ratelimitCode7d, fallbackUsedRatio: codeUsedRatio) {
             let resetTime = parseDate(ratelimitCode7d["resetTime"])
             let refreshText = resetTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
             windows.append(QuotaWindow(
@@ -429,12 +439,7 @@ struct KimiSubscriptionStatParser: DashboardParser {
         if let ratelimitCode5h = json["ratelimitCode5h"] as? [String: Any],
            (ratelimitCode5h["enabled"] as? Bool) == true {
             let resetTime = parseDate(ratelimitCode5h["resetTime"])
-            let remainingFraction: Double = {
-                if let ratio = parseNum(ratelimitCode5h["ratio"]) {
-                    return max(0, min(1, 1 - ratio))
-                }
-                return 1.0
-            }()
+            let remainingFraction = parseRemainingFraction(from: ratelimitCode5h, fallbackUsedRatio: codeUsedRatio) ?? 1.0
             let refreshText = resetTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
             windows.append(QuotaWindow(
                 title: "Code",
@@ -455,22 +460,85 @@ struct KimiSubscriptionStatParser: DashboardParser {
         return nil
     }
 
-    /// Kimi 的 `subscriptionBalance.expireTime` 不是 quota reset 时间。
-    ///
-    /// 用户实测 membership 页展示的是「下一次续费日」；当前该 API 字段与页面
-    /// 订阅日一致，因此作为 browser API source 的原始日期返回。调用方负责按
-    /// `.nextRenewalDate` 转成 UI 所需的「最后有效日」。
+    /// `GetSubscriptionStat.subscriptionBalance.expireTime` 不是 UI 要展示的
+    /// 「最后有效日」来源；真实日期改由 `GetSubscription.nextBillingTime`
+    /// 经过本地自然日转换得到。
     func parseSubscriptionExpiresAt(data: Data) -> Date? {
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let balance = json["subscriptionBalance"] as? [String: Any] else {
-            return nil
-        }
-        return parseDate(balance["expireTime"])
+        nil
     }
 
     private func parseNum(_ value: Any?) -> Double? {
         if let n = value as? NSNumber { return n.doubleValue }
         if let s = value as? String, let n = Double(s) { return n }
+        return nil
+    }
+
+    private func parseUsedRatio(_ value: Any?) -> Double? {
+        guard let ratio = parseNum(value) else { return nil }
+        return ratio <= 1 ? ratio : ratio / 100
+    }
+
+    private func parseRemainingFraction(
+        from limit: [String: Any],
+        fallbackUsedRatio: Double?
+    ) -> Double? {
+        if let ratio = parseUsedRatio(limit["ratio"])
+            ?? parseUsedRatio(limit["usedRatio"])
+            ?? parseUsedRatio(limit["usageRatio"])
+            ?? parseUsedRatio(limit["used_ratio"]) {
+            return max(0, min(1, 1 - ratio))
+        }
+
+        let used = parseNum(limit["used"])
+            ?? parseNum(limit["amountUsed"])
+            ?? parseNum(limit["usage"])
+        let total = parseNum(limit["total"])
+            ?? parseNum(limit["limit"])
+            ?? parseNum(limit["amountTotal"])
+        if let used, let total, total > 0 {
+            return max(0, min(1, 1 - used / total))
+        }
+
+        let remaining = parseNum(limit["remaining"])
+            ?? parseNum(limit["amountRemaining"])
+        if let remaining, let total, total > 0 {
+            return max(0, min(1, remaining / total))
+        }
+
+        if let fallbackUsedRatio {
+            return max(0, min(1, 1 - fallbackUsedRatio))
+        }
+        return nil
+    }
+
+    private func parseWorkUsedRatio(_ balance: [String: Any]) -> Double? {
+        if let ratio = parseUsedRatio(balance["amountUsedRatio"]) {
+            return ratio
+        }
+        if let ratio = parseUsedRatio(balance["usedRatio"])
+            ?? parseUsedRatio(balance["usageRatio"])
+            ?? parseUsedRatio(balance["amount_usage_ratio"]) {
+            return ratio
+        }
+
+        let used = parseNum(balance["amountUsed"])
+            ?? parseNum(balance["used"])
+            ?? parseNum(balance["usage"])
+            ?? parseNum(balance["consumed"])
+        let total = parseNum(balance["amountTotal"])
+            ?? parseNum(balance["total"])
+            ?? parseNum(balance["limit"])
+            ?? parseNum(balance["quota"])
+        if let used, let total, total > 0 {
+            return used / total
+        }
+
+        let remaining = parseNum(balance["amountRemaining"])
+            ?? parseNum(balance["remaining"])
+            ?? parseNum(balance["balance"])
+        if let remaining, let total, total > 0 {
+            return 1 - remaining / total
+        }
         return nil
     }
 
@@ -615,5 +683,29 @@ struct KimiSubscriptionParser: DashboardParser {
               let price = Double(priceInCents)
         else { return nil }
         return String(format: "¥%.0f/月", price / 100.0)
+    }
+
+    func parseSubscriptionExpiresAt(data: Data) -> Date? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let subscription = json["subscription"] as? [String: Any],
+              let renewalDate = parseDate(subscription["nextBillingTime"])
+        else { return nil }
+        return lastValidDate(beforeRenewalDate: renewalDate)
+    }
+
+    private func lastValidDate(beforeRenewalDate renewalDate: Date, calendar: Calendar = .current) -> Date {
+        let startOfRenewalDay = calendar.startOfDay(for: renewalDate)
+        return calendar.date(byAdding: .day, value: -1, to: startOfRenewalDay)
+            ?? renewalDate.addingTimeInterval(-86_400)
+    }
+
+    private func parseDate(_ raw: Any?) -> Date? {
+        guard let s = raw as? String else { return nil }
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = iso.date(from: s) { return d }
+        let isoFallback = ISO8601DateFormatter()
+        isoFallback.formatOptions = [.withInternetDateTime]
+        return isoFallback.date(from: s)
     }
 }

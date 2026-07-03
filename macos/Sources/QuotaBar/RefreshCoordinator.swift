@@ -18,6 +18,14 @@ protocol QuotaProvider: AnyObject, Sendable {
 
 @MainActor
 final class RefreshCoordinator: ObservableObject {
+    struct ProviderInstallSummary: Sendable {
+        let detections: [InstallDetectorProvider.InstallDetection]
+
+        var reason: String {
+            detections.map(\.detail).joined(separator: "；")
+        }
+    }
+
     @Published private(set) var state: DashboardState = .empty
     @Published private(set) var isRefreshing: Bool = false
     @Published private(set) var needsFullDiskAccess: Bool = false
@@ -25,12 +33,12 @@ final class RefreshCoordinator: ObservableObject {
 
     let providers: [QuotaProvider]
     let installDetectors: [ProviderKind: InstallDetectorProvider]
+    private let sourceIndexStore: ProviderSourceIndexStore
+    private let snapshotCacheStore: ProviderSnapshotCacheStore
+    private let cookieReader: BrowserCookieReader
+    private let harvesterTimeout: TimeInterval = 12
     var refreshInterval: TimeInterval
     var providerTimeout: TimeInterval
-
-    private let cookieReader: BrowserCookieReader
-    /// 订阅过期日 source 管线超时。日期失败不影响额度展示。
-    private let harvesterTimeout: TimeInterval = 6.0
 
     private var autoRefreshTask: Task<Void, Never>?
     private var inFlightTask: Task<Void, Never>?
@@ -41,13 +49,27 @@ final class RefreshCoordinator: ObservableObject {
         installDetectors: [ProviderKind: InstallDetectorProvider] = [:],
         refreshInterval: TimeInterval = 5 * 60,
         providerTimeout: TimeInterval = 10,
+        sourceIndexStore: ProviderSourceIndexStore = .shared,
+        snapshotCacheStore: ProviderSnapshotCacheStore = .shared,
         cookieReader: BrowserCookieReader = FilesystemCookieReader()
     ) {
         self.providers = providers
         self.installDetectors = installDetectors
+        self.sourceIndexStore = sourceIndexStore
+        self.snapshotCacheStore = snapshotCacheStore
+        self.cookieReader = cookieReader
         self.refreshInterval = refreshInterval
         self.providerTimeout = providerTimeout
-        self.cookieReader = cookieReader
+
+        let cachedSnapshots = Self.sortedSnapshots(
+            snapshotCacheStore.loadAll(),
+            order: PreferencesStore.shared.providerOrder()
+        )
+        self.state = DashboardState(
+            snapshots: cachedSnapshots,
+            refreshState: .idle,
+            lastUpdated: cachedSnapshots.map(\.fetchedAt).max()
+        )
 
         NotificationCenter.default.publisher(for: .quotaPreferencesDidChange)
             .receive(on: RunLoop.main)
@@ -176,6 +198,7 @@ final class RefreshCoordinator: ObservableObject {
         //    没装的 kind 直接跳过 pipeline，UI 不会显示。
         let installReasons = await detectInstallReasons()
         NSLog("QuotaBar: installReasons = \(installReasons.keys.sorted { $0.rawValue < $1.rawValue })")
+        removeCacheForUndetectedProviders(detectedKinds: Set(installReasons.keys))
 
         // 2. 跑 installed kind 的 pipeline（并发），只对「已装且未隐藏」的 kind seed placeholder。
         let activeProviders = providers.filter { installReasons[$0.kind] != nil && !hiddenKinds.contains($0.kind) }
@@ -184,8 +207,17 @@ final class RefreshCoordinator: ObservableObject {
         // 3. 立刻 seed placeholder（streaming refresh 的关键步骤）
         let providerOrder = PreferencesStore.shared.providerOrder()
         let now = Date()
+        let currentByKind = Dictionary(uniqueKeysWithValues: state.snapshots.map { ($0.kind, $0) })
         let placeholders = activeProviders
-            .map { ProviderSnapshot.loading(kind: $0.kind, fetchedAt: now) }
+            .map { provider -> ProviderSnapshot in
+                if let current = currentByKind[provider.kind], current.availability != .loading {
+                    return current.withStaleFlag(true)
+                }
+                if let cached = snapshotCacheStore.snapshot(for: provider.kind) {
+                    return cached
+                }
+                return ProviderSnapshot.loading(kind: provider.kind, fetchedAt: now)
+            }
             .sorted { Self.sortByProviderOrder($0.kind, $1.kind, order: providerOrder) }
         state = DashboardState(
             snapshots: placeholders,
@@ -197,7 +229,7 @@ final class RefreshCoordinator: ObservableObject {
         await withTaskGroup(of: Void.self) { group in
             for provider in activeProviders {
                 let kind = provider.kind
-                let installDetail = installReasons[kind]
+                let installSummary = installReasons[kind]
                 group.addTask { [weak self] in
                     guard let self else { return }
                     NSLog("QuotaBar: ▶️ start pipeline for \(kind.rawValue)")
@@ -220,7 +252,7 @@ final class RefreshCoordinator: ObservableObject {
                         self.applyProviderResult(
                             kind: kind,
                             result: result,
-                            installDetail: installDetail,
+                            installSummary: installSummary,
                             now: Date()
                         )
                     }
@@ -239,8 +271,10 @@ final class RefreshCoordinator: ObservableObject {
         let hasAnyVisible = !finalSnapshots.isEmpty
         let hasFailedKind = finalSnapshots.contains { snapshot in
             switch snapshot.availability {
-            case .available, .loading: return false
-            case .subscriptionExpired, .needsConfiguration, .notInstalled, .fetchFailed: return true
+            case .available, .loading, .subscriptionExpired, .notSubscribed:
+                return false
+            case .needsConfiguration, .notInstalled, .fetchFailed:
+                return true
             }
         }
         let hasAnyLoading = finalSnapshots.contains { $0.availability == .loading }
@@ -259,7 +293,7 @@ final class RefreshCoordinator: ObservableObject {
             case .needsConfiguration(let reason), .fetchFailed(let reason):
                 return reason.localizedCaseInsensitiveContains("Full Disk Access")
                     || reason.localizedCaseInsensitiveContains("完全磁盘访问")
-            case .available, .subscriptionExpired, .loading, .notInstalled:
+            case .available, .loading, .notInstalled, .subscriptionExpired, .notSubscribed:
                 return false
             }
         }
@@ -281,7 +315,7 @@ final class RefreshCoordinator: ObservableObject {
     private func applyProviderResult(
         kind: ProviderKind,
         result: Result<ProviderSnapshot, Error>,
-        installDetail: String?,
+        installSummary: ProviderInstallSummary?,
         now: Date
     ) {
         let newSnapshot: ProviderSnapshot
@@ -291,12 +325,7 @@ final class RefreshCoordinator: ObservableObject {
             newSnapshot = pickBestSnapshot(from: [snapshot]) ?? snapshot
         case .failure(let error):
             if let qe = error as? QuotaFetchError {
-                let availability: ProviderAvailability
-                if let installDetail {
-                    availability = .needsConfiguration(reason: installDetail)
-                } else {
-                    availability = qe.availabilityFallback
-                }
+                let availability = availabilityFallback(for: qe, installSummary: installSummary)
                 newSnapshot = ProviderSnapshot(
                     kind: kind,
                     availability: availability,
@@ -316,16 +345,19 @@ final class RefreshCoordinator: ObservableObject {
         }
 
         // 过滤掉 fetchFailed / notInstalled（与原行为一致）：不在 dropdown 显示
-        // loading（理论上此时 loading 已被替换）/ available / needsConfiguration 保留
+        // loading（理论上此时 loading 已被替换）/ available / subscriptionExpired / needsConfiguration 保留
         let keepAfterApply: Bool
         switch newSnapshot.availability {
         case .available:
             keepAfterApply = !newSnapshot.quotas.isEmpty
-        case .needsConfiguration, .subscriptionExpired:
+        case .needsConfiguration, .subscriptionExpired, .notSubscribed:
+            // v0.8.0：subscriptionExpired 跟 needsConfiguration 一样，保留让 UI 展示
+            // 「已过期 / 上次套餐 / 到期日」灰标（让用户知道"我曾经是 Plus，但过期了"）。
             keepAfterApply = true
         case .loading, .notInstalled, .fetchFailed:
             keepAfterApply = false
         }
+        updateSnapshotCache(with: newSnapshot)
 
         var newSnapshots = state.snapshots
         if let index = newSnapshots.firstIndex(where: { $0.kind == kind }) {
@@ -360,6 +392,70 @@ final class RefreshCoordinator: ObservableObject {
         )
     }
 
+    private func availabilityFallback(
+        for error: QuotaFetchError,
+        installSummary: ProviderInstallSummary?
+    ) -> ProviderAvailability {
+        switch error {
+        case .subscriptionExpired, .notSubscribed:
+            return error.availabilityFallback
+        case .missingCredentials(let detail), .permissionRequired(let detail):
+            return .needsConfiguration(reason: combinedReason(primary: detail, installSummary: installSummary))
+        case .transient(let detail):
+            return .needsConfiguration(reason: combinedReason(primary: detail, installSummary: installSummary))
+        case .sourceUnavailable(let detail):
+            if installSummary != nil {
+                return .needsConfiguration(reason: combinedReason(primary: detail, installSummary: installSummary))
+            }
+            return error.availabilityFallback
+        }
+    }
+
+    private func combinedReason(primary: String, installSummary: ProviderInstallSummary?) -> String {
+        let trimmed = primary.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let installSummary else {
+            return trimmed.isEmpty ? "待配置" : trimmed
+        }
+        guard !trimmed.isEmpty, trimmed != installSummary.reason else {
+            return installSummary.reason
+        }
+        return "\(trimmed)；\(installSummary.reason)"
+    }
+
+    private func enrichWithSubscriptionExpiry(_ snapshot: ProviderSnapshot) async -> ProviderSnapshot {
+        guard snapshot.availability == .available else {
+            QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] skip subscription expiry enrichment, availability=\(snapshot.availability)")
+            return snapshot
+        }
+
+        let resolver = SubscriptionExpiryResolver(
+            cookieReader: cookieReader,
+            timeout: harvesterTimeout
+        )
+        QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] start subscription expiry enrichment")
+        guard let resolution = await resolver.resolve(for: snapshot) else {
+            QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry unresolved")
+            return snapshot
+        }
+        QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry resolved expiresAt=\(resolution.expiresAt), source=\(resolution.source.id), kind=\(resolution.source.kind.rawValue), confidence=\(resolution.source.confidence.rawValue)")
+        NSLog(
+            "QuotaBar: 📅 \(snapshot.kind.rawValue) subscriptionExpiresAt=\(resolution.expiresAt) source=\(resolution.source.kind.rawValue) confidence=\(resolution.source.confidence.rawValue)"
+        )
+        return ProviderSnapshot(
+            id: snapshot.id,
+            kind: snapshot.kind,
+            subscriptionTier: snapshot.subscriptionTier,
+            availability: snapshot.availability,
+            quotas: snapshot.quotas,
+            monthlyPrice: snapshot.monthlyPrice,
+            subscriptionExpiresAt: resolution.expiresAt,
+            subscriptionExpiresAtSource: resolution.source.kind,
+            subscriptionExpiresAtConfidence: resolution.source.confidence,
+            fetchedAt: snapshot.fetchedAt,
+            isStale: snapshot.isStale
+        )
+    }
+
     /// 按用户偏好 provider 顺序排序；未指定的 provider 按 rawValue 字母顺序排在后面。
     private static func sortByProviderOrder(_ a: ProviderKind, _ b: ProviderKind, order: [String]) -> Bool {
         let indexA = order.firstIndex(of: a.rawValue) ?? Int.max
@@ -375,10 +471,12 @@ final class RefreshCoordinator: ObservableObject {
         // 优先级：available > needsConfiguration > loading > notInstalled > fetchFailed
         // loading 介于 needsConfiguration 和 notInstalled 之间：它表明 service 已装且正在取数据，
         // 优先级略高于 notInstalled / fetchFailed 但低于 available / needsConfiguration。
+        // v0.8.0：subscriptionExpired 优先级与 needsConfiguration 同级（都是"配置相关"问题）
         let priority: (ProviderAvailability) -> Int = { availability in
             switch availability {
-            case .available: return 4
-            case .subscriptionExpired: return 3
+            case .available: return 5
+            case .subscriptionExpired: return 4
+            case .notSubscribed: return 4
             case .needsConfiguration: return 3
             case .loading: return 2
             case .notInstalled: return 1
@@ -398,73 +496,101 @@ final class RefreshCoordinator: ObservableObject {
         return sorted.first
     }
 
-    /// 订阅过期日独立 source 管线。
-    ///
-    /// 额度 pipeline 负责回答“还有多少可用额度”；这里负责补充“付费订阅什么时候到期”。
-    /// 找不到日期时保留原 snapshot，不把日期失败映射成额度失败。
-    private func enrichWithSubscriptionExpiry(_ snapshot: ProviderSnapshot) async -> ProviderSnapshot {
-        guard snapshot.availability == .available else {
-            QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] skip subscription expiry enrichment, availability=\(snapshot.availability)")
-            return snapshot
-        }
-
-        let resolver = SubscriptionExpiryResolver(cookieReader: cookieReader, timeout: harvesterTimeout)
-        QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] start subscription expiry enrichment")
-        guard let resolution = await resolver.resolve(for: snapshot) else {
-            QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry unresolved")
-            return snapshot
-        }
-
-        QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry resolved expiresAt=\(resolution.expiresAt), source=\(resolution.source.id), kind=\(resolution.source.kind.rawValue), confidence=\(resolution.source.confidence.rawValue)")
-        return ProviderSnapshot(
-            id: snapshot.id,
-            kind: snapshot.kind,
-            subscriptionTier: snapshot.subscriptionTier,
-            availability: snapshot.availability,
-            quotas: snapshot.quotas,
-            monthlyPrice: snapshot.monthlyPrice,
-            subscriptionExpiresAt: resolution.expiresAt,
-            subscriptionExpiresAtSource: resolution.source.kind,
-            subscriptionExpiresAtConfidence: resolution.source.confidence,
-            fetchedAt: snapshot.fetchedAt,
-            isStale: snapshot.isStale
-        )
-    }
-
     // MARK: - 辅助
 
     /// 并行跑所有 `InstallDetectorProvider`，返回 kind → install reason。
     /// 没装的 kind 不会出现在结果里。
     /// reason 后续用于 pipeline 失败时 fallback 显示「已安装 X / Y」的文案。
-    private func detectInstallReasons() async -> [ProviderKind: String] {
+    private func detectInstallReasons() async -> [ProviderKind: ProviderInstallSummary] {
         guard !installDetectors.isEmpty else {
-            return Dictionary(uniqueKeysWithValues: providers.map { ($0.kind, "未知") })
+            return Dictionary(uniqueKeysWithValues: providers.map { ($0.kind, ProviderInstallSummary(detections: [])) })
         }
 
-        return await withTaskGroup(of: (ProviderKind, String?).self) { group in
+        let preferredSourceIds = Dictionary(uniqueKeysWithValues: installDetectors.keys.map {
+            ($0, sourceIndexStore.preferredSourceID(for: $0, layer: .provider))
+        })
+
+        return await withTaskGroup(of: (ProviderKind, ProviderInstallSummary?).self) { group in
             for (kind, detector) in installDetectors {
+                let preferredSourceId = preferredSourceIds[kind] ?? nil
                 group.addTask {
-                    do {
-                        let snapshot = try await detector.fetchSnapshot(timeout: 3)
-                        if case .needsConfiguration(let text) = snapshot.availability {
-                            NSLog("QuotaBar: 🔍 \(kind.rawValue) detected: \(text)")
-                            return (kind, text)
-                        }
-                        NSLog("QuotaBar: 🔍 \(kind.rawValue) not detected (availability not needsConfiguration)")
-                        return (kind, nil)
-                    } catch {
-                        NSLog("QuotaBar: 🔍 \(kind.rawValue) detection failed: \(error)")
+                    let detections = detector.detectSources(preferredSourceId: preferredSourceId)
+                    if detections.isEmpty {
+                        NSLog("QuotaBar: 🔍 \(kind.rawValue) not detected")
                         return (kind, nil)
                     }
+                    let summary = ProviderInstallSummary(detections: detections)
+                    NSLog("QuotaBar: 🔍 \(kind.rawValue) detected: \(summary.reason)")
+                    return (kind, summary)
                 }
             }
-            var map: [ProviderKind: String] = [:]
-            for await (kind, reason) in group {
-                if let reason { map[kind] = reason }
+            var map: [ProviderKind: ProviderInstallSummary] = [:]
+            for await (kind, summary) in group {
+                guard let summary else { continue }
+                map[kind] = summary
+                for detection in summary.detections {
+                    sourceIndexStore.recordSuccess(
+                        kind: kind,
+                        layer: .provider,
+                        sourceKind: detection.sourceKind,
+                        sourceId: detection.sourceId,
+                        metadata: detection.metadata
+                    )
+                }
             }
             NSLog("QuotaBar: 🔍 detected kinds: \(map.keys.map { $0.rawValue })")
             return map
         }
+    }
+
+    private func updateSnapshotCache(with snapshot: ProviderSnapshot) {
+        let sourceRecord = snapshotCacheSourceRecord(for: snapshot)
+        switch snapshot.availability {
+        case .available:
+            if snapshot.quotas.isEmpty {
+                snapshotCacheStore.remove(kind: snapshot.kind)
+            } else {
+                snapshotCacheStore.store(
+                    snapshot,
+                    sourceKind: sourceRecord?.sourceKind,
+                    sourceId: sourceRecord?.sourceId
+                )
+            }
+        case .subscriptionExpired, .notSubscribed:
+            snapshotCacheStore.store(
+                snapshot,
+                sourceKind: sourceRecord?.sourceKind,
+                sourceId: sourceRecord?.sourceId
+            )
+        case .loading, .needsConfiguration, .notInstalled, .fetchFailed:
+            snapshotCacheStore.remove(kind: snapshot.kind)
+        }
+    }
+
+    private func snapshotCacheSourceRecord(for snapshot: ProviderSnapshot) -> ProviderSourceRecord? {
+        switch snapshot.availability {
+        case .available:
+            return sourceIndexStore.preferredSource(for: snapshot.kind, layer: .quota)
+                ?? sourceIndexStore.preferredSource(for: snapshot.kind, layer: .plan)
+                ?? sourceIndexStore.preferredSource(for: snapshot.kind, layer: .expiration)
+                ?? sourceIndexStore.preferredSource(for: snapshot.kind, layer: .provider)
+        case .subscriptionExpired, .notSubscribed:
+            return sourceIndexStore.preferredSource(for: snapshot.kind, layer: .expiration)
+                ?? sourceIndexStore.preferredSource(for: snapshot.kind, layer: .provider)
+        case .loading, .needsConfiguration, .notInstalled, .fetchFailed:
+            return nil
+        }
+    }
+
+    private func removeCacheForUndetectedProviders(detectedKinds: Set<ProviderKind>) {
+        let managedKinds = Set(providers.map(\.kind))
+        for snapshot in snapshotCacheStore.loadAll() where managedKinds.contains(snapshot.kind) && !detectedKinds.contains(snapshot.kind) {
+            snapshotCacheStore.remove(kind: snapshot.kind)
+        }
+    }
+
+    private static func sortedSnapshots(_ snapshots: [ProviderSnapshot], order: [String]) -> [ProviderSnapshot] {
+        snapshots.sorted { sortByProviderOrder($0.kind, $1.kind, order: order) }
     }
 
     var lastUpdatedText: String {

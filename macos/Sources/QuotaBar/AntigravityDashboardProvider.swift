@@ -18,20 +18,30 @@ import Foundation
 /// 注意：agy CLI 启动的 language_server 使用自签名 HTTPS 证书且不需要 CSRF token；
 /// IDE/App 启动的 language_server 通常需要 `X-Codeium-Csrf-Token`。
 final class AntigravityDashboardProvider: QuotaProvider, @unchecked Sendable {
+    enum ProcessMode: Sendable {
+        case any
+        case languageServer
+        case cli
+    }
 
-    let id = "antigravity-dashboard"
+    let id: String
     let kind: ProviderKind = .antigravity
     var displayName: String { kind.displayName }
 
     private let session: URLSession
     private let commandRunner: CommandRunning
     private let dateProvider: () -> Date
+    private let processMode: ProcessMode
 
     init(
+        id: String = "antigravity-dashboard",
+        processMode: ProcessMode = .any,
         session: URLSession? = nil,
         commandRunner: CommandRunning = SystemCommandRunner(),
         dateProvider: @escaping () -> Date = Date.init
     ) {
+        self.id = id
+        self.processMode = processMode
         // 本地 language_server 使用自签名证书，需要允许不安全 HTTPS。
         self.session = session ?? Self.makeTrustingSession()
         self.commandRunner = commandRunner
@@ -45,7 +55,7 @@ final class AntigravityDashboardProvider: QuotaProvider, @unchecked Sendable {
         let pid = try await findLanguageServerPID()
         guard let pid else {
             throw QuotaFetchError.sourceUnavailable(
-                detail: "Antigravity IDE 未运行或未激活 workspace（找不到 language_server 进程）"
+                detail: missingProcessDetail
             )
         }
 
@@ -98,16 +108,19 @@ final class AntigravityDashboardProvider: QuotaProvider, @unchecked Sendable {
 
     private func findLanguageServerPID() async throws -> Int32? {
         // 1. 先查找 language_server_macos 进程（IDE / App 模式）
-        let lsResult = try await commandRunner.run(
-            "/bin/sh",
-            ["-c", "pgrep -f language_server_macos | head -1"]
-        )
-        let lsTrimmed = lsResult.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !lsTrimmed.isEmpty, let pid = Int32(lsTrimmed) {
-            return pid
+        if processMode != .cli {
+            let lsResult = try await commandRunner.run(
+                "/bin/sh",
+                ["-c", "pgrep -f language_server_macos | head -1"]
+            )
+            let lsTrimmed = lsResult.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !lsTrimmed.isEmpty, let pid = Int32(lsTrimmed) {
+                return pid
+            }
         }
 
         // 2. 查找 agy CLI 进程（多种匹配方式，避免路径差异）
+        guard processMode != .languageServer else { return nil }
         let agyPatterns = [
             "pgrep -x agy | head -1",
             "pgrep -f '[\\/]bin[\\/]agy' | head -1",
@@ -126,6 +139,17 @@ final class AntigravityDashboardProvider: QuotaProvider, @unchecked Sendable {
         }
 
         return nil
+    }
+
+    private var missingProcessDetail: String {
+        switch processMode {
+        case .languageServer:
+            return "Antigravity IDE 未运行或未激活 workspace（找不到 language_server 进程）"
+        case .cli:
+            return "Antigravity CLI 未运行（找不到 agy 进程）"
+        case .any:
+            return "Antigravity IDE/CLI 未运行或未激活 workspace（找不到 language_server / agy 进程）"
+        }
     }
 
     // MARK: - 端点解析

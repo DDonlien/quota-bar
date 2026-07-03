@@ -14,9 +14,15 @@ import AppKit
 ///
 /// 检测项：
 /// 1. **App Bundle**：用 `NSWorkspace` + 候选 App 名探测（沿用 `AppBundleProvider` 思路）；
-/// 2. **CLI 命令**：`kind.cliCommands` 指定的可执行命令候选是否在 PATH；
+/// 2. **CLI 命令**：`kind.cliCommand` 指定的可执行命令是否在 PATH；
 /// 3. **环境变量凭证**：`kind.envVarNames` 列出的环境变量是否有值。
 final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
+    struct InstallDetection: Sendable, Hashable {
+        let sourceKind: ProviderSourceKind
+        let sourceId: String
+        let detail: String
+        let metadata: [String: String]
+    }
 
     let id: String
     let kind: ProviderKind
@@ -32,33 +38,9 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
     }
 
     func fetchSnapshot(timeout: TimeInterval) async throws -> ProviderSnapshot {
-        var reasons: [String] = []
+        let detections = detectSources()
 
-        if let appPath = findAppPath() {
-            reasons.append("App 已装（\(appPath)）")
-        }
-
-        for command in kind.cliCommands {
-            if let path = findCommand(command) {
-                reasons.append("CLI 已装（\(path)）")
-                break
-            }
-        }
-
-        for envName in kind.envVarNames {
-            if let value = ProcessInfo.processInfo.environment[envName], !value.isEmpty {
-                reasons.append("\(envName) 已配置")
-            }
-        }
-
-        for path in kind.credentialFiles {
-            let expanded = (path as NSString).expandingTildeInPath
-            if FileManager.default.fileExists(atPath: expanded) {
-                reasons.append("凭证文件存在（\(path)）")
-            }
-        }
-
-        guard !reasons.isEmpty else {
+        guard !detections.isEmpty else {
             throw QuotaFetchError.sourceUnavailable(
                 detail: "未检测到 \(kind.displayName) 的 App/CLI/凭证"
             )
@@ -66,11 +48,132 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
 
         return ProviderSnapshot(
             kind: kind,
-            availability: .needsConfiguration(reason: reasons.joined(separator: "；")),
+            availability: .needsConfiguration(reason: detections.map(\.detail).joined(separator: "；")),
             quotas: [],
             monthlyPrice: nil,
             fetchedAt: Date()
         )
+    }
+
+    func detectSources(preferredSourceId: String? = nil) -> [InstallDetection] {
+        if let preferredSourceId,
+           let detection = detectPreferredSource(sourceId: preferredSourceId) {
+            return [detection]
+        }
+
+        var detections: [InstallDetection] = []
+
+        if let appPath = findAppPath() {
+            detections.append(InstallDetection(
+                sourceKind: .appBundle,
+                sourceId: "appBundle:\(kind.bundleIdentifier ?? appPath)",
+                detail: "App 已装（\(appPath)）",
+                metadata: ["path": appPath]
+            ))
+        }
+
+        if let command = kind.cliCommand, let path = findCommand(command) {
+            detections.append(InstallDetection(
+                sourceKind: .cli,
+                sourceId: "cli:\(command)",
+                detail: "CLI 已装（\(path)）",
+                metadata: ["command": command, "path": path]
+            ))
+        }
+
+        for envName in kind.envVarNames {
+            if let value = ProcessInfo.processInfo.environment[envName], !value.isEmpty {
+                detections.append(InstallDetection(
+                    sourceKind: .environment,
+                    sourceId: "environment:\(envName)",
+                    detail: "\(envName) 已配置",
+                    metadata: ["name": envName]
+                ))
+            }
+        }
+
+        for path in kind.credentialFiles {
+            let expanded = (path as NSString).expandingTildeInPath
+            if FileManager.default.fileExists(atPath: expanded) {
+                detections.append(InstallDetection(
+                    sourceKind: .configFile,
+                    sourceId: "configFile:\(path)",
+                    detail: "凭证文件存在（\(path)）",
+                    metadata: ["path": path]
+                ))
+            }
+        }
+
+        return prioritize(detections)
+    }
+
+    private func detectPreferredSource(sourceId: String) -> InstallDetection? {
+        if sourceId.hasPrefix("appBundle:"),
+           let appPath = findAppPath() {
+            return InstallDetection(
+                sourceKind: .appBundle,
+                sourceId: "appBundle:\(kind.bundleIdentifier ?? appPath)",
+                detail: "App 已装（\(appPath)）",
+                metadata: ["path": appPath]
+            )
+        }
+
+        if sourceId.hasPrefix("cli:") {
+            let command = String(sourceId.dropFirst("cli:".count))
+            if let path = findCommand(command) {
+                return InstallDetection(
+                    sourceKind: .cli,
+                    sourceId: "cli:\(command)",
+                    detail: "CLI 已装（\(path)）",
+                    metadata: ["command": command, "path": path]
+                )
+            }
+        }
+
+        if sourceId.hasPrefix("environment:") {
+            let name = String(sourceId.dropFirst("environment:".count))
+            if let value = ProcessInfo.processInfo.environment[name], !value.isEmpty {
+                return InstallDetection(
+                    sourceKind: .environment,
+                    sourceId: "environment:\(name)",
+                    detail: "\(name) 已配置",
+                    metadata: ["name": name]
+                )
+            }
+        }
+
+        if sourceId.hasPrefix("configFile:") {
+            let rawPath = String(sourceId.dropFirst("configFile:".count))
+            let expanded = (rawPath as NSString).expandingTildeInPath
+            if FileManager.default.fileExists(atPath: expanded) {
+                return InstallDetection(
+                    sourceKind: .configFile,
+                    sourceId: "configFile:\(rawPath)",
+                    detail: "凭证文件存在（\(rawPath)）",
+                    metadata: ["path": rawPath]
+                )
+            }
+        }
+
+        return nil
+    }
+
+    private func prioritize(_ detections: [InstallDetection]) -> [InstallDetection] {
+        let rank: (ProviderSourceKind) -> Int = { sourceKind in
+            switch sourceKind {
+            case .configFile: return 0
+            case .appBundle: return 1
+            case .cli: return 2
+            case .environment: return 3
+            case .api, .rpc, .browserCookie, .keychain, .localLog, .unknown: return 4
+            }
+        }
+        return detections.sorted {
+            let ra = rank($0.sourceKind)
+            let rb = rank($1.sourceKind)
+            if ra != rb { return ra < rb }
+            return $0.sourceId < $1.sourceId
+        }
     }
 
     // MARK: - App 路径搜索

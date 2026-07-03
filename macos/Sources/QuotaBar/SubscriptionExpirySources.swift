@@ -7,7 +7,7 @@ import Foundation
 /// 额度 pipeline 负责回答「还有多少可用额度」；订阅过期日 source pipeline 负责回答
 /// 「付费订阅什么时候续费 / 到期」。两者不能互相阻塞：没有付费订阅时仍可展示免费额度，
 /// 找不到过期日时只隐藏日期。
-enum SubscriptionExpirySourceKind: String, Hashable, Sendable {
+enum SubscriptionExpirySourceKind: String, Codable, Hashable, Sendable {
     /// Provider API 或 dashboard API 明确返回的订阅到期字段。
     case api
     /// 本地 App 缓存、LocalStorage、SQLite、配置文件或本地服务。
@@ -21,7 +21,7 @@ enum SubscriptionExpirySourceKind: String, Hashable, Sendable {
 }
 
 /// 订阅过期日可信度。用于调试和后续 UI 解释。
-enum SubscriptionExpiryConfidence: String, Hashable, Sendable {
+enum SubscriptionExpiryConfidence: String, Codable, Hashable, Sendable {
     case high
     case medium
     case low
@@ -31,7 +31,7 @@ enum SubscriptionExpiryConfidence: String, Hashable, Sendable {
 ///
 /// UI 展示的是「最后有效日」。有些页面直接写到期日；有些页面写的是下一次续费日，
 /// 这类日期需要减去一个本地自然日，才能变成最后有效日。
-enum SubscriptionExpiryDateMeaning: String, Hashable, Sendable {
+enum SubscriptionExpiryDateMeaning: String, Codable, Hashable, Sendable {
     case lastValidDate
     case nextRenewalDate
 }
