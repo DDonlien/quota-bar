@@ -61,6 +61,19 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
     /// 激活邮箱。当前激活体系尚未接入后端，只持久化用户输入。
     var activationEmail: String
 
+    /// 上一次成功检查更新的时间（v0.11.0-FE-A-007，5 分钟内不重复请求 GitHub API）。
+    var lastUpdateCheck: Date?
+
+    /// 用户点过「稍后提醒」的版本 tag 列表（v0.11.0-UI-A-002，24h 抑制在 UpdateChecker 内实现）。
+    var ignoredVersions: [String]
+
+    /// 是否启用 Claude Code `statusLine` hook 额度捕获（用户显式 opt-in）。
+    /// 开启后往 `~/.claude/settings.json` 写入一个小脚本作为 statusLine 命令，
+    /// 捕获 Claude Code 自己在终端状态栏渲染时携带的 `rate_limits` 数据到本地
+    /// 缓存文件；关闭时移除该脚本（若用户已有其他 statusLine 配置则不会覆盖，
+    /// 也不会移除）。见 `ClaudeStatusLineHookInstaller`。
+    var claudeStatusLineHookEnabled: Bool
+
     init(
         providerOverrides: [ProviderOverride] = [],
         quotaGroupOrder: [String: [String]] = [:],
@@ -74,7 +87,10 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         incidentMonitoringEnabled: Bool = false,
         advanced: AdvancedPreferences = AdvancedPreferences(),
         launchAtLogin: Bool = false,
-        activationEmail: String = ""
+        activationEmail: String = "",
+        lastUpdateCheck: Date? = nil,
+        ignoredVersions: [String] = [],
+        claudeStatusLineHookEnabled: Bool = false
     ) {
         self.providerOverrides = providerOverrides
         self.quotaGroupOrder = quotaGroupOrder
@@ -89,6 +105,9 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         self.advanced = advanced
         self.launchAtLogin = launchAtLogin
         self.activationEmail = activationEmail
+        self.lastUpdateCheck = lastUpdateCheck
+        self.ignoredVersions = ignoredVersions
+        self.claudeStatusLineHookEnabled = claudeStatusLineHookEnabled
     }
 
     enum CodingKeys: String, CodingKey {
@@ -105,6 +124,9 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         case advanced
         case launchAtLogin
         case activationEmail
+        case lastUpdateCheck
+        case ignoredVersions
+        case claudeStatusLineHookEnabled
     }
 
     init(from decoder: Decoder) throws {
@@ -122,7 +144,10 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
             incidentMonitoringEnabled: try container.decodeIfPresent(Bool.self, forKey: .incidentMonitoringEnabled) ?? false,
             advanced: try container.decodeIfPresent(AdvancedPreferences.self, forKey: .advanced) ?? AdvancedPreferences(),
             launchAtLogin: try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false,
-            activationEmail: try container.decodeIfPresent(String.self, forKey: .activationEmail) ?? ""
+            activationEmail: try container.decodeIfPresent(String.self, forKey: .activationEmail) ?? "",
+            lastUpdateCheck: try container.decodeIfPresent(Date.self, forKey: .lastUpdateCheck),
+            ignoredVersions: try container.decodeIfPresent([String].self, forKey: .ignoredVersions) ?? [],
+            claudeStatusLineHookEnabled: try container.decodeIfPresent(Bool.self, forKey: .claudeStatusLineHookEnabled) ?? false
         )
     }
 }
@@ -361,6 +386,13 @@ final class PreferencesStore {
         _ = try? persist()
     }
 
+    /// 切换 Claude Code statusLine hook；实际的 install/uninstall 副作用由调用方
+    /// （UI 层）在切换后调用 `ClaudeStatusLineHookInstaller` 执行，这里只持久化开关状态。
+    func setClaudeStatusLineHookEnabled(_ enabled: Bool) {
+        preferences.claudeStatusLineHookEnabled = enabled
+        _ = try? persist()
+    }
+
     func setAdvanced(_ advanced: AdvancedPreferences) {
         preferences.advanced = advanced
         _ = try? persist()
@@ -369,6 +401,24 @@ final class PreferencesStore {
     /// 设置是否在登录时启动。落地逻辑由调用方负责（`SMAppService`），本方法只持久化。
     func setLaunchAtLogin(_ enabled: Bool) {
         preferences.launchAtLogin = enabled
+        _ = try? persist()
+    }
+
+    // MARK: - 更新检查（v0.11.0）
+
+    func setLastUpdateCheck(_ date: Date?) {
+        preferences.lastUpdateCheck = date
+        _ = try? persist()
+    }
+
+    func ignoreVersion(_ tag: String) {
+        guard !preferences.ignoredVersions.contains(tag) else { return }
+        preferences.ignoredVersions.append(tag)
+        _ = try? persist()
+    }
+
+    func resetIgnoredVersions() {
+        preferences.ignoredVersions = []
         _ = try? persist()
     }
 

@@ -35,7 +35,12 @@ struct SubscriptionExpirySourcesTests {
     @Test("用户确认的 headless billing URL 已注册")
     func confirmedBillingURLs() {
         #expect(SubscriptionExpirySources.sources(for: .claude).first?.pageURL?.absoluteString == "https://claude.ai/new#settings/billing")
-        #expect(SubscriptionExpirySources.sources(for: .codex).first?.pageURL?.absoluteString == "https://chatgpt.com/#settings/Billing")
+        // Codex 的首选改为 accounts/check browserAPI（JSON，稳定），headless 账单页降为兜底。
+        let codexSources = SubscriptionExpirySources.sources(for: .codex)
+        #expect(codexSources.first?.id == "codex-accounts-check")
+        #expect(codexSources.first?.kind == .browserAPI)
+        #expect(codexSources.first?.apiRequest != nil)
+        #expect(codexSources.contains { $0.pageURL?.absoluteString == "https://chatgpt.com/#settings/Billing" })
         #expect(SubscriptionExpirySources.sources(for: .minimax).first?.pageURL?.absoluteString == "https://platform.minimaxi.com/console/plan")
     }
 

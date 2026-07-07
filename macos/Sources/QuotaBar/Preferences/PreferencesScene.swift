@@ -76,6 +76,7 @@ struct PreferencesScene: View {
         case .general: GeneralSettingsView()
         case .models: ModelsSettingsView()
         case .activation: ActivationSettingsView()
+        case .diagnostics: DiagnosticsSettingsView()
         case .about: AboutSettingsView()
         }
     }

@@ -9,6 +9,7 @@ enum PreferencesSection: String, Hashable, Identifiable, CaseIterable, Sendable 
     case general
     case models
     case activation
+    case diagnostics
     case about
 
     var id: String { rawValue }
@@ -19,6 +20,7 @@ enum PreferencesSection: String, Hashable, Identifiable, CaseIterable, Sendable 
         case .general: return "通用"
         case .models: return "模型"
         case .activation: return "激活"
+        case .diagnostics: return "日志"
         case .about: return "关于"
         }
     }
@@ -29,6 +31,7 @@ enum PreferencesSection: String, Hashable, Identifiable, CaseIterable, Sendable 
         case .general: return "gearshape"
         case .models: return "square.stack.3d.up"
         case .activation: return "key.fill"
+        case .diagnostics: return "doc.text.magnifyingglass"
         case .about: return "info.circle"
         }
     }
@@ -40,6 +43,7 @@ enum PreferencesSection: String, Hashable, Identifiable, CaseIterable, Sendable 
         case .general: return .gray
         case .models: return .blue
         case .activation: return .orange
+        case .diagnostics: return .green
         case .about: return .blue
         }
     }
@@ -48,7 +52,7 @@ enum PreferencesSection: String, Hashable, Identifiable, CaseIterable, Sendable 
     var group: PreferencesGroup {
         switch self {
         case .general, .models: return .default
-        case .activation, .about: return .quotaBar
+        case .activation, .diagnostics, .about: return .quotaBar
         }
     }
 }

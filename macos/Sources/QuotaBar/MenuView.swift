@@ -378,6 +378,10 @@ private struct PlanSection: View {
             case .available:
                 if isLoading {
                     QuotaSkeleton()
+                } else if snapshot.quotas.isEmpty {
+                    // 非授权流程只拿到了 provider 存在的信号（如 tier-only CLI 兜底层），
+                    // 额度本身还没有——额度栏自己请求授权，不依赖 header 那边的按钮。
+                    QuotaAuthPromptRow(kind: snapshot.kind)
                 } else if hasMultipleSubscriptionGroups {
                     // 多订阅组 provider：子组作为拖拽边界存在，但不渲染额外标签行。
                     // 状态灯仍只在 provider header 上显示，组内多条 quota 作为整组移动。
@@ -400,22 +404,31 @@ private struct PlanSection: View {
                 // primary_window 误导成有效付费额度），只展示一行灰标 hint，让用户知道
                 // 1) 账号在 2) 上次付费档位 3) 到期日
                 StatusRow(text: Self.expiredHint(plan: plan, expiredAt: expiredAt))
-            case .notSubscribed(let reason):
-                StatusRow(text: "未订阅 · \(reason)")
+            case .notSubscribed:
+                // 服务端已经明确告知"没有有效订阅"（不是获取失败、不是不清楚）：
+                // 直接显示灰色定论文案，不拼接原始技术性 reason（那是给日志看的）。
+                StatusRow(text: "未订阅或订阅已过期")
             case .needsConfiguration(let reason):
                 if snapshot.kind == .minimax, let onSaveKey {
                     MiniMaxKeyInputField(
                         reason: reason,
                         onSave: { key in onSaveKey(snapshot.kind, key) }
                     )
-                } else {
-                    StatusRow(
-                        text: "待配置 · \(reason)",
-                        actionTitle: snapshot.kind.webAuthorizationURL == nil ? nil : Self.webAuthorizationTitle(for: snapshot.kind),
-                        action: snapshot.kind.webAuthorizationURL == nil ? nil : {
-                            WebAuthorizationController.shared.openAuthorization(for: snapshot.kind)
-                        }
+                } else if snapshot.kind.webAuthorizationURL != nil {
+                    // 还不清楚这个 provider 到底有没有订阅（拿数据失败/凭证问题等，
+                    // 不是服务端明确告知"未订阅"）：只给一个清晰的操作入口，不展示
+                    // 原始技术性 reason 文本（例如内部拼接的多条错误信息），要么点开
+                    // WebView 授权，要么等下一轮非授权流程再试。
+                    InlineActionButton(
+                        title: Self.webAuthorizationTitle(for: snapshot.kind),
+                        action: { WebAuthorizationController.shared.openAuthorization(for: snapshot.kind) }
                     )
+                    .frame(height: 16)
+                    .padding(.top, MenuDashboardStyle.quotaRowTop)
+                    .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
+                } else {
+                    // 没有 WebView 授权入口可给：只能展示原始 reason，没有更好的选择。
+                    StatusRow(text: "待配置 · \(reason)")
                 }
             case .notInstalled:
                 StatusRow(text: "未安装")
@@ -906,15 +919,28 @@ private struct PlanHeader: View {
     let snapshot: ProviderSnapshot
     let onHide: (() -> Void)?
 
-    /// 触发「显示日期 + 价格」组合的共享前置条件：必须有订阅到期日、有月费、
-    /// 且处于已配置可用状态。集中在一处方便 UI-A-000 / UI-A-001 复用。
-    ///
-    /// 任何一条不满足都返回 `nil`，对应 UI 走「只渲染价格」分支——
-    /// `if let expiresAtText` 不渲染日期 Text，HStack 自动收缩为只装价格，
-    /// 配合左侧 `Spacer()` 把价格推回右边缘（v0.6.0-UI-A-000）。
+    /// TierName：非授权流程也可能拿到（tier-only CLI 层等）；空字符串视为未获取。
+    private var tierName: String? {
+        guard let tier = snapshot.subscriptionTier?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !tier.isEmpty else { return nil }
+        return tier
+    }
+
+    /// TierName 缺失但额度已经拿到时的假设（见需求方规格）：TierName 都拿不到，
+    /// 订阅费用、到期日、订阅周期理应也一并拿不到——用一个授权引导覆盖整个右侧，
+    /// 不必再分别判断价格/日期。额度本身缺失时由额度栏自己的按钮请求授权，这里不重复。
+    private var missingTierNeedsAuth: Bool {
+        snapshot.availability == .available
+            && tierName == nil
+            && !snapshot.quotas.isEmpty
+            && snapshot.kind.webAuthorizationURL != nil
+    }
+
+    /// 触发「显示到期日」的前置条件：必须有到期日、且处于已配置可用状态。
+    /// 订阅费用是否存在是独立的一条轴线，不再作为日期显示的前置条件——
+    /// 拿到日期但没拿到价格（或反之）都应该各自独立展示/隐藏。
     private var subscriptionExpiresDate: Date? {
-        guard snapshot.monthlyPrice != nil,
-              snapshot.availability == .available,
+        guard snapshot.availability == .available,
               let date = snapshot.subscriptionExpiresAt else { return nil }
         return date
     }
@@ -948,6 +974,36 @@ private struct PlanHeader: View {
         return f
     }()
 
+    /// 有 TierName、有额度，但没有订阅到期日、且该 provider 的日期依赖 headless 订阅页
+    /// （Codex / MiniMax / Claude 等）时，提供 WebView 授权引导入口。
+    /// Kimi 等日期直接来自本地 API 的 provider 不显示（拿不到就是真没有）。
+    private var canOfferWebAuthorizationForDate: Bool {
+        snapshot.availability == .available
+            && tierName != nil
+            && !snapshot.quotas.isEmpty
+            && snapshot.subscriptionExpiresAt == nil
+            && snapshot.kind.webAuthorizationURL != nil
+            && SubscriptionExpirySources.sources(for: snapshot.kind).contains { $0.kind == .headlessDOM }
+    }
+
+    private static let authPromptText = "打开 WebView 授权"
+
+    /// 「隐藏」按钮只在这个 provider 还没拿到真实额度数据时提供——跟在偏好设置
+    /// 「模型」页把开关关掉是完全同一个动作（见 `RefreshCoordinator.hide(kind:)`），
+    /// 持久化后不会再实际发起这个 provider 的任何请求，不是只在 dropdown 里视觉隐藏。
+    /// 已经有真实额度的 provider 不提供这个按钮——那种情况下没有"我不用这个"的诉求，
+    /// 误触的代价也更高。
+    private var canHide: Bool {
+        switch snapshot.availability {
+        case .needsConfiguration, .notSubscribed, .subscriptionExpired:
+            return true
+        case .available:
+            return snapshot.quotas.isEmpty
+        case .loading, .notInstalled, .fetchFailed:
+            return false
+        }
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             Circle()
@@ -955,22 +1011,36 @@ private struct PlanHeader: View {
                 .frame(width: MenuDashboardStyle.statusDotSize, height: MenuDashboardStyle.statusDotSize)
                 .frame(width: MenuDashboardStyle.leadingGlyphColumn, alignment: .center)
 
-            Text(snapshot.displayName)
-                .font(.system(size: MenuDashboardStyle.planNameFontSize, weight: MenuDashboardStyle.planNameWeight))
-                .foregroundStyle(Color.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.9)
+            HStack(spacing: 0) {
+                Text(snapshot.kind.displayName)
+                    .font(.system(size: MenuDashboardStyle.planNameFontSize, weight: MenuDashboardStyle.planNameWeight))
+                    .foregroundStyle(Color.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.9)
+                if let tierName {
+                    Text(" · \(tierName)")
+                        .font(.system(size: MenuDashboardStyle.planNameFontSize, weight: .regular))
+                        .foregroundStyle(Palette.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.9)
+                }
+            }
 
             Spacer()
 
-            switch snapshot.availability {
-            case .needsConfiguration:
-                HideButton(action: {
-                    onHide?()
-                })
-                .frame(width: 16, height: 16)
-                .help("隐藏此订阅")
-            default:
+            if missingTierNeedsAuth {
+                // TierName 都没拿到：按规格假设价格/到期日/周期也一并拿不到，
+                // 用一个授权引导覆盖整个右侧，不再分别判断。
+                Text(Self.authPromptText)
+                    .font(.system(size: MenuDashboardStyle.planExpiresAtFontSize, weight: .regular))
+                    .foregroundStyle(Palette.secondary)
+                    .underline()
+                    .lineLimit(1)
+                    .onTapGesture {
+                        WebAuthorizationController.shared.openAuthorization(for: snapshot.kind)
+                    }
+                    .help("在 App 内登录 \(snapshot.kind.displayName) 网页一次，后续自动获取档位、价格与到期日")
+            } else {
                 HStack(spacing: MenuDashboardStyle.planPriceTrailingGap) {
                     if let expiresAtText {
                         // 订阅/数据最后有效日期；灰色 11pt 视觉上比 13pt 价格次要，
@@ -982,14 +1052,69 @@ private struct PlanHeader: View {
                             .lineLimit(1)
                             .monospacedDigit()
                             .help("最后有效日期：\(preciseExpiresAtText ?? expiresAtText)")
+                    } else if canOfferWebAuthorizationForDate {
+                        // 有 TierName、有额度，但拿不到订阅到期日，且该 provider 支持
+                        // WebView 授权：提供与日期同样式的可点击引导（一次授权后
+                        // headless 永久静默补日期）。
+                        Text(Self.authPromptText)
+                            .font(.system(size: MenuDashboardStyle.planExpiresAtFontSize, weight: .regular))
+                            .foregroundStyle(Palette.secondary)
+                            .underline()
+                            .lineLimit(1)
+                            .onTapGesture {
+                                WebAuthorizationController.shared.openAuthorization(for: snapshot.kind)
+                            }
+                            .help("在 App 内登录 \(snapshot.kind.displayName) 网页一次，后续自动获取订阅到期日")
                     }
-                    Text(snapshot.monthlyPrice ?? "—")
-                        .font(.system(size: MenuDashboardStyle.planPriceFontSize, weight: .regular))
-                        .foregroundStyle(Palette.secondary)
-                        .lineLimit(1)
+                    // 没拿到费用（不管是真没有——如 API pay-as-you-go——还是暂未获取）
+                    // 就整组不显示：不渲染货币符号、订阅费用、订阅周期。
+                    if let price = snapshot.monthlyPrice {
+                        Text(price)
+                            .font(.system(size: MenuDashboardStyle.planPriceFontSize, weight: .regular))
+                            .foregroundStyle(Palette.secondary)
+                            .lineLimit(1)
+                    }
                 }
             }
+
+            if canHide {
+                HideButton(action: {
+                    onHide?()
+                })
+                .frame(width: 16, height: 16)
+                .padding(.leading, 6)
+                .help("隐藏此订阅（等同于在偏好设置「模型」页关闭）")
+            }
         }
+    }
+}
+
+/// 额度栏目：非授权流程拿不到额度时的引导行（蓝色、可点击）。
+/// 与 header 里 tier/date 缺失时的灰色引导视觉区分——这里是"额度完全没有"，
+/// 优先级更高，用 accent 蓝色强调。
+///
+/// 下划线规则统一：灰色引导（header 里那两处）都带下划线，蓝色引导（这里）
+/// 都不带——颜色本身已经足够表明"可点击"，蓝色 + 下划线是过度强调。
+private struct QuotaAuthPromptRow: View {
+    let kind: ProviderKind
+
+    var body: some View {
+        Group {
+            if kind.webAuthorizationURL != nil {
+                Text("打开 WebView 授权")
+                    .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .medium))
+                    .foregroundStyle(Palette.blue)
+                    .onTapGesture {
+                        WebAuthorizationController.shared.openAuthorization(for: kind)
+                    }
+            } else {
+                Text("暂无额度数据")
+                    .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
+                    .foregroundStyle(Palette.secondary)
+            }
+        }
+        .padding(.top, MenuDashboardStyle.quotaRowTop)
+        .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
     }
 }
 
@@ -1235,23 +1360,15 @@ private struct SkeletonRow: View {
 
 private struct StatusRow: View {
     let text: String
-    var actionTitle: String?
-    var action: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(text)
-                .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
-                .foregroundStyle(Palette.secondary)
-                .lineLimit(2)
-                .minimumScaleFactor(0.85)
-            if let actionTitle, let action {
-                InlineActionButton(title: actionTitle, action: action)
-                    .frame(height: 16)
-            }
-        }
-        .padding(.top, MenuDashboardStyle.quotaRowTop)
-        .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
+        Text(text)
+            .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
+            .foregroundStyle(Palette.secondary)
+            .lineLimit(2)
+            .minimumScaleFactor(0.85)
+            .padding(.top, MenuDashboardStyle.quotaRowTop)
+            .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
     }
 }
 

@@ -457,10 +457,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         menu.addItem(timeItem)
 
-        // 偏好设置入口暂时隐藏 — v0.3.0-PM-A-000 偏好设置页/窗口已 deferred 到 P2，
-        // 且当前 openPreferences() 仅为 NSSound.beep() 占位。等偏好设置面板真正落地
-        // 再恢复菜单项（feat/hide-preferences branch 上做后续工作）。
-        // menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
+        // v0.3.0-PM-A-006：偏好设置窗口由 PreferencesWindowController 单例承载
+        // （preferences/main 合并进 main 时该菜单项被手动 merge 漏掉，2026-07-05 恢复）。
+        menu.addItem(makeMenuItem(title: "偏好设置...", systemSymbolName: "gearshape", action: #selector(openPreferences), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(makeMenuItem(title: "退出", systemSymbolName: "xmark.square", action: #selector(quit), keyEquivalent: "q"))
     }
@@ -540,11 +539,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         coordinator.refreshNow()
     }
 
-    // openPreferences() 暂时禁用：偏好设置入口已隐藏（见 buildMenu 注释），
-    // 保留方法定义待偏好设置面板实现后复用。NSSound.beep() stub 一并注释避免编译警告。
-    // @objc private func openPreferences() {
-    //     NSSound.beep()
-    // }
+    // 触发偏好窗口：由 PreferencesWindowController（NSWindow + NSHostingView）单例
+    // 管理，不走 SwiftUI Settings scene —— 后者在 .accessory 菜单栏 app 下
+    // 会被默默吞掉（见 PreferencesWindowController.swift 注释）。
+    @objc private func openPreferences() {
+        PreferencesWindowController.shared.show()
+    }
 
     @objc private func quit() {
         coordinator.stop()

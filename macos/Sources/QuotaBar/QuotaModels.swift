@@ -98,14 +98,20 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
     /// 注意：`gemini` 已 deprecate —— Google 在用 `antigravity` CLI 取代它，
     /// 所以 Gemini 的检测不再依赖 gemini CLI（凭证也已迁移到 antigravity）。
     var cliCommand: String? {
+        cliCommands.first
+    }
+
+    /// CLI 候选命令名（按探测优先级）。同一服务的 CLI 在不同安装渠道可能叫
+    /// 不同名字：MiniMax 实际是 `mmx`（Homebrew），Antigravity 实际是 `agy`。
+    var cliCommands: [String] {
         switch self {
-        case .codex: return "codex"
-        case .claude: return "claude"
-        case .kimi: return "kimi"
-        case .minimax: return "minimax"
-        case .antigravity: return "antigravity"
-        case .zcode: return "zcode-cli"
-        default: return nil
+        case .codex: return ["codex"]
+        case .claude: return ["claude"]
+        case .kimi: return ["kimi"]
+        case .minimax: return ["mmx", "minimax"]
+        case .antigravity: return ["agy", "antigravity"]
+        case .zcode: return ["zcode-cli"]
+        default: return []
         }
     }
 
@@ -473,7 +479,15 @@ struct ProviderSnapshot: Identifiable, Hashable, Sendable {
             // 正在刷新中：灰色"未知"灯，区别于 needsConfiguration（也是灰，但含义不同）。
             return Color(hex: "#8E8E93")
         case .available:
-            let worstFraction = primarySubscriptionGroupWorstQuota(itemOrder: itemOrder)?.remainingFraction ?? 1.0
+            // tier-only 兜底层成功但额度层还没拿到时（如 Claude 只有 CLI 档位、没有
+            // 额度数值），`primarySubscriptionGroupWorstQuota` 返回 nil——这里原来
+            // 用 `?? 1.0` 兜底，等于把"不知道剩多少"当成"剩 100%"画绿灯，是错的。
+            // 没有真实额度数据时应该是灰色"未知"灯，跟 loading/needsConfiguration
+            // 同一套语义，而不是暗示"额度充足"。
+            guard let worst = primarySubscriptionGroupWorstQuota(itemOrder: itemOrder) else {
+                return Color(hex: "#8E8E93")
+            }
+            let worstFraction = worst.remainingFraction
             if worstFraction == 0 {
                 return Color.red
             } else if worstFraction <= 0.3 {
@@ -589,13 +603,6 @@ struct ProviderSnapshot: Identifiable, Hashable, Sendable {
     func worstQuota(itemOrder: [String]) -> QuotaWindow? {
         orderedQuotas(customItemOrder: itemOrder).min { $0.remainingFraction < $1.remainingFraction }
     }
-
-    var displayName: String {
-        guard let subscriptionTier, !subscriptionTier.isEmpty else {
-            return kind.displayName
-        }
-        return "\(kind.displayName) \(subscriptionTier)"
-    }
 }
 
 // MARK: - 刷新状态
@@ -678,12 +685,14 @@ enum QuotaFetchError: LocalizedError, Equatable {
 
     var fallbackPriority: Int {
         switch self {
+        // 服务端权威的订阅状态（已过期 / 未订阅）比权限、凭证类错误更有信息量：
+        // 一旦某个 source 确认了订阅失效，后续 source 的失败不应把它覆盖成「待配置」。
+        case .subscriptionExpired: return 4
+        case .notSubscribed: return 4
         case .permissionRequired: return 3
         case .missingCredentials: return 2
         case .transient: return 1
         case .sourceUnavailable: return 0
-        case .subscriptionExpired: return 2  // 与 missingCredentials 同级（都是"配置相关"问题）
-        case .notSubscribed: return 2
         }
     }
 }
@@ -829,6 +838,10 @@ enum ProviderPricing {
             return 10.0
         case (.minimax, "pro"):
             return 20.0
+        // Claude.ai 订阅档位：Pro 官网价格确认为 $20/月。Max（5x/20x）字段值
+        // 未经真实账号验证，不猜测映射，保持 nil（README 标注为待验证）。
+        case (.claude, "pro"):
+            return 20
         default:
             return nil
         }

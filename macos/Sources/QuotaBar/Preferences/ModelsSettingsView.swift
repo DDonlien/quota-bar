@@ -10,12 +10,47 @@ import SwiftUI
 /// （具体落到 `PreferencesStore.isEnabled(kind:)`，由调用方决定如何在 pipeline 中过滤）。
 struct ModelsSettingsView: View {
     @State private var store = PreferencesStore.shared
-    private let visibleProviders: [ProviderKind] = [.codex, .minimax, .kimi, .claude, .glm]
+    private let visibleProviders: [ProviderKind] = [.codex, .minimax, .kimi, .claude, .antigravity, .glm]
 
     var body: some View {
         SettingsPage(.models) {
             VStack(alignment: .leading, spacing: 18) {
                 providersSection
+                claudeStatusLineSection
+            }
+        }
+    }
+
+    /// Claude Code statusLine hook 额度捕获开关（v0.10.0-DATA-B-018）。
+    /// 开启后往 `~/.claude/settings.json` 写入一个小脚本作为 statusLine 命令，
+    /// 捕获 Claude Code 自己在终端状态栏渲染时携带的额度数据——不需要浏览器、
+    /// WebView 或 Keychain；代价是只有在最近跑过 claude 交互会话时数据才新鲜。
+    private var claudeStatusLineSection: some View {
+        SettingsSection("Claude Code 额度捕获（实验）") {
+            SettingsGroup {
+                SettingsRow(
+                    label: { Text("捕获终端状态栏额度数据") },
+                    subtitle: "在 ~/.claude/settings.json 里注册 statusLine 脚本，读取 Claude Code 自己渲染状态栏时携带的额度数据；不修改你已有的自定义 statusLine。仅在你最近用过 claude 交互会话时数据才新鲜。",
+                    subtitleLeading: 0,
+                    verticalPadding: 6,
+                    trailing: {
+                        Toggle("", isOn: bindingClaudeStatusLineHook)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
+                    }
+                )
+                if let message = claudeStatusLineStatusMessage {
+                    SettingsDivider()
+                    SettingsRow(
+                        label: {
+                            Text(message)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        },
+                        verticalPadding: 6
+                    )
+                }
             }
         }
     }
@@ -88,7 +123,7 @@ struct ModelsSettingsView: View {
         case .codex: return ["CLI", "Web"]
         case .minimax: return ["CLI", "Web", "API"]
         case .kimi: return ["CLI", "Web"]
-        case .claude: return ["Web"]
+        case .claude: return ["statusLine", "Config", "CLI", "Web"]
         case .glm: return ["API（待接入）"]
         case .zcode: return ["Config", "Keychain"]
         case .cursor: return ["待接入"]
@@ -108,6 +143,30 @@ struct ModelsSettingsView: View {
         Binding(
             get: { store.isEnabled(kind: kind) },
             set: { store.setEnabled($0, for: kind) }
+        )
+    }
+
+    @State private var claudeStatusLineStatusMessage: String?
+
+    private var bindingClaudeStatusLineHook: Binding<Bool> {
+        Binding(
+            get: { store.preferences.claudeStatusLineHookEnabled },
+            set: { enabled in
+                store.setClaudeStatusLineHookEnabled(enabled)
+                if enabled {
+                    switch ClaudeStatusLineHookInstaller.shared.install() {
+                    case .installed:
+                        claudeStatusLineStatusMessage = "已启用。打开一次 claude 交互会话即可开始捕获额度。"
+                    case .skippedExistingStatusLine:
+                        claudeStatusLineStatusMessage = "检测到你已有自定义 statusLine 配置，为避免覆盖未做修改——这种情况下额度捕获不会生效。"
+                    case .failed(let reason):
+                        claudeStatusLineStatusMessage = reason
+                    }
+                } else {
+                    ClaudeStatusLineHookInstaller.shared.uninstall()
+                    claudeStatusLineStatusMessage = nil
+                }
+            }
         )
     }
 }

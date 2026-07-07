@@ -29,7 +29,6 @@ final class RefreshCoordinator: ObservableObject {
     @Published private(set) var state: DashboardState = .empty
     @Published private(set) var isRefreshing: Bool = false
     @Published private(set) var needsFullDiskAccess: Bool = false
-    @Published private(set) var hiddenKinds: Set<ProviderKind> = []
 
     let providers: [QuotaProvider]
     let installDetectors: [ProviderKind: InstallDetectorProvider]
@@ -75,6 +74,7 @@ final class RefreshCoordinator: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 self?.applyProviderOrder()
+                self?.applyEnabledFilterChange()
             }
             .store(in: &cancellables)
     }
@@ -132,7 +132,6 @@ final class RefreshCoordinator: ObservableObject {
     // MARK: - 手动刷新
 
     func refreshNow() {
-        clearHidden()
         if let existing = inFlightTask {
             inFlightTask = Task { [weak self] in
                 _ = await existing.value
@@ -148,21 +147,44 @@ final class RefreshCoordinator: ObservableObject {
     }
 
     // MARK: - 隐藏 / 恢复
+    //
+    // dropdown 里点「隐藏」跟在 Preferences「模型」页把该 provider 的开关关掉是**同一个
+    // 动作**：都写 `PreferencesStore.setEnabled(false, for:)`，都会让该 provider 从
+    // `activeProviders` 里被过滤掉、不再实际发起任何网络/CLI 请求——不是只在 dropdown
+    // 里视觉隐藏、后台仍然正常刷新的"假隐藏"。两个入口共享同一份持久化状态，任一边
+    // 改了，另一边通过 `.quotaPreferencesDidChange` 通知同步。
 
+    /// dropdown 里点击「隐藏」：等同于在 Preferences 里关闭该 provider 的开关。
     func hide(kind: ProviderKind) {
-        hiddenKinds.insert(kind)
-        // 从当前 state 中移除该 kind
-        let updated = state.snapshots.filter { $0.kind != kind }
-        state = DashboardState(
-            snapshots: updated,
-            refreshState: state.refreshState,
-            lastUpdated: state.lastUpdated
-        )
-        refreshStatusItemAppearance()
+        PreferencesStore.shared.setEnabled(false, for: kind)
+        // `setEnabled` 内部 `persist()` 已经会 post `.quotaPreferencesDidChange`，
+        // 上面注册的订阅者会调用 `applyEnabledFilterChange()` 立刻把这个 kind 从
+        // state 里摘掉；这里不需要重复处理。
     }
 
-    func clearHidden() {
-        hiddenKinds.removeAll()
+    /// 把当前 `state.snapshots` 按 `PreferencesStore.isEnabled` 重新过滤 + 视需要补一次刷新。
+    /// 由 `.quotaPreferencesDidChange` 触发——不管是 dropdown 的隐藏按钮还是 Preferences
+    /// 「模型」页的开关改的，都走这一条同步路径，保证两处状态一致。
+    private func applyEnabledFilterChange() {
+        let stillEnabled = state.snapshots.filter { PreferencesStore.shared.isEnabled(kind: $0.kind) }
+        if stillEnabled.count != state.snapshots.count {
+            state = DashboardState(
+                snapshots: stillEnabled,
+                refreshState: state.refreshState,
+                lastUpdated: state.lastUpdated
+            )
+            refreshStatusItemAppearance()
+        }
+
+        // 刚被重新启用、但 state 里还没有它的 snapshot（之前被过滤掉了）：
+        // 不等下一个 5 分钟自动周期，立刻刷新一次。
+        let hasNewlyEnabledMissing = providers.contains { provider in
+            PreferencesStore.shared.isEnabled(kind: provider.kind)
+                && !state.snapshots.contains { $0.kind == provider.kind }
+        }
+        if hasNewlyEnabledMissing {
+            refreshNow()
+        }
     }
 
     private func refreshStatusItemAppearance() {
@@ -200,9 +222,19 @@ final class RefreshCoordinator: ObservableObject {
         NSLog("QuotaBar: installReasons = \(installReasons.keys.sorted { $0.rawValue < $1.rawValue })")
         removeCacheForUndetectedProviders(detectedKinds: Set(installReasons.keys))
 
-        // 2. 跑 installed kind 的 pipeline（并发），只对「已装且未隐藏」的 kind seed placeholder。
-        let activeProviders = providers.filter { installReasons[$0.kind] != nil && !hiddenKinds.contains($0.kind) }
+        // 2. 跑 installed kind 的 pipeline（并发），只对「已装且用户未关闭」的 kind seed
+        //    placeholder。是否启用统一读 `PreferencesStore.isEnabled`——dropdown 隐藏
+        //    按钮和 Preferences 开关写的是同一份持久化状态，这里只需要读一处。
+        let activeProviders = providers.filter { installReasons[$0.kind] != nil && PreferencesStore.shared.isEnabled(kind: $0.kind) }
         NSLog("QuotaBar: activeProviders = \(activeProviders.map { $0.kind.rawValue })")
+
+        // 未检测到安装 / 已隐藏的 kind 不会进入下面的 per-provider 并发阶段，
+        // 这里先把它们在 detectInstallReasons 里积累的「Provider 获取」诊断日志落盘，
+        // 避免那部分记录一直留在内存缓冲区里出不来。
+        let activeKinds = Set(activeProviders.map(\.kind))
+        for provider in providers where !activeKinds.contains(provider.kind) {
+            await ProviderCheckLog.shared.flush(kind: provider.kind)
+        }
 
         // 3. 立刻 seed placeholder（streaming refresh 的关键步骤）
         let providerOrder = PreferencesStore.shared.providerOrder()
@@ -246,6 +278,9 @@ final class RefreshCoordinator: ObservableObject {
                         NSLog("QuotaBar: ❌ \(kind.rawValue) failed: \(error)")
                         result = .failure(error)
                     }
+                    // 该 provider 本轮全部 check step（安装探测已在上面 flush 过、额度/档位/
+                    // 过期日到这里都跑完了）落盘，保证同一 provider 的日志连续输出。
+                    await ProviderCheckLog.shared.flush(kind: kind)
                     // 拿到结果后回到 MainActor 立即更新 state。
                     // 每个 provider 完成都会触发一次 @Published，UI 原地刷新。
                     await MainActor.run {
@@ -349,7 +384,11 @@ final class RefreshCoordinator: ObservableObject {
         let keepAfterApply: Bool
         switch newSnapshot.availability {
         case .available:
-            keepAfterApply = !newSnapshot.quotas.isEmpty
+            // `.available` 只会来自至少一个 strategy 成功——即便只是 tier-only（CLI 兜底层
+            // 拿到档位但没拿到额度），也一定至少有 tier/price 之一非 nil，不存在"什么都没有"
+            // 的空 available。额度层缺失时应保留展示、在 dropdown 里提示"打开 WebView 授权"，
+            // 而不是整个 provider 从列表消失（曾经因为这里错误剔除导致 Claude 完全不显示）。
+            keepAfterApply = true
         case .needsConfiguration, .subscriptionExpired, .notSubscribed:
             // v0.8.0：subscriptionExpired 跟 needsConfiguration 一样，保留让 UI 展示
             // 「已过期 / 上次套餐 / 到期日」灰标（让用户知道"我曾经是 Plus，但过期了"）。
@@ -514,7 +553,7 @@ final class RefreshCoordinator: ObservableObject {
             for (kind, detector) in installDetectors {
                 let preferredSourceId = preferredSourceIds[kind] ?? nil
                 group.addTask {
-                    let detections = detector.detectSources(preferredSourceId: preferredSourceId)
+                    let detections = await detector.detectSources(preferredSourceId: preferredSourceId)
                     if detections.isEmpty {
                         NSLog("QuotaBar: 🔍 \(kind.rawValue) not detected")
                         return (kind, nil)

@@ -38,7 +38,7 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
     }
 
     func fetchSnapshot(timeout: TimeInterval) async throws -> ProviderSnapshot {
-        let detections = detectSources()
+        let detections = await detectSources()
 
         guard !detections.isEmpty else {
             throw QuotaFetchError.sourceUnavailable(
@@ -55,30 +55,59 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
         )
     }
 
-    func detectSources(preferredSourceId: String? = nil) -> [InstallDetection] {
+    func detectSources(preferredSourceId: String? = nil) async -> [InstallDetection] {
         if let preferredSourceId,
-           let detection = detectPreferredSource(sourceId: preferredSourceId) {
+           let detection = await detectPreferredSource(sourceId: preferredSourceId) {
+            await ProviderCheckLog.shared.record(
+                kind: kind, step: .provider, method: detection.sourceKind.checkLogLabel,
+                outcome: .success, detail: "命中上次成功来源缓存（\(detection.sourceId)）：\(detection.detail)"
+            )
             return [detection]
+        }
+        if let preferredSourceId {
+            await ProviderCheckLog.shared.record(
+                kind: kind, step: .provider, method: "上次成功来源索引",
+                outcome: .failure, detail: "缓存来源（\(preferredSourceId)）已失效，回退到默认顺序全量探测"
+            )
         }
 
         var detections: [InstallDetection] = []
 
-        if let appPath = findAppPath() {
-            detections.append(InstallDetection(
-                sourceKind: .appBundle,
-                sourceId: "appBundle:\(kind.bundleIdentifier ?? appPath)",
-                detail: "App 已装（\(appPath)）",
-                metadata: ["path": appPath]
-            ))
+        if !candidateAppNames.isEmpty || kind.bundleIdentifier != nil {
+            if let appPath = findAppPath() {
+                detections.append(InstallDetection(
+                    sourceKind: .appBundle,
+                    sourceId: "appBundle:\(kind.bundleIdentifier ?? appPath)",
+                    detail: "App 已装（\(appPath)）",
+                    metadata: ["path": appPath]
+                ))
+                await ProviderCheckLog.shared.record(kind: kind, step: .provider, method: "App Bundle", outcome: .success, detail: appPath)
+            } else {
+                await ProviderCheckLog.shared.record(kind: kind, step: .provider, method: "App Bundle", outcome: .failure, detail: "未找到")
+            }
         }
 
-        if let command = kind.cliCommand, let path = findCommand(command) {
-            detections.append(InstallDetection(
-                sourceKind: .cli,
-                sourceId: "cli:\(command)",
-                detail: "CLI 已装（\(path)）",
-                metadata: ["command": command, "path": path]
-            ))
+        // 同一服务的 CLI 在不同安装渠道叫不同名字（mmx/minimax、agy/antigravity），
+        // 按候选顺序探测，命中第一个即止（同类同优先级，不重复登记）；未命中的候选
+        // 也逐个记录，如实反映实际探测顺序。
+        var cliHit = false
+        for command in kind.cliCommands {
+            if cliHit {
+                await ProviderCheckLog.shared.record(kind: kind, step: .provider, method: "CLI 命令 \(command)", outcome: .skipped, detail: "已命中同类候选，不再检查")
+                continue
+            }
+            if let path = await findCommand(command) {
+                detections.append(InstallDetection(
+                    sourceKind: .cli,
+                    sourceId: "cli:\(command)",
+                    detail: "CLI 已装（\(path)）",
+                    metadata: ["command": command, "path": path]
+                ))
+                await ProviderCheckLog.shared.record(kind: kind, step: .provider, method: "CLI 命令 \(command)", outcome: .success, detail: path)
+                cliHit = true
+            } else {
+                await ProviderCheckLog.shared.record(kind: kind, step: .provider, method: "CLI 命令 \(command)", outcome: .failure, detail: "未找到")
+            }
         }
 
         for envName in kind.envVarNames {
@@ -89,6 +118,9 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
                     detail: "\(envName) 已配置",
                     metadata: ["name": envName]
                 ))
+                await ProviderCheckLog.shared.record(kind: kind, step: .provider, method: "环境变量 \(envName)", outcome: .success, detail: "已配置")
+            } else {
+                await ProviderCheckLog.shared.record(kind: kind, step: .provider, method: "环境变量 \(envName)", outcome: .failure, detail: "未配置")
             }
         }
 
@@ -101,13 +133,16 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
                     detail: "凭证文件存在（\(path)）",
                     metadata: ["path": path]
                 ))
+                await ProviderCheckLog.shared.record(kind: kind, step: .provider, method: "凭证文件 \(path)", outcome: .success, detail: "文件存在")
+            } else {
+                await ProviderCheckLog.shared.record(kind: kind, step: .provider, method: "凭证文件 \(path)", outcome: .failure, detail: "文件不存在")
             }
         }
 
         return prioritize(detections)
     }
 
-    private func detectPreferredSource(sourceId: String) -> InstallDetection? {
+    private func detectPreferredSource(sourceId: String) async -> InstallDetection? {
         if sourceId.hasPrefix("appBundle:"),
            let appPath = findAppPath() {
             return InstallDetection(
@@ -120,7 +155,7 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
 
         if sourceId.hasPrefix("cli:") {
             let command = String(sourceId.dropFirst("cli:".count))
-            if let path = findCommand(command) {
+            if let path = await findCommand(command) {
                 return InstallDetection(
                     sourceKind: .cli,
                     sourceId: "cli:\(command)",
@@ -165,7 +200,7 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
             case .appBundle: return 1
             case .cli: return 2
             case .environment: return 3
-            case .api, .rpc, .browserCookie, .keychain, .localLog, .unknown: return 4
+            case .api, .rpc, .browserCookie, .webViewSession, .keychain, .localLog, .unknown: return 4
             }
         }
         return detections.sorted {
@@ -206,29 +241,9 @@ final class InstallDetectorProvider: QuotaProvider, @unchecked Sendable {
 
     // MARK: - CLI 探测
 
-    private func findCommand(_ command: String) -> String? {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/which")
-        task.arguments = [command]
-
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = Pipe()
-
-        do {
-            try task.run()
-            task.waitUntilExit()
-            if task.terminationStatus == 0 {
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                let path = String(data: data, encoding: .utf8)?
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                if let path, !path.isEmpty {
-                    return path
-                }
-            }
-        } catch {
-            return nil
-        }
-        return nil
+    /// 委托给 `CLICommandLocator`：先查常见安装目录，找不到再退化到登录 shell
+    /// 解析（覆盖 nvm / asdf / pnpm / 任意自定义 PATH），结果按进程生命周期缓存。
+    private func findCommand(_ command: String) async -> String? {
+        await CLICommandLocator.locate(command)
     }
 }
