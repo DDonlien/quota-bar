@@ -250,6 +250,7 @@
 - 构建命令：`make build`（等价于 `cd macos && swift build`）；站点构建为 `make site`。
 - 应用打包：`make app`（等价于 `cd macos && ./scripts/build-app.sh`）。
 - 发布命令：`make deploy`（部署 `site/` 到 Vercel，首次需先 `make link`）。
+- 发版流程（ad-hoc 预开发版）：本地 `make app` 产 ad-hoc 签名包 → 推 main 自动产 `nightly-<sha>` pre-release（首次打开需「右键 → 打开」）；对外稳定版在 GitHub Actions 手动触发 `Release` workflow 并传 `version=vX.Y.Z`（`build-app.sh` 校验格式并写入 `CFBundleShortVersionString`）。签名升级（Developer ID + notarize）见 REQUIREMENTS v0.12.0。
 
 ### 文档入口
 

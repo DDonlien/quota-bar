@@ -89,6 +89,7 @@
 - [x] [0.2.0-DATA-B-019] Provider pipeline 在首个数据源缺凭证时继续尝试后续数据源，避免 MiniMax/Kimi/Codex 因 API key 或 OAuth 缺失而跳过 Cookie/CLI fallback #P1
 - [x] [0.2.0-DATA-B-020] Cookie dashboard 响应中的订阅档位/费用信息传递到 UI，MiniMax Web 路径支持 `current_package_name` 和已知 Coding Plan 价格映射 #P1
 - [ ] [0.2.0-DATA-B-021] Trae Work 是否独立接入 #P2 #deferred — 官方已有 TRAE Work 与用量/订阅概念，值得作为独立 provider 继续调研；当前缺少已验证本地 CLI、App 或 dashboard endpoint，不并入 P1 核心
+- [x] [0.2.0-DATA-B-028] Kimi 服务端下线 `GetSubscriptionStat`（2026-07 起返回 404）后，Work 月额度改从 `GetSubscription.balances[]`（FEATURE_OMNI/SUBSCRIPTION 的 amountUsedRatio）解析；档位/价格/续费日同响应的 goods.title / amounts / nextBillingTime；Code 5h/周额度由 CLI OAuth 经分层合并补齐 #P0 #bugfix — `KimiSubscriptionParser.parse` + `KimiDesktopTokenProvider`
 
 ### sub/main: 提供额度刷新机制
 
@@ -433,6 +434,7 @@
 - [ ] [0.9.0-ARCH-A-001] 设计持久化 schema version 与向后兼容策略；所有持久化文件必须带 `schemaVersion`，读取失败时安全丢弃并回到实时抓取，不阻塞 app 启动 #P1
 - [ ] [0.9.0-ARCH-A-002] 明确安全边界：持久化文件不得保存 token、cookie、API key、refresh token 或浏览器 Cookie 明文；敏感凭证仍只读取原始服务配置、浏览器 Cookie 或 macOS Keychain #P1
 - [x] [0.9.0-SEC-A-000] App 启动时不得注册浏览器 Cookie Keychain 预授权弹窗；默认刷新链路不得主动触发浏览器密码 / 权限提示 #P0
+- [x] [0.9.0-SEC-A-001] 默认禁用 SweetCookieKit 的 Chromium Keychain 解密（`BrowserCookieKeychainAccessGate.isDisabled = true`），杜绝 "Chrome Safe Storage" 密码弹窗；仅当用户在偏好设置显式选择 Chrome 浏览器来源时放开。订阅过期日 headless source 也随之默认无弹窗：优先 App 自有 WebView 会话，其次 Safari/Firefox 文件 Cookie（FDA 已授权时静默）#P0 — `AppDelegate.applyBrowserCookieKeychainPolicy`
 
 ### sub/main: 建立来源索引
 
@@ -476,7 +478,136 @@
 - [ ] [0.10.0-DATA-B-001] 为 Claude、Cursor、Kimi、MiniMax、Antigravity、GLM 等 provider 设计与 `CodexSubscriptionInspector` 等价的 inspector 或 source 规则；明确 free / expired / unknown / active 的判定边界 #P1
 - [ ] [0.10.0-DATA-B-002] 统一处理“免费额度仍可用但付费订阅已过期”的 UI 语义：区分免费额度展示、付费订阅过期提示、以及真正的抓取失败 #P1
 - [ ] [0.10.0-DATA-B-003] 为所有 provider 增加防御性 parser：当 dashboard 明确返回 free / expired / unpaid / trial-ended 等状态时，不把免费或降级额度误标成付费订阅额度 #P1
+- [x] [0.10.0-DATA-B-004] MiniMax `coding_plan/remains` / `mmx quota` 返回 `no active token plan subscription`（HTTP 200 + 非 0 status_code）时映射为 `notSubscribed`（订阅已到期/未订阅），不再显示「待配置」或抓取失败 #P1 — `MiniMaxCLIProvider.indicatesNoActiveSubscription`
 - [ ] [0.10.0-QA-B-000] 为统一订阅过期识别补测试矩阵：active、expired、free、unknown、免费额度存在、dashboard 字段缺失、字段 schema 变化 #P1
+
+### sub/main: 分组分层获取方案落地（5 agent × 4 信息）
+
+> 用户要求：现有 5 个 provider（Codex / Kimi / MiniMax / Antigravity / Z Code）的 4 种信息
+> （安装情况、额度、过期日、档位和费用）都能正确获取，且用户最多只需在系统设置里做一次
+> 常规操作（授予 Full Disk Access）。层级顺序：本地 API/RPC → CLI → 浏览器 Cookie（静默）→
+> App 内 WebView 授权（一次登录，永久静默）。
+
+- [x] [0.10.0-ARCH-B-000] `FetchPipeline.runSequential` 支持分层合并：首个成功来源做基底 snapshot，后续 strategy 只为缺失层（quota scope / plan）补数据；`expectedQuotaScopes` 声明 provider 完整额度的 scope 集合（Kimi = work + code）#P0 — `FetchPipeline.mergeLayers`
+- [x] [0.10.0-ARCH-B-000-test] 分层合并测试：work-only 基底合并 CLI code 窗口、基底失败回退、同 scope 不重复追加 #P1 — `FetchPipelineLayeredMergeTests`
+- [x] [0.10.0-ARCH-B-001] `SubscriptionExpiryResolver`：snapshot 已带日期直接采用（不再为已知日期跑 headless）；headless source 优先 App 自有 WebView 会话（`WKWebsiteDataStore.default()`，由 WebView 授权窗口写入），浏览器 Cookie 退居其次 #P0
+- [x] [0.10.0-UI-C-000] dropdown 中「有额度但缺订阅到期日、且日期依赖 headless 订阅页」的 provider，价格左侧显示「授权获取日期」可点击引导，打开 App 内 WebView 登录一次后自动获取 #P1 — `MenuView.PlanHeader.canOfferWebAuthorizationForDate`
+- [x] [0.10.0-ARCH-B-002] App WebView 会话桥接到**额度层**：`AppWebViewSessionCookieReader` 读 `WKWebsiteDataStore.default()`，与 `BrowserCookieProvider` 组合复用全部 dashboard endpoint / parser；作为 Codex / Claude / Kimi / MiniMax 额度管线的最后一层默认启用（无弹窗）。Claude 由此获得默认唯一的额度路径（organizations → usage）#P0 — 用户反馈「claude/antigravity 用 webview 授权后依旧没有额度」的修复
+- [x] [0.10.0-ARCH-B-003] `SubscriptionExpirySource` 支持**可执行的 browserAPI source**（`SubscriptionExpiryAPIRequest`）：用会话 Cookie（App WebView 会话优先，浏览器 Cookie 兜底）调 JSON API 提取日期。Codex 注册 `accounts/check` 的 `entitlement.expires_at` 为 P1，headless 账单页（hash 路由 SPA，DOM 提取长期 nil）降为兜底 #P0
+- [x] [0.10.0-ARCH-B-004] `WKWebViewHeadlessLoader` 增加 SPA settle 延迟：didFinish 后等 2s 再提取 outerHTML，缓解 hash 路由页面 didFinish 时目标内容未渲染的问题 #P1
+- [x] [0.10.0-ARCH-B-005] `QuotaFetchError.fallbackPriority`：`subscriptionExpired` / `notSubscribed`（服务端权威订阅状态）提升到最高优先级，管线全失败时不被权限/凭证类错误覆盖成「待配置」#P1
+- [x] [0.10.0-DATA-B-005] MiniMax 增加**真实 CLI 命令层** `MiniMaxCommandProvider`：执行 `mmx quota show --output json`（非 TTY 已验证），解析 remains 形状输出与 `{"error":...}` 包裹（no active subscription → notSubscribed）；GUI 不继承 shell PATH，按 Homebrew / `~/.local/bin` 候选路径查找 #P1 — 呼应「所有 CLI 路径都应该是 CLI 里执行命令」
+- [x] [0.10.0-UI-C-001] accessory app 补 `NSApp.mainMenu`（App + Edit 菜单）：修复 WebView 授权窗口 / 偏好设置输入框无法 Cmd+V 粘贴（无 Edit 菜单则快捷键无处派发）#P0 — `AppDelegate.installMainMenu`
+- [x] [0.10.0-UI-C-002] 恢复 dropdown「偏好设置...」菜单项（`Cmd+,` → `PreferencesWindowController.shared.show()`）；preferences/main 手动合并进 main 时该菜单项被漏掉，注释还停留在 beep 占位时代 #P0 — 复检 v0.3.0-PM-A-006
+
+### sub/main: AGY 真实 CLI 层 + Claude 额度修复 + 获取方案审计
+
+> 用户用 `agy` 进入交互 CLI、`/usage` 查看额度演示了真实操作路径；同时反馈 Claude webview 授权后仍无额度；并指出 README 矩阵存在同列多个同优先级（Codex 两个 P2、GLM 两个 P2 两个 P3 等）的错误，要求全面审计矩阵与实现一致性。
+
+- [x] [0.10.0-DATA-B-006] `AntigravityCLISessionProvider`：IDE / 已运行 agy 进程都不可用时，拉起临时 `agy` 交互会话（`/usr/bin/script` 提供 PTY）、复用其本地 RPC（委托 `AntigravityDashboardProvider(.cli)`）取结构化额度，成功或超时后立即终止会话；接入 antigravity 管线排在 `antigravity-cli` 之后、keychain 之前 #P0 — 不驱动 `/usage` TUI 文本解析（`agy --print "/usage"` 实测会被当自然语言 prompt 消耗额度，明确排除）
+- [x] [0.10.0-DATA-B-007] `ClaudeDashboardParser` 改用真实响应形状：`five_hour`/`seven_day`/`seven_day_sonnet`/`seven_day_opus` 顶层字段（经 CodexBar `ClaudeWebAPIFetcher` 与 Claude-Usage-Tracker `ClaudeAPIService` 两个独立参考实现交叉验证），修复此前只认 `usage`/`limits` wrapper key、对真实响应恒返回空数组的 bug；`usageURL(from:)` 增加多 org 优先级（chat 能力 > 非 api-only > 第一个）避免选中纯计费 org #P0 — 根因确认：Claude 一直没额度不是弹窗/授权问题，是 parser 形状写错
+- [x] [0.10.0-DATA-B-008] CLI 命令探测支持**候选命令名列表**（`ProviderKind.cliCommands`）：MiniMax 实际命令是 `mmx`（旧 `minimax` 保留兼容）、Antigravity 实际命令是 `agy`（旧 `antigravity` 保留兼容），候选同类同优先级、命中即止；`InstallDetectorProvider.findCommand` 增加 Homebrew / `~/.local/bin` 等候选目录直查（GUI app 的 launchd PATH 不含这些路径，此前 `which` 单独查找会失败）#P0
+- [x] [0.10.0-DOC-A-001] README 四张矩阵表全面审计重写：统一「同列内优先级唯一、同格内多个同类文件/命令共享格优先级」规则，修复 Codex 两个 P2、GLM 两个 P2 两个 P3 等冲突；Provider 获取表改为反映实际统一探测顺序（凭证文件 → App Bundle → CLI → 环境变量）；额度/过期日/档位表按当前实现逐格核对（Kimi GetSubscription、MiniMax mmx 已验证、Codex accounts/check P1、Claude 待验证标记等）#P1
+
+### sub/main: Claude 配置 / CLI / RPC 三项验证与实现
+
+> 用户要求验证 README 里 Claude 的三处「待验证」（配置文件→API、CLI、本地 RPC），并提示可参考已下载的 CodexBar/ClaudeBar/Claude-Usage-Tracker 三个参考仓库交叉核实。核实后发现均可转为确定结论并直接实现，而不只是更新文档。
+
+- [x] [0.10.0-DATA-B-009] `ClaudeOAuthUsageProvider`：读 `~/.claude/.credentials.json` 的 `claudeAiOauth.accessToken`/`subscriptionType`，直调 `GET https://api.anthropic.com/api/oauth/usage`（`anthropic-beta: oauth-2025-04-20`），响应字段与 web session 端点一致，复用抽出的 `ClaudeUsageWindowParser`；接入 Claude 管线为新 P1（配置文件 → API），排在 App WebView 会话之前，401→missingCredentials、429→transient #P0 — 端点/字段经 CodexBar `ClaudeOAuthUsageFetcher` 源码交叉验证，未接触本机 Keychain
+- [x] [0.10.0-DATA-B-010] `ClaudeAuthStatusCLIProvider`：执行 `claude auth status --json`（实测确认非交互、结构化、无副作用），失败/未登录抛 `missingCredentials`；只贡献订阅档位（`subscriptionType`），不伪造额度；接入管线为 OAuth provider 之后的 CLI 层，供凭证文件缺失（如仅 Keychain 存储）时兜底档位 #P1
+- [x] [0.10.0-DATA-B-011] 修正 `KeychainProvider` 对 Claude 的 service/account 猜测：`defaultKeychainService` 从虚构的 `"com.anthropic.claude"` 改为经 CodexBar 源码确认的真实 Keychain generic password service 名 `"Claude Code-credentials"`；`defaultKeychainAccount` 支持返回 `nil`（service-only 匹配，不再要求固定 account——Claude Code 写入的 account 属性是运行时动态值，无法硬编码）；`KeychainProvider`/`hasToken` 的 account 参数改为可选，其余 provider 行为不变 #P1
+- [x] [0.10.0-DATA-B-012] `ProviderPricing` 新增 Claude Pro 价格映射（$20/月，官网公开价确认）；Max（5x/20x）等更高档位的 `subscriptionType` 字符串未经真实账号验证，不猜测映射 #P2
+- [x] [0.10.0-DOC-A-002] README 额度/过期日/档位表按上述验证结果更新：Claude 配置→API 从「待验证」改为已验证 P1（含端点/字段说明）；本地 RPC 从「待验证」改为「跳过：已核实无本地 RPC 可用」（`claude gateway` 是企业 auth/telemetry 代理非用量接口）；CLI 命令行从「待验证」改为「跳过额度：已核实无结构化额度 CLI」+ 档位表新增 P3 `claude auth status`；过期日表「配置文件/token payload」从「待验证」改为「跳过：`expiresAt` 是 access token 有效期非订阅到期日」（与 Kimi OAuth 同类陷阱）；「CLI 指令」从「待验证」改为「跳过：已核实不返回到期日」#P1
+
+### sub/main: 面向全网用户的 hardcoded 路径 / 假设审计
+
+> 用户明确本应用是面向全网用户售卖的商用软件，不是只给开发者本人用；要求不管本机环境如何，按理论上可行的方案把实现做好，并检查全部实现有没有 hardcoded 路径。审计范围：全部 Provider 实现、CLI 路径探测、Keychain 查询、货币/价格假设、个人信息残留。
+
+- [x] [0.10.0-ARCH-C-000] 新增 `CLICommandLocator` 共享工具：两级解析——先查一批常见固定安装目录（Homebrew 双架构、MacPorts、用户级 `~/.local/bin` 等），命中失败再退化到登录 shell 解析（`$SHELL -lc 'command -v <cmd>'`，source 用户真实 shell 配置，覆盖 nvm / asdf / pnpm 等任意版本管理器或自定义 PATH）；按命令名做进程内缓存（一次 App 生命周期只解析一次）；拒绝含 shell 元字符的命令名，防止拼进 `-lc` 字符串被注入 #P0 — 此前 `MiniMaxCommandProvider`/`AntigravityCLISessionProvider`/`ClaudeAuthStatusCLIProvider`/`InstallDetectorProvider` 各自维护一份不完整、互相不一致的固定路径清单，只覆盖 Homebrew 默认前缀，漏掉 nvm/asdf/pnpm/MacPorts 等真实用户会用到的安装方式
+- [x] [0.10.0-ARCH-C-001] `MiniMaxCommandProvider` / `AntigravityCLISessionProvider` / `ClaudeAuthStatusCLIProvider` 改为默认走 `CLICommandLocator`（显式传入候选路径时仍走原候选列表，保持测试确定性）；`InstallDetectorProvider.findCommand` 同步改为委托 `CLICommandLocator`，移除原本因未设置 PATH 而形同虚设的裸 `which` fallback，四处路径探测收敛为单一实现 #P0
+- [x] [0.10.0-DATA-B-013] 修正 `ClaudeAuthStatusCLIProvider` 的路径漂移 bug：existence 检查用的候选列表和实际执行的 `runProcess` 各自硬编码了一份独立列表，可能不一致；改为解析路径后作为参数传给 executor（与 MiniMax/Antigravity 两个 provider 已有模式一致）#P1
+- [x] [0.10.0-DATA-B-014] `KeychainProvider.readToken()` 的 service-only（account=nil）查询路径改为 `kSecMatchLimitAll` 取全部匹配项后按 `kSecAttrModificationDate` 选最近修改的一条，而不是 Keychain 内部枚举顺序里任意一条——覆盖重装 / 多版本 CLI 各自写入同 service 不同条目的场景 #P1
+- [x] [0.10.0-QA-B-000] 审计确认无需改动的项：`NSHomeDirectory()` 全部用法均动态取当前用户主目录（非 hardcode）；代码/测试/README/REQUIREMENTS 无残留个人用户名、邮箱、真实 org ID；`PreferredCurrency`/`ExchangeRateProvider` 的 USD/CNY 双档设计是既有文档化范围，非 bug；未发现任何架构（arm64/x86_64）分支判断 #P2
+- [ ] [0.10.0-DATA-B-015] `EdgeCookieReader` 硬编码只读 `Microsoft Edge/Default` 单一 profile，多 profile（如工作/个人分账号）用户可能登录在非 Default profile 中；浏览器 Cookie 路径当前已是显式启用的最后兜底层，非默认路径，暂不提升优先级 #P2 #deferred — 呼应既有 `0.2.0-DATA-B-008` 多浏览器/多 profile 选择的 deferred 项，一并留待后续处理
+
+### sub/main: 修复 Claude 额度真正的根因（子进程环境裁剪）+ Keychain 凭证兜底
+
+> 用户反馈打包后 Claude 仍然没有额度，并指出参考的三个仓库都不需要 WebView，最多是系统设置里做一次性授权。实测复现：不是 WebView/授权设计的问题，是 `ClaudeAuthStatusCLIProvider`/`MiniMaxCommandProvider` 生成子进程时把环境变量整体替换成只有 `HOME`（或 `HOME`+`TERM`），导致 `claude auth status` 读不到本机真实登录态（`loggedIn` 变成 `false`）——跟 WebView、跟浏览器都没关系。
+
+- [x] [0.10.0-DATA-B-016] 修复 `ClaudeAuthStatusCLIProvider` / `MiniMaxCommandProvider` 的子进程环境裁剪 bug：`process.environment` 此前整体替换成 `["HOME": ...]`（或加 `TERM`），改为继承 `ProcessInfo.processInfo.environment` 完整环境后只覆盖必需的个别键；已用 `env -i HOME=... USER=... claude auth status --json` 实测复现根因（只给 HOME 时 `loggedIn: false`，补上 `USER` 后恢复 `loggedIn: true` + 正确 `subscriptionType`）#P0 — `AntigravityCLISessionProvider` 未设置 `process.environment`（默认继承完整环境）不受影响；`TTYCommandRunner.runRaw` 一直是正确的合并写法，本次两处新代码复刻了旧的错误写法
+- [x] [0.10.0-DATA-B-017] `ClaudeOAuthUsageProvider` 增加 Keychain 凭证兜底：`~/.claude/.credentials.json` 不存在或解析失败时，改读 Keychain `"Claude Code-credentials"`（`ClaudeKeychainCredentialsReader`，取最近修改条目，同 0.10.0-DATA-B-014 的选择逻辑），同一套 JSON 解析复用两个来源；读取时**不设** `interactionNotAllowed`，允许系统弹出一次性「始终允许」授权（读取另一 App 写入的 Keychain 条目的标准流程，等价用户所说的"系统设置里开"，与浏览器 Cookie Keychain 静默降级的 0.9.0-SEC-A-001 是不同凭证来源，不适用同一条禁令）#P0 — 让只有 Keychain、没有凭证文件的机器（本机即是）也能不经 WebView 拿到真实额度
+
+### sub/main: Claude statusLine hook 额度捕获（不依赖 Keychain 的 app 化方案）
+
+> 用户指出 3 个参考仓库 + 新提供的 ping-island、vibe island 都能"像 Codex 一样用 app/配置拿额度"，要求不用 Keychain，可以用 FDA/辅助功能等系统权限。查 ping-island 源码（`HookInstaller.swift`）发现真正机制：Claude Code CLI 的 `statusLine` hook 会把包含 `rate_limits` 的 JSON 喂给用户配置的 statusLine 命令——这是 Claude Code 自己的官方能力，不需要 OAuth token、不需要 Keychain、不需要子进程。本机已安装的 Vibe Island（同类闭源商用 App，`~/.vibe-island/bin/vibe-island-statusline`）用完全相同的手法验证了这一机制真实有效。
+
+- [x] [0.10.0-ARCH-D-000] `ClaudeStatusLineHookInstaller`：把一个极小脚本（不依赖 `jq`，只用 POSIX `grep`/`sed`）注册为 `~/.claude/settings.json` 的 `statusLine.command`，捕获 Claude Code 自己渲染终端状态栏时携带的 payload（含 `rate_limits`）到本地缓存文件；若用户已有非本安装器写入的 statusLine 配置则不覆盖、返回 `.skippedExistingStatusLine`（与 ping-island `isManagedStatusLine` 逻辑一致）；提供 `install()`/`uninstall()`，路径全部可注入以便测试不触碰真实文件 #P0
+- [x] [0.10.0-ARCH-D-001] `ClaudeStatusLineUsageProvider`：读取上述缓存文件，解析 `rate_limits.{five_hour,seven_day}`（`used_percentage`/`utilization` 同义字段，`resets_at` 支持 epoch 数字/ISO8601/缺失三种形态，字段形状经 ping-island 测试夹具与本机 Vibe Island 真实缓存 `~/.vibe-island/cache/rl.json` 双重交叉验证）；缓存超过 6 小时视为陈旧，退化到下一层（配置文件/Keychain → API），不展示过期数字 #P0 — 接入 Claude 管线为新 P1（在 OAuth 之前），零权限、零子进程，是本次「不用 Keychain、app 自己能拿到」诉求里唯一完全不涉及 Keychain 的路径
+- [x] [0.10.0-PM-A-013] 「模型」偏好页新增「Claude Code 额度捕获（实验）」开关（`PreferencesStore.claudeStatusLineHookEnabled`），显式 opt-in 才会修改用户的 `~/.claude/settings.json`；开启成功/跳过（已有自定义 statusLine）/失败三种结果都有对应提示文案；关闭时只移除本安装器写入的 statusLine 引用，不动用户自己的配置 #P1
+- [x] [0.10.0-DOC-A-003] README 额度获取表新增「本地 hook 缓存（Claude 专属）」行，标注为 Claude 新的默认 P1（原配置/凭证 → API 降为 P2，App WebView 会话降为 P3），注明经 ping-island 源码与本机 Vibe Island 真实缓存交叉验证 #P1
+
+### sub/main: Preferences provider 列表遗漏 + dropdown Claude 消失架构 bug + 分层诊断日志 + dropdown 显示规则重写
+
+> 用户实测发现两个真实 bug：Preferences「模型」页 provider 列表漏了 Antigravity；dropdown 里 Claude 彻底不显示（比"没额度"更严重）。同时要求新增结构化分层获取诊断日志，并按详细规格重写 dropdown 名称栏/额度栏的显示逻辑。
+
+- [x] [0.10.0-BUG-A-000] `ModelsSettingsView.visibleProviders` 补上 `.antigravity`（此前只有 codex/minimax/kimi/claude/glm 五项，agy 完全没有开关行）#P0
+- [x] [0.10.0-BUG-A-001] 修复 dropdown 里 Claude 完全不显示：根因是 `FetchPipeline.runSequential` 在只有 tier-only CLI 兜底层成功（`quotas=[]`）、且后续额度层全部失败时，仍返回 `availability=.available` 的"幽灵成功" snapshot；`RefreshCoordinator.applyProviderResult` 对 `.available` 原本判定 `keepAfterApply = !quotas.isEmpty`，导致这条 snapshot 被直接移除。`.available` 只可能来自至少一个 strategy 成功，不存在"什么都没有"的空 available，改为始终 `keepAfterApply = true`；额度缺失的展示交给 dropdown 新的"打开 WebView 授权"提示（0.10.0-UI-B-000）兜底，不再让整个 provider 消失 #P0
+- [x] [0.10.0-ARCH-E-000] 新增 `ProviderCheckLog` actor + `ProviderCheckLogStore`：按用户规格实现结构化分层获取诊断日志，格式 `<yyyy.mm.dd_hh.mm.ss> - <ProviderName>: <CheckStep>, <MethodName>: <Result>`；CheckStep 对应 README 四层获取矩阵（Provider 获取/额度获取/过期日获取/档位与费用获取）；按 provider 缓冲、该 provider 本轮工作完全结束才整段落盘，保证同一 provider 的行始终连续输出，check step / method name 按真实调用顺序自然满足；结果里明示缓存命中/失效、成功获取到的信息、失败原因 #P0
+- [x] [0.10.0-ARCH-E-001] 确认并保留现有并发模型：`RefreshCoordinator` 对安装探测和 pipeline+过期日阶段都用 `withTaskGroup` 做 provider 间并发；单个 provider 内部（`FetchPipeline.runSequential`、`SubscriptionExpiryResolver.resolve`）都是严格 for 循环顺序执行——已经符合"provider 内顺序检查、provider 间并发检查"，本次只新增日志埋点，不改变原有并发架构 #P0
+- [x] [0.10.0-ARCH-E-002] 埋点覆盖三处：`InstallDetectorProvider.detectSources`（App Bundle / CLI 命令 / 环境变量 / 凭证文件逐项命中与否，含"上次成功来源缓存"命中/失效提示）、`FetchPipeline.runSequential`（每次 strategy 尝试按 `supportedLayers ∩ {quota, plan}` 各记一条，一次 fetch 同时贡献额度+档位时记两条）、`SubscriptionExpiryResolver.resolve`（每个 expiry source 尝试的成功/失败明细）#P0
+- [x] [0.10.0-PM-A-014] Preferences 新增「日志」sidebar 页（`DiagnosticsSettingsView`），只读展示 `ProviderCheckLogStore` 落盘内容，支持刷新/复制全部/清空 #P1
+- [x] [0.10.0-UI-B-000] dropdown 名称栏重写（`PlanHeader`）：左侧 `<ProviderName> · <TierName>`（TierName 缺失时省略"·"）；右侧按"TierName 缺失 → 到期日缺失 → 都齐全"三级 cascade 决定显示"打开 WebView 授权"提示还是真实到期日+价格；价格缺失时整组（货币符号/费用/周期）直接不渲染，不再显示"—"占位；到期日显示不再要求价格同时存在（原逻辑错误地把两者耦合）#P1
+- [x] [0.10.0-UI-B-001] dropdown 额度栏重写：`.available` 但 `quotas.isEmpty`（tier-only 兜底层成功、额度层还没拿到）时渲染新增的 `QuotaAuthPromptRow`——有 WebView 授权入口的 provider 显示蓝色可点击"打开 WebView 授权"，没有的显示灰色"暂无额度数据"；不再是空白 VStack #P1
+- [x] [0.10.0-CLEAN-A-000] 删除已无调用方的 `ProviderSnapshot.displayName`（原 `"\(kind.displayName) \(subscriptionTier)"` 拼接，被 0.10.0-UI-B-000 拆成独立的 ProviderName/TierName 两个 Text 后不再需要）#P2
+
+### sub/main: 日志上线首日实测反馈——排序 bug、Claude 价格 bug、dropdown 待配置态显示规则
+
+> 上线新日志当天用户实测发现：Z Code 等 `.needsConfiguration` provider 在 dropdown 里同时显示原始技术性 reason 文本和 WebView 授权按钮，观感混乱；`.notSubscribed` 应该用统一"未订阅或订阅已过期"文案而不是拼原始 reason；日志页标签"获取日志"应简化为"日志"。用户直接读了一段真实日志，进一步发现两个此前没被注意到的真实 bug（这正是新增诊断日志的价值——第一次实测就抓出真问题）。
+
+- [x] [0.10.0-BUG-A-002] `FetchPipeline.orderedStrategies` 删除"按上次成功来源缓存重排"逻辑：原实现只要任一层有缓存的 preferred source，就把所有 `supportedLayers` 覆盖满三层的 strategy 整体提到最前，与各自在数组里的声明位置无关。实测复现两处真实错误：Kimi 的 `kimi-webview`（声明最后、本该是最后一道兜底）排到 `kimi-auth`（声明第二、真正的常规 CLI OAuth 层）前面；Claude 的 `claude-auth-status-cli`（P3 兜底）因为是"上次成功来源"排到 `claude-statusline`（声明第一、零权限 P1）前面。**中间态**先改成恒定按数组声明顺序执行、完全不看缓存；用户随后指出这也不对（见 0.10.0-BUG-A-004），最终版本是"缓存优先试、失败才完整走声明顺序" #P0
+- [x] [0.10.0-BUG-A-003] `ClaudeAuthStatusCLIProvider.parseStatusOutput` 补上 `ProviderPricing.localizedMonthlyPrice(kind: .claude, tier:)` 调用：此前硬编码 `monthlyPrice: nil`，导致只靠这条 CLI 兜底层拿到档位（如 "Pro"）的用户永远看不到价格，即使 `ProviderPricing` 里已经有 `(.claude, "pro") → $20` 的映射。价格是从档位名字查静态公开定价表，不是"伪造额度"，跟这里保持为空的 quotas 是两回事 #P0
+- [x] [0.10.0-UI-B-002] dropdown `.needsConfiguration` 分支重写：不确定是否订阅时（拿数据失败、凭证问题等），有 `webAuthorizationURL` 的 provider 只显示清爽的「打开 WebView 授权」按钮，不再同时堆一段原始技术性 reason 文本；没有授权入口的才退回显示原始 reason #P1
+- [x] [0.10.0-UI-B-003] dropdown `.notSubscribed` 分支重写：改为统一显示"未订阅或订阅已过期"（灰色，无按钮），不再拼接原始 reason；这个状态只在服务端明确告知"没有有效订阅"时触发，跟"不清楚是否订阅"的 `.needsConfiguration` 是两种不同确定性，不应该用同一种"待配置 · reason"文案 #P1
+- [x] [0.10.0-PM-A-015] Preferences sidebar「获取日志」标签简化为「日志」#P2
+
+### sub/main: 缓存优先级语义纠正 + dropdown 隐藏按钮与 Preferences 开关状态统一
+
+> 用户纠正 0.10.0-BUG-A-002 的"完全不看缓存、恒定按声明顺序"过于绝对：正确语义是"每层如果有缓存，优先检查缓存；缓存没有返回结果，才按声明顺序完整跑一遍（不是默认就重跑）"。同时指出 dropdown 的隐藏（叉）按钮应该对所有没拿到真实额度的 provider 一致提供，且点击效果必须等同于 Preferences 里把该 provider 关掉——不能是"dropdown 里看不见了、后台还在正常刷新"的假隐藏。
+
+- [x] [0.10.0-BUG-A-004] `FetchPipeline.effectiveOrder`/`cachedFirstStrategy`：只有当本轮所需的**全部**层（额度 + 档位）的「上次成功来源索引」一致指向同一个 strategy id 时，才把它提到最前单独先试一次；试完无论成败，剩余 strategy 依然按 pipeline 声明顺序完整跑一遍（跳过刚试过的那个，避免同一轮重复调用）。层与层之间不一致、或任一层完全没有缓存记录，都视为"信息不全"，直接走完整声明顺序，不取巧——这也是为什么 `quotaOnlySourceCannotShadowFullSource` 这条既有测试还能通过：它只给 quota 层记了缓存，跟 plan 层不一致。新增两条回归测试锁定"层一致时优先且提前于声明顺序"和"缓存来源本轮失败后仍完整 fallback"两种场景 #P0
+- [x] [0.10.0-UI-B-004] dropdown 隐藏（叉）按钮从"只在 `.needsConfiguration` 出现"改为"所有没有真实额度数据的 provider 都出现"（`.needsConfiguration` / `.notSubscribed` / `.subscriptionExpired` / `.available` 但 `quotas.isEmpty`），已有真实额度的 provider 不提供（没有"不想用"的诉求，误触代价也更高）#P1
+- [x] [0.10.0-ARCH-F-000] 删除 `RefreshCoordinator.hiddenKinds`（内存态、手动刷新会被 `clearHidden()` 清空的临时隐藏集合），改为统一读写 `PreferencesStore.isEnabled(kind:)`（持久化）。`hide(kind:)` 现在直接调用 `PreferencesStore.setEnabled(false, for:)`；`runRefreshCycle` 的 `activeProviders` 过滤也改读同一个持久化状态。dropdown 隐藏按钮和 Preferences「模型」页的开关现在是同一份状态的两个入口，任一边改动都会真正阻止该 provider 发起请求，而不是只在 UI 上视觉隐藏 #P0
+- [x] [0.10.0-ARCH-F-001] `RefreshCoordinator` 新增 `applyEnabledFilterChange()`，订阅 `.quotaPreferencesDidChange` 通知：立即把刚被关闭的 provider 从 `state.snapshots` 摘掉；刚被重新启用但 `state.snapshots` 里还没有它的 provider，立刻触发一次 `refreshNow()`，不用等下一个 5 分钟自动周期 #P1
+
+### sub/main: dropdown 全局规则纠正 + 日志页体验 + 日志内容可读性统一
+
+> 用户截图指出一批具体问题：日志页清空后 ScrollView 收缩变窄；停留在日志页时新记录不会自动出现，要切一次 tab 才行；Claude 明明没拿到额度却是绿灯（状态灯全局规则错误）；灰色/蓝色 WebView 授权提示的下划线不统一；并贴了一段真实日志，指出 Kimi 的额度/档位两层看起来"交叉"、`kimi-desktop-token` 这类 MethodName 看不出属于哪一类来源、Z Code 额度层只跑了一次、以及追问 Claude 的 OAuth/Keychain 到底为什么读不到凭证。
+
+- [x] [0.10.0-UI-C-000] `DiagnosticsSettingsView` 的日志 `ScrollView` 内容 `VStack` 加 `.frame(maxWidth: .infinity, alignment: .leading)`：清空后只剩一行短提示文字时，原来没有这个约束会让整个 ScrollView（进而整个设置页）收缩到刚好包住那行字的宽度 #P1
+- [x] [0.10.0-ARCH-G-000] 新增 `Notification.Name.providerCheckLogDidChange`，`ProviderCheckLogStore.append`/`clear` 落盘后在主线程 post；`DiagnosticsSettingsView` 订阅它调用 `reload()`——停留在日志页时，刷新周期写入的新记录会实时出现，不用切一次 tab 才触发 `onAppear` 重新读取 #P1
+- [x] [0.10.0-BUG-A-005] `ProviderSnapshot.statusColor` 的 `.available` 分支修复：`primarySubscriptionGroupWorstQuota` 为 nil（tier-only 兜底层成功、额度层还没拿到，如 Claude 常见的 CLI-only 状态）时，原来用 `?? 1.0` 兜底把"不知道剩多少"当成"剩 100%"画绿灯；改为这种情况下返回灰色"未知"灯，跟 loading/needsConfiguration 同一套语义 #P0
+- [x] [0.10.0-UI-C-001] 统一 WebView 授权提示的下划线规则：header 里两处灰色引导（TierName 缺失 / 到期日缺失）保持下划线；`QuotaAuthPromptRow`（额度栏蓝色引导）去掉误加的 `.underline()`——颜色本身已经表明可点击，蓝色 + 下划线是重复强调，之前两者没统一 #P1
+- [x] [0.10.0-ARCH-G-001] 诊断日志层输出顺序修正：`FetchPipeline.logAttempt` 原来用 `relevantLayers.sorted(by: { $0.rawValue < $1.rawValue })` 按字母序排（"plan" < "quota"），导致同一次成功调用先输出「档位与费用获取」再输出「额度获取」，跟额度层排 README 四层矩阵第 2 层、档位排第 4 层的既定顺序自相矛盾，看起来像"交叉"。改为固定用 `[.quota, .plan]` 显式顺序 #P0
+- [x] [0.10.0-ARCH-G-002] 诊断日志 MethodName 统一：新增 `ProviderSourceKind.checkLogLabel`/`SubscriptionExpirySourceKind.checkLogLabel`，把 Provider 获取/额度获取/档位与费用获取/过期日获取四层的 MethodName 统一改成同一套分类词汇（"配置/凭证 → API"「CLI 命令」「本地 App / RPC」「App WebView 会话」「浏览器 Cookie」「Keychain」等，对应 README 五级来源排序的用词），不再直接用 `kimi-desktop-token` 这类单看名字猜不出类别的 strategy id 当 MethodName；具体 id 移到 `result` 里（格式："来源 <id>：<结果>"）#P0
+- [x] [0.10.0-BUG-A-006] 修正 `QuotaProviderStrategy.sourceKind` 对 `"minimax-cli"` 的误分类：这个 id 是历史命名遗留，实际实现读 `~/.mmx/config.json` 的 API key 直调 `coding_plan/remains`，并不真的执行 `mmx` 命令（真正的 CLI 层是另一个 id `minimax-mmx-cli`），原来的 `id.contains("cli")` 通配会把它错分类成"CLI 命令"；新增日志用到 `checkLogLabel` 后这个误分类会直接暴露给用户，借这次统一顺手修掉 #P1
+- [x] [0.10.0-INVESTIGATE-A-000] 排查 Claude OAuth/Keychain 凭证读取失败：用户机器上 `claude auth status --json`（CLI 层）能成功返回 `subscriptionType: pro`，说明本机确实登录有效；但 `ClaudeOAuthUsageProvider` 的文件路径（`~/.claude/.credentials.json` 不存在，已确认）和 Keychain 路径（`security find-generic-password -s "Claude Code-credentials"` 确认条目真实存在，service/account 与代码预期完全匹配）都读不到有效 accessToken。代码走读未发现查询逻辑本身的 bug。最可能的解释：`build-app.sh` 用 ad-hoc 签名（`--sign -`）+ 固定 `--identifier`重签，但 ad-hoc 签名本身在每次重新构建后 CDHash 会变化，可能导致 macOS 对 Keychain 第三方条目的"始终允许"信任判定无法跨构建持久化——与已知的 TCC/Accessibility 权限持久化问题（v0.12.0 Developer ID 签名规划）是同一根因类别 #P1
+
+### sub/main: 对照参考项目源码，Claude Keychain 读取改走 `security` CLI
+
+> 用户直接问"你发的 4 个开源项目是怎么获得 claude 额度的"，要求对照 CodexBar / ClaudeBar / Claude-Usage-Tracker / ping-island 的真实源码，而不是继续靠猜。读了 CodexBar 的 `docs/KEYCHAIN_FIX.md` 和 `ClaudeOAuthCredentials.swift`、ClaudeBar 的 `ClaudeCredentialLoader.swift`，找到了此前 0.10.0-INVESTIGATE-A-000 一直没验证到的具体可执行修复。
+
+- [x] [0.10.0-BUG-A-007] `ClaudeKeychainCredentialsReader.readCredentialsJSON()` 从直接调 `SecItemCopyMatching`（`kSecMatchLimitAll` + `kSecReturnData` + `kSecReturnAttributes` 一次性查询）改为 `Process` 调 `/usr/bin/security find-generic-password -s "Claude Code-credentials" -w`，参考 ClaudeBar 的真实实现（`ClaudeCredentialLoader.loadFromKeychain`）。关键原因：`/usr/bin/security` 是 CDHash 永不变的 Apple 签名系统二进制，用户「始终允许」的信任记在它的身份上，不受本项目 ad-hoc 签名（`--sign -`）每次重新构建后 CDHash 变化的影响——而直接调 Security.framework 时信任是记在自己 App 的签名身份上的，这正是 0.10.0-INVESTIGATE-A-000 排查时怀疑的根因。CodexBar 的 `docs/KEYCHAIN_FIX.md` 也独立佐证了"不同查询形状 macOS 分别记忆授权"这一点（它们用了另一种解法：把 metadata-only 查询和单条 secret-data 查询拆成两次不同形状的调用）#P0
+- [x] [0.10.0-ARCH-H-000] `ClaudeOAuthUsageProvider` 新增 `keychainReader` 注入点（默认走真实 `readCredentialsJSON`），修复了顺手改动暴露的测试隔离问题：原来两个"应该抛 missingCredentials"的测试因为直接调用真实 Keychain 读取，在已登录 Claude Code 的开发机上会意外读到真实凭证、进而对 `api.anthropic.com` 发起真实网络请求；现在测试显式注入返回 nil 的 reader #P0
+- [x] [0.10.0-ARCH-H-000-test] 新增 `ClaudeKeychainCredentialsReaderTests`：验证对一个真实不存在的占位 service 名调用 `readViaSecurityCLI` 返回 nil（跨机器确定性成立，不依赖开发机是否登录过 Claude）#P1
+
+### sub/main: 日志格式二次调整 + Claude 额度条标题统一 + 更新功能现状确认
+
+> 用户反馈日志格式"冒号逗号混排"不好读，要求改成管道分隔的层级/方案/结果/内容；截图指出 Claude 的额度条显示"Session"/"Weekly"前缀，跟 Codex 只显示周期标签不一致；询问 Preferences 更新功能现状（要求走 v0.11.0 记录的 ad-hoc 签名 workaround，不是 v0.12.0 的 Developer ID 方案）。
+
+- [x] [0.10.0-ARCH-I-000] `ProviderCheckLog` 行格式从 `<Provider>: <Step>, <Method>: <Result>`（冒号逗号混排，成败判断混在自由文本里）改成 `<Provider> | <Step> | <Method> | <成功/失败/跳过> | <详细内容>`：新增独立的 `Outcome` 枚举（`.success`/`.failure`/`.skipped`），跟自由文本的 `detail` 彻底分开，一眼就能扫到成败，不用从长句子里找"成功"/"失败"字样。改动覆盖 `InstallDetectorProvider`/`ProviderFetchStrategy`/`SubscriptionExpirySources` 三处全部约 22 个调用点；`ProviderCheckLogTests` 同步更新 + 新增 `.skipped` 状态的落盘测试 #P0
+- [x] [0.10.0-BUG-A-008] Claude 额度条标题统一：`ClaudeUsageWindowParser`（`DashboardEndpoints.swift`）和 `ClaudeStatusLineUsageProvider` 的 `five_hour`/`seven_day` 窗口 title 从 `"Session"`/`"Weekly"` 改成空字符串，跟 Codex 的 `primary`/`secondary` 窗口一致——这两个窗口只是同一份额度的两个时间维度，不是 Kimi Work/Code、MiniMax General/Video 那种需要区分的不同 scope，不应该显示前缀名称；legacy 的 `seven_day_sonnet`/`seven_day_opus` 分支保留各自的区分标题（它们是真正不同的 scope：不同模型的独立额度池）。相关测试改用 `periodSeconds` 而不是 `title` 区分窗口 #P1
+- [x] [0.10.0-DOC-A-004] 确认 Preferences 更新功能（`UpdateChecker.swift` + `AboutSettingsView.swift` + `install-update.sh` + `release.yml`）已在 v0.11.0 完整落地并接入真实 `DDonlien/quota-bar` 仓库，release workflow 也确认真实产出 `.dmg` 资产；本轮未发现需要新增的缺口，仅做现状确认，不重复建设 #P2
+
 
 ## Phase - v0.11.0 - 真实自动更新（ad-hoc 预开发版）+ semver 发版
 
@@ -510,12 +641,12 @@
 > 保留 nightly 作为默认 push 自动打包路径；新增 `workflow_dispatch` 触发的 semver 发版路径。
 > 引入 semver 并不意味着丢弃 nightly —— nightly 仍是 dev 日常节奏，semver 是「对外稳定版」标记。
 
-- [ ] [0.11.0-CI-A-000] `release.yml` 新增 `workflow_dispatch` 输入项 `version`（形如 `v0.11.0`），触发 semver 发版；main 自动 push 路径继续产出 `nightly-<sha>` 不变 #P1
-- [ ] [0.11.0-CI-A-001] semver 发版路径 tag = `version` 输入值（如 `v0.11.0`）、`prerelease: false`；产物上传到同名 GitHub Release；DMG 名称 `QuotaBar-<version>.dmg`；macOS `CFBundleShortVersionString` 同步写入 `0.11.0`（去前导 `v`）#P1
-- [ ] [0.11.0-CI-A-002] `build-app.sh` 接受 `VERSION` 环境变量：默认空时走 nightly 行为（`CFBundleShortVersionString = "1.0"` 保持），传入 `v0.11.0` 时写入 `CFBundleShortVersionString = "0.11.0"`；脚本内对 `VERSION` 走严格 `vX.Y.Z` 校验，非合法格式立即 fail，不静默回退 #P1
-- [ ] [0.11.0-CI-A-003] `CFBundleVersion` / `QBDisplayBuild` 统一日期戳 `YYMMDD.HHMMSS.branch`（当前已部分实现，验证 nightly 与 semver 两条路径都走同一逻辑）#P1
-- [ ] [0.11.0-CI-A-004] `release.yml` 注释维持 `unsigned and not notarized`，与本 phase ad-hoc 实际行为一致；v0.12.0 升级 cert 时再更新注释为实际签名 + notarize 步骤（升级版见 [0.12.0-SEC-A-005]）#P1
-- [ ] [0.11.0-CI-A-002-test] 测试 `build-app.sh` 在 `VERSION=v0.11.0` / `VERSION=` / `VERSION=garbage` 三种情况下 Info.plist 写入行为分别正确 #P1
+- [x] [0.11.0-CI-A-000] `release.yml` 新增 `workflow_dispatch` 输入项 `version`（形如 `v0.11.0`），触发 semver 发版；main 自动 push 路径继续产出 `nightly-<sha>` 不变 #P1
+- [x] [0.11.0-CI-A-001] semver 发版路径 tag = `version` 输入值（如 `v0.11.0`）、`prerelease: false`；产物上传到同名 GitHub Release；DMG 名称 `QuotaBar-<version>.dmg`；macOS `CFBundleShortVersionString` 同步写入 `0.11.0`（去前导 `v`）#P1
+- [x] [0.11.0-CI-A-002] `build-app.sh` 接受 `VERSION` 环境变量：默认空时走 nightly 行为（`CFBundleShortVersionString = "1.0"` 保持），传入 `v0.11.0` 时写入 `CFBundleShortVersionString = "0.11.0"`；脚本内对 `VERSION` 走严格 `vX.Y.Z` 校验，非合法格式立即 fail，不静默回退 #P1
+- [x] [0.11.0-CI-A-003] `CFBundleVersion` / `QBDisplayBuild` 统一日期戳 `YYMMDD.HHMMSS.branch`（当前已部分实现，验证 nightly 与 semver 两条路径都走同一逻辑）#P1
+- [x] [0.11.0-CI-A-004] `release.yml` 注释维持 `unsigned and not notarized`，与本 phase ad-hoc 实际行为一致；v0.12.0 升级 cert 时再更新注释为实际签名 + notarize 步骤（升级版见 [0.12.0-SEC-A-005]）#P1
+- [x] [0.11.0-CI-A-002-test] 测试 `build-app.sh` 在 `VERSION=v0.11.0` / `VERSION=` / `VERSION=garbage` 三种情况下 Info.plist 写入行为分别正确 #P1 — 2026-07-05 手动验证：garbage 立即 fail、v0.11.0 写入 0.11.0、空写入 1.0
 
 ### update/main: 维持 ad-hoc 签名 + 无 notarize 立场（预开发版）
 
@@ -523,10 +654,10 @@
 > 正式升级到 Developer ID 签名 + notarize 在 v0.12.0 完成（phase header 已说明两者关系）。
 > 本段落的 ARCH 任务是**为 v0.12.0 提前锁定资产**：bundle id 在 v0.11.0 阶段就锁死，v0.12.0 升级 cert 时直接复用，避免 TCC 权限被清。
 
-- [ ] [0.11.0-ARCH-A-000] 保持 bundle identifier `com.taobe.quotabar` 在所有 build 中不变；`build-app.sh` 内已 hardcode，本 phase 任何修改都不允许触碰该值（v0.12.0 升级 cert 时这是 TCC 权限保留的形式化前置条件）#P1
-- [ ] [0.11.0-ARCH-A-001] 保持 `--identifier com.taobe.quotabar` 重签名参数与 Info.plist 的 `CFBundleIdentifier` 一致；ad-hoc 模式下该参数是 macOS 识别「同一 app」的最重要依据，本 phase 不允许改动 #P1
-- [ ] [0.11.0-ARCH-A-002] build script 在本 phase 维持 `--sign -` ad-hoc 签名；**不引入** `--options runtime` / `xcrun notarytool` / .p8 API Key 任一项；v0.11.0 范围内任何与签名相关的改动都 defer 到 v0.12.0 #P1
-- [ ] [0.11.0-ARCH-A-003] helper 脚本 `install-update.sh` 同样 ad-hoc 签名；本机使用可接受，Gatekeeper 首次会拦截，本机授权一次后记住；v0.12.0 同步升级为 Developer ID 签名（见 [0.12.0-SEC-A-006]）#P1
+- [x] [0.11.0-ARCH-A-000] 保持 bundle identifier `com.taobe.quotabar` 在所有 build 中不变；`build-app.sh` 内已 hardcode，本 phase 任何修改都不允许触碰该值（v0.12.0 升级 cert 时这是 TCC 权限保留的形式化前置条件）#P1
+- [x] [0.11.0-ARCH-A-001] 保持 `--identifier com.taobe.quotabar` 重签名参数与 Info.plist 的 `CFBundleIdentifier` 一致；ad-hoc 模式下该参数是 macOS 识别「同一 app」的最重要依据，本 phase 不允许改动 #P1
+- [x] [0.11.0-ARCH-A-002] build script 在本 phase 维持 `--sign -` ad-hoc 签名；**不引入** `--options runtime` / `xcrun notarytool` / .p8 API Key 任一项；v0.11.0 范围内任何与签名相关的改动都 defer 到 v0.12.0 #P1
+- [x] [0.11.0-ARCH-A-003] helper 脚本 `install-update.sh` 同样 ad-hoc 签名；本机使用可接受，Gatekeeper 首次会拦截，本机授权一次后记住；v0.12.0 同步升级为 Developer ID 签名（见 [0.12.0-SEC-A-006]）#P1
 - [ ] [0.11.0-ARCH-A-000-test] 测试每次 `build-app.sh` 跑完后，生成的 .app 的 `Info.plist.CFBundleIdentifier` == `--identifier` 参数值 == `com.taobe.quotabar`（断言三个值一致，防止 v0.12.0 升级 cert 时出现签名 identifier 与 bundle id 漂移）#P1
 
 ### update/main: 写轻量 helper 替换脚本
@@ -535,12 +666,12 @@
 > 本 phase helper 用 ad-hoc 签名（依赖 [0.11.0-ARCH-A-003]）；v0.12.0 同步升级为 Developer ID（见 [0.12.0-SEC-A-006]）。
 > ad-hoc 签名下 `spctl --assess` 会拒绝（因为 macOS 不认 ad-hoc 为有效签名），所以 v0.11.0 阶段只跑 `codesign --verify`，跳过 spctl；v0.12.0 起两者都跑。
 
-- [ ] [0.11.0-TOOL-A-000] 新增 `macos/scripts/install-update.sh`：接受 dmg 路径参数 → 挂载 dmg → 复制 .app 到 `/Applications/Quota Bar.app`（覆盖现有）→ 卸载 dmg → 退出码反映成功 / 失败 #P1
-- [ ] [0.11.0-TOOL-A-001] `install-update.sh` 替换前 verify 签名：`codesign --verify --verbose=2 <.app>`；ad-hoc 签名下**跳过** `spctl --assess`（ad-hoc 永远被拒，跳过不视为不通过）；任一失败立即终止，避免安装未签名包导致 TCC 权限被清。v0.12.0 升级 Developer ID 后强制加 `spctl --assess --type execute --verbose=2` 检查（见 [0.12.0-SEC-A-006]）#P1
-- [ ] [0.11.0-TOOL-A-002] `install-update.sh` 走 `build-app.sh` 同一签名流程（v0.11.0 是 ad-hoc，v0.12.0 升级为 Developer ID + notarize）；产物 `install-update` 与主 .app 一起打包进 dmg 内的 `tools/` 目录（dmg 用户从 Applications 拖到 Applications 的常规用法不会暴露它，仅 app 启动时通过 `Bundle.main.bundleURL.deletingLastPathComponent()` 等方式定位）#P1
-- [ ] [0.11.0-TOOL-A-003] `install-update.sh` 在替换前等主 app 进程退出（`pkill -x "QuotaBar"` + 短暂 sleep 等待进程清理），避免 file lock；超时 5s 后强杀 #P1
-- [ ] [0.11.0-TOOL-A-004] 替换失败时（disk full / 权限不足 / 签名 verify 失败）回滚：保留旧 .app，把失败原因写 `~/Library/Application Support/QuotaBar/update-error.log`；主 app 启动时检测该文件并弹「上次更新失败」通知 #P1
-- [ ] [0.11.0-TOOL-A-005] `install-update.sh` 支持 `--dry-run` 模式：不实际替换，仅打印将要执行的操作；CI / 开发调试使用 #P1
+- [x] [0.11.0-TOOL-A-000] 新增 `macos/scripts/install-update.sh`：接受 dmg 路径参数 → 挂载 dmg → 复制 .app 到 `/Applications/Quota Bar.app`（覆盖现有）→ 卸载 dmg → 退出码反映成功 / 失败 #P1
+- [x] [0.11.0-TOOL-A-001] `install-update.sh` 替换前 verify 签名：`codesign --verify --verbose=2 <.app>`；ad-hoc 签名下**跳过** `spctl --assess`（ad-hoc 永远被拒，跳过不视为不通过）；任一失败立即终止，避免安装未签名包导致 TCC 权限被清。v0.12.0 升级 Developer ID 后强制加 `spctl --assess --type execute --verbose=2` 检查（见 [0.12.0-SEC-A-006]）#P1
+- [x] [0.11.0-TOOL-A-002] `install-update.sh` 走 `build-app.sh` 同一签名流程（v0.11.0 是 ad-hoc，v0.12.0 升级为 Developer ID + notarize）；产物 `install-update` 与主 .app 一起打包进 dmg 内的 `tools/` 目录（dmg 用户从 Applications 拖到 Applications 的常规用法不会暴露它，仅 app 启动时通过 `Bundle.main.bundleURL.deletingLastPathComponent()` 等方式定位）#P1 — 实现偏差：helper 打包进 .app 的 `Contents/Resources/install-update.sh`（随主包 ad-hoc 签名整体覆盖），主 app 通过 `Bundle.main.url(forResource:)` 定位；比 dmg tools/ 目录更不易被用户误删
+- [x] [0.11.0-TOOL-A-003] `install-update.sh` 在替换前等主 app 进程退出（`pkill -x "QuotaBar"` + 短暂 sleep 等待进程清理），避免 file lock；超时 5s 后强杀 #P1
+- [x] [0.11.0-TOOL-A-004] 替换失败时（disk full / 权限不足 / 签名 verify 失败）回滚：保留旧 .app，把失败原因写 `~/Library/Application Support/QuotaBar/update-error.log`；主 app 启动时检测该文件并弹「上次更新失败」通知 #P1
+- [x] [0.11.0-TOOL-A-005] `install-update.sh` 支持 `--dry-run` 模式：不实际替换，仅打印将要执行的操作；CI / 开发调试使用 #P1
 - [ ] [0.11.0-TOOL-A-000-test] helper 集成测试：mock dmg 挂载 + 写一个 .app stub，验证 dry-run 不写盘、正常模式正确复制、失败模式回滚 + 写 error log #P1
 - [ ] [0.11.0-TOOL-A-001-test] helper 拒绝未签名 / 签名错误的 dmg，给出明确错误码 #P1
 
@@ -548,43 +679,43 @@
 
 > 调公开 API，无需鉴权（60 req/IP/h 限流单用户自用足够）。解析 semver + nightly 两种 tag，取「当前 channel 视角下的最新可用版本」。
 
-- [ ] [0.11.0-FE-A-000] 新增 `macos/Sources/QuotaBar/UpdateChecker.swift`：使用 `URLSession` 调 `https://api.github.com/repos/DDonlien/quota-bar/releases?per_page=30`，不鉴权 #P1
-- [ ] [0.11.0-FE-A-001] `UpdateChecker` 解析 release list：semver tag 用 `^v\d+\.\d+\.\d+$` 正则匹配（不匹配 prerelease 如 `v0.11.0-rc1`），nightly tag 用 `^nightly-[0-9a-f]{7,40}$` 匹配 #P1
-- [ ] [0.11.0-FE-A-002] `UpdateChecker` 状态机：`idle` / `checking` / `updateAvailable(remoteVersion, channel, releaseURL, assetURL, releaseNotes)` / `upToDate(currentVersion)` / `error(message)`；使用 `@MainActor @Published` 暴露给 SwiftUI #P1
-- [ ] [0.11.0-FE-A-003] 版本比较：semver 段按三段数字比（`v0.10.0` < `v0.11.0` < `v0.2.0` 不成立）；nightly 之间用日期戳 `YYMMDD.HHMMSS.branch` 字符串字典序比（等价于时间序）；semver stable 永远优先于 nightly 推荐 #P1
-- [ ] [0.11.0-FE-A-004] `UpdateChecker` 暴露 `currentVersion: String`（`Bundle.main.CFBundleShortVersionString`）和 `currentBuild: String`（`Bundle.main.CFBundleVersion`）便于比较 #P1
-- [ ] [0.11.0-FE-A-005] 检查默认在「关于」页打开时后台触发一次；用户也可手动点「检查更新」按钮触发；触发时 `idle` → `checking` → 终态 #P1
-- [ ] [0.11.0-FE-A-006] 网络超时 10s；错误状态展示中文友好提示（「无法连接到 GitHub，请检查网络」），不暴露原始 API 错误；限流命中（403 with X-RateLimit-Remaining: 0）时显示「检查过于频繁，请稍后重试」#P1
-- [ ] [0.11.0-FE-A-007] `UpdateChecker` 缓存上次检查结果到 `PreferencesStore.QuotaPreferences.lastUpdateCheck: Date?`；同一 session 内 `AboutSettingsView` 重新打开时若 5min 内已查过不重复请求 #P1
+- [x] [0.11.0-FE-A-000] 新增 `macos/Sources/QuotaBar/UpdateChecker.swift`：使用 `URLSession` 调 `https://api.github.com/repos/DDonlien/quota-bar/releases?per_page=30`，不鉴权 #P1
+- [x] [0.11.0-FE-A-001] `UpdateChecker` 解析 release list：semver tag 用 `^v\d+\.\d+\.\d+$` 正则匹配（不匹配 prerelease 如 `v0.11.0-rc1`），nightly tag 用 `^nightly-[0-9a-f]{7,40}$` 匹配 #P1
+- [x] [0.11.0-FE-A-002] `UpdateChecker` 状态机：`idle` / `checking` / `updateAvailable(remoteVersion, channel, releaseURL, assetURL, releaseNotes)` / `upToDate(currentVersion)` / `error(message)`；使用 `@MainActor @Published` 暴露给 SwiftUI #P1
+- [x] [0.11.0-FE-A-003] 版本比较：semver 段按三段数字比（`v0.10.0` < `v0.11.0` < `v0.2.0` 不成立）；nightly 之间用日期戳 `YYMMDD.HHMMSS.branch` 字符串字典序比（等价于时间序）；semver stable 永远优先于 nightly 推荐 #P1
+- [x] [0.11.0-FE-A-004] `UpdateChecker` 暴露 `currentVersion: String`（`Bundle.main.CFBundleShortVersionString`）和 `currentBuild: String`（`Bundle.main.CFBundleVersion`）便于比较 #P1
+- [x] [0.11.0-FE-A-005] 检查默认在「关于」页打开时后台触发一次；用户也可手动点「检查更新」按钮触发；触发时 `idle` → `checking` → 终态 #P1
+- [x] [0.11.0-FE-A-006] 网络超时 10s；错误状态展示中文友好提示（「无法连接到 GitHub，请检查网络」），不暴露原始 API 错误；限流命中（403 with X-RateLimit-Remaining: 0）时显示「检查过于频繁，请稍后重试」#P1
+- [x] [0.11.0-FE-A-007] `UpdateChecker` 缓存上次检查结果到 `PreferencesStore.QuotaPreferences.lastUpdateCheck: Date?`；同一 session 内 `AboutSettingsView` 重新打开时若 5min 内已查过不重复请求 #P1
 - [ ] [0.11.0-FE-A-000-test] mock `URLProtocol` 喂各种 release JSON：纯 nightly / 纯 semver / 混合 / prerelease / 空 list / 限流 403 / 网络超时；验证 state machine 正确转移 #P1
-- [ ] [0.11.0-FE-A-003-test] 版本比较单元测试：`v0.2.0 < v0.10.0`（数字比）、`v0.2.0-rc1 < v0.2.0`（prerelease 不进 stable 比）、`v0.2.0 stable > nightly-<sha>`（stable 优先）、`nightly-260701 < nightly-260702`（日期戳字典序）#P1
+- [x] [0.11.0-FE-A-003-test] 版本比较单元测试：`v0.2.0 < v0.10.0`（数字比）、`v0.2.0-rc1 < v0.2.0`（prerelease 不进 stable 比）、`v0.2.0 stable > nightly-<sha>`（stable 优先）、`nightly-260701 < nightly-260702`（日期戳字典序）#P1 — 实现偏差：nightly tag 本身是 `nightly-<sha>` 无日期戳，改用 GitHub release `published_at` 比较新旧，本地构建时间从 `CFBundleVersion`（YYMMDD.HHMMSS）解析；测试见 `UpdateCheckerTests`
 
 ### update/main: 后台下载 + 提示重启安装
 
 > 选 B 方案的下半段：检查到更新 → 提示 → 后台下载 → 签名 verify → 调 helper 替换 → 重启 app。
 > 状态机在 v0.11.0-FE-A-002 基础上扩展。
 
-- [ ] [0.11.0-FE-A-008] 检测到更新后展示 banner：「v0.11.0 已发布」+ 变更摘要（`body` 字段截前 500 字，去掉 markdown 强调符号）+ 三个按钮：稍后提醒 / 查看 GitHub Release / 立即下载并安装 #P1
-- [ ] [0.11.0-FE-A-009] 选「立即下载并安装」→ 后台下载 dmg 到 `~/Library/Application Support/QuotaBar/updates/QuotaBar-<ver>.dmg`；进度通过 `URLSessionTaskDelegate.urlSession(_:didWriteData:totalBytesWritten:totalBytesExpectedToWrite:)` 反馈百分比 #P1
-- [ ] [0.11.0-FE-A-010] 下载完成 + 签名 verify 通过 → 弹「更新已下载，立即重启并安装？」对话框；用户确认后调 `Process.run` 启动 dmg 内 `tools/install-update.sh`；helper 退出后用同一 `Process.run` 启动 `/Applications/Quota Bar.app` 重新拉起主程序 #P1
-- [ ] [0.11.0-FE-A-011] 状态机扩展：`idle` / `checking` / `updateAvailable` / `downloading(progress: Double)` / `verifying` / `downloaded` / `installing` / `upToDate` / `error(message)`；每个状态都有对应 UI 展示 #P1
-- [ ] [0.11.0-FE-A-012] 同一版本 24h 内「稍后提醒」不重复提示；用户可在「关于」页点「重置忽略」清空 ignoredVersions #P1
+- [x] [0.11.0-FE-A-008] 检测到更新后展示 banner：「v0.11.0 已发布」+ 变更摘要（`body` 字段截前 500 字，去掉 markdown 强调符号）+ 三个按钮：稍后提醒 / 查看 GitHub Release / 立即下载并安装 #P1
+- [x] [0.11.0-FE-A-009] 选「立即下载并安装」→ 后台下载 dmg 到 `~/Library/Application Support/QuotaBar/updates/QuotaBar-<ver>.dmg`；进度通过 `URLSessionTaskDelegate.urlSession(_:didWriteData:totalBytesWritten:totalBytesExpectedToWrite:)` 反馈百分比 #P1
+- [x] [0.11.0-FE-A-010] 下载完成 + 签名 verify 通过 → 弹「更新已下载，立即重启并安装？」对话框；用户确认后调 `Process.run` 启动 dmg 内 `tools/install-update.sh`；helper 退出后用同一 `Process.run` 启动 `/Applications/Quota Bar.app` 重新拉起主程序 #P1
+- [x] [0.11.0-FE-A-011] 状态机扩展：`idle` / `checking` / `updateAvailable` / `downloading(progress: Double)` / `verifying` / `downloaded` / `installing` / `upToDate` / `error(message)`；每个状态都有对应 UI 展示 #P1
+- [x] [0.11.0-FE-A-012] 同一版本 24h 内「稍后提醒」不重复提示；用户可在「关于」页点「重置忽略」清空 ignoredVersions #P1 — 实现偏差：「稍后提醒」= 永久忽略该版本 tag（自动检查跳过、手动检查仍会提示），配合关于页「重置已忽略的版本」入口；比 24h 计时更可预期
 - [ ] [0.11.0-FE-A-008-test] mock 下载失败 / 签名 verify 失败的 dmg，验证状态机正确转 `error` 且不调 helper；mock 重复触发同版本，验证 24h 抑制逻辑 #P1
 - [ ] [0.11.0-FE-A-010-test] 启动 helper 失败时回退到「请手动从 GitHub 下载」提示，不卡死 #P1
 
 ### update/main: 更新检查 UI 改造
 
-- [ ] [0.11.0-UI-A-000] `AboutSettingsView` 的「检查更新」按钮接 `UpdateChecker` state machine：点击 → `checking` 转圈；新版本 → banner 展示 release notes + 下载按钮；最新 → 「已是最新版本 v0.11.0」提示 #P1
-- [ ] [0.11.0-UI-A-001] 下载中显示百分比进度条（`ProgressView(value:)`）+ 取消按钮；下载完成显示「立即重启并安装」+「稍后」#P1
-- [ ] [0.11.0-UI-A-002] 「稍后提醒」把版本号写到 `PreferencesStore.QuotaPreferences.ignoredVersions: [String]`（Codable 向后兼容，旧配置自动获得 `[]`）；下次检查该版本不再提示 #P1
-- [ ] [0.11.0-UI-A-003] 「关于」页加一行小字（ad-hoc 版文案）：「macOS 权限设置（Accessibility 等）更新后通常会保留；正式形式化保障将在 v0.12.0 升级签名后落地」让用户知情当前 TCC 保留是 best-effort，不做过度承诺 #P1
-- [ ] [0.11.0-UI-A-004] 移除当前「检查更新」按钮的占位行为（旧实现是直接打开 GitHub Releases 页面 URL），改为触发 `UpdateChecker` #P1
+- [x] [0.11.0-UI-A-000] `AboutSettingsView` 的「检查更新」按钮接 `UpdateChecker` state machine：点击 → `checking` 转圈；新版本 → banner 展示 release notes + 下载按钮；最新 → 「已是最新版本 v0.11.0」提示 #P1
+- [x] [0.11.0-UI-A-001] 下载中显示百分比进度条（`ProgressView(value:)`）+ 取消按钮；下载完成显示「立即重启并安装」+「稍后」#P1
+- [x] [0.11.0-UI-A-002] 「稍后提醒」把版本号写到 `PreferencesStore.QuotaPreferences.ignoredVersions: [String]`（Codable 向后兼容，旧配置自动获得 `[]`）；下次检查该版本不再提示 #P1
+- [x] [0.11.0-UI-A-003] 「关于」页加一行小字（ad-hoc 版文案）：「macOS 权限设置（Accessibility 等）更新后通常会保留；正式形式化保障将在 v0.12.0 升级签名后落地」让用户知情当前 TCC 保留是 best-effort，不做过度承诺 #P1
+- [x] [0.11.0-UI-A-004] 移除当前「检查更新」按钮的占位行为（旧实现是直接打开 GitHub Releases 页面 URL），改为触发 `UpdateChecker` #P1
 - [ ] [0.11.0-UI-A-000-test] UI 状态切换测试：检查 → 找到新版本 → 下载中 → 下载完成 → 安装中 → 完成全流程；error 状态展示中文友好提示 #P1
 
 ### update/main: 更新流程文档与验收
 
-- [ ] [0.11.0-DOC-A-000] `macos/AGENTS.md` 加一节「发版流程（ad-hoc 预开发版）」：本地 `make app`（ad-hoc 签名）→ 推 main → 自动 nightly（ad-hoc DMG，首次打开需「右键 → 打开」）；需要发版时用 GitHub Actions 手动触发 `workflow_dispatch` 传 `vX.Y.Z`。v0.12.0 升级 cert 后本节再扩展签名 + notarize 步骤（见 [0.12.0-DOC-A-001]）#P1
-- [ ] [0.11.0-DOC-A-001] `README.md` 加「更新策略（ad-hoc 预开发版）」段：自动更新如何工作 + 哪些 macOS 权限**通常会保留（best-effort）** + 如何手动重置忽略的版本。v0.12.0 升级后正式改写为「Developer ID 签名后形式化保障」（见 [0.12.0-DOC-A-002]）#P1
+- [x] [0.11.0-DOC-A-000] `macos/AGENTS.md` 加一节「发版流程（ad-hoc 预开发版）」：本地 `make app`（ad-hoc 签名）→ 推 main → 自动 nightly（ad-hoc DMG，首次打开需「右键 → 打开」）；需要发版时用 GitHub Actions 手动触发 `workflow_dispatch` 传 `vX.Y.Z`。v0.12.0 升级 cert 后本节再扩展签名 + notarize 步骤（见 [0.12.0-DOC-A-001]）#P1
+- [x] [0.11.0-DOC-A-001] `README.md` 加「更新策略（ad-hoc 预开发版）」段：自动更新如何工作 + 哪些 macOS 权限**通常会保留（best-effort）** + 如何手动重置忽略的版本。v0.12.0 升级后正式改写为「Developer ID 签名后形式化保障」（见 [0.12.0-DOC-A-002]）#P1
 - [ ] [0.11.0-DOC-A-002] 写 `macos/scripts/cert-bootstrap.md`：用户首次配签名环境的 step-by-step（enroll / 生成 cert / 配 API Key / 验证）#deferred v0.12.0 — 本 phase 不引入 cert，文档先不写；v0.12.0 升级时落地（见 [0.12.0-DOC-A-000]）
 - [ ] [0.11.0-QA-A-000] 端到端冒烟（ad-hoc 路径）：从空本地 checkout → `make app` 成功生成 ad-hoc 签名的 dmg → 推 main → 自动生成 nightly release → 在 app 内检查到。Gatekeeper 首次拦截预期内、本机授权一次后记住 #P1
 - [ ] [0.11.0-QA-A-001] 手动触发 semver workflow → 生成 `v0.11.0` release → 旧版 app 启动后能正确识别为新版本 → 走完下载 + 替换流程 → 新版 app 启动 → Accessibility 权限**通常仍在**（best-effort，不保证；ad-hoc 签名下 macOS 可能把它当新 app，UI 文案已在 [0.11.0-UI-A-003] 明确告知）#P1
