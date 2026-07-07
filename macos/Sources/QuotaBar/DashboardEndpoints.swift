@@ -232,8 +232,32 @@ struct CodexDashboardParser: DashboardParser {
 /// Claude dashboard 需要两个步骤：
 /// 1. `GET /api/organizations` → `[{uuid, name, capabilities, ...}]`
 /// 2. `GET /api/organizations/{uuid}/usage` → `[{utilization, resets_at}, ...]`
+/// 解析 `GET https://claude.ai/api/organizations` 和
+/// `GET https://claude.ai/api/organizations/{uuid}/usage`。
+///
+/// 响应形状经三方独立实现交叉验证（CodexBar `ClaudeWebAPIFetcher` /
+/// Claude-Usage-Tracker `ClaudeAPIService`）：
+/// ```json
+/// // organizations：顶层数组
+/// [{"uuid": "...", "name": "...", "capabilities": ["chat", ...]}]
+/// // usage：固定字段名，不在任何 "usage"/"limits" wrapper 下
+/// {
+///   "five_hour": {"utilization": 25, "resets_at": "2026-...Z"},
+///   "seven_day": {"utilization": 10, "resets_at": "2026-...Z"},
+///   "seven_day_opus": {"utilization": 5, "resets_at": "2026-...Z"},
+///   "seven_day_sonnet": {"utilization": 8, "resets_at": "2026-...Z"}
+/// }
+/// ```
 struct ClaudeDashboardParser: DashboardParser {
     static func usageURL(from data: Data) -> URL? {
+        guard let orgId = selectOrganizationId(from: data) else { return nil }
+        return URL(string: "https://claude.ai/api/organizations/\(orgId)/usage")
+    }
+
+    /// 多 org 账号（团队 / enterprise）优先选有 chat 能力的 org；
+    /// 没有 chat 能力标记时退而求其次选非 api-only 的 org；否则用第一个。
+    /// 选错 org（例如选中纯 API 计费 org）会导致 usage 端点返回空或 404。
+    private static func selectOrganizationId(from data: Data) -> String? {
         guard let json = try? JSONSerialization.jsonObject(with: data) else { return nil }
         let organizations: [[String: Any]]
         if let array = json as? [[String: Any]] {
@@ -244,25 +268,95 @@ struct ClaudeDashboardParser: DashboardParser {
         } else {
             return nil
         }
+        guard !organizations.isEmpty else { return nil }
 
+        func orgId(_ org: [String: Any]) -> String? {
+            let id = org["uuid"] as? String ?? org["id"] as? String ?? org["organization_uuid"] as? String
+            return (id?.isEmpty ?? true) ? nil : id
+        }
+        func capabilities(_ org: [String: Any]) -> Set<String> {
+            Set(((org["capabilities"] as? [String]) ?? []).map { $0.lowercased() })
+        }
+
+        if let chatOrg = organizations.first(where: { capabilities($0).contains("chat") }),
+           let id = orgId(chatOrg) {
+            return id
+        }
+        if let nonApiOnly = organizations.first(where: { !capabilities($0).isEmpty && capabilities($0) != ["api"] }),
+           let id = orgId(nonApiOnly) {
+            return id
+        }
         for org in organizations {
-            let id = org["uuid"] as? String
-                ?? org["id"] as? String
-                ?? org["organization_uuid"] as? String
-            if let id, !id.isEmpty {
-                return URL(string: "https://claude.ai/api/organizations/\(id)/usage")
-            }
+            if let id = orgId(org) { return id }
         }
         return nil
     }
 
     func parse(data: Data) -> [QuotaWindow]? {
-        guard let payload = try? JSONSerialization.jsonObject(with: data) else { return nil }
-        let candidates = Self.flattenUsageCandidates(payload)
-        let windows = candidates.compactMap(Self.makeWindow(from:))
-        return windows.isEmpty ? nil : windows.sorted {
+        ClaudeUsageWindowParser.parse(data: data)
+    }
+}
+
+/// Claude 额度窗口解析，供 web session 路径（`organizations/{id}/usage`）和
+/// OAuth 路径（`api.anthropic.com/api/oauth/usage`，见 `ClaudeOAuthUsageProvider`）
+/// 共用——两个端点返回同一组顶层字段（经 CodexBar / Claude-Usage-Tracker 交叉验证）。
+enum ClaudeUsageWindowParser {
+    static func parse(data: Data) -> [QuotaWindow]? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+
+        // five_hour / seven_day 只是同一份额度的两个时间维度（跟 Codex 的 primary/
+        // secondary 完全同构），不是 Kimi Work/Code、MiniMax General/Video 那种
+        // 需要区分的不同 scope——title 留空，跟 Codex 一致只显示周期标签（"5 小时
+        // 额度"/"周额度"），不再显示 "Session"/"Weekly" 前缀（2026-07-07 用户指出）。
+        var windows: [QuotaWindow] = []
+        if let window = makeKnownWindow(from: json["five_hour"] as? [String: Any], title: "", periodSeconds: 5 * 3600) {
+            windows.append(window)
+        }
+        if let window = makeKnownWindow(from: json["seven_day"] as? [String: Any], title: "", periodSeconds: 7 * 86400) {
+            windows.append(window)
+        }
+        // seven_day_sonnet 优先于 seven_day_opus（同一账号通常只有一个非 nil）。
+        if let sonnet = json["seven_day_sonnet"] as? [String: Any],
+           let window = makeKnownWindow(from: sonnet, title: "Weekly (Sonnet)", periodSeconds: 7 * 86400) {
+            windows.append(window)
+        } else if let opus = json["seven_day_opus"] as? [String: Any],
+                  let window = makeKnownWindow(from: opus, title: "Weekly (Opus)", periodSeconds: 7 * 86400) {
+            windows.append(window)
+        }
+
+        if !windows.isEmpty {
+            return windows.sorted {
+                ($0.periodSeconds ?? .greatestFiniteMagnitude) < ($1.periodSeconds ?? .greatestFiniteMagnitude)
+            }
+        }
+
+        // 已知字段全部缺失时的防御性 fallback：万一 Anthropic 换了 schema，
+        // 尝试从常见 wrapper key 里找结构类似的额度对象，好过直接失败。
+        let candidates = flattenUsageCandidates(json)
+        let fallbackWindows = candidates.compactMap(makeWindow(from:))
+        return fallbackWindows.isEmpty ? nil : fallbackWindows.sorted {
             ($0.periodSeconds ?? .greatestFiniteMagnitude) < ($1.periodSeconds ?? .greatestFiniteMagnitude)
         }
+    }
+
+    /// 已知字段（five_hour / seven_day / seven_day_sonnet / seven_day_opus）都是
+    /// `{"utilization": 0-100, "resets_at": ISO8601}` 形状，utilization 越高表示
+    /// 用得越多（不是剩余）。
+    private static func makeKnownWindow(from dict: [String: Any]?, title: String, periodSeconds: TimeInterval) -> QuotaWindow? {
+        guard let dict, let utilization = number(dict["utilization"]) else { return nil }
+        let remainingFraction = max(0, min(1, 1 - utilization / (utilization > 1 ? 100 : 1)))
+        let resetsAt = date(dict["resets_at"])
+        let refreshText = resetsAt.map { QuotaResetText.description(for: $0) } ?? "重置时间未知"
+        return QuotaWindow(
+            title: title,
+            remainingFraction: remainingFraction,
+            refreshDescription: refreshText,
+            resetsAt: resetsAt,
+            periodSeconds: periodSeconds,
+            subscriptionGroup: ProviderKind.claude.rawValue
+        )
     }
 
     private static func flattenUsageCandidates(_ payload: Any) -> [[String: Any]] {
@@ -659,9 +753,60 @@ struct MiniMaxDashboardParser: DashboardParser {
 /// 该端点同时返回 `subscription.goods.title`（Andante/Moderato/Allegretto/Allegro）
 /// 和 `subscription.goods.amounts`（价格信息）。
 struct KimiSubscriptionParser: DashboardParser {
+    /// 2026-07 起服务端下线了 `GetSubscriptionStat`（404），Work 月度额度数据
+    /// 迁移到了 `GetSubscription.balances[]`：
+    /// ```json
+    /// "balances": [{
+    ///   "feature": "FEATURE_OMNI", "type": "SUBSCRIPTION", "unit": "UNIT_CREDIT",
+    ///   "amountUsedRatio": 1, "expireTime": "2026-07-10T00:00:00Z"
+    /// }]
+    /// ```
+    /// Code 5h/周额度不在该响应里，由 Kimi CLI OAuth（`kimi-auth`）经
+    /// pipeline 分层合并补齐。
     func parse(data: Data) -> [QuotaWindow]? {
-        // GetSubscription 主要用于获取 tier，额度从 GetSubscriptionStat 获取
-        return nil
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let balances = json["balances"] as? [[String: Any]]
+        else { return nil }
+
+        let fetchedAt = Date()
+        var windows: [QuotaWindow] = []
+        for balance in balances {
+            // 只认订阅型 Work 池：FEATURE_OMNI 或 type == SUBSCRIPTION。
+            let feature = (balance["feature"] as? String) ?? ""
+            let type = (balance["type"] as? String) ?? ""
+            guard feature == "FEATURE_OMNI" || type == "SUBSCRIPTION" else { continue }
+            guard let usedRatio = parseUsedRatio(balance["amountUsedRatio"]) else { continue }
+
+            let remainingFraction = max(0, min(1, 1 - usedRatio))
+            // expireTime 是本期余额周期的截止时间，只进 refreshDescription，
+            // 不写 resetsAt（Work 月度窗口与订阅到期日是不同概念，见 0.6.0-DATA-A-002）。
+            let expireTime = parseDate(balance["expireTime"])
+                ?? parseDate((balance["upcomingExpiration"] as? [String: Any])?["timestamp"])
+            let refreshText = expireTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
+            windows.append(QuotaWindow(
+                title: "Work",
+                remainingFraction: remainingFraction,
+                refreshDescription: refreshText,
+                resetsAt: nil,
+                periodSeconds: 30 * 86400,
+                scope: "work",
+                subscriptionGroup: ProviderKind.kimi.rawValue
+            ))
+        }
+        return windows.isEmpty ? nil : windows
+    }
+
+    private func parseUsedRatio(_ value: Any?) -> Double? {
+        let number: Double?
+        if let n = value as? NSNumber {
+            number = n.doubleValue
+        } else if let s = value as? String, let n = Double(s) {
+            number = n
+        } else {
+            number = nil
+        }
+        guard let ratio = number else { return nil }
+        return ratio <= 1 ? ratio : ratio / 100
     }
 
     func parseTier(data: Data) -> String? {

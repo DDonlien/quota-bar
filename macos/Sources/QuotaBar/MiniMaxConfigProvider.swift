@@ -173,6 +173,17 @@ final class MiniMaxConfigProvider: QuotaProvider, @unchecked Sendable {
 
         if statusCode != 0 {
             let msg = baseResp?["status_msg"] as? String ?? "未知错误"
+            if MiniMaxCLIProvider.indicatesNoActiveSubscription(msg) {
+                // 服务端权威信号：订阅到期 / 未订阅 → 显示订阅失效而不是抓取失败。
+                return ProviderSnapshot(
+                    kind: .minimax,
+                    subscriptionTier: nil,
+                    availability: .notSubscribed(reason: "MiniMax Coding Plan 订阅已到期或未订阅"),
+                    quotas: [],
+                    monthlyPrice: nil,
+                    fetchedAt: fetchedAt
+                )
+            }
             // 仍认为不是 fatal error，让 UI 显示 fetchFailed
             return ProviderSnapshot(
                 kind: .minimax,

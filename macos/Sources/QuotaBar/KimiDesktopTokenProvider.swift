@@ -36,30 +36,50 @@ final class KimiDesktopTokenProvider: QuotaProvider, @unchecked Sendable {
         let fetchedAt = dateProvider()
         let accessToken = try readAccessToken()
 
-        let data = try await performMembershipRequest(
-            url: endpoint,
-            accessToken: accessToken,
-            timeout: timeout
-        )
+        // 2026-07 起 GetSubscriptionStat 被服务端下线（404），主请求切到
+        // GetSubscription：它同时返回 Work 月度余额（balances[]）、订阅名
+        // （goods.title）、价格（goods.amounts）和下一次续费日（nextBillingTime）。
+        // Code 5h/周额度由 pipeline 里的 `kimi-auth`（CLI OAuth）分层合并补齐。
+        let subscriptionParser = KimiSubscriptionParser()
+        var subscriptionData: Data?
+        do {
+            subscriptionData = try await performMembershipRequest(
+                url: subscriptionEndpoint,
+                accessToken: accessToken,
+                timeout: timeout
+            )
+        } catch let error as QuotaFetchError {
+            if case .missingCredentials = error { throw error }
+            subscriptionData = nil
+        }
 
-        let parser = KimiSubscriptionStatParser()
-        guard let windows = parser.parse(data: data), !windows.isEmpty else {
+        // 旧端点作为兼容路径保留：个别账号 / 地区可能仍在返回 stat 数据。
+        let statParser = KimiSubscriptionStatParser()
+        var statData: Data?
+        if subscriptionData == nil || subscriptionData.flatMap({ subscriptionParser.parse(data: $0) }) == nil {
+            statData = try? await performMembershipRequest(
+                url: endpoint,
+                accessToken: accessToken,
+                timeout: min(3, timeout)
+            )
+        }
+
+        var windows: [QuotaWindow] = []
+        if let subscriptionData, let workWindows = subscriptionParser.parse(data: subscriptionData) {
+            windows = workWindows
+        } else if let statData, let statWindows = statParser.parse(data: statData) {
+            windows = statWindows
+        }
+        guard !windows.isEmpty else {
             throw QuotaFetchError.transient(detail: "无法解析 Kimi Desktop membership 响应")
         }
 
-        let subscriptionData = await fetchOptionalSubscriptionData(
-            accessToken: accessToken,
-            timeout: min(1.5, timeout)
-        )
-        let subscriptionParser = KimiSubscriptionParser()
         let tier = subscriptionData.flatMap { subscriptionParser.parseTier(data: $0) }
-            ?? parser.parseTier(data: data)
+            ?? statData.flatMap { statParser.parseTier(data: $0) }
             ?? tierFromTokenStore()
         let monthlyPrice: String?
         if let subscriptionData,
            let parsedPrice = subscriptionParser.parseMonthlyPrice(data: subscriptionData) {
-            monthlyPrice = parsedPrice
-        } else if let parsedPrice = parser.parseMonthlyPrice(data: data) {
             monthlyPrice = parsedPrice
         } else {
             monthlyPrice = await ProviderPricing.localizedMonthlyPrice(kind: .kimi, tier: tier)
@@ -75,6 +95,9 @@ final class KimiDesktopTokenProvider: QuotaProvider, @unchecked Sendable {
             quotas: windows,
             monthlyPrice: monthlyPrice,
             subscriptionExpiresAt: subscriptionExpiresAt,
+            // 标记来源，避免 RefreshCoordinator 的过期日 enrichment 再跑 headless。
+            subscriptionExpiresAtSource: subscriptionExpiresAt != nil ? .api : nil,
+            subscriptionExpiresAtConfidence: subscriptionExpiresAt != nil ? .high : nil,
             fetchedAt: fetchedAt
         )
     }
@@ -109,22 +132,6 @@ final class KimiDesktopTokenProvider: QuotaProvider, @unchecked Sendable {
             throw QuotaFetchError.missingCredentials(detail: "Kimi Desktop token 已过期，请重新登录 Kimi")
         default:
             throw QuotaFetchError.transient(detail: "Kimi Desktop membership HTTP \(http.statusCode)")
-        }
-    }
-
-    private func fetchOptionalSubscriptionData(
-        accessToken: String,
-        timeout: TimeInterval
-    ) async -> Data? {
-        do {
-            return try await performMembershipRequest(
-                url: subscriptionEndpoint,
-                accessToken: accessToken,
-                timeout: timeout
-            )
-        } catch {
-            NSLog("QuotaBar: [kimi-desktop-token] GetSubscription failed: \(error)")
-            return nil
         }
     }
 

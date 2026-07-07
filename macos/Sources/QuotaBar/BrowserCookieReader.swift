@@ -1,5 +1,6 @@
 import Foundation
 import SweetCookieKit
+import WebKit
 
 /// 浏览器 Cookie 读取器抽象。
 ///
@@ -156,6 +157,44 @@ final class FilesystemCookieReader: BrowserCookieReader, @unchecked Sendable {
     /// 用于 UI 提示用户「去这些浏览器里登录」。
     func availableBrowsers() -> [Browser] {
         preferredBrowsers.filter { !client.stores(for: $0).isEmpty }
+    }
+}
+
+// MARK: - App 自有 WebView 会话读取器（分层获取的最后一层）
+
+/// 从 `WKWebsiteDataStore.default()` 读取 Cookie —— 该 store 由
+/// `WebAuthorizationController` 的一次性 App 内 WebView 登录写入。
+///
+/// 特性：
+/// - 不读浏览器文件、不碰 Keychain，天然无弹窗、无 FDA 依赖；
+/// - 用户在 App 内 WebView 登录一次后，登录态持久保存，之后永久静默复用；
+/// - 作为每个 provider 额度管线的**最后一层**（本地 API/RPC → CLI →
+///   浏览器 Cookie → WebView 会话），与 `BrowserCookieProvider` 组合即可
+///   复用全部 dashboard endpoint / parser 逻辑。
+final class AppWebViewSessionCookieReader: BrowserCookieReader, @unchecked Sendable {
+
+    /// Cookie 提供者，默认读 `WKWebsiteDataStore.default()`；测试可注入。
+    private let cookiesProvider: @Sendable () async -> [HTTPCookie]
+
+    init(cookiesProvider: (@Sendable () async -> [HTTPCookie])? = nil) {
+        self.cookiesProvider = cookiesProvider ?? {
+            await Task { @MainActor in
+                await WKWebsiteDataStore.default().httpCookieStore.allCookies()
+            }.value
+        }
+    }
+
+    func readCookies(matching domains: [String]) async throws -> [HTTPCookie] {
+        guard !domains.isEmpty else { return [] }
+        let all = await cookiesProvider()
+        let now = Date()
+        return all.filter { cookie in
+            if let expires = cookie.expiresDate, expires < now { return false }
+            let normalized = cookie.domain.hasPrefix(".") ? String(cookie.domain.dropFirst()) : cookie.domain
+            return domains.contains { target in
+                normalized == target || normalized.hasSuffix("." + target)
+            }
+        }
     }
 }
 

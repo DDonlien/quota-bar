@@ -160,12 +160,16 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
         )
     }
 
-    /// Kimi 专用：并行拉取 GetSubscription（档位/价格）和 GetSubscriptionStat（额度）。
+    /// Kimi 专用。2026-07 起服务端下线 `GetSubscriptionStat`（404），主请求切到
+    /// `GetSubscription`：一个响应同时给 Work 月额度（balances[]）、档位、价格和
+    /// 续费日；旧 stat 端点保留为可选兼容路径（个别账号可能仍在返回）。
+    /// Code 5h/周额度由管线里的 CLI OAuth 分层合并补齐。
     private func fetchKimiSnapshot(
         cookies: [HTTPCookie],
         quotaEndpoint: DashboardEndpoints.Endpoint,
         fetchedAt: Date
     ) async throws -> ProviderSnapshot {
+        let subscriptionParser = KimiSubscriptionParser()
         let subscriptionEndpoint = DashboardEndpoints.Endpoint(
             url: URL(string: "https://www.kimi.com/apiv2/kimi.gateway.membership.v2.MembershipService/GetSubscription")!,
             method: "POST",
@@ -175,64 +179,46 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
                 "Origin": "https://www.kimi.com",
                 "Referer": "https://www.kimi.com/"
             ],
-            parser: KimiSubscriptionParser(),
+            parser: subscriptionParser,
             bearerTokenCookieName: "kimi-auth"
         )
 
-        // 额度是必需数据；tier/price 是附加信息，不能阻塞 Work 额度回填。
-        let quotaData = try await performRequest(with: cookies, endpoint: quotaEndpoint)
-        let subscriptionData = await fetchOptionalKimiSubscriptionData(
-            cookies: cookies,
-            endpoint: subscriptionEndpoint,
-            timeout: 1.5
-        )
+        // 主请求：GetSubscription（Work 额度 + 档位 + 价格 + 续费日）。
+        let subscriptionData = try? await performRequest(with: cookies, endpoint: subscriptionEndpoint)
+        var windows = subscriptionData.flatMap { subscriptionParser.parse(data: $0) } ?? []
 
-        // 解析 tier/price
-        var kimiTier: String?
-        var kimiPrice: String?
-        if let subscriptionData {
-            NSLog("QuotaBar: [kimi-cookie] GetSubscription raw: \(String(data: subscriptionData, encoding: .utf8) ?? "<nil>")")
-            if let parsed = try? JSONSerialization.jsonObject(with: subscriptionData) as? [String: Any],
-               let subscription = parsed["subscription"] as? [String: Any],
-               let goods = subscription["goods"] as? [String: Any] {
-                if let title = goods["title"] as? String {
-                    kimiTier = title
-                    NSLog("QuotaBar: [kimi-cookie] tier from GetSubscription: \(title)")
-                } else {
-                    NSLog("QuotaBar: [kimi-cookie] no goods.title in GetSubscription")
-                }
-                if let amounts = goods["amounts"] as? [[String: Any]],
-                   let firstAmount = amounts.first,
-                   let priceInCents = firstAmount["priceInCents"] as? String,
-                   let price = Double(priceInCents) {
-                    kimiPrice = String(format: "¥%.0f/月", price / 100.0)
-                    NSLog("QuotaBar: [kimi-cookie] price from GetSubscription: \(kimiPrice ?? "<nil>")")
-                }
+        // 兼容路径：主请求拿不到额度时再试旧 stat 端点（含 Work + Code）。
+        var statData: Data?
+        if windows.isEmpty {
+            statData = await fetchOptionalKimiSubscriptionData(
+                cookies: cookies,
+                endpoint: quotaEndpoint,
+                timeout: 3
+            )
+            if let statData, let statWindows = quotaEndpoint.parser.parse(data: statData) {
+                windows = statWindows
             }
         }
-
-        // 解析额度
-        NSLog("QuotaBar: [kimi-cookie] GetSubscriptionStat raw (first 800): \(String(data: quotaData.prefix(800), encoding: .utf8) ?? "<nil>")")
-
-        guard let windows = quotaEndpoint.parser.parse(data: quotaData) else {
-            NSLog("QuotaBar: [kimi-cookie] parser returned nil")
+        guard !windows.isEmpty else {
+            NSLog("QuotaBar: [kimi-cookie] GetSubscription/GetSubscriptionStat 均未产出额度")
             throw QuotaFetchError.transient(detail: "无法解析 Kimi dashboard 响应")
         }
         NSLog("QuotaBar: [kimi-cookie] parsed windows: \(windows.map { "\($0.title): \(Int($0.remainingFraction*100))%" }.joined(separator: ", "))")
 
-        let tier = kimiTier ?? quotaEndpoint.parser.parseTier(data: quotaData) ?? parsePlanType(from: quotaData)
+        // 档位 / 价格 / 续费日全部来自 GetSubscription；stat 只在兼容路径下兜底 tier。
+        let tier = subscriptionData.flatMap { subscriptionParser.parseTier(data: $0) }
+            ?? statData.flatMap { quotaEndpoint.parser.parseTier(data: $0) }
         let monthlyPrice: String?
-        if let parsedPrice = quotaEndpoint.parser.parseMonthlyPrice(data: quotaData) {
+        if let subscriptionData,
+           let parsedPrice = subscriptionParser.parseMonthlyPrice(data: subscriptionData) {
             monthlyPrice = parsedPrice
-        } else if let kimiPrice {
-            monthlyPrice = kimiPrice
         } else {
             monthlyPrice = await ProviderPricing.localizedMonthlyPrice(kind: .kimi, tier: tier)
         }
         // Kimi 的展示日期来自 GetSubscription.nextBillingTime（下一次续费日）
-        // 转换出的最后有效日；GetSubscriptionStat.expireTime/currentEndTime 不直接展示。
+        // 转换出的最后有效日；stat 的 expireTime/currentEndTime 不直接展示。
         let subscriptionExpiresAt = subscriptionData.flatMap {
-            KimiSubscriptionParser().parseSubscriptionExpiresAt(data: $0)
+            subscriptionParser.parseSubscriptionExpiresAt(data: $0)
         }
         NSLog("QuotaBar: [kimi-cookie] final tier=\(tier ?? "<nil>"), price=\(monthlyPrice ?? "<nil>"), expiresAt=\(subscriptionExpiresAt?.description ?? "<nil>")")
         return ProviderSnapshot(
@@ -242,6 +228,8 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
             quotas: windows,
             monthlyPrice: monthlyPrice,
             subscriptionExpiresAt: subscriptionExpiresAt,
+            subscriptionExpiresAtSource: subscriptionExpiresAt != nil ? .browserAPI : nil,
+            subscriptionExpiresAtConfidence: subscriptionExpiresAt != nil ? .high : nil,
             fetchedAt: fetchedAt
         )
     }

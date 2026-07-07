@@ -277,7 +277,7 @@ struct QuotaFetchErrorAvailabilityFallbackTests {
 @Suite("Codex pipeline — default strategy order")
 struct CodexPipelineStrategyOrderTests {
 
-    @Test("codexPipeline 默认只有 auth → keychain，不包含 cookie / cli log")
+    @Test("codexPipeline 默认是 auth → webview 会话 → keychain，不包含 cookie / cli log")
     @MainActor
     func strategiesOrder() {
         unsetenv("QUOTABAR_ENABLE_BROWSER_COOKIE")
@@ -292,13 +292,16 @@ struct CodexPipelineStrategyOrderTests {
             return
         }
 
-        // strategies 是 private(set) var，可以读
+        // strategies 是 private(set) var，可以读。
+        // 默认链路：auth → App WebView 会话（最后额度层）→ keychain；
+        // 浏览器 cookie / CLI log 仍需显式启用。
         let strategyIds = codexPipeline.strategies.map { $0.id }
-        #expect(strategyIds.count == 2, "expected 2 strategies, got \(strategyIds.count)")
+        #expect(strategyIds.count == 3, "expected 3 strategies, got \(strategyIds.count)")
         #expect(strategyIds[0].contains("codex-auth"))
-        #expect(strategyIds[1].contains("codex-keychain"))
+        #expect(strategyIds[1].contains("codex-webview"))
+        #expect(strategyIds[2].contains("codex-keychain"))
         #expect(!strategyIds.contains { $0.contains("codex-cookie") })
-        #expect(!strategyIds.contains { $0.contains("codex-cli") })
+        #expect(!strategyIds.contains { $0 == "codex-cli" })
     }
 
     @Test("codexPipeline runMode 是 sequential（不是 parallel）—— 第一个成功就停")

@@ -76,9 +76,29 @@ final class MiniMaxCLIProvider: QuotaProvider, @unchecked Sendable {
         }
     }
 
+    /// 服务端表达「没有生效的 Token Plan 订阅」的错误文案。
+    /// 实测（2026-07）：`mmx quota` / coding_plan/remains 在订阅到期后返回
+    /// `"no active token plan subscription"`（HTTP 200 + 非 0 status_code）。
+    static func indicatesNoActiveSubscription(_ message: String) -> Bool {
+        let lowered = message.lowercased()
+        return (lowered.contains("no active") && lowered.contains("subscription"))
+            || lowered.contains("not subscribed")
+            || lowered.contains("subscription expired")
+    }
+
     // MARK: - JSON 解析
 
     private func parseQuotaJSON(data: Data, fetchedAt: Date) async throws -> ProviderSnapshot {
+        try await MiniMaxQuotaResponseParser.parse(data: data, fetchedAt: fetchedAt)
+    }
+}
+
+// MARK: - 共享响应解析
+
+/// `coding_plan/remains` 形状的响应解析，供配置→API 路径（MiniMaxCLIProvider /
+/// MiniMaxConfigProvider）和真实 CLI 命令路径（MiniMaxCommandProvider）复用。
+enum MiniMaxQuotaResponseParser {
+    static func parse(data: Data, fetchedAt: Date) async throws -> ProviderSnapshot {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw QuotaFetchError.transient(detail: "MiniMax quota JSON 解析失败")
         }
@@ -87,6 +107,11 @@ final class MiniMaxCLIProvider: QuotaProvider, @unchecked Sendable {
         let statusCode = (baseResp?["status_code"] as? NSNumber)?.intValue ?? -1
         if statusCode != 0 {
             let msg = baseResp?["status_msg"] as? String ?? "未知错误"
+            if MiniMaxCLIProvider.indicatesNoActiveSubscription(msg) {
+                // 服务端权威信号：Token Plan 订阅不存在 / 已到期。
+                // 映射成 notSubscribed 而不是「待配置」，UI 显示订阅已失效。
+                throw QuotaFetchError.notSubscribed(detail: "MiniMax Coding Plan 订阅已到期或未订阅")
+            }
             throw QuotaFetchError.transient(detail: "MiniMax quota API 错误：\(msg)")
         }
 

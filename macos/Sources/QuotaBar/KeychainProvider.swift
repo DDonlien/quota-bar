@@ -16,14 +16,17 @@ final class KeychainProvider: QuotaProvider, @unchecked Sendable {
     var displayName: String { kind.displayName }
 
     private let keychainService: String
-    private let account: String
+    /// `nil` 表示不按 account 过滤，只按 service 匹配第一条（Claude Code 的
+    /// Keychain 条目 account 是运行时动态值，不是固定字符串，见下方
+    /// `defaultKeychainAccount` 注释）。
+    private let account: String?
     private let dateProvider: () -> Date
 
     init(
         id: String,
         kind: ProviderKind,
         keychainService: String? = nil,
-        account: String? = nil,
+        account: String?? = nil,
         dateProvider: @escaping () -> Date = Date.init
     ) {
         self.id = id
@@ -40,6 +43,13 @@ final class KeychainProvider: QuotaProvider, @unchecked Sendable {
         let context = LAContext()
         context.interactionNotAllowed = true
 
+        guard let account else {
+            // service-only 匹配（account 未知/动态）：同一 service 下可能有多条历史
+            // 条目（重装 / 多版本 CLI 各自写入），取最近修改的一条，而不是
+            // Keychain 内部枚举顺序里任意一条——否则可能读到过期/失效的旧凭证。
+            return Self.readNewestToken(service: keychainService, context: context)
+        }
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
@@ -52,7 +62,33 @@ final class KeychainProvider: QuotaProvider, @unchecked Sendable {
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         guard status == errSecSuccess else { return nil }
+        return Self.extractToken(from: result)
+    }
 
+    private static func readNewestToken(service: String, context: LAContext) -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecReturnData as String: true,
+            kSecReturnAttributes as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+            kSecUseAuthenticationContext as String: context
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess, let items = result as? [[String: Any]], !items.isEmpty else {
+            return nil
+        }
+        let newest = items.max { a, b in
+            let dateA = a[kSecAttrModificationDate as String] as? Date ?? .distantPast
+            let dateB = b[kSecAttrModificationDate as String] as? Date ?? .distantPast
+            return dateA < dateB
+        }
+        guard let data = newest?[kSecValueData as String] as? Data else { return nil }
+        return Self.extractToken(from: data)
+    }
+
+    private static func extractToken(from result: Any?) -> String? {
         if let data = result as? Data, let token = String(data: data, encoding: .utf8) {
             return token.isEmpty ? nil : token
         }
@@ -72,17 +108,19 @@ final class KeychainProvider: QuotaProvider, @unchecked Sendable {
 
     /// 仅探测 Keychain 中是否存在凭证，不读取具体内容。
     /// 用于不希望触发 keychain 弹窗的快速路径。
-    static func hasToken(service: String, account: String) -> Bool {
+    static func hasToken(service: String, account: String?) -> Bool {
         let context = LAContext()
         context.interactionNotAllowed = true
-        let query: [String: Any] = [
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
             kSecReturnData as String: false,
             kSecMatchLimit as String: kSecMatchLimitOne,
             kSecUseAuthenticationContext as String: context
         ]
+        if let account {
+            query[kSecAttrAccount as String] = account
+        }
         return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
     }
 }
@@ -93,18 +131,25 @@ extension ProviderKind {
         case .codex: return "ai.openai.codex"
         case .minimax: return "com.minimax.code"
         case .kimi: return "com.moonshot.kimi"
-        case .claude: return "com.anthropic.claude"
+        // 经 CodexBar (`ClaudeOAuthCredentialsStore.claudeKeychainService`) 交叉验证的
+        // 真实 Claude Code Keychain generic password service 名。此前
+        // "com.anthropic.claude" 是猜测值，从未匹配到真实条目。
+        case .claude: return "Claude Code-credentials"
         case .gemini: return "com.google.gemini"
         default: return "com.quotabar.\(rawValue)"
         }
     }
 
-    var defaultKeychainAccount: String {
+    /// `nil` 表示查询时不按 account 过滤（服务名唯一匹配）。
+    /// Claude Code 写入 Keychain 时 account 属性是运行时动态值（非固定字符串，
+    /// 见 CodexBar 对应实现按 service 查询后回读 `kSecAttrAccount` 的做法），
+    /// 无法硬编码，因此返回 nil 走 service-only 匹配。
+    var defaultKeychainAccount: String? {
         switch self {
         case .codex: return "oauth-token"
         case .minimax: return "api-key"
         case .kimi: return "session"
-        case .claude: return "claude.ai-session"
+        case .claude: return nil
         case .gemini: return "gemini-session"
         default: return "default"
         }

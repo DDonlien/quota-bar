@@ -29,6 +29,8 @@ enum ProviderSourceKind: String, Codable, Hashable, Sendable {
     case api
     case rpc
     case browserCookie
+    /// App 自有 WebView 会话（WKWebsiteDataStore.default()，一次 WebView 授权后静默复用）。
+    case webViewSession
     case keychain
     case localLog
     case environment

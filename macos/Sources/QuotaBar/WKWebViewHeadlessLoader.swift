@@ -26,9 +26,13 @@ import WebKit
 @MainActor
 final class WKWebViewHeadlessLoader {
     private let cookieReader: BrowserCookieReader
+    /// didFinish 后再等这么久才提取 outerHTML：hash 路由 SPA（chatgpt.com /
+    /// claude.ai 等）在 didFinish 时目标面板往往还没被 JS 渲染出来。
+    private let settleDelay: TimeInterval
 
-    init(cookieReader: BrowserCookieReader) {
+    init(cookieReader: BrowserCookieReader, settleDelay: TimeInterval = 2.0) {
         self.cookieReader = cookieReader
+        self.settleDelay = settleDelay
     }
 
     /// 加载订阅管理页并返回 `document.documentElement.outerHTML`。
@@ -93,23 +97,61 @@ final class WKWebViewHeadlessLoader {
         )
     }
 
+    /// App 自有会话模式：使用 `WKWebsiteDataStore.default()` 里的登录态
+    /// （由 `WebAuthorizationController` 的一次性 WebView 登录写入），
+    /// 完全不读浏览器 Cookie、不触碰 Keychain。
+    ///
+    /// - Returns: 渲染后的 outerHTML；default store 没有该域 cookie 时抛
+    ///   `.missingCredentials`（调用方可降级到浏览器 Cookie 路径）。
+    static func appSessionHasCookies(for domains: [String]) async -> Bool {
+        let cookies = await WKWebsiteDataStore.default().httpCookieStore.allCookies()
+        return cookies.contains { cookie in
+            let normalized = cookie.domain.hasPrefix(".") ? String(cookie.domain.dropFirst()) : cookie.domain
+            return domains.contains { normalized == $0 || normalized.hasSuffix("." + $0) }
+        }
+    }
+
+    func loadUsingAppSession(
+        url: URL,
+        cookieDomains: [String],
+        timeout: TimeInterval,
+        identifier: String
+    ) async throws -> String {
+        guard await Self.appSessionHasCookies(for: cookieDomains) else {
+            throw QuotaFetchError.missingCredentials(detail: "App 内 WebView 尚未授权")
+        }
+        NSLog("QuotaBar: [\(identifier)] loading \(url.absoluteString) with app session cookies")
+        return try await loadPageSource(
+            url: url,
+            cookies: nil,
+            timeout: timeout,
+            identifier: identifier
+        )
+    }
+
+    /// - Parameter cookies: 非 nil 时注入到一次性非持久 data store（浏览器 Cookie 模式）；
+    ///   nil 时直接使用 `WKWebsiteDataStore.default()`（App 自有会话模式）。
     private func loadPageSource(
         url: URL,
-        cookies: [HTTPCookie],
+        cookies: [HTTPCookie]?,
         timeout: TimeInterval,
         identifier: String
     ) async throws -> String {
         let config = WKWebViewConfiguration()
-        let dataStore = WKWebsiteDataStore.nonPersistent()
-        config.websiteDataStore = dataStore
         config.defaultWebpagePreferences.allowsContentJavaScript = true
 
-        for cookie in cookies {
-            await dataStore.httpCookieStore.setCookie(cookie)
+        if let cookies {
+            let dataStore = WKWebsiteDataStore.nonPersistent()
+            config.websiteDataStore = dataStore
+            for cookie in cookies {
+                await dataStore.httpCookieStore.setCookie(cookie)
+            }
+        } else {
+            config.websiteDataStore = .default()
         }
 
         let webView = WKWebView(frame: .zero, configuration: config)
-        let delegate = LoaderDelegate()
+        let delegate = LoaderDelegate(settleDelay: settleDelay)
         webView.navigationDelegate = delegate
 
         // 超时 Task：到点停 load + 抛 transient
@@ -147,6 +189,11 @@ final class WKWebViewHeadlessLoader {
 private final class LoaderDelegate: NSObject, WKNavigationDelegate {
     var continuation: CheckedContinuation<String, Error>?
     private var resumed = false
+    private let settleDelay: TimeInterval
+
+    init(settleDelay: TimeInterval = 0) {
+        self.settleDelay = settleDelay
+    }
 
     func fail(with error: Error) {
         guard !resumed else { return }
@@ -156,6 +203,19 @@ private final class LoaderDelegate: NSObject, WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // SPA settle：didFinish 只代表初始文档加载完成，hash 路由页面的目标内容
+        // 还要等 JS 异步渲染；延迟提取（超时 task 仍在守门，最坏走超时降级）。
+        Task { @MainActor [weak self, weak webView] in
+            guard let self else { return }
+            if self.settleDelay > 0 {
+                try? await Task.sleep(nanoseconds: UInt64(self.settleDelay * 1_000_000_000))
+            }
+            guard !self.resumed, let webView else { return }
+            self.extractHTML(from: webView)
+        }
+    }
+
+    private func extractHTML(from webView: WKWebView) {
         webView.evaluateJavaScript("document.documentElement.outerHTML") { [weak self] result, error in
             // evaluateJavaScript callback 不一定在 main thread，wrap 进 MainActor
             Task { @MainActor [weak self] in

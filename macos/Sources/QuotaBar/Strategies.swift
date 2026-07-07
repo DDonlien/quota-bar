@@ -24,8 +24,14 @@ struct QuotaProviderStrategy: ProviderFetchStrategy {
 
     var sourceKind: ProviderSourceKind {
         if id.contains("keychain") { return .keychain }
+        if id.contains("webview") { return .webViewSession }
         if id.contains("cookie") || id.contains("edge") { return .browserCookie }
         if id == "codex-cli" { return .localLog }
+        // "minimax-cli" 是历史命名遗留——实际实现读 `~/.mmx/config.json` 的 API key
+        // 直调 `coding_plan/remains`，并不真的执行 `mmx` 命令（真正的 CLI 层是
+        // `minimax-mmx-cli`）。放在下面的 `id.contains("cli")` 通配之前特判掉，
+        // 避免被误分类成「CLI 命令」。
+        if id == "minimax-cli" { return .configFile }
         if id.contains("cli") { return .cli }
         if id.contains("config") || id.contains("auth") || id.contains("zcode") { return .configFile }
         if id.contains("dashboard") { return .rpc }
@@ -159,6 +165,8 @@ enum ProviderPipelines {
         if codexLogEstimateEnabled {
             strategies.append(QuotaProviderStrategy(CLILogProvider(id: "codex-cli", kind: .codex)))
         }
+        // 最后一层：App 内 WebView 授权会话（一次登录，永久静默）。
+        strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "codex-webview", kind: .codex, cookieReader: AppWebViewSessionCookieReader())))
         strategies.append(QuotaProviderStrategy(KeychainProvider(id: "codex-keychain", kind: .codex)))
 
         return FetchPipeline(
@@ -173,11 +181,25 @@ enum ProviderPipelines {
         cookieReader: BrowserCookieReader,
         edgeCookieReader: BrowserCookieReader
     ) -> FetchPipeline {
-        var strategies: [ProviderFetchStrategy] = []
+        var strategies: [ProviderFetchStrategy] = [
+            // 首选：Claude Code statusLine hook 本地缓存（见 ClaudeStatusLineHookInstaller）。
+            // 纯文件读取，零权限、零子进程；用户未启用或缓存过期时自然落到下一层。
+            QuotaProviderStrategy(ClaudeStatusLineUsageProvider()),
+            // 第二：~/.claude/.credentials.json 的 OAuth access token 直调
+            // api.anthropic.com/api/oauth/usage（配置文件 → API，无需浏览器/WebView）。
+            QuotaProviderStrategy(ClaudeOAuthUsageProvider()),
+            // 第二：真实 CLI 命令补档位。Claude 没有结构化额度 CLI（/usage 只有
+            // 交互 TUI），`claude auth status --json` 是唯一可用的非交互结构化
+            // 输出，只贡献 subscriptionType（档位），凭证文件已带该字段时不会被走到。
+            QuotaProviderStrategy(ClaudeAuthStatusCLIProvider()),
+        ]
         if browserCookieStrategiesEnabled {
             strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "claude-edge", kind: .claude, cookieReader: edgeCookieReader)))
             strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "claude-cookie", kind: .claude, cookieReader: cookieReader)))
         }
+        // OAuth 凭证文件缺失/过期时的兜底：App 内 WebView 授权会话
+        // （organizations → usage 二段请求），同样无弹窗。
+        strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "claude-webview", kind: .claude, cookieReader: AppWebViewSessionCookieReader())))
         strategies.append(QuotaProviderStrategy(KeychainProvider(id: "claude-keychain", kind: .claude)))
 
         return FetchPipeline(
@@ -193,15 +215,20 @@ enum ProviderPipelines {
         edgeCookieReader: BrowserCookieReader
     ) -> FetchPipeline {
         var strategies: [ProviderFetchStrategy] = [
-            // 首选：CLI 直接获取额度（mmx quota --output json）
+            // 首选：本地配置 → API（~/.mmx/config.json 的 API key 直调 coding_plan/remains）
             QuotaProviderStrategy(MiniMaxCLIProvider()),
-            // 第二：~/.mavis/config.yaml / ~/.mmx/config.json 里的 API Key
+            // 第二：~/.mavis/config.yaml 里的 API Key
             QuotaProviderStrategy(MiniMaxConfigProvider()),
+            // 第三：真实 CLI 命令（mmx quota show --output json）——
+            // 让 mmx 自己处理鉴权/region/token 刷新，Quota Bar 只消费结构化输出。
+            QuotaProviderStrategy(MiniMaxCommandProvider()),
         ]
         if browserCookieStrategiesEnabled {
             strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "minimax-edge", kind: .minimax, cookieReader: edgeCookieReader)))
             strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "minimax-cookie", kind: .minimax, cookieReader: cookieReader)))
         }
+        // 最后一层：App 内 WebView 授权会话。
+        strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "minimax-webview", kind: .minimax, cookieReader: AppWebViewSessionCookieReader())))
         strategies.append(QuotaProviderStrategy(KeychainProvider(id: "minimax-keychain", kind: .minimax)))
 
         return FetchPipeline(
@@ -217,9 +244,11 @@ enum ProviderPipelines {
         edgeCookieReader: BrowserCookieReader
     ) -> FetchPipeline {
         var strategies: [ProviderFetchStrategy] = [
-            // 首选：Kimi Desktop token，能拿 Work + Code 且不触发浏览器 Cookie / Keychain 弹窗。
+            // 首选：Kimi Desktop token → GetSubscription，拿 Work 月额度 + 档位 +
+            // 价格 + 订阅到期日，不触发浏览器 Cookie / Keychain 弹窗。
             QuotaProviderStrategy(KimiDesktopTokenProvider()),
-            // 第二：Kimi CLI OAuth，作为桌面 token 不存在时的 Code-only fallback。
+            // 第二：Kimi CLI OAuth（coding/v1/usages），Code 5h/周额度来源；
+            // desktop token 成功时也会通过分层合并补齐 code scope。
             QuotaProviderStrategy(KimiAuthProvider()),
         ]
         if browserCookieStrategiesEnabled {
@@ -227,12 +256,17 @@ enum ProviderPipelines {
             strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "kimi-edge", kind: .kimi, cookieReader: edgeCookieReader)))
             strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "kimi-cookie", kind: .kimi, cookieReader: cookieReader)))
         }
+        // 最后一层：App 内 WebView 授权会话（desktop token 缺失时补 Work/档位/价格/日期）。
+        strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "kimi-webview", kind: .kimi, cookieReader: AppWebViewSessionCookieReader())))
         strategies.append(QuotaProviderStrategy(KeychainProvider(id: "kimi-keychain", kind: .kimi)))
 
         return FetchPipeline(
             kind: .kimi,
             strategies: strategies,
-            runMode: .sequential
+            runMode: .sequential,
+            // Kimi 完整额度 = Work（desktop token）+ Code（CLI OAuth），
+            // 任一来源单独成功都只有一半 scope，需要分层合并。
+            expectedQuotaScopes: ["work", "code"]
         )
     }
 
@@ -254,9 +288,12 @@ enum ProviderPipelines {
             strategies: [
                 // 首选：Antigravity IDE 本地 language_server gRPC-Web endpoint
                 QuotaProviderStrategy(AntigravityDashboardProvider(id: "antigravity-rpc", processMode: .languageServer)),
-                // 第二：agy CLI 进程暴露的本地 gRPC-Web endpoint。它不是自然语言问询，
-                // 而是 CLI 运行时本地 RPC，仍然返回结构化 quota JSON。
+                // 第二：已在运行的 agy CLI 进程暴露的本地 gRPC-Web endpoint。它不是
+                // 自然语言问询，而是 CLI 运行时本地 RPC，仍然返回结构化 quota JSON。
                 QuotaProviderStrategy(AntigravityDashboardProvider(id: "antigravity-cli", processMode: .cli)),
+                // 第三：真实 CLI 层——IDE / agy 都没在跑时，拉起一个临时 agy 会话
+                // （等价于用户手动 `agy` + `/usage`），取完结构化额度立即退出。
+                QuotaProviderStrategy(AntigravityCLISessionProvider()),
                 // 最后兜底：Keychain 只能证明有凭证，不能生成额度。
                 QuotaProviderStrategy(KeychainProvider(id: "antigravity-keychain", kind: .antigravity)),
             ],
