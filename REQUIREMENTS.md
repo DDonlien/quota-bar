@@ -608,6 +608,24 @@
 - [x] [0.10.0-BUG-A-008] Claude 额度条标题统一：`ClaudeUsageWindowParser`（`DashboardEndpoints.swift`）和 `ClaudeStatusLineUsageProvider` 的 `five_hour`/`seven_day` 窗口 title 从 `"Session"`/`"Weekly"` 改成空字符串，跟 Codex 的 `primary`/`secondary` 窗口一致——这两个窗口只是同一份额度的两个时间维度，不是 Kimi Work/Code、MiniMax General/Video 那种需要区分的不同 scope，不应该显示前缀名称；legacy 的 `seven_day_sonnet`/`seven_day_opus` 分支保留各自的区分标题（它们是真正不同的 scope：不同模型的独立额度池）。相关测试改用 `periodSeconds` 而不是 `title` 区分窗口 #P1
 - [x] [0.10.0-DOC-A-004] 确认 Preferences 更新功能（`UpdateChecker.swift` + `AboutSettingsView.swift` + `install-update.sh` + `release.yml`）已在 v0.11.0 完整落地并接入真实 `DDonlien/quota-bar` 仓库，release workflow 也确认真实产出 `.dmg` 资产；本轮未发现需要新增的缺口，仅做现状确认，不重复建设 #P2
 
+### sub/main: 更新检查改为纯版本号比较 + dropdown 隐藏按钮实时刷新 + GLM/Z Code 开关关联修复
+
+> 用户实测发现三个问题：装好最新构建后「关于」页仍提示"有更新"（根因见 0.10.0-DOC-A-004 之后的时区 bug 修复只是治标）；用户明确指出更新判断不该依赖发布/构建时间，同一版本重复打包不该被当成"有更新"，要求改成纯版本号比较，并给出 `vX.Y.Z-<git-sha>` 格式规则、X.Y.Z 由 Agent 维护；dropdown 隐藏（叉）按钮点击后要关闭再打开 dropdown 才生效；Preferences「模型」页的 Z Code/GLM 开关与 dropdown 隐藏状态没有关联（只有 MiniMax 是好的）。
+
+- [x] [0.10.0-ARCH-J-000] `UpdateChecker.swift` 彻底移除按发布/构建时间比较的设计：删除 `UpdateChannel` 枚举与 `UpdateCandidate.channel`/`publishedAt` 字段、`buildDate(fromBundleVersion:)`、`pickUpdate` 的 `currentBuildDate` 参数和 10 分钟缓冲逻辑；`SemanticVersion.init?(tag:)` 改为剥离首个 `-` 之后的任意后缀（如 git short sha）再解析 `X.Y.Z`；`pickUpdate` 简化为纯语义化版本号比较——取候选中 `X.Y.Z` 最高且严格大于当前版本的那个，同一 `X.Y.Z`（不管 sha 是否不同）不算更新 #P0
+- [x] [0.10.0-ARCH-J-001] 新增仓库根目录 [`VERSION`](../VERSION) 文件（内容 `0.10.0`）作为版本号唯一权威来源；`build-app.sh` 改为读取该文件 + `git rev-parse --short HEAD`，始终写入 `CFBundleShortVersionString = "<VERSION>-<sha>"`，移除原来的 `VERSION` 环境变量 + 空值走 `"1.0"` 的双通道分支；`.github/workflows/release.yml` 同步移除 `workflow_dispatch` 的手动 `version` 输入，push main / 手动触发都统一走"读 VERSION 文件 + 当前 sha 打 tag"这一条路径，不再产出 `nightly-<sha>` 与 `vX.Y.Z` 两种 tag #P0
+- [x] [0.10.0-ARCH-J-002] `AboutSettingsView` 移除 `version == "1.0"` 的 nightly 特殊展示分支：所有版本都是真实 `X.Y.Z-sha`，"已是最新版本"直接显示 `v\(version)` #P1
+- [x] [0.10.0-DOC-A-005] `AGENTS.md` 新增「版本号维护规则」小节：`VERSION` 文件权威来源、Agent 按改动量级判断 PATCH/MINOR/MAJOR 的启发式、每次改动 `VERSION` 必须在 agent-log 里写明原因；`README.md`「更新策略」章节同步改写，不再提 nightly/stable 两条通道 #P1
+- [x] [0.10.0-BUG-A-009] `RefreshCoordinator` 的 `.quotaPreferencesDidChange` 订阅从 `.receive(on: RunLoop.main)` 改为 `.receive(on: DispatchQueue.main)`：`RunLoop.main` 默认用 `.default` run loop mode，dropdown 的 `NSMenu` 鼠标 tracking 期间是 `.eventTracking` mode，`.default` 模式排的任务要等菜单关闭才会跑，这正是"点了叉不会立刻隐藏，要关闭再打开 dropdown 才生效"的根因；`hide(kind:)` 额外同步直接调用一次 `applyEnabledFilterChange()`，不完全依赖异步通知链路的时机 #P0
+- [x] [0.10.0-BUG-A-010] `ModelsSettingsView.visibleProviders` 把幽灵 kind `.glm`（从未接入任何真实 pipeline）换成实际在跑的 `.zcode`——此前 Preferences 切 "GLM" 开关和 dropdown 隐藏 "Z Code" 是两个完全独立的 `ProviderOverride` 记录，互不影响；`providerVendor(.zcode)` 的展示文案从 `"Z Code"` 改为更准确的 `"智谱 / Z.ai"` #P0
+- [x] [0.10.0-QA-A-001] `UpdateCheckerTests` 全面重写以匹配新 API：删除所有 channel/发布时间相关测试（`stablePreferredOverNightly`、`nightlyRecommendedByPublishDate`、`parsesBuildDate` 等），新增覆盖"git sha 后缀被忽略"、"发布时间更新但版本号更低的候选不会被选中"、"相同 X.Y.Z 不同 sha 不算更新"三个场景 #P1
+
+### sub/main: 诊断日志误报"额度获取失败"修正
+
+> 用户贴了一段真实日志问"为什么 claude、antigravity 额度一会有一会没有，日志里都是失败"。排查确认额度数据本身没有被覆盖或丢弃——`FetchPipeline.mergeLayers` 是纯追加逻辑，已经拿到的额度不会被后续失败的来源清空；dropdown 显示的其实是刷新过程中某一刻的瞬时状态（Antigravity 的 `antigravity-cli-session` 要拉起一个临时 `agy` 会话，整轮加上过期日 resolver 耗时近 20 秒，比 Codex/Kimi 这类本地文件直读的 provider 慢一个数量级，中途截图容易看到还没刷新完的旧状态）。但排查过程中确实发现日志本身有一处误报：分层合并阶段，某个来源只是为了补档位（plan）层被重试，如果它失败，日志会连带记一条"额度获取失败"，即使额度早就被更早的来源满足——这正是用户看到"日志里都是失败"这种误导观感的来源之一。
+
+- [x] [0.10.0-BUG-A-011] `FetchPipeline.logAttempt` 新增 `onlyLayers` 参数：分层合并阶段（`runSequential` 的补层分支）调用时传入 `missing`（本轮实际缺失、值得重试的层），不再无条件按 `strategy.supportedLayers` 全量记录；这样一个只支持补档位场景下失败的来源，不会在「额度获取」步骤留下一条虚假的失败记录（额度早已被更早的来源满足）。首次尝试（`merged == nil` 时）不受影响，此时确实在为全部所需层探测 #P1 — `ProviderFetchStrategyTests.mergeBranchFailureOnlyLogsMissingLayer`
+
 
 ## Phase - v0.11.0 - 真实自动更新（ad-hoc 预开发版）+ semver 发版
 

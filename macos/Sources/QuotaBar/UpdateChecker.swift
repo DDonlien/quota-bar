@@ -1,17 +1,21 @@
 import Foundation
 import AppKit
 
-// MARK: - 版本模型（v0.11.0-FE-A-001/003）
+// MARK: - 版本模型（v0.11.0-FE-A-001/003，2026-07-07 改版：纯版本号比较）
+//
+// 2026-07-07 用户明确指出：更新判断必须基于"最新包的版本号"，不能基于发布时间/
+// 构建时间——同一个 commit 打两次包，时间戳会不一样，但内容完全相同，不该被判断
+// 成"有更新"（这也是同一天早些时候那个时区解析 bug 的根本教训：只要还依赖时间
+// 比较，就永远有踩上时区/时钟这类问题的风险）。
+//
+// 新版本号格式：`vX.Y.Z-<git-short-sha>`（例如 `v0.10.0-dcfff71`），写入
+// `CFBundleShortVersionString`。`X.Y.Z` 由 Agent 维护（见 AGENTS.md「版本号维护
+// 规则」），`<git-short-sha>` 由 `build-app.sh` 自动追加，只用来标识"具体是哪次
+// 构建"，**不参与新旧判断**——新旧只看 `X.Y.Z` 语义化版本号谁更大。不再区分
+// "stable/nightly 两条通道"：每一次发布都带着有意义的版本号，直接比大小即可。
 
-/// GitHub Release tag 的两种发布通道。
-enum UpdateChannel: String, Sendable {
-    /// `vX.Y.Z` 形式的稳定版。
-    case stable
-    /// `nightly-<sha>` 形式的每日构建。
-    case nightly
-}
-
-/// 语义化版本三段（不含 prerelease；`v0.11.0-rc1` 不算 stable）。
+/// 语义化版本三段。容忍任意 `-<suffix>` 后缀（如 git short sha）、忽略其内容，
+/// 只解析 `X.Y.Z` 部分用于比较。
 struct SemanticVersion: Comparable, Equatable, Sendable, CustomStringConvertible {
     let major: Int
     let minor: Int
@@ -19,10 +23,14 @@ struct SemanticVersion: Comparable, Equatable, Sendable, CustomStringConvertible
 
     var description: String { "\(major).\(minor).\(patch)" }
 
-    /// 解析 `v0.11.0` / `0.11.0`。带 prerelease 后缀（`-rc1`）返回 nil。
+    /// 解析 `v0.11.0`、`0.11.0`、`v0.11.0-dcfff71` 等。`-` 之后的任何内容
+    /// （通常是 git short sha）都会被忽略，不影响解析出的 `X.Y.Z`。
     init?(tag: String) {
         var raw = tag
         if raw.hasPrefix("v") { raw.removeFirst() }
+        if let dashIndex = raw.firstIndex(of: "-") {
+            raw = String(raw[raw.startIndex..<dashIndex])
+        }
         let parts = raw.split(separator: ".", omittingEmptySubsequences: false)
         guard parts.count == 3,
               let major = Int(parts[0]),
@@ -45,10 +53,7 @@ struct SemanticVersion: Comparable, Equatable, Sendable, CustomStringConvertible
 /// 一条可安装的远端 release。
 struct UpdateCandidate: Equatable, Sendable {
     let tag: String
-    let channel: UpdateChannel
-    let semanticVersion: SemanticVersion?
-    /// GitHub release 的发布时间，nightly 之间用它比新旧。
-    let publishedAt: Date
+    let semanticVersion: SemanticVersion
     let releaseURL: URL
     /// dmg 资产下载地址；没有 dmg 资产的 release 不可自动安装。
     let assetURL: URL?
@@ -60,8 +65,9 @@ struct UpdateCandidate: Equatable, Sendable {
 // MARK: - GitHub Releases 解析
 
 enum UpdateReleaseParser {
-    static let semverTagPattern = #"^v\d+\.\d+\.\d+$"#
-    static let nightlyTagPattern = #"^nightly-[0-9a-f]{7,40}$"#
+    /// `vX.Y.Z` 或 `vX.Y.Z-<git-short-sha>`；sha 部分是可选的（历史上手动
+    /// `workflow_dispatch` 发的纯 `vX.Y.Z` 稳定版也认）。
+    static let versionTagPattern = #"^v\d+\.\d+\.\d+(-[0-9a-f]{7,40})?$"#
 
     struct GitHubRelease: Decodable {
         struct Asset: Decodable {
@@ -78,40 +84,24 @@ enum UpdateReleaseParser {
         let assets: [Asset]
     }
 
-    /// 把 GitHub Releases API 响应解析为按通道分类的候选列表。
-    /// draft 一律跳过；`prerelease == true` 只允许 nightly tag（semver 的 rc 等不进 stable 通道）。
+    /// 把 GitHub Releases API 响应解析成候选列表——只要 tag 能解析出语义化版本号
+    /// 就算候选，不再区分"stable/nightly 通道"。draft 一律跳过。
     static func parse(data: Data) -> [UpdateCandidate] {
         guard let releases = try? JSONDecoder().decode([GitHubRelease].self, from: data) else {
             return []
         }
-        let isoFraction = ISO8601DateFormatter()
-        isoFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let iso = ISO8601DateFormatter()
 
         var candidates: [UpdateCandidate] = []
         for release in releases where !release.draft {
             let tag = release.tag_name
-            let channel: UpdateChannel
-            var semantic: SemanticVersion?
-            if tag.range(of: semverTagPattern, options: .regularExpression) != nil,
-               let version = SemanticVersion(tag: tag) {
-                channel = .stable
-                semantic = version
-            } else if tag.range(of: nightlyTagPattern, options: .regularExpression) != nil {
-                channel = .nightly
-            } else {
-                continue
-            }
-            guard let releaseURL = URL(string: release.html_url) else { continue }
-            let publishedAt = release.published_at.flatMap {
-                isoFraction.date(from: $0) ?? iso.date(from: $0)
-            } ?? .distantPast
+            guard tag.range(of: versionTagPattern, options: .regularExpression) != nil,
+                  let version = SemanticVersion(tag: tag),
+                  let releaseURL = URL(string: release.html_url)
+            else { continue }
             let dmgAsset = release.assets.first { $0.name.lowercased().hasSuffix(".dmg") }
             candidates.append(UpdateCandidate(
                 tag: tag,
-                channel: channel,
-                semanticVersion: semantic,
-                publishedAt: publishedAt,
+                semanticVersion: version,
                 releaseURL: releaseURL,
                 assetURL: dmgAsset.flatMap { URL(string: $0.browser_download_url) },
                 assetName: dmgAsset?.name,
@@ -135,58 +125,20 @@ enum UpdateReleaseParser {
         return text
     }
 
-    /// 在候选中挑「当前版本视角下应推荐的更新」。
-    ///
-    /// 规则（v0.11.0-FE-A-003）：
-    /// - 当前是 semver 版：只推荐更高的 semver stable；
-    /// - 当前是 nightly（`CFBundleShortVersionString == "1.0"` 的开发/每日构建）：
-    ///   有任何 semver stable 就优先推荐 stable，否则推荐比当前构建时间新的 nightly；
-    /// - 找不到就返回 nil（已是最新）。
+    /// 在候选中挑「比当前版本号更高的最新版本」。纯语义化版本号比较，不看发布
+    /// 时间/构建时间——同一个版本号（哪怕是不同 commit、不同次打包）不算更新，
+    /// 避免"重复打包同一个版本被误判成有更新"。解析不出当前版本号时保守返回
+    /// nil（不弹提示，而不是猜）。
     static func pickUpdate(
         candidates: [UpdateCandidate],
-        currentVersion: String,
-        currentBuildDate: Date?
+        currentVersion: String
     ) -> UpdateCandidate? {
-        let stable = candidates
-            .filter { $0.channel == .stable && $0.assetURL != nil }
-            .sorted { ($0.semanticVersion ?? SemanticVersion(tag: "v0.0.0")!) > ($1.semanticVersion ?? SemanticVersion(tag: "v0.0.0")!) }
-        let nightly = candidates
-            .filter { $0.channel == .nightly && $0.assetURL != nil }
-            .sorted { $0.publishedAt > $1.publishedAt }
-
-        if let currentSemantic = SemanticVersion(tag: currentVersion) {
-            // 当前是稳定版：只比 semver。
-            if let best = stable.first,
-               let bestVersion = best.semanticVersion,
-               bestVersion > currentSemantic {
-                return best
-            }
-            return nil
-        }
-
-        // 当前是 nightly / 开发构建：stable 永远优先推荐。
-        if let best = stable.first {
-            return best
-        }
-        if let bestNightly = nightly.first {
-            if let buildDate = currentBuildDate {
-                // 加 10 分钟余量，避免同一次 CI 构建被误判为新版本。
-                return bestNightly.publishedAt > buildDate.addingTimeInterval(10 * 60) ? bestNightly : nil
-            }
-            return bestNightly
-        }
-        return nil
-    }
-
-    /// 从 `CFBundleVersion`（`YYMMDD.HHMMSS`）解析本地构建时间。
-    static func buildDate(fromBundleVersion bundleVersion: String?) -> Date? {
-        guard let bundleVersion else { return nil }
-        let parts = bundleVersion.split(separator: ".")
-        guard parts.count >= 2, parts[0].count == 6, parts[1].count == 6 else { return nil }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyMMdd.HHmmss"
-        formatter.timeZone = .current
-        return formatter.date(from: "\(parts[0]).\(parts[1])")
+        guard let currentSemantic = SemanticVersion(tag: currentVersion) else { return nil }
+        let best = candidates
+            .filter { $0.assetURL != nil }
+            .max { $0.semanticVersion < $1.semanticVersion }
+        guard let best, best.semanticVersion > currentSemantic else { return nil }
+        return best
     }
 }
 
@@ -291,11 +243,9 @@ final class UpdateChecker: NSObject, ObservableObject {
         preferences.setLastUpdateCheck(Date())
 
         let candidates = UpdateReleaseParser.parse(data: data)
-        let buildDate = UpdateReleaseParser.buildDate(fromBundleVersion: currentBuild)
         guard var update = UpdateReleaseParser.pickUpdate(
             candidates: candidates,
-            currentVersion: currentVersion,
-            currentBuildDate: buildDate
+            currentVersion: currentVersion
         ) else {
             state = .upToDate(currentVersion: currentVersion)
             return
@@ -310,9 +260,7 @@ final class UpdateChecker: NSObject, ObservableObject {
         if update.releaseNotes.isEmpty {
             update = UpdateCandidate(
                 tag: update.tag,
-                channel: update.channel,
                 semanticVersion: update.semanticVersion,
-                publishedAt: update.publishedAt,
                 releaseURL: update.releaseURL,
                 assetURL: update.assetURL,
                 assetName: update.assetName,

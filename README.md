@@ -350,16 +350,26 @@ Codex / Claude 的 TUI 在无 TTY 时会拒绝交互。`TTYCommandRunner` 通过
 
 ### 更新策略（ad-hoc 预开发版）
 
-自动更新不依赖 Apple Developer 签名（v0.11.0 阶段全程 ad-hoc）：
+自动更新不依赖 Apple Developer 签名（v0.11.0 阶段全程 ad-hoc）。
+
+版本号规则（2026-07-07 改版）：每个构建的 tag 和 `CFBundleShortVersionString` 都是
+`vX.Y.Z-<git-short-sha>`（如 `v0.10.0-dcfff71`）。`X.Y.Z` 来自仓库根目录的
+[`VERSION`](./VERSION) 文件，由 Agent 按改动量级判断是否/如何 bump（规则见
+[AGENTS.md](./AGENTS.md#版本号维护规则)）；`-<sha>` 只是构建标识，**不参与新旧判断**。
+不再区分"stable/nightly 两条通道"——`UpdateChecker` 纯按 `X.Y.Z` 语义化版本号比大小，
+完全不看发布时间/构建时间/sha，同一个 `X.Y.Z` 无论打包多少次、时间戳差多少，都不会被
+误判成"有更新"（修复了此前一版靠时间戳比较、时区解析错误导致的虚假更新提示）。
 
 1. 「偏好设置 → 关于」打开时后台调 GitHub Releases API 检查一次（5 分钟内不重复请求，也可手动点「检查更新」）；
-2. 解析 `vX.Y.Z`（稳定版）与 `nightly-<sha>`（每日构建）两种 tag，稳定版永远优先推荐；
+2. 解析所有 tag 能匹配 `vX.Y.Z(-sha)?` 的 release，取 `X.Y.Z` 最高且严格大于当前版本的那个；
 3. 「立即下载并安装」→ 后台下载 dmg 到 `~/Library/Application Support/QuotaBar/updates/` → `hdiutil verify` 校验 → 确认后调 `install-update.sh` helper 替换 `/Applications/Quota Bar.app` 并自动重启；
 4. 替换失败时保留旧版并写 `update-error.log`，下次启动提示「上次更新失败」；
 5. macOS 权限设置（Full Disk Access 等）更新后**通常会保留**（bundle id `com.taobe.quotabar` 与签名 identifier 稳定），但 ad-hoc 签名下这是 best-effort；Developer ID + notarize 的形式化保障在 v0.12.0 落地；
 6. 「稍后提醒」会忽略该版本（自动检查跳过），可在「关于」页「重置已忽略的版本」恢复。
 
-发版：日常 push main 自动产 `nightly-<sha>` pre-release；对外稳定版在 GitHub Actions 手动触发 `Release` workflow 并传入 `version=vX.Y.Z`（写入 `CFBundleShortVersionString` 并发布同名 Release）。
+发版：push main 或手动触发 `Release` workflow 都会读取 `VERSION` 文件 + 当前 commit 的
+short sha，打一个 `v<VERSION>-<sha>` tag 并发布同名 GitHub Release（写入
+`CFBundleShortVersionString`）。
 
 ---
 

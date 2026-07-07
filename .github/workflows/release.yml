@@ -5,12 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "semver 发版 tag（形如 v0.11.0）；留空则只跑构建"
-        required: false
-        default: ""
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -66,21 +61,15 @@ jobs:
   release:
     name: Package .dmg + GitHub Release
     needs: build
-    # push main → nightly；workflow_dispatch 传 version → semver 稳定版。
+    # 2026-07-07 改版：不再区分 nightly/stable 两条通道，push main 和手动触发
+    # 都走同一条路径——版本号来自仓库根目录的 VERSION 文件（Agent 维护），
+    # tag 统一是 v<VERSION>-<git-short-sha>。
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.version != '')
+      github.event_name == 'workflow_dispatch'
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
-
-      - name: Validate semver input
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          VERSION: ${{ github.event.inputs.version }}
-        run: |
-          echo "$VERSION" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-            || { echo "version 必须形如 v0.11.0，收到: '$VERSION'"; exit 1; }
 
       - name: Cache SwiftPM artifacts
         uses: actions/cache@v4
@@ -96,17 +85,20 @@ jobs:
         working-directory: macos
         env:
           APP_NAME: QuotaBar
-          SHORT_SHA: ${{ github.sha }}
-          # semver 路径写入 CFBundleShortVersionString（去前导 v）；nightly 路径为空保持 "1.0"。
-          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}
         run: ./scripts/build-app.sh
+
+      - name: Compute release tag
+        id: version
+        run: |
+          BASE_VERSION="$(tr -d '[:space:]' < VERSION)"
+          SHORT_SHA="$(git rev-parse --short HEAD)"
+          echo "tag=v${BASE_VERSION}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Build .dmg
         env:
           APP_NAME: QuotaBar
           APP_BUNDLE_NAME: Quota Bar
-          SHORT_SHA: ${{ github.sha }}
-          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '' }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
           APP="$GITHUB_WORKSPACE/macos/build/latest/${APP_BUNDLE_NAME}.app"
@@ -116,11 +108,7 @@ jobs:
           mkdir -p "$STAGE"
           cp -R "$APP" "$STAGE/"
           ln -s /Applications "$STAGE/Applications"
-          if [ -n "$VERSION" ]; then
-            DMG="$RUNNER_TEMP/${APP_NAME}-${VERSION}.dmg"
-          else
-            DMG="$RUNNER_TEMP/${APP_NAME}-${SHORT_SHA::7}.dmg"
-          fi
+          DMG="$RUNNER_TEMP/${APP_NAME}-${TAG}.dmg"
           hdiutil create \
             -volname "Quota Bar" \
             -srcfolder "$STAGE" \
@@ -130,40 +118,19 @@ jobs:
           echo "DMG=$DMG" >> "$GITHUB_ENV"
           ls -lh "$DMG"
 
-      - name: Upload nightly to GitHub Release
-        if: github.event_name == 'push'
+      - name: Upload GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: nightly-${{ github.sha }}
-          name: Nightly · ${{ github.event.head_commit.message }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Quota Bar ${{ steps.version.outputs.tag }}
           body: |
-            Automated nightly build from `${{ github.sha }}`.
+            Automated build from `${{ github.sha }}`.
 
             **Install**
 
-            1. Download `QuotaBar-<short-sha>.dmg` below.
+            1. Download `QuotaBar-${{ steps.version.outputs.tag }}.dmg` below.
             2. Open it (double-click).
             3. Drag **Quota Bar** into **Applications** — or just double-click it inside the DMG window to run from there.
-
-            > First launch requires right-click → Open. The binary is unsigned and not notarized.
-          draft: false
-          prerelease: true
-          fail_on_unmatched_files: true
-          files: ${{ env.DMG }}
-
-      - name: Upload semver release
-        if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.event.inputs.version }}
-          name: Quota Bar ${{ github.event.inputs.version }}
-          body: |
-            Stable release ${{ github.event.inputs.version }} (from `${{ github.sha }}`).
-
-            **Install**
-
-            1. Download `QuotaBar-${{ github.event.inputs.version }}.dmg` below.
-            2. Open it and drag **Quota Bar** into **Applications**.
 
             > First launch requires right-click → Open. The binary is unsigned and not notarized (v0.12.0 will add Developer ID + notarization).
           draft: false

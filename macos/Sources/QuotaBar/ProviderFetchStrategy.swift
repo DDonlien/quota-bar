@@ -106,17 +106,17 @@ final class FetchPipeline {
                     let addition = try await strategy.fetch(timeout: timeout)
                     lastSnapshots[strategy.id] = addition
                     recordSuccess(strategy: strategy, snapshot: addition)
-                    await logAttempt(strategy: strategy, snapshot: addition)
+                    await logAttempt(strategy: strategy, snapshot: addition, onlyLayers: missing)
                     merged = Self.mergeLayers(base: base, addition: addition)
                 } catch let error as QuotaFetchError {
                     lastErrors[strategy.id] = error
                     recordError(error, strategy: strategy)
-                    await logAttempt(strategy: strategy, error: error)
+                    await logAttempt(strategy: strategy, error: error, onlyLayers: missing)
                 } catch {
                     let transient = QuotaFetchError.transient(detail: error.localizedDescription)
                     lastErrors[strategy.id] = transient
                     recordError(transient, strategy: strategy)
-                    await logAttempt(strategy: strategy, error: transient)
+                    await logAttempt(strategy: strategy, error: transient, onlyLayers: missing)
                 }
                 continue
             }
@@ -212,8 +212,18 @@ final class FetchPipeline {
     /// 2. MethodName 统一用 `strategy.sourceKind.checkLogLabel`（配置/凭证 → API、
     ///    CLI 命令等分类词），不用 strategy 自己的 id（如 `kimi-desktop-token`，
     ///    单看名字猜不出属于哪一类来源）；具体是哪个 strategy 放在 `detail` 里。
-    private func logAttempt(strategy: ProviderFetchStrategy, snapshot: ProviderSnapshot? = nil, error: QuotaFetchError? = nil) async {
-        let relevantLayers = strategy.supportedLayers.intersection([.quota, .plan])
+    ///
+    /// `onlyLayers`（分层合并的补层调用专用）：只记录**这次调用实际是为了补哪一层**
+    /// 才尝试的层，不是 `strategy.supportedLayers` 的全集。分层合并阶段，某个 strategy
+    /// 可能同时支持 quota+plan，但这一轮只是因为 plan 还缺才被重新尝试——如果它失败，
+    /// 不加这个过滤会记一条"额度获取失败"，但实际上额度早就被更早的来源满足了，只是
+    /// 这次没打算靠它补额度。2026-07-07 用户看真实日志时确认过这个现象容易被误读成
+    /// "全都失败"。首次尝试（`base == nil` 时）不传，此时确实是在为全部所需层探测。
+    private func logAttempt(strategy: ProviderFetchStrategy, snapshot: ProviderSnapshot? = nil, error: QuotaFetchError? = nil, onlyLayers: Set<ProviderFetchLayer>? = nil) async {
+        var relevantLayers = strategy.supportedLayers.intersection([.quota, .plan])
+        if let onlyLayers {
+            relevantLayers.formIntersection(onlyLayers)
+        }
         guard !relevantLayers.isEmpty else { return }
         let method = strategy.sourceKind.checkLogLabel
         for layer in [ProviderFetchLayer.quota, .plan] where relevantLayers.contains(layer) {

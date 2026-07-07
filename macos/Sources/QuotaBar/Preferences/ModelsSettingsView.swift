@@ -10,7 +10,13 @@ import SwiftUI
 /// （具体落到 `PreferencesStore.isEnabled(kind:)`，由调用方决定如何在 pipeline 中过滤）。
 struct ModelsSettingsView: View {
     @State private var store = PreferencesStore.shared
-    private let visibleProviders: [ProviderKind] = [.codex, .minimax, .kimi, .claude, .antigravity, .glm]
+    // `.glm` 之前在这里，但它是个"幽灵" kind——`Strategies.supportedProviderKinds`
+    // 从来没有把它接进任何真实 pipeline，dropdown 里跑的实际是 `.zcode`。两个不同的
+    // `ProviderKind` 枚举值意味着两套完全独立的 `PreferencesStore.providerOverrides`
+    // 记录，Preferences 这里切 "GLM" 的开关不会影响任何真正在跑的 provider，dropdown
+    // 里隐藏 "Z Code" 也不会反映到这个开关上（2026-07-07 用户实测发现"关联不上"）。
+    // 这里改用真正在跑的 `.zcode`，跟 dropdown 显示的是同一个 kind。
+    private let visibleProviders: [ProviderKind] = [.codex, .minimax, .kimi, .claude, .antigravity, .zcode]
 
     var body: some View {
         SettingsPage(.models) {
@@ -105,7 +111,7 @@ struct ModelsSettingsView: View {
         case .kimi: return "Moonshot"
         case .claude: return "Anthropic"
         case .glm: return "智谱"
-        case .zcode: return "Z Code"
+        case .zcode: return "智谱 / Z.ai"
         case .cursor: return "Anysphere"
         case .gemini, .antigravity: return "Google"
         case .openai: return "OpenAI"

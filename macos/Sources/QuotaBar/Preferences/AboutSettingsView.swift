@@ -137,7 +137,7 @@ struct AboutSettingsView: View {
         case .idle, .checking:
             EmptyView()
         case .upToDate(let version):
-            Text("已是最新版本 \(version == "1.0" ? "（nightly \(appBuild)）" : "v\(version)")")
+            Text("已是最新版本 v\(version)")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         case .error(let message):

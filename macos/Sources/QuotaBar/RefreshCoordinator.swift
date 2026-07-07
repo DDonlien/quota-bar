@@ -70,8 +70,14 @@ final class RefreshCoordinator: ObservableObject {
             lastUpdated: cachedSnapshots.map(\.fetchedAt).max()
         )
 
+        // `.receive(on: RunLoop.main)`（Combine 默认用 `RunLoop.Mode.default`）在 dropdown
+        // 打开期间不会触发——NSMenu 的鼠标 tracking 用的是 `.eventTracking` run loop
+        // mode，`.default` 模式排的活要等菜单关闭、tracking loop 退出才会跑，这正是
+        // "点了叉不会立刻隐藏，要关闭再打开 dropdown 才生效"的根因（2026-07-07 用户
+        // 实测发现）。改用 `DispatchQueue.main`：GCD 主队列的任务通过 common run loop
+        // mode 派发，不受 tracking mode 影响，dropdown 开着的时候也能正常触发。
         NotificationCenter.default.publisher(for: .quotaPreferencesDidChange)
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.applyProviderOrder()
                 self?.applyEnabledFilterChange()
@@ -157,9 +163,12 @@ final class RefreshCoordinator: ObservableObject {
     /// dropdown 里点击「隐藏」：等同于在 Preferences 里关闭该 provider 的开关。
     func hide(kind: ProviderKind) {
         PreferencesStore.shared.setEnabled(false, for: kind)
-        // `setEnabled` 内部 `persist()` 已经会 post `.quotaPreferencesDidChange`，
-        // 上面注册的订阅者会调用 `applyEnabledFilterChange()` 立刻把这个 kind 从
-        // state 里摘掉；这里不需要重复处理。
+        // `setEnabled` 内部 `persist()` 会 post `.quotaPreferencesDidChange`，上面的
+        // 订阅者也会调用 `applyEnabledFilterChange()`——但那条链路要经过
+        // NotificationCenter → Combine 调度，点击这一刻正处在 dropdown 的 NSMenu
+        // tracking 期间，调度有被推迟到菜单关闭才执行的风险。这里直接同步再调一次，
+        // 保证点击的瞬间就从 `state.snapshots` 里摘掉，不依赖那条异步链路的时机。
+        applyEnabledFilterChange()
     }
 
     /// 把当前 `state.snapshots` 按 `PreferencesStore.isEnabled` 重新过滤 + 视需要补一次刷新。

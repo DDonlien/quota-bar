@@ -7,19 +7,23 @@ EXECUTABLE_NAME="QuotaBar"
 APP_NAME="Quota Bar"
 ICON_NAME="QuotaBar.icns"
 
-# v0.11.0-CI-A-002：VERSION 环境变量控制 CFBundleShortVersionString。
-# - 空          → nightly 行为，保持 "1.0"（UpdateChecker 据此识别 nightly 通道）；
-# - vX.Y.Z      → semver 发版，写入去掉前导 v 的版本号；
-# - 其他任何值  → 立即失败，不静默回退。
-VERSION="${VERSION:-}"
-if [ -z "$VERSION" ]; then
-    SHORT_VERSION="1.0"
-elif echo "$VERSION" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-    SHORT_VERSION="${VERSION#v}"
-else
-    echo "ERROR: VERSION 必须是 vX.Y.Z 形式（收到: '$VERSION'）" >&2
+# 2026-07-07 改版：不再区分"nightly/stable 两条通道"。每一次构建（本地或 CI）
+# 都带一个真实版本号：`<VERSION 文件内容>-<git short sha>`，写入
+# CFBundleShortVersionString。`VERSION` 文件里的 X.Y.Z 由 Agent 维护，见
+# AGENTS.md「版本号维护规则」；UpdateChecker 只按这个 X.Y.Z 比大小，完全不看
+# sha、也不看发布/构建时间——同一个 X.Y.Z 重复打包不会被误判成"有更新"。
+VERSION_FILE="$PROJECT/../VERSION"
+if [ ! -f "$VERSION_FILE" ]; then
+    echo "ERROR: 找不到 VERSION 文件（预期路径: $VERSION_FILE）" >&2
     exit 1
 fi
+BASE_VERSION="$(tr -d '[:space:]' < "$VERSION_FILE")"
+if ! echo "$BASE_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo "ERROR: VERSION 文件内容必须是 X.Y.Z 形式（收到: '$BASE_VERSION'）" >&2
+    exit 1
+fi
+GIT_SHORT_SHA="$(cd "$PROJECT/.." && git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+SHORT_VERSION="${BASE_VERSION}-${GIT_SHORT_SHA}"
 
 # 每次构建生成 `YYYYMMDD-HHMMSS-<branch>` 命名的子文件夹，保留历史版本便于验证。
 # branch 段来自当前 Git 分支；detached HEAD 时 fallback 到 detached-<short-sha>。
@@ -30,7 +34,7 @@ if [ -z "$BRANCH" ] || [ "$BRANCH" = "HEAD" ]; then
     BRANCH="detached-$SHORT_SHA"
 fi
 BRANCH_SAFE="$(echo "$BRANCH" | tr '/' '-')"
-BUNDLE_VERSION="$(date +%y%m%d.%H%M%S)"
+BUNDLE_VERSION="$(date -u +%y%m%d.%H%M%S)"
 DISPLAY_BUILD="${BUNDLE_VERSION}.${BRANCH_SAFE}"
 BUILD_DIR="$PROJECT/build/${TIMESTAMP}-${BRANCH_SAFE}"
 APP_DIR="$BUILD_DIR/${APP_NAME}.app"

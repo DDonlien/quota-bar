@@ -5,7 +5,7 @@ import Testing
 @Suite("UpdateChecker version logic")
 struct UpdateCheckerTests {
 
-    // MARK: - SemanticVersion（v0.11.0-FE-A-003-test）
+    // MARK: - SemanticVersion（2026-07-07 改版：纯版本号比较，容忍 git sha 后缀）
 
     @Test("semver compares numerically not lexically")
     func semverNumericCompare() throws {
@@ -15,91 +15,77 @@ struct UpdateCheckerTests {
         #expect(!(v10 < v2))
     }
 
-    @Test("prerelease tags are not valid stable versions")
-    func prereleaseRejected() {
-        #expect(SemanticVersion(tag: "v0.2.0-rc1") == nil)
-        #expect(SemanticVersion(tag: "v0.2.0" ) != nil)
+    @Test("git short sha suffix is ignored, only X.Y.Z drives comparison")
+    func gitShaSuffixIgnored() throws {
+        // 新格式 `vX.Y.Z-<git-short-sha>`：sha 只是构建标识，不参与新旧比较——
+        // 同一个 X.Y.Z，不管 sha 是什么，语义化版本号都相同。
+        let plain = try #require(SemanticVersion(tag: "v0.10.0"))
+        let withSha = try #require(SemanticVersion(tag: "v0.10.0-dcfff71"))
+        #expect(plain == withSha)
         #expect(SemanticVersion(tag: "garbage") == nil)
+        #expect(SemanticVersion(tag: "v0.2") == nil)
     }
 
-    // MARK: - Release 解析（v0.11.0-FE-A-000-test）
+    // MARK: - Release 解析（2026-07-07 改版：不再分 stable/nightly 通道）
 
-    @Test("parses mixed semver and nightly releases, skipping drafts and odd tags")
-    func parsesMixedReleases() {
+    @Test("parses releases with valid version tags, skipping drafts and unparseable tags")
+    func parsesReleases() {
         let data = Self.releasesJSON([
             Self.release(tag: "v0.11.0", prerelease: false, published: "2026-07-04T10:00:00Z", asset: "QuotaBar-v0.11.0.dmg"),
-            Self.release(tag: "nightly-0123abc", prerelease: true, published: "2026-07-05T10:00:00Z", asset: "QuotaBar-0123abc.dmg"),
-            Self.release(tag: "v0.11.0-rc1", prerelease: true, published: "2026-07-03T10:00:00Z", asset: "QuotaBar-rc.dmg"),
+            Self.release(tag: "v0.10.0-0123abc", prerelease: false, published: "2026-07-05T10:00:00Z", asset: "QuotaBar-0123abc.dmg"),
             Self.release(tag: "v0.10.0", prerelease: false, published: "2026-07-01T10:00:00Z", asset: "QuotaBar-v0.10.0.dmg", draft: true),
             Self.release(tag: "weird-tag", prerelease: false, published: "2026-07-01T10:00:00Z", asset: nil),
         ])
         let candidates = UpdateReleaseParser.parse(data: data)
         #expect(candidates.count == 2)
-        #expect(candidates.contains { $0.tag == "v0.11.0" && $0.channel == .stable })
-        #expect(candidates.contains { $0.tag == "nightly-0123abc" && $0.channel == .nightly })
+        #expect(candidates.contains { $0.tag == "v0.11.0" })
+        #expect(candidates.contains { $0.tag == "v0.10.0-0123abc" })
     }
 
-    @Test("stable is always preferred over nightly for nightly builds")
-    func stablePreferredOverNightly() {
+    @Test("picks the highest semver above current, ignoring which one has a newer publish date")
+    func picksHighestSemverRegardlessOfPublishDate() {
+        // 特意让版本号更低的 release 发布时间更晚——验证比较只看版本号，不看时间。
         let candidates = UpdateReleaseParser.parse(data: Self.releasesJSON([
-            Self.release(tag: "nightly-0123abc", prerelease: true, published: "2026-07-05T10:00:00Z", asset: "n.dmg"),
-            Self.release(tag: "v0.11.0", prerelease: false, published: "2026-07-01T10:00:00Z", asset: "s.dmg"),
+            Self.release(tag: "v0.9.0-aaaaaaa", prerelease: false, published: "2026-07-06T10:00:00Z", asset: "old.dmg"),
+            Self.release(tag: "v0.11.0-bbbbbbb", prerelease: false, published: "2026-07-01T10:00:00Z", asset: "new.dmg"),
         ]))
-        let picked = UpdateReleaseParser.pickUpdate(
-            candidates: candidates,
-            currentVersion: "1.0",
-            currentBuildDate: ISO8601DateFormatter().date(from: "2026-07-04T00:00:00Z")
-        )
-        #expect(picked?.tag == "v0.11.0")
+        let picked = UpdateReleaseParser.pickUpdate(candidates: candidates, currentVersion: "v0.10.0-ccccccc")
+        #expect(picked?.tag == "v0.11.0-bbbbbbb")
     }
 
-    @Test("newer nightly recommended when no stable exists")
-    func nightlyRecommendedByPublishDate() {
+    @Test("current version only upgrades to a strictly higher semver")
+    func onlyUpgradesToHigherSemver() {
         let candidates = UpdateReleaseParser.parse(data: Self.releasesJSON([
-            Self.release(tag: "nightly-0123abc", prerelease: true, published: "2026-07-05T10:00:00Z", asset: "n.dmg"),
+            Self.release(tag: "v0.11.0-dcfff71", prerelease: false, published: "2026-07-04T10:00:00Z", asset: "s.dmg"),
         ]))
-        let older = UpdateReleaseParser.pickUpdate(
-            candidates: candidates,
-            currentVersion: "1.0",
-            currentBuildDate: ISO8601DateFormatter().date(from: "2026-07-04T00:00:00Z")
-        )
-        #expect(older?.tag == "nightly-0123abc")
-
-        let newerLocal = UpdateReleaseParser.pickUpdate(
-            candidates: candidates,
-            currentVersion: "1.0",
-            currentBuildDate: ISO8601DateFormatter().date(from: "2026-07-06T00:00:00Z")
-        )
-        #expect(newerLocal == nil)
+        #expect(UpdateReleaseParser.pickUpdate(candidates: candidates, currentVersion: "v0.11.0") == nil)
+        #expect(UpdateReleaseParser.pickUpdate(candidates: candidates, currentVersion: "v0.10.2")?.tag == "v0.11.0-dcfff71")
     }
 
-    @Test("stable current version only upgrades to higher semver")
-    func stableOnlyUpgradesToHigherSemver() {
+    /// 回归测试：2026-07-07 用户明确要求——同一个版本号重复打包（比如两次不同的
+    /// commit 但没有 bump `VERSION` 文件，或者同一个 commit 打两次包）不应该被
+    /// 判断为"有更新"。这是这次改版的核心目的：只比版本号，不比时间/sha 是否
+    /// 相同。
+    @Test("rebuilding the exact same version is not offered as an update to itself")
+    func sameVersionDifferentShaIsNotAnUpdate() {
         let candidates = UpdateReleaseParser.parse(data: Self.releasesJSON([
-            Self.release(tag: "v0.11.0", prerelease: false, published: "2026-07-04T10:00:00Z", asset: "s.dmg"),
-            Self.release(tag: "nightly-0123abc", prerelease: true, published: "2026-07-05T10:00:00Z", asset: "n.dmg"),
+            Self.release(tag: "v0.10.0-dcfff71", prerelease: false, published: "2026-07-07T04:49:52Z", asset: "n.dmg"),
         ]))
-        #expect(UpdateReleaseParser.pickUpdate(candidates: candidates, currentVersion: "0.11.0", currentBuildDate: nil) == nil)
-        #expect(UpdateReleaseParser.pickUpdate(candidates: candidates, currentVersion: "0.10.2", currentBuildDate: nil)?.tag == "v0.11.0")
+        let picked = UpdateReleaseParser.pickUpdate(candidates: candidates, currentVersion: "v0.10.0-eeeeeee")
+        #expect(picked == nil, "相同 X.Y.Z、不同 sha 不应该被识别成待更新的新版本")
     }
 
     @Test("empty release list means up to date")
     func emptyList() {
-        #expect(UpdateReleaseParser.pickUpdate(candidates: [], currentVersion: "1.0", currentBuildDate: nil) == nil)
+        #expect(UpdateReleaseParser.pickUpdate(candidates: [], currentVersion: "v1.0.0") == nil)
     }
 
-    // MARK: - 构建时间解析
-
-    @Test("parses build date from CFBundleVersion timestamp")
-    func parsesBuildDate() throws {
-        let date = try #require(UpdateReleaseParser.buildDate(fromBundleVersion: "260705.213000"))
-        let comps = Calendar.current.dateComponents([.year, .month, .day, .hour], from: date)
-        #expect(comps.year == 2026)
-        #expect(comps.month == 7)
-        #expect(comps.day == 5)
-        #expect(comps.hour == 21)
-        #expect(UpdateReleaseParser.buildDate(fromBundleVersion: "1") == nil)
-        #expect(UpdateReleaseParser.buildDate(fromBundleVersion: nil) == nil)
+    @Test("unparseable current version yields no recommendation")
+    func unparseableCurrentVersionYieldsNil() {
+        let candidates = UpdateReleaseParser.parse(data: Self.releasesJSON([
+            Self.release(tag: "v0.11.0", prerelease: false, published: "2026-07-04T10:00:00Z", asset: "s.dmg"),
+        ]))
+        #expect(UpdateReleaseParser.pickUpdate(candidates: candidates, currentVersion: "garbage") == nil)
     }
 
     // MARK: - release notes 清洗
