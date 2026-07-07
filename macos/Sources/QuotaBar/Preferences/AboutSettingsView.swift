@@ -7,6 +7,7 @@ import SwiftUI
 /// - 不展示额外 section 标题，保持紧凑系统列表。
 struct AboutSettingsView: View {
     @State private var store = PreferencesStore.shared
+    @ObservedObject private var updateChecker = UpdateChecker.shared
     @State private var showResetConfirmation = false
 
     var body: some View {
@@ -16,6 +17,10 @@ struct AboutSettingsView: View {
                 updateGroup
                 resetSection
             }
+        }
+        .onAppear {
+            // v0.11.0-FE-A-005：打开关于页时后台触发一次（5min 内不重复请求）。
+            updateChecker.check(userInitiated: false)
         }
         .confirmationDialog(
             "确定要重置所有偏好设置吗？",
@@ -74,15 +79,121 @@ struct AboutSettingsView: View {
         SettingsGroup {
             SettingsRow(
                 label: {
-                    Button {
-                        openReleasesPage()
-                    } label: {
-                        SettingsIconLabel("检查更新", symbol: "arrow.triangle.2.circlepath", tint: .blue)
+                    HStack(spacing: 10) {
+                        Button {
+                            updateChecker.check(userInitiated: true)
+                        } label: {
+                            SettingsIconLabel("检查更新", symbol: "arrow.triangle.2.circlepath", tint: .blue)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(updateBusy)
+                        if case .checking = updateChecker.state {
+                            ProgressView().controlSize(.small)
+                        }
                     }
-                    .buttonStyle(.plain)
                 },
                 verticalPadding: 8
             )
+            if hasUpdateStatus {
+                SettingsDivider()
+                SettingsRow(
+                    label: { updateStatusView },
+                    verticalPadding: 8
+                )
+            }
+            if !store.preferences.ignoredVersions.isEmpty {
+                SettingsDivider()
+                SettingsRow(
+                    label: {
+                        Button("重置已忽略的版本（\(store.preferences.ignoredVersions.count)）") {
+                            updateChecker.resetIgnoredVersions()
+                        }
+                        .controlSize(.small)
+                    },
+                    verticalPadding: 8
+                )
+            }
+        }
+    }
+
+    private var updateBusy: Bool {
+        switch updateChecker.state {
+        case .checking, .downloading, .verifying, .installing: return true
+        default: return false
+        }
+    }
+
+    private var hasUpdateStatus: Bool {
+        switch updateChecker.state {
+        case .idle, .checking: return false
+        default: return true
+        }
+    }
+
+    /// 检查更新按钮下方的状态区（v0.11.0-UI-A-000/001）。
+    @ViewBuilder
+    private var updateStatusView: some View {
+        switch updateChecker.state {
+        case .idle, .checking:
+            EmptyView()
+        case .upToDate(let version):
+            Text("已是最新版本 \(version == "1.0" ? "（nightly \(appBuild)）" : "v\(version)")")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+        case .error(let message):
+            Text(message)
+                .font(.system(size: 11))
+                .foregroundStyle(.orange)
+        case .updateAvailable(let candidate):
+            VStack(alignment: .leading, spacing: 6) {
+                Text("\(candidate.tag) 已发布")
+                    .font(.system(size: 12, weight: .semibold))
+                if !candidate.releaseNotes.isEmpty {
+                    Text(candidate.releaseNotes)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(6)
+                }
+                HStack(spacing: 12) {
+                    Button("立即下载并安装") { updateChecker.downloadAndInstall() }
+                        .controlSize(.small)
+                    Button("查看 GitHub Release") { NSWorkspace.shared.open(candidate.releaseURL) }
+                        .controlSize(.small)
+                    Button("稍后提醒") { updateChecker.ignoreCurrentUpdate() }
+                        .controlSize(.small)
+                }
+            }
+        case .downloading(let progress):
+            VStack(alignment: .leading, spacing: 6) {
+                ProgressView(value: progress) {
+                    Text("正在下载更新… \(Int(progress * 100))%")
+                        .font(.system(size: 11))
+                }
+                Button("取消") { updateChecker.cancelDownload() }
+                    .controlSize(.small)
+            }
+        case .verifying:
+            Text("正在校验更新包…")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+        case .downloaded(let candidate, _):
+            VStack(alignment: .leading, spacing: 6) {
+                Text("\(candidate.tag) 已下载完成")
+                    .font(.system(size: 12, weight: .semibold))
+                HStack(spacing: 12) {
+                    Button("立即重启并安装") { updateChecker.installDownloadedUpdate() }
+                        .controlSize(.small)
+                    Button("稍后") { updateChecker.ignoreCurrentUpdate() }
+                        .controlSize(.small)
+                }
+                Text("macOS 权限设置（Accessibility 等）更新后通常会保留；正式形式化保障将在 v0.12.0 升级签名后落地。")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+            }
+        case .installing:
+            Text("正在安装更新，应用将自动重启…")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -121,11 +232,6 @@ struct AboutSettingsView: View {
         Bundle.main.infoDictionary?["QBDisplayBuild"] as? String
             ?? Bundle.main.infoDictionary?["CFBundleVersion"] as? String
             ?? "dev"
-    }
-
-    private func openReleasesPage() {
-        guard let url = URL(string: "https://github.com/DDonlien/quota-bar/releases") else { return }
-        NSWorkspace.shared.open(url)
     }
 
     /// 应用图标。SwiftPM 直跑时不存在 AppIcon，取不到就 fallback 到 SF Symbol。

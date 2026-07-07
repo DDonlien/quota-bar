@@ -7,6 +7,20 @@ EXECUTABLE_NAME="QuotaBar"
 APP_NAME="Quota Bar"
 ICON_NAME="QuotaBar.icns"
 
+# v0.11.0-CI-A-002：VERSION 环境变量控制 CFBundleShortVersionString。
+# - 空          → nightly 行为，保持 "1.0"（UpdateChecker 据此识别 nightly 通道）；
+# - vX.Y.Z      → semver 发版，写入去掉前导 v 的版本号；
+# - 其他任何值  → 立即失败，不静默回退。
+VERSION="${VERSION:-}"
+if [ -z "$VERSION" ]; then
+    SHORT_VERSION="1.0"
+elif echo "$VERSION" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+    SHORT_VERSION="${VERSION#v}"
+else
+    echo "ERROR: VERSION 必须是 vX.Y.Z 形式（收到: '$VERSION'）" >&2
+    exit 1
+fi
+
 # 每次构建生成 `YYYYMMDD-HHMMSS-<branch>` 命名的子文件夹，保留历史版本便于验证。
 # branch 段来自当前 Git 分支；detached HEAD 时 fallback 到 detached-<short-sha>。
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
@@ -39,6 +53,10 @@ mkdir -p "$APP_DIR/Contents/Resources"
 BIN_PATH="$(swift build --disable-sandbox --show-bin-path)/$EXECUTABLE_NAME"
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/$EXECUTABLE_NAME"
 cp "$PROJECT/Resources/$ICON_NAME" "$APP_DIR/Contents/Resources/$ICON_NAME"
+# 更新助手（v0.11.0-TOOL-A-002）：随包分发，UpdateChecker 通过
+# Bundle.main.url(forResource:) 定位并在安装更新时调用。
+cp "$SCRIPT_DIR/install-update.sh" "$APP_DIR/Contents/Resources/install-update.sh"
+chmod +x "$APP_DIR/Contents/Resources/install-update.sh"
 
 # 4. 写入 Info.plist
 cat > "$APP_DIR/Contents/Info.plist" << PLIST
@@ -59,7 +77,7 @@ cat > "$APP_DIR/Contents/Info.plist" << PLIST
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>$SHORT_VERSION</string>
     <key>CFBundleVersion</key>
     <string>$BUNDLE_VERSION</string>
     <key>QBDisplayBuild</key>
