@@ -16,7 +16,7 @@ struct ModelsSettingsView: View {
     // 记录，Preferences 这里切 "GLM" 的开关不会影响任何真正在跑的 provider，dropdown
     // 里隐藏 "Z Code" 也不会反映到这个开关上（2026-07-07 用户实测发现"关联不上"）。
     // 这里改用真正在跑的 `.zcode`，跟 dropdown 显示的是同一个 kind。
-    private let visibleProviders: [ProviderKind] = [.codex, .minimax, .kimi, .claude, .antigravity, .zcode]
+    private let visibleProviders: [ProviderKind] = [.codex, .minimax, .kimi, .claude, .antigravity, .zcode, .opencode]
 
     var body: some View {
         SettingsPage(.models) {
@@ -121,6 +121,7 @@ struct ModelsSettingsView: View {
         case .perplexity: return "Perplexity"
         case .warp: return "Warp"
         case .trae: return "ByteDance"
+        case .opencode: return "SST"
         }
     }
 
@@ -142,6 +143,7 @@ struct ModelsSettingsView: View {
         case .warp: return ["待接入"]
         case .trae: return ["待接入"]
         case .antigravity: return ["App", "CLI"]
+        case .opencode: return ["Config"]
         }
     }
 

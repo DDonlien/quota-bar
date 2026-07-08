@@ -820,3 +820,31 @@
 - [ ] [0.12.0-QA-A-004] 60 次/小时限流边界：mock API 返回 `403 X-RateLimit-Remaining: 0` 时 app 提示「检查过于频繁，请稍后重试」而非永久拒服务（v0.11.0-QA-A-004 regression check）#P1
 - [ ] [0.12.0-QA-A-005] helper 失败路径：mock 替换失败 → 主 app 检测到 `update-error.log` → 启动时弹「上次更新失败」通知，旧版继续运行不崩（v0.11.0-QA-A-005 regression check；helper 现在 Developer ID 签名，失败处理路径不变）#P1
 - [ ] [0.12.0-QA-A-006] TCC 权限形式化断言（v0.12.0 验收核心）：旧版 app 已授权 Accessibility → 触发更新 → 安装新版 → 通过 `tccutil` / `sqlite3 ~/Library/Application Support/com.apple.TCC/TCC.db` 查新版 app 的授权状态（service = kTCCServiceAccessibility / kTCCServiceScreenCapture / kTCCServicePostEvent，client = `com.taobe.quotabar`），断言 auth_value = 2（allowed）而非 0（denied）#P1
+
+## Phase - v0.13.0 - opencode Provider 支持（探测 + 诚实的"已配置"态）
+
+> **背景**：opencode（`https://opencode.ai`）是一个 BYOK 聚合 CLI，本身没有稳定的额度百分比接口——
+> 调研确认 Zen（其自家 pay-as-you-go 网关）的 credits API 返回 `Not Found`（未上线/不稳定），
+> Go（其自家订阅）的用量只能靠抓一个未公开的私有 dashboard 网页 + 浏览器 auth cookie，没有官方文档且结构随时可能变。
+> 参考了同类项目 `opgginc/opencode-bar`（GitHub 上一个已实现 opencode 用量追踪的 macOS 菜单栏 App）的源码验证了以上结论。
+>
+> **本 phase 的范围决策**（已与用户确认，2026-07-08）：只做「探测 + 诚实的已配置态」——
+> 读 `~/.local/share/opencode/auth.json` 判断已配置了哪些下游 provider，`.available` + 空 quotas，
+> 对齐 `ClaudeAuthStatusCLIProvider` 的 tier-only fallback 先例（有真实档位信息但没有额度数值时，
+> 不伪造百分比，quotas 留空，UI 自然显示灰色"未知"灯）。不引入浏览器 cookie 抓取 Go 私有 dashboard 的方案，
+> 也不用本地 `opencode stats` CLI 伪造一个固定月度上限来充当额度条——两者都超出当前验证过的可靠数据范围。
+>
+> **VERSION 说明**：本 phase 完成，但暂不 bump 根目录 `VERSION` 文件——v0.11.0 / v0.12.0 phase
+> （自动更新 + Developer ID 签名）已在 REQUIREMENTS.md 中规划但尚未全部完成，可能有其他 agent 正在推进，
+> 现在 bump VERSION 可能与其并发工作冲突或造成版本语义混乱（VERSION 目前落在 0.10.0，早于已规划但未完成
+> 的 0.11.0/0.12.0）。VERSION 的实际 bump 时机留给之后统一处理已完成 phase 时一并决定。
+
+### sub/main: opencode 探测 + 已配置态接入
+
+- [x] [0.13.0-DATA-A-000] 在 `ProviderKind` enum 新增 `.opencode` 枚举值：`displayName = "opencode"`、`brandColor = #03B000`（取自 opencode.ai 官网配色）、`iconSymbol = "chevron.left.forwardslash.chevron.right"`、`cliCommands = ["opencode"]`、`credentialFiles = ["~/.local/share/opencode/auth.json"]`，无 `bundleIdentifier`（纯 CLI 工具）、无 `envVarNames`（BYOK 无单一规范环境变量）、无 `cookieDomains`（不采用浏览器方案）
+- [x] [0.13.0-DATA-A-001] `OpenCodeAuthProvider` 实现：解析 `~/.local/share/opencode/auth.json`（支持 `XDG_DATA_HOME` 覆盖路径），按 provider id 罗列已配置的下游 provider；命中 `opencode-go` / `opencode` 时档位标签显示 `Go` / `Zen`，否则显示通用 `BYOK`；找不到凭证时报 `missingCredentials` → pipeline 兜底 `.needsConfiguration`
+- [x] [0.13.0-ARCH-A-000] `Strategies.opencodePipeline()` 接入 `supportedProviderKinds` + `makePipelines()`，只有 `OpenCodeAuthProvider` 一层（无 fallback 层，明确不引入浏览器 cookie 方案）
+- [x] [0.13.0-FE-A-000] `Preferences → 模型` 页 `ModelsSettingsView.visibleProviders` 同步加入 `.opencode`（避免重演 GLM/`.zcode` 那种"幽灵 kind 对不上真实 pipeline"的开关错位 bug），`providerVendor` / `providerAccessModes` 补齐 opencode 分支
+- [x] [0.13.0-QA-A-000] 单元测试 `OpenCodeAuthProviderTests`：多 provider 解析、tier 优先级（Go > Zen > BYOK）、有凭证时返回 available + 空 quotas、无凭证时 missingCredentials
+- [x] [0.13.0-QA-A-001] `swift build` + `swift test`（185 个测试全过，含新增 4 个）；并用本机真实 `~/.local/share/opencode/auth.json`（已配置 `opencode-go`）实测 `swift run` 全链路：探测成功 → 档位=Go、价格=未获取 → 诊断日志确认无额度层伪造
+- [x] [0.13.0-DOC-A-000] `README.md`「支持的 Provider」加入 opencode，并补充独立说明段落解释为什么它不进四层获取矩阵

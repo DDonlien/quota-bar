@@ -362,6 +362,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         case .trae: return NSColor(srgbRed: 0x3D/255, green: 0x7C/255, blue: 0xFF/255, alpha: 1)
         case .antigravity: return NSColor(srgbRed: 0x1A/255, green: 0x73/255, blue: 0xE8/255, alpha: 1)
         case .zcode: return NSColor(srgbRed: 0x38/255, green: 0x66/255, blue: 0xFF/255, alpha: 1)
+        case .opencode: return NSColor(srgbRed: 0x03/255, green: 0xB0/255, blue: 0x00/255, alpha: 1)
         }
     }
 

@@ -121,6 +121,7 @@ enum ProviderPipelines {
         .kimi,
         .antigravity,
         .zcode,
+        .opencode,
     ]
 
     private static var codexLogEstimateEnabled: Bool {
@@ -151,6 +152,7 @@ enum ProviderPipelines {
             kimiPipeline(),
             antigravityPipeline(),
             zcodePipeline(),
+            opencodePipeline(),
         ]
     }
 
@@ -284,6 +286,21 @@ enum ProviderPipelines {
                 QuotaProviderStrategy(ZCodeAuthProvider()),
                 QuotaProviderStrategy(ZCodePlanCacheProvider()),
                 QuotaProviderStrategy(KeychainProvider(id: "zcode-keychain", kind: .zcode)),
+            ],
+            runMode: .sequential
+        )
+    }
+
+    /// opencode 没有官方额度百分比接口（见 `OpenCodeAuthProvider` 顶部注释），
+    /// 目前只有「已配置」这一层：`~/.local/share/opencode/auth.json` 存在且至少配置
+    /// 了一个下游 provider。没有额外 fallback 层——不引入浏览器 cookie 抓取未公开
+    /// dashboard 的方案。
+    @MainActor
+    private static func opencodePipeline() -> FetchPipeline {
+        FetchPipeline(
+            kind: .opencode,
+            strategies: [
+                QuotaProviderStrategy(OpenCodeAuthProvider()),
             ],
             runMode: .sequential
         )
