@@ -20,6 +20,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
     case trae
     case antigravity
     case zcode
+    case opencode
 
     var id: String { rawValue }
 
@@ -41,6 +42,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .trae: return "Trae"
         case .antigravity: return "Antigravity"
         case .zcode: return "Z Code"
+        case .opencode: return "opencode"
         }
     }
 
@@ -68,6 +70,8 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .trae: return Color(hex: "#3D7CFF")
         case .antigravity: return Color(hex: "#1A73E8")
         case .zcode: return Color(hex: "#3866FF")
+        // 取自 opencode.ai 官网配色（灰阶为主，唯一高饱和度强调色）。
+        case .opencode: return Color(hex: "#03B000")
         }
     }
 
@@ -90,6 +94,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .trae: return "hammer"
         case .antigravity: return "paperplane"
         case .zcode: return "shippingbox"
+        case .opencode: return "chevron.left.forwardslash.chevron.right"
         }
     }
 
@@ -111,6 +116,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .minimax: return ["mmx", "minimax"]
         case .antigravity: return ["agy", "antigravity"]
         case .zcode: return ["zcode-cli"]
+        case .opencode: return ["opencode"]
         default: return []
         }
     }
@@ -156,6 +162,9 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .glm: return ["~/.bigmodel/config.json", "~/.zhipu/config.json"]
         case .gemini: return ["~/.gemini/oauth_creds.json"]
         case .zcode: return ["~/.zcode/v2/config.json", "~/.zcode/v2/credentials.json"]
+        // opencode 是 BYOK 聚合 CLI：所有下游 provider 的凭证统一写在这一份文件里
+        // （`~/.local/share/opencode/auth.json`，按 XDG Base Directory 规范存放）。
+        case .opencode: return ["~/.local/share/opencode/auth.json"]
         default: return []
         }
     }
@@ -174,7 +183,7 @@ enum ProviderKind: String, CaseIterable, Hashable, Identifiable, Codable, Sendab
         case .copilot: return ["github.com", "copilot.github.com"]
         case .openrouter: return ["openrouter.ai"]
         case .perplexity: return ["perplexity.ai"]
-        case .warp, .trae, .antigravity, .zcode: return []
+        case .warp, .trae, .antigravity, .zcode, .opencode: return []
         }
     }
 }

@@ -237,6 +237,8 @@ struct AgentDetector {
             return fileExists(atPath: "\(codexHome)/auth.json")
         case .gemini:
             return fileExists(atPath: "\(NSHomeDirectory())/.gemini")
+        case .opencode:
+            return fileExists(atPath: "\(NSHomeDirectory())/.local/share/opencode/auth.json")
         default:
             return true
         }
