@@ -272,11 +272,9 @@ enum SubscriptionExpirySources {
 
 @MainActor
 final class SubscriptionExpiryResolver {
-    private let cookieReader: BrowserCookieReader
     private let timeout: TimeInterval
 
-    init(cookieReader: BrowserCookieReader, timeout: TimeInterval) {
-        self.cookieReader = cookieReader
+    init(timeout: TimeInterval) {
         self.timeout = timeout
     }
 
@@ -324,9 +322,8 @@ final class SubscriptionExpiryResolver {
                     return SubscriptionExpiryResolution(expiresAt: expiresAt, source: source)
                 }
             case .browserAPI:
-                // 可执行的 browserAPI source：用会话 Cookie 打 JSON API。
-                // Cookie 来源两级：App 自有 WebView 会话（无弹窗）→ 浏览器 Cookie
-                // （Safari/Firefox 文件读取，FDA 授权后静默；Chromium 默认被 Keychain gate 挡掉）。
+                // 可执行的 browserAPI source：用 App 自有 WebView 会话 Cookie 打 JSON API
+                // （2026-07-08 移除浏览器 Cookie 文件读取兜底）。
                 guard let request = source.apiRequest else { continue }
                 do {
                     let cookies = await sessionCookies(for: source.cookieDomains)
@@ -352,7 +349,7 @@ final class SubscriptionExpiryResolver {
             case .headlessDOM:
                 guard let harvester = source.harvester else { continue }
                 guard let url = source.pageURL else { continue }
-                let loader = WKWebViewHeadlessLoader(cookieReader: cookieReader)
+                let loader = WKWebViewHeadlessLoader()
                 do {
                     let html = try await loadHeadlessHTML(
                         loader: loader,
@@ -378,11 +375,10 @@ final class SubscriptionExpiryResolver {
         return nil
     }
 
-    /// browserAPI source 的会话 Cookie：App 自有 WebView 会话优先，浏览器 Cookie 兜底。
+    /// browserAPI source 的会话 Cookie：只用 App 自有 WebView 会话（2026-07-08
+    /// 移除浏览器文件读取兜底，见 `BrowserCookieReader.swift` 顶部说明）。
     private func sessionCookies(for domains: [String]) async -> [HTTPCookie] {
-        let appSession = (try? await AppWebViewSessionCookieReader().readCookies(matching: domains)) ?? []
-        if !appSession.isEmpty { return appSession }
-        return (try? await cookieReader.readCookies(matching: domains)) ?? []
+        (try? await AppWebViewSessionCookieReader().readCookies(matching: domains)) ?? []
     }
 
     /// 执行 browserAPI 请求并提取日期。
@@ -414,30 +410,20 @@ final class SubscriptionExpiryResolver {
         return request.extractDate(data)
     }
 
-    /// headless 页面加载的两级会话：
-    /// 1. **App 自有 WebView 会话**（用户在 App 内 WebView 登录过一次即可，永久静默）；
-    /// 2. **浏览器 Cookie**（Safari/Firefox 文件读取，FDA 授权后静默；
-    ///    Chromium 系默认被 KeychainAccessGate 挡掉，绝不弹窗）。
+    /// headless 页面加载：只用 App 自有 WebView 会话（用户在 App 内 WebView
+    /// 登录过一次即可，永久静默）。2026-07-08 移除浏览器 Cookie 文件读取兜底，
+    /// 见 `BrowserCookieReader.swift` 顶部说明；没有 app session cookie 时直接
+    /// 抛 `missingCredentials`，不再尝试读浏览器文件。
     private func loadHeadlessHTML(
         loader: WKWebViewHeadlessLoader,
         url: URL,
         source: SubscriptionExpirySource
     ) async throws -> String {
-        if await WKWebViewHeadlessLoader.appSessionHasCookies(for: source.cookieDomains) {
-            QuotaBarDiagnostics.write("[\(source.id)] starting subscription expiry source headlessDOM(appSession) url=\(url.absoluteString)")
-            do {
-                return try await loader.loadUsingAppSession(
-                    url: url,
-                    cookieDomains: source.cookieDomains,
-                    timeout: timeout,
-                    identifier: source.id
-                )
-            } catch {
-                QuotaBarDiagnostics.write("[\(source.id)] appSession load failed: \(error)，降级到浏览器 Cookie")
-            }
+        guard await WKWebViewHeadlessLoader.appSessionHasCookies(for: source.cookieDomains) else {
+            throw QuotaFetchError.missingCredentials(detail: "App 内 WebView 尚未授权")
         }
-        QuotaBarDiagnostics.write("[\(source.id)] starting subscription expiry source \(source.kind.rawValue) url=\(url.absoluteString) domains=\(source.cookieDomains.joined(separator: ","))")
-        return try await loader.load(
+        QuotaBarDiagnostics.write("[\(source.id)] starting subscription expiry source headlessDOM(appSession) url=\(url.absoluteString)")
+        return try await loader.loadUsingAppSession(
             url: url,
             cookieDomains: source.cookieDomains,
             timeout: timeout,

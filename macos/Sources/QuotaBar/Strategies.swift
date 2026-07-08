@@ -123,10 +123,6 @@ enum ProviderPipelines {
         .zcode,
     ]
 
-    private static var browserCookieStrategiesEnabled: Bool {
-        boolEnvironmentFlag("QUOTABAR_ENABLE_BROWSER_COOKIE")
-    }
-
     private static var codexLogEstimateEnabled: Bool {
         boolEnvironmentFlag("QUOTABAR_ENABLE_CODEX_LOG_ESTIMATE")
     }
@@ -139,29 +135,30 @@ enum ProviderPipelines {
         return ["1", "true", "yes", "on"].contains(raw)
     }
 
+    /// 2026-07-08 移除浏览器 Cookie 文件读取路径（Safari/Firefox 直读文件、
+    /// Chromium 系 Keychain Safe Storage 解密）：这条路径此前一直被
+    /// `QUOTABAR_ENABLE_BROWSER_COOKIE` 环境变量挡着，没有任何 UI 能打开它，对
+    /// 真实用户来说从一开始就是不可达的死路径。核实过 App 内 WebView 授权会话
+    /// （`AppWebViewSessionCookieReader`）覆盖同一批 provider、同一批 endpoint，
+    /// 且不需要 Full Disk Access / Keychain 密码弹窗——两者功能等价，
+    /// 保留 WebView 会话、删除浏览器文件读取，减少一条永远打不开的代码路径。
     @MainActor
-    static func makePipelines(
-        cookieReader: BrowserCookieReader = FilesystemCookieReader(),
-        edgeCookieReader: BrowserCookieReader = EdgeCookieReader()
-    ) -> [FetchPipeline] {
+    static func makePipelines() -> [FetchPipeline] {
         [
-            codexPipeline(cookieReader: cookieReader),
-            claudePipeline(cookieReader: cookieReader, edgeCookieReader: edgeCookieReader),
-            minimaxPipeline(cookieReader: cookieReader, edgeCookieReader: edgeCookieReader),
-            kimiPipeline(cookieReader: cookieReader, edgeCookieReader: edgeCookieReader),
+            codexPipeline(),
+            claudePipeline(),
+            minimaxPipeline(),
+            kimiPipeline(),
             antigravityPipeline(),
             zcodePipeline(),
         ]
     }
 
     @MainActor
-    private static func codexPipeline(cookieReader: BrowserCookieReader) -> FetchPipeline {
+    private static func codexPipeline() -> FetchPipeline {
         var strategies: [ProviderFetchStrategy] = [
             QuotaProviderStrategy(CodexAuthProvider()),
         ]
-        if browserCookieStrategiesEnabled {
-            strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "codex-cookie", kind: .codex, cookieReader: cookieReader)))
-        }
         if codexLogEstimateEnabled {
             strategies.append(QuotaProviderStrategy(CLILogProvider(id: "codex-cli", kind: .codex)))
         }
@@ -177,11 +174,8 @@ enum ProviderPipelines {
     }
 
     @MainActor
-    private static func claudePipeline(
-        cookieReader: BrowserCookieReader,
-        edgeCookieReader: BrowserCookieReader
-    ) -> FetchPipeline {
-        var strategies: [ProviderFetchStrategy] = [
+    private static func claudePipeline() -> FetchPipeline {
+        let strategies: [ProviderFetchStrategy] = [
             // 首选：Claude Code statusLine hook 本地缓存（见 ClaudeStatusLineHookInstaller）。
             // 纯文件读取，零权限、零子进程；用户未启用或缓存过期时自然落到下一层。
             QuotaProviderStrategy(ClaudeStatusLineUsageProvider()),
@@ -192,15 +186,11 @@ enum ProviderPipelines {
             // 交互 TUI），`claude auth status --json` 是唯一可用的非交互结构化
             // 输出，只贡献 subscriptionType（档位），凭证文件已带该字段时不会被走到。
             QuotaProviderStrategy(ClaudeAuthStatusCLIProvider()),
+            // OAuth 凭证文件缺失/过期时的兜底：App 内 WebView 授权会话
+            // （organizations → usage 二段请求），同样无弹窗。
+            QuotaProviderStrategy(BrowserCookieProvider(id: "claude-webview", kind: .claude, cookieReader: AppWebViewSessionCookieReader())),
+            QuotaProviderStrategy(KeychainProvider(id: "claude-keychain", kind: .claude)),
         ]
-        if browserCookieStrategiesEnabled {
-            strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "claude-edge", kind: .claude, cookieReader: edgeCookieReader)))
-            strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "claude-cookie", kind: .claude, cookieReader: cookieReader)))
-        }
-        // OAuth 凭证文件缺失/过期时的兜底：App 内 WebView 授权会话
-        // （organizations → usage 二段请求），同样无弹窗。
-        strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "claude-webview", kind: .claude, cookieReader: AppWebViewSessionCookieReader())))
-        strategies.append(QuotaProviderStrategy(KeychainProvider(id: "claude-keychain", kind: .claude)))
 
         return FetchPipeline(
             kind: .claude,
@@ -210,11 +200,8 @@ enum ProviderPipelines {
     }
 
     @MainActor
-    private static func minimaxPipeline(
-        cookieReader: BrowserCookieReader,
-        edgeCookieReader: BrowserCookieReader
-    ) -> FetchPipeline {
-        var strategies: [ProviderFetchStrategy] = [
+    private static func minimaxPipeline() -> FetchPipeline {
+        let strategies: [ProviderFetchStrategy] = [
             // 首选：本地配置 → API（~/.mmx/config.json 的 API key 直调 coding_plan/remains）
             QuotaProviderStrategy(MiniMaxCLIProvider()),
             // 第二：~/.mavis/config.yaml 里的 API Key
@@ -222,14 +209,10 @@ enum ProviderPipelines {
             // 第三：真实 CLI 命令（mmx quota show --output json）——
             // 让 mmx 自己处理鉴权/region/token 刷新，Quota Bar 只消费结构化输出。
             QuotaProviderStrategy(MiniMaxCommandProvider()),
+            // 最后一层：App 内 WebView 授权会话。
+            QuotaProviderStrategy(BrowserCookieProvider(id: "minimax-webview", kind: .minimax, cookieReader: AppWebViewSessionCookieReader())),
+            QuotaProviderStrategy(KeychainProvider(id: "minimax-keychain", kind: .minimax)),
         ]
-        if browserCookieStrategiesEnabled {
-            strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "minimax-edge", kind: .minimax, cookieReader: edgeCookieReader)))
-            strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "minimax-cookie", kind: .minimax, cookieReader: cookieReader)))
-        }
-        // 最后一层：App 内 WebView 授权会话。
-        strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "minimax-webview", kind: .minimax, cookieReader: AppWebViewSessionCookieReader())))
-        strategies.append(QuotaProviderStrategy(KeychainProvider(id: "minimax-keychain", kind: .minimax)))
 
         return FetchPipeline(
             kind: .minimax,
@@ -239,26 +222,18 @@ enum ProviderPipelines {
     }
 
     @MainActor
-    private static func kimiPipeline(
-        cookieReader: BrowserCookieReader,
-        edgeCookieReader: BrowserCookieReader
-    ) -> FetchPipeline {
-        var strategies: [ProviderFetchStrategy] = [
+    private static func kimiPipeline() -> FetchPipeline {
+        let strategies: [ProviderFetchStrategy] = [
             // 首选：Kimi Desktop token → GetSubscription，拿 Work 月额度 + 档位 +
             // 价格 + 订阅到期日，不触发浏览器 Cookie / Keychain 弹窗。
             QuotaProviderStrategy(KimiDesktopTokenProvider()),
             // 第二：Kimi CLI OAuth（coding/v1/usages），Code 5h/周额度来源；
             // desktop token 成功时也会通过分层合并补齐 code scope。
             QuotaProviderStrategy(KimiAuthProvider()),
+            // 最后一层：App 内 WebView 授权会话（desktop token 缺失时补 Work/档位/价格/日期）。
+            QuotaProviderStrategy(BrowserCookieProvider(id: "kimi-webview", kind: .kimi, cookieReader: AppWebViewSessionCookieReader())),
+            QuotaProviderStrategy(KeychainProvider(id: "kimi-keychain", kind: .kimi)),
         ]
-        if browserCookieStrategiesEnabled {
-            // 显式启用后再用 Web Cookie 补 Work 月度额度、Code 周额度、Code 5h 额度以及 Andante 档位/价格。
-            strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "kimi-edge", kind: .kimi, cookieReader: edgeCookieReader)))
-            strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "kimi-cookie", kind: .kimi, cookieReader: cookieReader)))
-        }
-        // 最后一层：App 内 WebView 授权会话（desktop token 缺失时补 Work/档位/价格/日期）。
-        strategies.append(QuotaProviderStrategy(BrowserCookieProvider(id: "kimi-webview", kind: .kimi, cookieReader: AppWebViewSessionCookieReader())))
-        strategies.append(QuotaProviderStrategy(KeychainProvider(id: "kimi-keychain", kind: .kimi)))
 
         return FetchPipeline(
             kind: .kimi,

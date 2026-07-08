@@ -280,13 +280,8 @@ struct CodexPipelineStrategyOrderTests {
     @Test("codexPipeline 默认是 auth → webview 会话 → keychain，不包含 cookie / cli log")
     @MainActor
     func strategiesOrder() {
-        unsetenv("QUOTABAR_ENABLE_BROWSER_COOKIE")
         unsetenv("QUOTABAR_ENABLE_CODEX_LOG_ESTIMATE")
-        // 触发 makePipelines（不需要 cookieReader 真读）
-        let pipelines = ProviderPipelines.makePipelines(
-            cookieReader: FilesystemCookieReader(),
-            edgeCookieReader: EdgeCookieReader()
-        )
+        let pipelines = ProviderPipelines.makePipelines()
         guard let codexPipeline = pipelines.first(where: { $0.providerKind == .codex }) else {
             Issue.record("codex pipeline not found")
             return
@@ -294,7 +289,7 @@ struct CodexPipelineStrategyOrderTests {
 
         // strategies 是 private(set) var，可以读。
         // 默认链路：auth → App WebView 会话（最后额度层）→ keychain；
-        // 浏览器 cookie / CLI log 仍需显式启用。
+        // 浏览器 cookie 读取路径已彻底移除（2026-07-08），CLI log 仍需显式启用。
         let strategyIds = codexPipeline.strategies.map { $0.id }
         #expect(strategyIds.count == 3, "expected 3 strategies, got \(strategyIds.count)")
         #expect(strategyIds[0].contains("codex-auth"))
@@ -307,10 +302,7 @@ struct CodexPipelineStrategyOrderTests {
     @Test("codexPipeline runMode 是 sequential（不是 parallel）—— 第一个成功就停")
     @MainActor
     func sequentialRunMode() {
-        let pipelines = ProviderPipelines.makePipelines(
-            cookieReader: FilesystemCookieReader(),
-            edgeCookieReader: EdgeCookieReader()
-        )
+        let pipelines = ProviderPipelines.makePipelines()
         guard let codexPipeline = pipelines.first(where: { $0.providerKind == .codex }) else {
             Issue.record("codex pipeline not found")
             return

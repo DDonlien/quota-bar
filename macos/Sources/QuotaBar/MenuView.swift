@@ -414,11 +414,16 @@ private struct PlanSection: View {
                         reason: reason,
                         onSave: { key in onSaveKey(snapshot.kind, key) }
                     )
-                } else if snapshot.kind.webAuthorizationURL != nil {
+                } else if snapshot.kind.webAuthorizationURL != nil && ProviderKind.webViewQuotaCapableKinds.contains(snapshot.kind) {
                     // 还不清楚这个 provider 到底有没有订阅（拿数据失败/凭证问题等，
                     // 不是服务端明确告知"未订阅"）：只给一个清晰的操作入口，不展示
                     // 原始技术性 reason 文本（例如内部拼接的多条错误信息），要么点开
                     // WebView 授权，要么等下一轮非授权流程再试。
+                    //
+                    // 同 `missingTierNeedsAuth`/`QuotaAuthPromptRow`：额外要求
+                    // `webViewQuotaCapableKinds`，因为 Antigravity/Z Code 的
+                    // WebView 登录窗口没有接入任何能解出额度的 dashboard 接口，
+                    // 在这里展示这个按钮同样是个兑现不了的承诺。
                     InlineActionButton(
                         title: Self.webAuthorizationTitle(for: snapshot.kind),
                         action: { WebAuthorizationController.shared.openAuthorization(for: snapshot.kind) }
@@ -929,11 +934,18 @@ private struct PlanHeader: View {
     /// TierName 缺失但额度已经拿到时的假设（见需求方规格）：TierName 都拿不到，
     /// 订阅费用、到期日、订阅周期理应也一并拿不到——用一个授权引导覆盖整个右侧，
     /// 不必再分别判断价格/日期。额度本身缺失时由额度栏自己的按钮请求授权，这里不重复。
+    ///
+    /// 除了 `webAuthorizationURL != nil`，还必须确认这个 provider 真的注册了能解出
+    /// 档位的 WebView 会话策略（`ProviderKind.webViewQuotaCapableKinds`）——不然
+    /// 对 Antigravity/Z Code 这种只用 WebView 登录窗口抓订阅到期日、完全没有档位
+    /// 来源的 provider，会展示一个登录了也没用的虚假授权引导（2026-07-08 用户实测
+    /// 反馈）。
     private var missingTierNeedsAuth: Bool {
         snapshot.availability == .available
             && tierName == nil
             && !snapshot.quotas.isEmpty
             && snapshot.kind.webAuthorizationURL != nil
+            && ProviderKind.webViewQuotaCapableKinds.contains(snapshot.kind)
     }
 
     /// 触发「显示到期日」的前置条件：必须有到期日、且处于已配置可用状态。
@@ -1098,9 +1110,16 @@ private struct PlanHeader: View {
 private struct QuotaAuthPromptRow: View {
     let kind: ProviderKind
 
+    /// 同 `PlanHeader.missingTierNeedsAuth`：只有真的注册了 WebView 会话额度策略的
+    /// provider 才展示可点击的授权引导，否则会承诺一个登录了也拿不到额度的假入口
+    /// （2026-07-08 用户实测 Antigravity 反馈）。
+    private var canOfferWebAuthorization: Bool {
+        kind.webAuthorizationURL != nil && ProviderKind.webViewQuotaCapableKinds.contains(kind)
+    }
+
     var body: some View {
         Group {
-            if kind.webAuthorizationURL != nil {
+            if canOfferWebAuthorization {
                 Text("打开 WebView 授权")
                     .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .medium))
                     .foregroundStyle(Palette.blue)

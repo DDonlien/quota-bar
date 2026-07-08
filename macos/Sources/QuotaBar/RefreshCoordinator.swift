@@ -34,7 +34,6 @@ final class RefreshCoordinator: ObservableObject {
     let installDetectors: [ProviderKind: InstallDetectorProvider]
     private let sourceIndexStore: ProviderSourceIndexStore
     private let snapshotCacheStore: ProviderSnapshotCacheStore
-    private let cookieReader: BrowserCookieReader
     private let harvesterTimeout: TimeInterval = 12
     var refreshInterval: TimeInterval
     var providerTimeout: TimeInterval
@@ -49,14 +48,12 @@ final class RefreshCoordinator: ObservableObject {
         refreshInterval: TimeInterval = 5 * 60,
         providerTimeout: TimeInterval = 10,
         sourceIndexStore: ProviderSourceIndexStore = .shared,
-        snapshotCacheStore: ProviderSnapshotCacheStore = .shared,
-        cookieReader: BrowserCookieReader = FilesystemCookieReader()
+        snapshotCacheStore: ProviderSnapshotCacheStore = .shared
     ) {
         self.providers = providers
         self.installDetectors = installDetectors
         self.sourceIndexStore = sourceIndexStore
         self.snapshotCacheStore = snapshotCacheStore
-        self.cookieReader = cookieReader
         self.refreshInterval = refreshInterval
         self.providerTimeout = providerTimeout
 
@@ -81,8 +78,48 @@ final class RefreshCoordinator: ObservableObject {
             .sink { [weak self] _ in
                 self?.applyProviderOrder()
                 self?.applyEnabledFilterChange()
+                self?.applyRefreshIntervalChange()
+                self?.applyProviderTimeoutChange()
             }
             .store(in: &cancellables)
+
+        // 用户关掉 App 内 WebView 授权窗口后立即刷新一次——此前这里完全没有触发
+        // 任何动作，用户登录完看到的还是登录前的失败状态，得等下一个自动刷新周期
+        // 或者自己想起来手动点「立即刷新」，体感上跟"WebView 登录没用"没区别
+        // （2026-07-08 用户实测反馈）。见 `WebAuthorizationController.windowWillClose`。
+        NotificationCenter.default.publisher(for: .webAuthorizationWindowDidClose)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.refreshNow()
+            }
+            .store(in: &cancellables)
+    }
+
+    /// 跟 `applyRefreshIntervalChange()` 同一类问题：`advanced.providerTimeoutSeconds`
+    /// 此前完全没有 UI、也没有被这里读取过，`providerTimeout` 一直固定用构造函数的
+    /// 默认值。现在偏好设置里有了「Provider 刷新超时」选项后，这里负责同步。
+    /// 不需要像刷新间隔那样重启循环——`providerTimeout` 只在每次发起新的
+    /// `fetchSnapshot(timeout:)` 调用时被读取，改完这里，下一轮刷新（不管是自动还是
+    /// 手动触发）自然就会用上新值，正在进行中的请求也不需要被打断。
+    private func applyProviderTimeoutChange() {
+        providerTimeout = PreferencesStore.shared.preferences.advanced.providerTimeoutSeconds
+    }
+
+    /// 偏好设置里的「刷新间隔」只会写入 `PreferencesStore.preferences.refreshIntervalSeconds`
+    /// 并 persist；`RefreshCoordinator.refreshInterval` 是构造时传入的独立字段，此前从未
+    /// 跟偏好同步过——不管是启动时（`StatusBarController` 用的是构造函数默认值，压根没读
+    /// 持久化的偏好）还是运行中改动（`.quotaPreferencesDidChange` 订阅者原来只处理 provider
+    /// 顺序/启停，没碰这个字段），导致 dropdown 里「自动刷新 N 分钟」的文案和真实的自动
+    /// 刷新节奏永远停在构造时的默认值，用户在偏好里怎么改都不会生效（2026-07-07 用户
+    /// 实测发现）。这里补上同步，并且如果间隔真的变了就重启自动刷新循环——不这样做的话，
+    /// 新间隔只有等当前这轮 `Task.sleep` 走完才会用上，缩短间隔时体感上还是"不生效"。
+    private func applyRefreshIntervalChange() {
+        let newInterval = PreferencesStore.shared.preferences.refreshIntervalSeconds
+        guard newInterval != refreshInterval else { return }
+        refreshInterval = newInterval
+        guard autoRefreshTask != nil else { return }
+        stop()
+        start()
     }
 
     deinit {
@@ -476,10 +513,7 @@ final class RefreshCoordinator: ObservableObject {
             return snapshot
         }
 
-        let resolver = SubscriptionExpiryResolver(
-            cookieReader: cookieReader,
-            timeout: harvesterTimeout
-        )
+        let resolver = SubscriptionExpiryResolver(timeout: harvesterTimeout)
         QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] start subscription expiry enrichment")
         guard let resolution = await resolver.resolve(for: snapshot) else {
             QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry unresolved")

@@ -626,6 +626,28 @@
 
 - [x] [0.10.0-BUG-A-011] `FetchPipeline.logAttempt` 新增 `onlyLayers` 参数：分层合并阶段（`runSequential` 的补层分支）调用时传入 `missing`（本轮实际缺失、值得重试的层），不再无条件按 `strategy.supportedLayers` 全量记录；这样一个只支持补档位场景下失败的来源，不会在「额度获取」步骤留下一条虚假的失败记录（额度早已被更早的来源满足）。首次尝试（`merged == nil` 时）不受影响，此时确实在为全部所需层探测 #P1 — `ProviderFetchStrategyTests.mergeBranchFailureOnlyLogsMissingLayer`
 
+### sub/main: 「刷新间隔」偏好从未真正生效
+
+> 用户反馈"我发现刷新间隔改了不会同步真的生效"。排查确认这是一个从未接通的架构性 bug：偏好设置的 Picker 只写入 `PreferencesStore.preferences.refreshIntervalSeconds` 并 persist，但 `RefreshCoordinator.refreshInterval`（自动刷新循环真正读取、dropdown「自动刷新 N 分钟」文案也读取的字段）是构造函数传入的独立值，从来没有跟这个偏好同步过——不仅运行中改动不生效，连**应用启动时**都不会读取上次保存的偏好（`StatusBarController` 构造 `RefreshCoordinator` 时没有传 `refreshInterval` 参数，永远吃构造函数自己的默认值 5 分钟）。也就是说这个偏好设置从实现以来就是摆设，不是这次改动引入的回归。
+
+- [x] [0.10.0-BUG-A-012] `StatusBarController.init` 默认构造 `RefreshCoordinator` 时显式传入 `refreshInterval: PreferencesStore.shared.preferences.refreshIntervalSeconds`，应用启动时会真正读取上次保存的偏好，不再永远固定 5 分钟 #P0
+- [x] [0.10.0-BUG-A-013] `RefreshCoordinator` 的 `.quotaPreferencesDidChange` 订阅新增 `applyRefreshIntervalChange()`：检测到 `PreferencesStore.preferences.refreshIntervalSeconds` 变化时同步更新 `self.refreshInterval`，并重启自动刷新循环（`stop()` + `start()`）让新间隔立刻生效，不需要等当前这轮 `Task.sleep` 走完、也不需要重启 app #P0 — 未新增自动化测试：`PreferencesStore.shared` 是硬编码单例、直接读写真实 `preferences.json`，没有像其余 store 那样支持注入临时目录，强行测试会触碰用户真实偏好文件，跟本次会话已确立的"不在测试里碰真实用户状态"原则冲突；已用 `swift build`/`swift test`（181 全过）验证不引入回归，逻辑本身很直接（读值、比较、必要时重启）
+
+### sub/main: 偏好设置摆设字段全面审计 + WebView 授权修复 + 移除浏览器 Cookie 文件读取
+
+> 用户要求排查代码仓库里是否还有类似"刷新间隔"那种看着接通实际没用的摆设设置。审计（含一个只读排查 subagent）发现：`providerOverrides.isForcedVisible`、`incidentMonitoringEnabled`、`advanced` 的 `currencyCode`/`showResetDates` 都是没有 UI、没有消费方的纯死字段；`advanced.providerTimeoutSeconds` 有意图但从未接通到 `RefreshCoordinator.providerTimeout`（同一类"两份独立副本"问题）；`browserSource`（Cookie 来源选择）唯一的运行时效果被一个没有 UI 的环境变量挡死，对真实用户完全不可达。用户确认后要求：接通 `providerTimeoutSeconds`、删除纯死字段，并追问 browserSource 对应的浏览器 Cookie 文件读取路径是否已经被 App WebView 授权会话取代——核实后确认两者功能等价，用户要求直接删除浏览器 Cookie 文件读取整条路径，只保留 WebView 会话。
+>
+> 在执行删除前，用户报告了一个更紧急的真实 bug："打开 WebView 后即使登录了 Claude/Antigravity，仍然提示需要打开 WebView 授权，拿不到到期日/档位/金额"。排查确认这不是数据丢失（`FetchPipeline.mergeLayers` 纯追加，不会清空已成功的层），而是三个真实缺口：(1) Antigravity 的 pipeline 里根本没有注册任何 WebView 会话额度/档位策略——`missingTierNeedsAuth`/`QuotaAuthPromptRow` 只看 `webAuthorizationURL != nil` 就展示授权引导，对 Antigravity/Z Code 这种登录了也拿不到档位的 provider 是个兑现不了的承诺；(2) `WebAuthorizationController` 关闭授权窗口后不会触发任何刷新，用户登录完看到的还是登录前的失败状态；(3) 没有 `WKUIDelegate` 处理登录页常见的 `window.open()` 弹窗式 SSO，可能导致某些登录流程卡在半途。
+
+- [x] [0.10.0-BUG-A-014] `ProviderKind.webViewQuotaCapableKinds` 新增静态集合（`WebAuthorizationController.swift`），显式声明哪些 provider 真的注册了能解出额度/档位的 WebView 会话策略（codex/claude/minimax/kimi）；`MenuView.PlanHeader.missingTierNeedsAuth`、`QuotaAuthPromptRow`、`.needsConfiguration` 分支三处判断都改为同时检查这个集合，不再对 Antigravity/Z Code 展示一个登录了也没用的"打开 WebView 授权"引导 #P0
+- [x] [0.10.0-BUG-A-015] `WebAuthorizationController` 关闭主授权窗口时 post 新通知 `.webAuthorizationWindowDidClose`；`RefreshCoordinator` 订阅并调用 `refreshNow()`，登录完关掉窗口立即触发一次刷新，不用等 5 分钟自动周期或自己想起来手动刷新 #P0
+- [x] [0.10.0-ARCH-K-000] `WebAuthorizationController` 新增 `WKUIDelegate` 实现（`createWebViewWith`/`webViewDidClose`），承接登录页用 `window.open()` 发起的 SSO 弹窗（尤其 Google 账号登录常见）；此前没有这个 delegate，WebKit 会静默丢弃这类弹窗请求，脚本以为窗口打开了，实际登录流程可能卡在半途 #P1
+- [x] [0.10.0-ARCH-K-001] 彻底移除浏览器 Cookie 文件读取路径：删除 `FilesystemCookieReader`（Safari/Chrome/Firefox 真实文件读取，基于 SweetCookieKit）、`EdgeCookieReader.swift`（SQLite 直读）、`BrowserSourcePreference`/`browserSource` 偏好及其 UI、`browserCookieStrategiesEnabled`/`QUOTABAR_ENABLE_BROWSER_COOKIE` 环境变量开关、`AppDelegate.applyBrowserCookieKeychainPolicy()`、`Strategies.swift` 四个 pipeline 里的 `-cookie`/`-edge` 策略注册；`SubscriptionExpiryResolver`/`WKWebViewHeadlessLoader` 的浏览器 Cookie 兜底分支一并移除，只保留 App WebView 会话（`AppWebViewSessionCookieReader`）单一路径；`Package.swift` 移除 `SweetCookieKit` 依赖。核实过这条路径此前被环境变量挡死、对真实用户不可达，且和 App WebView 会话功能完全重叠，删除无回归风险 #P1 — 更新 `CodexAuthProviderInspectorThrowTests.swift`/`SubscriptionExpirySourcesTests.swift` 的调用签名，删除已整体过时的 `WKWebViewHeadlessLoaderTests.swift`（3 个测试全部针对被删除的浏览器 Cookie 入口路径）
+- [x] [0.10.0-CLEAN-A-001] 删除纯死代码：`ProviderOverride.isForcedVisible`（无 UI、无消费方）、`incidentMonitoringEnabled`（同上）、`AdvancedPreferences.currencyCode`/`showResetDates`（同上）及各自的 getter/setter #P2
+- [x] [0.10.0-BUG-A-016] 接通 `advanced.providerTimeoutSeconds`：新增 `ProviderTimeoutOption` 离散选项（10/15/20/30 秒，跟 `RefreshIntervalOption` 同一设计）+ `PreferencesStore.setProviderTimeout`/`currentProviderTimeoutOption`；`GeneralSettingsView` 新增「Provider 刷新超时」Picker；`StatusBarController`/`RefreshCoordinator` 启动时读取、运行中通过 `applyProviderTimeoutChange()` 实时同步——此前这个字段有意图（默认值 30，`RefreshCoordinator.providerTimeout` 默认值却是不同步的 10）但从未接通，跟 `refreshIntervalSeconds` 是同一类 bug #P1
+
+
+
 
 ## Phase - v0.11.0 - 真实自动更新（ad-hoc 预开发版）+ semver 发版
 

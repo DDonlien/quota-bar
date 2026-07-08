@@ -1,5 +1,4 @@
 import AppKit
-import SweetCookieKit
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -8,16 +7,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         Self.installMainMenu()
-        Self.applyBrowserCookieKeychainPolicy()
-        NotificationCenter.default.addObserver(
-            forName: .quotaPreferencesDidChange,
-            object: nil,
-            queue: .main
-        ) { _ in
-            MainActor.assumeIsolated {
-                Self.applyBrowserCookieKeychainPolicy()
-            }
-        }
         statusBarController = StatusBarController()
         notifyIfLastUpdateFailed()
     }
@@ -64,18 +53,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mainMenu.addItem(editMenuItem)
 
         NSApp.mainMenu = mainMenu
-    }
-
-    /// 0.9.0-SEC-A-000：默认刷新链路不得触发浏览器密码 / Keychain 弹窗。
-    ///
-    /// Chromium 系浏览器（Chrome / Edge / Brave...）的 cookie 解密需要读
-    /// Keychain 里的 "Chrome Safe Storage"，macOS 会弹登录密码框。
-    /// 默认（`browserSource == .auto` / `.safari` / `.firefox`）直接禁用
-    /// SweetCookieKit 的 Keychain 访问：Safari / Firefox 的 cookie 是纯文件，
-    /// 有 Full Disk Access 就能静默读取；Chromium 分支会以 keychainDenied
-    /// 失败而不是弹窗。只有用户在偏好设置里显式选择 Chrome 才放开。
-    static func applyBrowserCookieKeychainPolicy() {
-        let source = PreferencesStore.shared.preferences.browserSource
-        BrowserCookieKeychainAccessGate.isDisabled = (source != .chrome)
     }
 }

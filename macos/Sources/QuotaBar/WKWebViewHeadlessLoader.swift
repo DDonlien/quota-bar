@@ -5,16 +5,19 @@ import WebKit
 
 /// macOS native WKWebView 包装，用于 headless 抓取订阅管理页。
 ///
-/// 工作流（v0.6.0 起订阅到期日真实数据源）：
-/// 1. 通过 `BrowserCookieReader` 读取目标域 cookies；
-/// 2. 注入到 `WKHTTPCookieStore`（非持久 data store，**不污染**用户浏览器 cookie）；
-/// 3. `WKWebView.load` 加载 URL；
-/// 4. 等 `WKNavigationDelegate.didFinish` 回调；
-/// 5. `evaluateJavaScript("document.documentElement.outerHTML")` 拿渲染后的 DOM 字符串。
+/// 工作流：
+/// 1. 使用 `WKWebsiteDataStore.default()` 里 App 自有 WebView 会话的登录态
+///    （由 `WebAuthorizationController` 的一次性 App 内 WebView 登录写入）；
+/// 2. `WKWebView.load` 加载 URL；
+/// 3. 等 `WKNavigationDelegate.didFinish` 回调；
+/// 4. `evaluateJavaScript("document.documentElement.outerHTML")` 拿渲染后的 DOM 字符串。
+///
+/// 2026-07-08 移除了读取真实浏览器 Cookie 文件、注入到临时 data store 的旧路径
+/// （见 `BrowserCookieReader.swift` 顶部说明）——只保留 App 自有会话这一种模式。
 ///
 /// **线程约束**：WKWebView 必须在 main thread 创建与交互；本类用 `@MainActor`
-/// 强制。调用方（`BrowserCookieProvider` / `FetchPipeline` strategy）也在
-/// main actor 上，所以 `await` 是 no-op actor 切换。
+/// 强制。调用方（`SubscriptionExpiryResolver`）也在 main actor 上，所以 `await`
+/// 是 no-op actor 切换。
 ///
 /// **超时**：独立 Task 计时，到点调 `webView.stopLoading()` 并抛
 /// `QuotaFetchError.transient`。
@@ -25,76 +28,12 @@ import WebKit
 ///   在 `harvester.extract` 之前可以 sleep 一下（实际看效果再说）。
 @MainActor
 final class WKWebViewHeadlessLoader {
-    private let cookieReader: BrowserCookieReader
     /// didFinish 后再等这么久才提取 outerHTML：hash 路由 SPA（chatgpt.com /
     /// claude.ai 等）在 didFinish 时目标面板往往还没被 JS 渲染出来。
     private let settleDelay: TimeInterval
 
-    init(cookieReader: BrowserCookieReader, settleDelay: TimeInterval = 2.0) {
-        self.cookieReader = cookieReader
+    init(settleDelay: TimeInterval = 2.0) {
         self.settleDelay = settleDelay
-    }
-
-    /// 加载订阅管理页并返回 `document.documentElement.outerHTML`。
-    ///
-    /// - Parameters:
-    ///   - url: 目标订阅页 URL。
-    ///   - kind: 用来决定从哪些域读 cookie（见 `ProviderKind.dashboardCookieDomains`）。
-    ///   - timeout: 整体超时（含 cookie 读取 + 页面加载 + JS 提取）。
-    ///   - identifier: 日志前缀，建议填 harvester 的 `identifier`。
-    /// - Returns: 渲染后的 outerHTML。
-    /// - Throws: `QuotaFetchError.missingCredentials` / `.permissionRequired` /
-    ///           `.transient`。
-    func load(
-        url: URL,
-        kind: ProviderKind,
-        timeout: TimeInterval,
-        identifier: String
-    ) async throws -> String {
-        try await load(
-            url: url,
-            cookieDomains: kind.dashboardCookieDomains,
-            timeout: timeout,
-            identifier: identifier
-        )
-    }
-
-    /// 加载订阅管理页并返回 `document.documentElement.outerHTML`。
-    ///
-    /// 与 `load(url:kind:timeout:identifier:)` 相同，但 cookie 域由 caller 显式提供。
-    /// 订阅过期日 source 可能和额度 dashboard 使用不同域名，例如 MiniMax 额度来自
-    /// `minimax.chat`，订阅页在 `platform.minimaxi.com`。
-    func load(
-        url: URL,
-        cookieDomains: [String],
-        timeout: TimeInterval,
-        identifier: String
-    ) async throws -> String {
-        let cookies: [HTTPCookie]
-        do {
-            cookies = try await cookieReader.readCookies(matching: cookieDomains)
-        } catch let error as FilesystemCookieReader.ReaderError {
-            switch error {
-            case .privacyAccessDenied:
-                throw QuotaFetchError.permissionRequired(detail: "读取浏览器 Cookie 需要 Full Disk Access")
-            case .cookieStoreUnavailable:
-                throw QuotaFetchError.missingCredentials(detail: "未发现已登录的浏览器")
-            case .loadFailed(_, let detail):
-                throw QuotaFetchError.transient(detail: detail)
-            }
-        }
-        guard !cookies.isEmpty else {
-            throw QuotaFetchError.missingCredentials(detail: "浏览器未登录")
-        }
-
-        NSLog("QuotaBar: [\(identifier)] loading \(url.absoluteString) with \(cookies.count) cookies")
-
-        return try await loadPageSource(
-            url: url,
-            cookies: cookies,
-            timeout: timeout,
-            identifier: identifier
-        )
     }
 
     /// App 自有会话模式：使用 `WKWebsiteDataStore.default()` 里的登录态
@@ -123,32 +62,19 @@ final class WKWebViewHeadlessLoader {
         NSLog("QuotaBar: [\(identifier)] loading \(url.absoluteString) with app session cookies")
         return try await loadPageSource(
             url: url,
-            cookies: nil,
             timeout: timeout,
             identifier: identifier
         )
     }
 
-    /// - Parameter cookies: 非 nil 时注入到一次性非持久 data store（浏览器 Cookie 模式）；
-    ///   nil 时直接使用 `WKWebsiteDataStore.default()`（App 自有会话模式）。
     private func loadPageSource(
         url: URL,
-        cookies: [HTTPCookie]?,
         timeout: TimeInterval,
         identifier: String
     ) async throws -> String {
         let config = WKWebViewConfiguration()
         config.defaultWebpagePreferences.allowsContentJavaScript = true
-
-        if let cookies {
-            let dataStore = WKWebsiteDataStore.nonPersistent()
-            config.websiteDataStore = dataStore
-            for cookie in cookies {
-                await dataStore.httpCookieStore.setCookie(cookie)
-            }
-        } else {
-            config.websiteDataStore = .default()
-        }
+        config.websiteDataStore = .default()
 
         let webView = WKWebView(frame: .zero, configuration: config)
         let delegate = LoaderDelegate(settleDelay: settleDelay)

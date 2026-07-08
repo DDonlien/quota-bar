@@ -38,17 +38,11 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
     /// 自动刷新间隔（秒）。默认 5 分钟。
     var refreshIntervalSeconds: TimeInterval
 
-    /// 浏览器 Cookie 来源偏好。
-    var browserSource: BrowserSourcePreference
-
     /// 界面语言偏好。
     var language: LanguagePreference
 
     /// 菜单栏图标展示模式。
     var iconMode: IconModePreference
-
-    /// 是否启用 Provider 服务状态监控（incident 检测）。
-    var incidentMonitoringEnabled: Bool
 
     /// 高级选项。
     var advanced: AdvancedPreferences
@@ -81,10 +75,8 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         quotaItemOrder: [String: [String]] = [:],
         subscriptionGroupOrder: [String: [String]] = [:],
         refreshIntervalSeconds: TimeInterval = 5 * 60,
-        browserSource: BrowserSourcePreference = .auto,
         language: LanguagePreference = .chinese,
         iconMode: IconModePreference = .combined,
-        incidentMonitoringEnabled: Bool = false,
         advanced: AdvancedPreferences = AdvancedPreferences(),
         launchAtLogin: Bool = false,
         activationEmail: String = "",
@@ -98,10 +90,8 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         self.quotaItemOrder = quotaItemOrder
         self.subscriptionGroupOrder = subscriptionGroupOrder
         self.refreshIntervalSeconds = refreshIntervalSeconds
-        self.browserSource = browserSource
         self.language = language
         self.iconMode = iconMode
-        self.incidentMonitoringEnabled = incidentMonitoringEnabled
         self.advanced = advanced
         self.launchAtLogin = launchAtLogin
         self.activationEmail = activationEmail
@@ -117,10 +107,8 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         case quotaItemOrder
         case subscriptionGroupOrder
         case refreshIntervalSeconds
-        case browserSource
         case language
         case iconMode
-        case incidentMonitoringEnabled
         case advanced
         case launchAtLogin
         case activationEmail
@@ -138,10 +126,8 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
             quotaItemOrder: try container.decodeIfPresent([String: [String]].self, forKey: .quotaItemOrder) ?? [:],
             subscriptionGroupOrder: try container.decodeIfPresent([String: [String]].self, forKey: .subscriptionGroupOrder) ?? [:],
             refreshIntervalSeconds: try container.decodeIfPresent(TimeInterval.self, forKey: .refreshIntervalSeconds) ?? 5 * 60,
-            browserSource: try container.decodeIfPresent(BrowserSourcePreference.self, forKey: .browserSource) ?? .auto,
             language: try container.decodeIfPresent(LanguagePreference.self, forKey: .language) ?? .chinese,
             iconMode: try container.decodeIfPresent(IconModePreference.self, forKey: .iconMode) ?? .combined,
-            incidentMonitoringEnabled: try container.decodeIfPresent(Bool.self, forKey: .incidentMonitoringEnabled) ?? false,
             advanced: try container.decodeIfPresent(AdvancedPreferences.self, forKey: .advanced) ?? AdvancedPreferences(),
             launchAtLogin: try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false,
             activationEmail: try container.decodeIfPresent(String.self, forKey: .activationEmail) ?? "",
@@ -171,36 +157,14 @@ enum LanguagePreference: String, Codable, CaseIterable, Sendable {
 /// 用户对单个 Provider 的手动覆盖。
 ///
 /// - `isEnabled`：是否参与刷新与展示；关闭后即使本机已安装也不显示。
-/// - `isForcedVisible`：是否强制显示该 Provider（即使未探测到）；
-///   当前阶段仅做数据持久化，后续与「手动添加 Provider」流程对接。
 struct ProviderOverride: Codable, Equatable, Identifiable, Sendable {
     var id: ProviderKind { kind }
     let kind: ProviderKind
     var isEnabled: Bool
-    var isForcedVisible: Bool
 
-    init(kind: ProviderKind, isEnabled: Bool = true, isForcedVisible: Bool = false) {
+    init(kind: ProviderKind, isEnabled: Bool = true) {
         self.kind = kind
         self.isEnabled = isEnabled
-        self.isForcedVisible = isForcedVisible
-    }
-}
-
-// MARK: - 浏览器来源
-
-enum BrowserSourcePreference: String, Codable, CaseIterable, Sendable {
-    case auto = "auto"
-    case safari = "safari"
-    case chrome = "chrome"
-    case firefox = "firefox"
-
-    var displayName: String {
-        switch self {
-        case .auto: return "自动（全部）"
-        case .safari: return "Safari"
-        case .chrome: return "Chrome"
-        case .firefox: return "Firefox"
-        }
     }
 }
 
@@ -256,23 +220,45 @@ enum RefreshIntervalOption: Int, CaseIterable, Identifiable, Codable, Sendable {
 // MARK: - 高级选项
 
 struct AdvancedPreferences: Codable, Equatable, Sendable {
-    /// 单次 provider 刷新超时（秒）。
+    /// 单次 provider 刷新超时（秒）。用于 `RefreshCoordinator.providerTimeout`——
+    /// 2026-07-08 之前这个字段虽然存在，但没有任何 UI 暴露、也没有被
+    /// `RefreshCoordinator` 读取过，后者一直用自己构造函数的硬编码默认值（10 秒），
+    /// 两边完全不同步（跟当时的 `refreshIntervalSeconds` 是同一类"看着像接通了、
+    /// 实际没有"的 bug）。现在正式接通：见 `GeneralSettingsView` 的高级设置区
+    /// 和 `RefreshCoordinator.applyProviderTimeoutChange()`。
     var providerTimeoutSeconds: TimeInterval
 
-    /// 固定货币代码；`nil` 表示按系统 Locale 自动选择。
-    var currencyCode: String?
-
-    /// 是否在额度行展示重置日期。
-    var showResetDates: Bool
-
-    init(
-        providerTimeoutSeconds: TimeInterval = 30,
-        currencyCode: String? = nil,
-        showResetDates: Bool = true
-    ) {
+    init(providerTimeoutSeconds: TimeInterval = 10) {
         self.providerTimeoutSeconds = providerTimeoutSeconds
-        self.currencyCode = currencyCode
-        self.showResetDates = showResetDates
+    }
+}
+
+/// 偏好窗口里「Provider 刷新超时」下拉框的固定选项，跟 `RefreshIntervalOption`
+/// 同一套设计（离散下拉而非连续 slider）。Antigravity 的 `antigravity-cli-session`
+/// 策略内部预留的有效时间大约是 `timeout - 1` 秒（2 秒 settle + 轮询），10 秒的
+/// 默认值对它来说余量很紧，系统稍有波动就可能超时——这正是新增这个可调选项的
+/// 直接动机。
+enum ProviderTimeoutOption: Int, CaseIterable, Identifiable, Codable, Sendable {
+    case tenSeconds = 10
+    case fifteenSeconds = 15
+    case twentySeconds = 20
+    case thirtySeconds = 30
+
+    var id: Int { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .tenSeconds: return "10 秒"
+        case .fifteenSeconds: return "15 秒"
+        case .twentySeconds: return "20 秒"
+        case .thirtySeconds: return "30 秒"
+        }
+    }
+
+    var seconds: TimeInterval { TimeInterval(rawValue) }
+
+    static func nearest(to seconds: TimeInterval) -> ProviderTimeoutOption {
+        allCases.min(by: { abs($0.seconds - seconds) < abs($1.seconds - seconds) }) ?? .tenSeconds
     }
 }
 
@@ -323,11 +309,6 @@ final class PreferencesStore {
         override(for: kind)?.isEnabled ?? true
     }
 
-    /// 该 Provider 是否被强制显示（无论是否探测到）。
-    func isForcedVisible(kind: ProviderKind) -> Bool {
-        override(for: kind)?.isForcedVisible ?? false
-    }
-
     /// 获取或创建某个 Provider 的覆盖配置。
     func override(for kind: ProviderKind) -> ProviderOverride? {
         preferences.providerOverrides.first { $0.kind == kind }
@@ -337,14 +318,6 @@ final class PreferencesStore {
         ensureOverride(for: kind)
         if let index = preferences.providerOverrides.firstIndex(where: { $0.kind == kind }) {
             preferences.providerOverrides[index].isEnabled = enabled
-            _ = try? persist()
-        }
-    }
-
-    func setForcedVisible(_ visible: Bool, for kind: ProviderKind) {
-        ensureOverride(for: kind)
-        if let index = preferences.providerOverrides.firstIndex(where: { $0.kind == kind }) {
-            preferences.providerOverrides[index].isForcedVisible = visible
             _ = try? persist()
         }
     }
@@ -366,11 +339,6 @@ final class PreferencesStore {
         RefreshIntervalOption.nearest(to: preferences.refreshIntervalSeconds)
     }
 
-    func setBrowserSource(_ source: BrowserSourcePreference) {
-        preferences.browserSource = source
-        _ = try? persist()
-    }
-
     func setLanguage(_ language: LanguagePreference) {
         preferences.language = language
         _ = try? persist()
@@ -381,11 +349,6 @@ final class PreferencesStore {
         _ = try? persist()
     }
 
-    func setIncidentMonitoringEnabled(_ enabled: Bool) {
-        preferences.incidentMonitoringEnabled = enabled
-        _ = try? persist()
-    }
-
     /// 切换 Claude Code statusLine hook；实际的 install/uninstall 副作用由调用方
     /// （UI 层）在切换后调用 `ClaudeStatusLineHookInstaller` 执行，这里只持久化开关状态。
     func setClaudeStatusLineHookEnabled(_ enabled: Bool) {
@@ -393,9 +356,17 @@ final class PreferencesStore {
         _ = try? persist()
     }
 
-    func setAdvanced(_ advanced: AdvancedPreferences) {
-        preferences.advanced = advanced
+    func setProviderTimeout(_ seconds: TimeInterval) {
+        preferences.advanced.providerTimeoutSeconds = max(5, min(120, seconds))
         _ = try? persist()
+    }
+
+    func setProviderTimeout(_ option: ProviderTimeoutOption) {
+        setProviderTimeout(option.seconds)
+    }
+
+    var currentProviderTimeoutOption: ProviderTimeoutOption {
+        ProviderTimeoutOption.nearest(to: preferences.advanced.providerTimeoutSeconds)
     }
 
     /// 设置是否在登录时启动。落地逻辑由调用方负责（`SMAppService`），本方法只持久化。

@@ -59,10 +59,7 @@ struct SubscriptionExpirySourcesTests {
             subscriptionExpiresAtConfidence: .high,
             fetchedAt: Date()
         )
-        let resolver = SubscriptionExpiryResolver(
-            cookieReader: InMemoryCookieReader(cookies: []),
-            timeout: 0.1
-        )
+        let resolver = SubscriptionExpiryResolver(timeout: 0.1)
         let result = await resolver.resolve(for: snapshot)
         #expect(result?.expiresAt == expiresAt)
         #expect(result?.source.kind == .api)
@@ -80,10 +77,7 @@ struct SubscriptionExpirySourcesTests {
             monthlyPrice: nil,
             fetchedAt: Date()
         )
-        let resolver = SubscriptionExpiryResolver(
-            cookieReader: InMemoryCookieReader(cookies: []),
-            timeout: 0.1
-        )
+        let resolver = SubscriptionExpiryResolver(timeout: 0.1)
         let result = await resolver.resolve(for: snapshot)
         #expect(result == nil)
         if case .available = snapshot.availability {

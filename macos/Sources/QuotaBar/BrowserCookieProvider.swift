@@ -1,16 +1,15 @@
 import Foundation
 import SwiftUI
-import SweetCookieKit
 
 /// 浏览器 Cookie 数据源。
 ///
 /// 拉取流程：
-/// 1. 通过 `BrowserCookieReader` 读取匹配域的 Cookie（SweetCookieKit，跨浏览器支持）；
+/// 1. 通过 `BrowserCookieReader` 读取匹配域的 Cookie（现在只有
+///    `AppWebViewSessionCookieReader` 一种实现，见该类型顶部说明）；
 /// 2. 用这些 Cookie 调服务商 Dashboard 接口（`DashboardEndpoints` 注册表）；
 /// 3. 解析响应为 `ProviderSnapshot`。
 ///
 /// **降级策略**：
-/// - SweetCookieKit 抛 `accessDenied` → 转 `transient`，由聚合器在 UI 显示 FDA 引导；
 /// - 读不到 Cookie → `missingCredentials`（需要登录）；
 /// - Cookie 在但请求失败 → `transient`（保留上次数据）；
 /// - 解析失败或 endpoint 未对接 → fallback 占位（仍然标记为已登录）。
@@ -80,31 +79,20 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
         // —— Inspector 仍由 CodexAuthProvider 调一次（"权威"端），此处 BrowserCookie 信任 API。
 
         let domains = kind.dashboardCookieDomains
-        let cookies: [HTTPCookie]
-        do {
-            // 整个 cookie 读取包 4s 硬超时，避免某些浏览器的 cookie 文件锁住 SweetCookieKit
-            cookies = try await withThrowingTaskGroup(of: [HTTPCookie].self) { group in
-                let hardTimeout: TimeInterval = min(4, timeout)
-                group.addTask { [cookieReader, domains] in
-                    try await cookieReader.readCookies(matching: domains)
-                }
-                group.addTask {
-                    try await Task.sleep(nanoseconds: UInt64(hardTimeout * 1_000_000_000))
-                    throw QuotaFetchError.transient(detail: "浏览器 Cookie 读取超时（\(Int(hardTimeout))s）")
-                }
-                guard let first = try await group.next() else { return [] }
-                group.cancelAll()
-                return first
+        // 整个 cookie 读取包一个硬超时（`AppWebViewSessionCookieReader` 本身不会
+        // hang，但保留这层保护更稳妥）。
+        let cookies: [HTTPCookie] = try await withThrowingTaskGroup(of: [HTTPCookie].self) { group in
+            let hardTimeout: TimeInterval = min(4, timeout)
+            group.addTask { [cookieReader, domains] in
+                try await cookieReader.readCookies(matching: domains)
             }
-        } catch let error as FilesystemCookieReader.ReaderError {
-            switch error {
-            case .privacyAccessDenied:
-                throw QuotaFetchError.permissionRequired(detail: "读取浏览器 Cookie 需要 Full Disk Access")
-            case .cookieStoreUnavailable:
-                throw QuotaFetchError.sourceUnavailable(detail: "未发现已登录的浏览器")
-            case .loadFailed(_, let detail):
-                throw QuotaFetchError.transient(detail: detail)
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(hardTimeout * 1_000_000_000))
+                throw QuotaFetchError.transient(detail: "会话 Cookie 读取超时（\(Int(hardTimeout))s）")
             }
+            guard let first = try await group.next() else { return [] }
+            group.cancelAll()
+            return first
         }
 
         guard !cookies.isEmpty else {

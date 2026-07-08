@@ -15,7 +15,6 @@ struct GeneralSettingsView: View {
         SettingsPage(.general) {
             VStack(alignment: .leading, spacing: 20) {
                 refreshSection
-                browserSection
                 languageSection
                 iconModeSection
                 launchSection
@@ -44,21 +43,15 @@ struct GeneralSettingsView: View {
                         .controlSize(.small)
                     }
                 )
-            }
-        }
-    }
-
-    private var browserSection: some View {
-        SettingsSection("数据来源") {
-            SettingsGroup {
+                SettingsDivider()
                 SettingsRow(
-                    label: { Text("Cookie 来源") },
-                    subtitle: "选择从哪个浏览器读取 Cookie 获取 dashboard 数据；自动模式按导入顺序尝试所有已登录浏览器。",
+                    label: { Text("Provider 刷新超时") },
+                    subtitle: "单个 Provider 单次拉取额度的最长等待时间；部分方案（如 Antigravity 的临时 CLI 会话）本身较慢，超时太短容易在系统稍有波动时被判定为失败。",
                     separatesSubtitle: true,
                     trailing: {
-                        Picker("", selection: bindingBrowserSource) {
-                            ForEach(BrowserSourcePreference.allCases, id: \.self) { source in
-                                Text(source.displayName).tag(source)
+                        Picker("", selection: bindingProviderTimeout) {
+                            ForEach(ProviderTimeoutOption.allCases) { option in
+                                Text(option.displayName).tag(option)
                             }
                         }
                         .labelsHidden()
@@ -168,10 +161,10 @@ struct GeneralSettingsView: View {
         )
     }
 
-    private var bindingBrowserSource: Binding<BrowserSourcePreference> {
+    private var bindingProviderTimeout: Binding<ProviderTimeoutOption> {
         Binding(
-            get: { store.preferences.browserSource },
-            set: { store.setBrowserSource($0) }
+            get: { store.currentProviderTimeoutOption },
+            set: { store.setProviderTimeout($0) }
         )
     }
 

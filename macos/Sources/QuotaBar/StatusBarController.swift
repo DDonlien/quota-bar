@@ -18,7 +18,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     init(coordinator: RefreshCoordinator = RefreshCoordinator(
         providers: ProviderFactory.createProviders(),
-        installDetectors: ProviderFactory.createInstallDetectors()
+        installDetectors: ProviderFactory.createInstallDetectors(),
+        // 此前这里没传，`RefreshCoordinator` 用自己构造函数的默认值 5 分钟——不管用户在
+        // 偏好设置里存了什么，每次启动都会被无视。这里显式传入持久化的偏好值。
+        refreshInterval: PreferencesStore.shared.preferences.refreshIntervalSeconds,
+        // 同上：`advanced.providerTimeoutSeconds` 之前也没人读过，`providerTimeout` 一直
+        // 固定用 `RefreshCoordinator` 自己的默认值（10 秒）。
+        providerTimeout: PreferencesStore.shared.preferences.advanced.providerTimeoutSeconds
     )) {
         self.coordinator = coordinator
         // 不使用 variableLength，避免 macOS 26 新菜单栏 widget 系统把 item 放到虚拟屏外；
