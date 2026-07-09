@@ -26,7 +26,7 @@ const en: Dict = {
   // 英文版强制单行（mobile 除外）：与中文"提前掌握额度上限"语义对等
   "hero.subtitle": "Stay ahead of every limit.",
   "hero.cta.download": "Download for Free",
-  "hero.cta.docs": "View Documentation",
+  "hero.cta.docs": "View Pricing",
 
   // ProductPreview (3 个 tab：总览 / 详情 / 调整)
   // 英文用单字短词 — 不换行 + 直接传达动作
@@ -61,18 +61,18 @@ const en: Dict = {
   "services.heading": "Supported Services",
   "services.note": "Available quota data varies across app, web, and CLI.",
 
-  // Pricing
-  "pricing.heading": "Ready to upgrade your workflow?",
-  "pricing.subheading": "One-time purchase. No subscriptions.",
+  // Pricing — Beta 限时免费：现在下载即可在正式版发布时自动获得 Pro 授权
+  "pricing.badge": "Limited Time · Beta Exclusive",
+  "pricing.heading": "Download now, get Pro free for life",
+  "pricing.subheading": "We're still in Beta — every Beta downloader gets a full Pro license automatically at launch.",
   "pricing.plan.name": "Quota Bar Pro",
-  "pricing.plan.note": "Lifetime license",
+  "pricing.plan.note": "Free during Beta · $14.99 at launch",
   "pricing.bullet.unlimited": "Unlimited Services Tracking",
-  "pricing.bullet.alerts": "Advanced Custom Alerts",
   "pricing.bullet.support": "Priority Support",
   "pricing.bullet.updates": "Unlimited sessions & future updates",
   "pricing.bullet.swift": "Native Swift Performance",
-  "pricing.cta": "Get Quota Bar Pro",
-  "pricing.support.hint": "Payment issues? hi@quotabar.app",
+  "pricing.cta": "Get Pro Free",
+  "pricing.support.hint": "Payment issues? taobe@freshli4.com",
 
   // FAQ
   // q1 「What services are supported?」已删除 — 与中段 SupportedServices section 重复
@@ -86,6 +86,40 @@ const en: Dict = {
   "faq.q4": "Is this a subscription?",
   "faq.a4":
     "No! Quota Bar is a one-time purchase. You get lifetime access to the current features and all future minor updates.",
+
+  // Changelog page (in-site, not linking out to GitHub)
+  "changelog.heading": "Changelog",
+  "changelog.subheading": "What's new in Quota Bar, straight from the build log.",
+  "changelog.back": "← Back to home",
+  "changelog.v10.version": "v0.10.0",
+  "changelog.v10.date": "Jul 8, 2026",
+  "changelog.v10.title": "Steadier quota refresh",
+  "changelog.v10.bullet1": "Added quota detection support for opencode",
+  "changelog.v10.bullet2": "Fixed refresh interval and timeout settings not taking effect",
+  "changelog.v10.bullet3": "Versioning switched fully to Semantic Versioning",
+  "changelog.v9.version": "v0.9.0",
+  "changelog.v9.date": "Jul 7, 2026",
+  "changelog.v9.title": "Auto-update & diagnostics",
+  "changelog.v9.bullet1": "The app can now auto-update without an Apple Developer certificate",
+  "changelog.v9.bullet2": "Added per-provider diagnostic logs so auth failures are easy to spot",
+  "changelog.v9.bullet3": "Fixed quota fetching for Kimi, Codex, MiniMax, and Claude",
+  "changelog.v9.bullet4": "Redesigned the dropdown's display rules to cut visual noise",
+  "changelog.v5.version": "v0.5.0",
+  "changelog.v5.date": "Jul 3, 2026",
+  "changelog.v5.title": "More subscription services",
+  "changelog.v5.bullet1": "Merged in quota tracking for several more subscription-based services",
+  "changelog.v5.bullet2": "Unified fetch pipeline makes adding new services faster",
+  "changelog.v2.version": "v0.2.0",
+  "changelog.v2.date": "Jul 1, 2026",
+  "changelog.v2.title": "Preferences arrive",
+  "changelog.v2.bullet1": "Brand-new Preferences window for display and refresh behavior",
+  "changelog.v2.bullet2": "Added GLM as a supported service",
+  "changelog.v2.bullet3": "Added subscription-expiry reminders",
+  "changelog.v1.version": "v0.1.0",
+  "changelog.v1.date": "Jun 29, 2026",
+  "changelog.v1.title": "First beta",
+  "changelog.v1.bullet1": "Menu bar shows live quota bars for Codex, MiniMax, and Kimi",
+  "changelog.v1.bullet2": "One-click refresh and a Preferences entry point",
 
   // Footer
   "footer.tagline": "Visualize your API Quotas in your Menu Bar",
@@ -110,7 +144,7 @@ const zh: Dict = {
   "hero.title.tail": "配额",
   "hero.subtitle": "提前掌握额度上限，不打断你的工作流。",
   "hero.cta.download": "免费下载",
-  "hero.cta.docs": "查看文档",
+  "hero.cta.docs": "查看定价",
 
   // ProductPreview (3 个 tab：总览 / 详情 / 调整)
   "product.tab.monitor": "总览",
@@ -144,18 +178,18 @@ const zh: Dict = {
   "services.heading": "支持哪些服务",
   "services.note": "使用 app、web 和 cli 时，能获取到的额度信息会有所不同。",
 
-  // Pricing
-  "pricing.heading": "准备升级你的工作流？",
-  "pricing.subheading": "一次性买断，无任何订阅。",
+  // Pricing — Beta 限时免费：现在下载，正式版发布时自动获得 Pro 授权
+  "pricing.badge": "限时免费 · Beta 专享",
+  "pricing.heading": "现在下载，正式版 Pro 永久免费送",
+  "pricing.subheading": "产品仍处于 Beta 阶段，所有当前下载用户都会在正式版发布时自动获得 Pro 授权。",
   "pricing.plan.name": "Quota Bar Pro",
-  "pricing.plan.note": "终身授权",
+  "pricing.plan.note": "Beta 期间免费 · 正式价 $14.99",
   "pricing.bullet.unlimited": "无限服务追踪",
-  "pricing.bullet.alerts": "高级自定义告警",
   "pricing.bullet.support": "优先技术支持",
   "pricing.bullet.updates": "无限会话及后续更新",
   "pricing.bullet.swift": "Swift 原生级性能",
-  "pricing.cta": "购买 Quota Bar Pro",
-  "pricing.support.hint": "付款问题请联系 hi@quotabar.app",
+  "pricing.cta": "免费领取 Pro",
+  "pricing.support.hint": "付款问题请联系 taobe@freshli4.com",
 
   // FAQ
   // q1 「支持哪些服务？」已删除 — 与中段 SupportedServices section 重复
@@ -169,6 +203,40 @@ const zh: Dict = {
   "faq.q4": "是订阅制吗？",
   "faq.a4":
     "不是！Quota Bar 一次性买断，你将获得当前所有功能以及后续小版本更新的终身使用权。",
+
+  // Changelog page（站内，不跳转 GitHub）
+  "changelog.heading": "更新日志",
+  "changelog.subheading": "Quota Bar 的每一次迭代，都记在这里。",
+  "changelog.back": "← 返回首页",
+  "changelog.v10.version": "v0.10.0",
+  "changelog.v10.date": "2026-07-08",
+  "changelog.v10.title": "更稳定的配额刷新",
+  "changelog.v10.bullet1": "新增 opencode 配额检测支持",
+  "changelog.v10.bullet2": "修复刷新间隔与超时时间设置不生效的问题",
+  "changelog.v10.bullet3": "版本号全面切换为语义化版本（SemVer）",
+  "changelog.v9.version": "v0.9.0",
+  "changelog.v9.date": "2026-07-07",
+  "changelog.v9.title": "自动更新与诊断日志",
+  "changelog.v9.bullet1": "无需 Apple 开发者证书即可自动更新",
+  "changelog.v9.bullet2": "新增按服务的诊断日志，授权失败时一目了然",
+  "changelog.v9.bullet3": "修复 Kimi / Codex / MiniMax / Claude 的额度抓取问题",
+  "changelog.v9.bullet4": "重新设计下拉面板的信息展示规则，减少视觉噪音",
+  "changelog.v5.version": "v0.5.0",
+  "changelog.v5.date": "2026-07-03",
+  "changelog.v5.title": "更多订阅类服务",
+  "changelog.v5.bullet1": "合并多个订阅类服务的额度追踪支持",
+  "changelog.v5.bullet2": "打通统一的配额抓取 pipeline，新服务接入更快",
+  "changelog.v2.version": "v0.2.0",
+  "changelog.v2.date": "2026-07-01",
+  "changelog.v2.title": "偏好设置上线",
+  "changelog.v2.bullet1": "全新的偏好设置界面，可自定义显示与刷新行为",
+  "changelog.v2.bullet2": "新增 GLM 服务支持",
+  "changelog.v2.bullet3": "新增订阅到期提醒",
+  "changelog.v1.version": "v0.1.0",
+  "changelog.v1.date": "2026-06-29",
+  "changelog.v1.title": "首个 Beta 版本",
+  "changelog.v1.bullet1": "菜单栏实时显示 Codex / MiniMax / Kimi 三项配额进度条",
+  "changelog.v1.bullet2": "一键刷新、偏好设置入口",
 
   // Footer
   "footer.tagline": "在菜单栏里可视化你的 API 配额",

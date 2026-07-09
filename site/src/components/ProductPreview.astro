@@ -131,19 +131,23 @@
     justify-content: center;
     /* 不再有 padding：video 自身有圆角，不需要外层再留呼吸 */
     opacity: 0;
-    /* cross-slide：hidden 默认在右偏 48px（~5% 容器宽），active 时滑到中心；
-     * 新 image 从右稍稍滑入 + fade in，旧的同时向右微移 + fade out，
-     * 掩盖 video seek 帧的瞬间突跳，又不会像 carousel 那么"大动作" */
-    transform: translateX(48px);
+    /* Apple TV 式大卡片横移：JS 在切换前按方向把 --slide-x 设为 ±偏移，
+     * 进场卡片从该偏移 + 缩小 + 轻微模糊滑入放大到中心，离场卡片则反向滑出，
+     * 一来一回都带方向性，比单纯淡入淡出更有"推移"的空间感。 */
+    transform: translateX(var(--slide-x, 88px)) scale(0.92);
+    filter: blur(6px);
+    /* 2.5x 于最初版本（620ms）：卡片挪动感更从容，接近 Apple TV 那种慢悠悠的推移 */
     transition:
-      opacity 480ms cubic-bezier(0.33, 0, 0.2, 1),
-      transform 480ms cubic-bezier(0.33, 0, 0.2, 1);
+      opacity 1600ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 1600ms cubic-bezier(0.22, 1, 0.36, 1),
+      filter 1600ms cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: none;
-    will-change: opacity, transform;
+    will-change: opacity, transform, filter;
   }
   .product-preview__image[aria-hidden="false"] {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
+    filter: blur(0);
   }
 
   /* —— Video 自己承担：圆角 + drop-shadow + 底部 fade mask ——
@@ -367,7 +371,7 @@
     });
 
     var currentIdx = 0;
-    var scheduledAt = null;        // 当前挂起的 setTimeout 句柄
+    var pollHandle = null;         // 轮询定时器句柄
     var lastTickAt = Date.now();   // 上次 tick 的真实墙钟时间，用于 visibility 补偿
     var dict = window.QB_I18N || { en: {}, zh: {} };
     function locale() {
@@ -392,9 +396,28 @@
       });
     }
 
+    // 方向判定：取「更短的那圈」当前进方向，1 = 向右前进（下一张从右滑入），
+    // -1 = 向左后退（下一张从左滑入）。3 个 tab 时能同时覆盖自动播放的顺序前进
+    // 和用户点击到任意 tab 的最短路径。
+    function slideDirection(from, to, len) {
+      var diff = ((to - from) % len + len) % len;
+      return diff <= len / 2 ? 1 : -1;
+    }
+
     function show(idx, fromUser) {
       if (idx === currentIdx) return;
       var next = ((idx % tabs.length) + tabs.length) % tabs.length;
+
+      var dir = slideDirection(currentIdx, next, tabs.length);
+      var enteringName = tabs[next].getAttribute("data-tab");
+      var leavingName = tabs[currentIdx].getAttribute("data-tab");
+      var enteringEl = imageMap[enteringName];
+      var leavingEl = imageMap[leavingName];
+      // 进场卡片先在正确的一侧待命（此时仍是 aria-hidden=true，不可见，
+      // 所以这次属性变化不会触发可见的跳动），离场卡片则把目标位置设为反方向，
+      // 稍后 aria-hidden 一变就会往那个方向滑出去。
+      if (enteringEl) enteringEl.style.setProperty("--slide-x", dir * 88 + "px");
+      if (leavingEl) leavingEl.style.setProperty("--slide-x", -dir * 88 + "px");
 
       // fade out → swap text + active class + image → fade in
       headingEl.classList.add("is-fading");
@@ -453,38 +476,34 @@
 
     function tick() {
       show(currentIdx + 1, false);
-      // 重置参考时间戳：下次 scheduleNext 按「从这个 tick 开始」算 delay，
-      // 否则 visibility 触发的 tick 会因为 lastTickAt 还是 start() 的时间，
-      // 让 delay = max(0, INTERVAL_MS - huge_elapsed) = 0，导致连续 fire
       lastTickAt = Date.now();
-      // 自调度：tick 完成后挂下一次 timer（之前 setInterval 自动续命，改 setTimeout 链要手动续）
-      scheduleNext();
     }
 
-    // —— 自调度定时器：用 Date.now() 记录真实墙钟时间，
-    //   切到其它桌面/最小化浏览器后回来（setInterval 会被节流）能精准补偿。
+    // —— 轮询式定时器（替代之前的单次自调度 setTimeout 链）——
+    //   旧实现：每次 tick 后用 setTimeout(delay) 挂一次性下一个 timer。
+    //   问题：如果 start() 第一次执行时 document.hidden 恰好是 true
+    //   （比如页面在后台标签页加载、或被浏览器预渲染/预加载），
+    //   scheduleNext() 会直接 return、什么都不挂 —— 之后再也没有任何
+    //   timer 被建立，只能靠用户碰巧触发 visibilitychange 或手动点击
+    //   tab 才会重新调用 start()，表现为「进度条满了以后卡住很久」。
+    //   改成每 250ms 轮询一次「是否到点该切了」：任何一次检查被跳过
+    //   （页面隐藏中）都不会导致永久卡死，下一次轮询会自动补上。
+    var POLL_MS = 250;
+    function poll() {
+      if (document.hidden) return;
+      if (Date.now() - lastTickAt >= INTERVAL_MS) {
+        tick();
+      }
+    }
     function start() {
       stop();
       lastTickAt = Date.now();
-      scheduleNext();
-    }
-    function scheduleNext() {
-      if (scheduledAt) {
-        clearTimeout(scheduledAt);
-        scheduledAt = null;
-      }
-      // 切到后台时不再调度（setTimeout 在 hidden tab 也可能被压到 1Hz，等回来时再补）
-      if (document.hidden) return;
-      var delay = Math.max(0, INTERVAL_MS - (Date.now() - lastTickAt));
-      scheduledAt = setTimeout(function () {
-        scheduledAt = null;
-        tick();
-      }, delay);
+      pollHandle = setInterval(poll, POLL_MS);
     }
     function stop() {
-      if (scheduledAt) {
-        clearTimeout(scheduledAt);
-        scheduledAt = null;
+      if (pollHandle) {
+        clearInterval(pollHandle);
+        pollHandle = null;
       }
     }
     function restart() {
@@ -521,23 +540,27 @@
       });
     }
 
-    // —— visibilitychange：从后台回到前台时精准 resync
-    //   浏览器在 hidden tab 会把 setTimeout 节流到 ~1Hz，但 CSS animation 可能
-    //   仍继续走 — 用户回来会看到「进度条满了但 tab 没切」。
-    //   回来时：计算实际过了多久，过了 >= INTERVAL 就立刻 tick；并重置进度条动画，
-    //   让用户看到一次干净的 0 → 100 播放。
+    // —— visibilitychange：从后台标签页回到前台时，给一次干净的完整周期
+    //   （而不是按已经过去的时间立刻切换，那样体验更突兀）。
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) return;
-      // 前台了：重置当前激活 tab 的进度条 + resync 定时器
       restartProgress(currentIdx);
-      var elapsed = Date.now() - lastTickAt;
-      if (elapsed >= INTERVAL_MS) {
-        // 至少错过了 1 次 tick — 立即推进
-        tick();
-      } else {
-        // 没到点，按剩余时间继续调度
-        scheduleNext();
-      }
+      lastTickAt = Date.now();
+    });
+
+    // —— pageshow：兜底覆盖 bfcache 回退 / 预渲染激活等场景。
+    //   这些场景下浏览器可能不会触发 visibilitychange，而当前 tab 对应的
+    //   <video> 也可能已经被浏览器暂停 —— 顺手把它重新播放一遍。
+    window.addEventListener("pageshow", function () {
+      restartProgress(currentIdx);
+      lastTickAt = Date.now();
+      var tabName = tabs[currentIdx].getAttribute("data-tab");
+      var el = imageMap[tabName];
+      var vid = el && el.querySelector("video");
+      if (!vid) return;
+      try { vid.currentTime = 0; } catch (_) {}
+      var p = vid.play();
+      if (p && typeof p.catch === "function") p.catch(function () {});
     });
 
     // 监听 locale 切换，重新翻译当前 heading

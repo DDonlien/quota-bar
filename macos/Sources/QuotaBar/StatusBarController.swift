@@ -418,10 +418,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let dashboardItem = NSMenuItem()
         let menuView = MenuView(
             coordinator: coordinator,
-            onSaveKey: { [weak self] kind, _ in
-                // 用户保存了某个 provider 的 API key → 触发刷新
-                self?.coordinator.refreshNow()
-            },
             onHideKind: { [weak self] kind in
                 self?.coordinator.hide(kind: kind)
                 self?.rebuildMenu()

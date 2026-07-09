@@ -98,10 +98,13 @@ struct ProviderFetchStrategyTests {
     @Test("merge-branch strategy failures only log the layer actually being retried, not a spurious quota failure")
     @MainActor
     func mergeBranchFailureOnlyLogsMissingLayer() async throws {
-        await ProviderCheckLog.resetForTesting()
         let dir = Self.makeTempDirectory()
         defer { try? FileManager.default.removeItem(at: dir) }
         let store = ProviderSourceIndexStore(directoryURL: dir)
+        // 独立的临时日志文件——避免写到 `ProviderCheckLog.shared` 背后真实用户机器上的
+        // 诊断日志（`~/Library/Application Support/QuotaBar/provider-check.log`）。
+        let logFileURL = dir.appendingPathComponent("provider-check.log")
+        let checkLog = ProviderCheckLog(store: ProviderCheckLogStore(fileURL: logFileURL))
 
         let pipeline = FetchPipeline(
             kind: .antigravity,
@@ -110,7 +113,8 @@ struct ProviderFetchStrategyTests {
                 ThrowingBothLayersStubStrategy(id: "plan-filler"),
             ],
             runMode: .sequential,
-            sourceIndexStore: store
+            sourceIndexStore: store,
+            checkLog: checkLog
         )
 
         let snapshot = try await pipeline.run(timeout: 1)
@@ -118,7 +122,7 @@ struct ProviderFetchStrategyTests {
         #expect(snapshot.quotas.count == 2)
         #expect(snapshot.subscriptionTier == nil)
 
-        let lines = await ProviderCheckLog.shared.flush(kind: .antigravity)
+        let lines = await checkLog.flush(kind: .antigravity)
         #expect(!lines.contains { $0.contains("额度获取") && $0.contains("plan-filler") },
                  "额度已经由 quota-source 满足，plan-filler 的失败不该在「额度获取」步骤留下误导性记录")
         #expect(lines.contains { $0.contains("档位与费用获取") && $0.contains("plan-filler") && $0.contains("失败") },

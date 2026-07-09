@@ -1,6 +1,71 @@
 import Foundation
 import WebKit
 
+// MARK: - WebKitSessionWarmup
+
+/// App 冷启动后、第一轮刷新读 `WKWebsiteDataStore.default()` 之前，主动"预热"一次
+/// 默认 data store 的 Cookie 存储。
+///
+/// 背景（2026-07-08 用户实测反馈，日志覆盖 11:06–11:58 约 52 分钟）：用户全程已经
+/// 在 App 内 WebView 登录过 Claude，但 `claude-webview`/`AppWebViewSessionCookieReader`
+/// 连续约 50 轮刷新都报「未登录」（读到空 Cookie 列表）；直到用户手动重新打开一次
+/// `WebAuthorizationController` 的登录窗口（这一步会真正创建一个 `WKWebView`）之后，
+/// 同一进程内后续的 Cookie 读取才突然恢复正常。
+///
+/// 根因：整个 App 里，除了 `WebAuthorizationController.openAuthorization` 这一次
+/// 性登录窗口之外，没有任何代码会创建 `WKWebView` 实例——而 `RefreshCoordinator.
+/// start()` 在 `StatusBarController` 初始化时就立即触发第一轮刷新（见该文件），
+/// 也就是说全程可能一次 `WKWebView` 都没创建过，`.default()` data store 背后的
+/// WebKit 网络进程/Cookie 存储从未被真正启动过——`httpCookieStore.allCookies()`
+/// 因此长期停留在"进程未就绪"的空态，即使磁盘上早已持久化了真实登录 Cookie。
+///
+/// 修复：在触发第一轮刷新之前，主动创建一个 `WKWebView` 并读一次 Cookie，强制该
+/// data store 提前完成初始化——效果等价于用户手动打开一次登录窗口，但不需要用户
+/// 参与。见 `AppDelegate.applicationDidFinishLaunching` 里的调用顺序：必须在
+/// `StatusBarController()` 构造（进而 `coordinator.start()`）之前完成。
+///
+/// **2026-07-09 修订**：最初的实现只创建了一个 frame `.zero`、不挂任何窗口的裸
+/// `WKWebView`，长期持有却从来没有真正的 `NSWindow`/superview 宿主。这跟 App 里
+/// 其余所有 `WKWebView` 用法（`WebAuthorizationController` 的登录窗口、
+/// `WKWebViewHeadlessLoader` 的抓取窗口）都不一样——那些都挂在一个真实的
+/// `NSWindow` 上。真实崩溃日志（`QuotaBar-2026-07-09-000952.ips`）显示一次
+/// `EXC_BAD_ACCESS`/`SIGSEGV`，出现在 WebKit 处理来自 WebContent 进程的异步 IPC
+/// 消息、提交 remote layer tree 时（`RemoteLayerTreePropertyApplier::
+/// applyHierarchyUpdates` 空指针解引用）——最可能的解释是一个永远没有真实窗口宿主
+/// 的 `WKWebView` 让 WebKit 内部的 layer tree 状态长期处于不正常的形态，某次异步
+/// IPC 回调命中了失效状态。修复：给这个预热用的 `WKWebView` 一个真实的
+/// `NSWindow`（永远不 `orderFront`/不可见，只是给 WebKit 一个正常的宿主环境），
+/// 跟已知稳定运行多轮的登录窗口用法保持一致，而不是用一个游离状态的裸 WKWebView。
+@MainActor
+enum WebKitSessionWarmup {
+    /// 强引用，避免创建后立即被释放导致 data store 关联失效。
+    private static var webView: WKWebView?
+    /// 同样强引用——`WKWebView` 需要一个真实的宿主窗口，见上方 2026-07-09 修订说明。
+    private static var window: NSWindow?
+
+    static func warmUp() async {
+        guard webView == nil else { return }
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .default()
+        let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 1, height: 1), configuration: configuration)
+
+        let window = NSWindow(
+            contentRect: NSRect(x: -10000, y: -10000, width: 1, height: 1),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: true
+        )
+        window.isReleasedWhenClosed = false
+        window.contentView = webView
+        // 故意不调用 makeKeyAndOrderFront/orderFront——窗口在屏幕外、永远不可见，
+        // 只是给 WKWebView 一个正常的宿主环境。
+
+        Self.webView = webView
+        Self.window = window
+        _ = await configuration.websiteDataStore.httpCookieStore.allCookies()
+    }
+}
+
 // MARK: - WKWebViewHeadlessLoader
 
 /// macOS native WKWebView 包装，用于 headless 抓取订阅管理页。

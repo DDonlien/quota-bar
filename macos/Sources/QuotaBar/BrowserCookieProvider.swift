@@ -339,6 +339,7 @@ extension ProviderKind {
         case .openrouter: return ["openrouter.ai"]
         case .perplexity: return ["perplexity.ai"]
         case .cursor: return ["cursor.com", "cursor.sh"]
+        case .opencode: return ["opencode.ai"]
         default: return []
         }
     }

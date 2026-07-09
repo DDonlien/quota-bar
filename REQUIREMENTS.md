@@ -646,7 +646,98 @@
 - [x] [0.10.0-CLEAN-A-001] 删除纯死代码：`ProviderOverride.isForcedVisible`（无 UI、无消费方）、`incidentMonitoringEnabled`（同上）、`AdvancedPreferences.currencyCode`/`showResetDates`（同上）及各自的 getter/setter #P2
 - [x] [0.10.0-BUG-A-016] 接通 `advanced.providerTimeoutSeconds`：新增 `ProviderTimeoutOption` 离散选项（10/15/20/30 秒，跟 `RefreshIntervalOption` 同一设计）+ `PreferencesStore.setProviderTimeout`/`currentProviderTimeoutOption`；`GeneralSettingsView` 新增「Provider 刷新超时」Picker；`StatusBarController`/`RefreshCoordinator` 启动时读取、运行中通过 `applyProviderTimeoutChange()` 实时同步——此前这个字段有意图（默认值 30，`RefreshCoordinator.providerTimeout` 默认值却是不同步的 10）但从未接通，跟 `refreshIntervalSeconds` 是同一类 bug #P1
 
+### sub/main: dropdown 授权文案统一 + Preferences 新增 API Key 配置入口
 
+> 用户看到 dropdown 里 Antigravity/Z Code 直接展示原始技术性报错（"Antigravity HTTP 500: {...}"、"BigModel Start 可用，但未返回额度数值；builtin:..."），追问"为什么 agy/opencode/zcode 不显示打开 WebView 授权"，并给出标准：不能走 WebView 授权的 provider，应该统一显示"在 Preferences 中通过 API Key 授权"或"未获取到授权"两种灰字之一，不能再暴露原始 reason。同时指出 Preferences「模型」页的"获取模式"文案应该如实反映实现，并要求给支持 API Key 的 provider（参考 Zed 的"已配置/Reset"交互，视觉沿用本页原生 macOS 26 风格）在 Preferences 里加一行真正的手动输入入口——不只是 MiniMax，Z Code 也要有（用户贴的 Zed 截图里 GLM/Z.ai provider 正好也是纯 API Key 模式）。
+
+- [x] [0.10.0-BUG-A-017] `MenuView` 的 `.needsConfiguration` 分支重写为三级判断（替换原来"MiniMax 特判内联输入框 / else 展示原始 reason"的二分支）：`apiKeyCapableKinds` → 灰字"在 Preferences 中通过 API Key 授权"；`webViewQuotaCapableKinds` → 保留原有蓝色可点击"打开 WebView 授权"；两者都不支持（Antigravity/opencode 等）→ 灰字"未获取到授权"，不再拼接原始技术性 reason（HTTP 状态码 JSON、内部错误链等只留在诊断日志里）#P0
+- [x] [0.10.0-ARCH-L-000] 新增 `ProviderKind.apiKeyCapableKinds = [.minimax, .zcode]` 静态集合（跟 `webViewQuotaCapableKinds` 同一维护模式，新增/移除某 provider 的手动 key 支持时必须同步改这里）#P0
+- [x] [0.10.0-ARCH-L-001] 新增 `ZCodeManualKeyStore`（`ZCodeAuthProvider.swift`）：Quota Bar 自己独占的 `~/Library/Application Support/QuotaBar/zcode-api-key.json`，供没装官方 Z Code CLI、只想手动粘贴 key 的用户使用；`ZCodeAuthProvider.configPaths` 把它排在最前，复用现有 `flattenStrings`/`isLikelyAPIKey` 通用解析逻辑识别，不需要额外解析代码 #P1 — `ZCodeAuthProviderTests`：missing-by-default、save/read 掩码显示、拒绝空 key 三个新测试
+- [x] [0.10.0-PM-A-016] 「偏好设置 → 模型」页新增「API Key 配置」区块（`APIKeyConfigRow`），MiniMax 和 Z Code 各一行：展示"已配置 · 掩码 key"/"未配置"状态 + "配置/重置"按钮，点开后是原生 `SettingsRow` 风格的输入框（复用 dropdown 已有的 `APIKeyTextField`）；交互参考 Zed 的 provider 设置页（用户提供截图），视觉不复刻、沿用本页其余行的 macOS 26 原生风格。同步删除 dropdown 里原来 MiniMax 专属的内联输入框 `MiniMaxKeyInputField`（连带贯穿 5 层 View 的整条 `onSaveKey` 回调链），入口统一收敛到 Preferences #P0
+- [x] [0.10.0-ARCH-L-002] 新增 `.providerCredentialsDidChange` 通知：Preferences 里保存 API key 成功后 post，`RefreshCoordinator` 订阅并 `refreshNow()`，不用等自动刷新周期——跟 `.webAuthorizationWindowDidClose` 同一类"用户刚做完授权动作应该立刻看到结果"的诉求 #P1
+- [x] [0.10.0-DOC-A-006] 全面核对 `ModelsSettingsView.providerAccessModes` 跟 `Strategies.swift` 实际 pipeline 是否一致（用户反馈"这一页应该如实显示我们支持的获取模式"）：Codex/Kimi 的 "CLI" 改成更准确的 "Config"（默认 pipeline 没有真实 CLI 子进程执行）；Claude/Antigravity 补上遗漏的 "Keychain"；MiniMax/Z Code 统一用 "API" 标注——现在这个词对应一个真实可操作的能力（上面新增的手动输入入口），不再只是描述性标签 #P1
+
+### sub/main: 日志页刷新按钮 + 灰字精简 + 并发架构核实
+
+> 用户反馈三点：「日志里的刷新按钮没用」；「Provider 刷新超时」/「刷新间隔」下方的灰色说明文字不需要；诊断日志"现在是全刷新完了才会出来，其实应该逐条输出的"。同时贴了一段真实日志追问"claude又获取不到额度了"——Antigravity 单独耗时 31 秒（`antigravity-cli-session`），其余 6 个 provider 的日志行全部标着同一秒的时间戳，看起来像是被 Antigravity 卡住、全部堆到一起才出来。
+
+- [x] [0.10.0-BUG-A-018] 「偏好设置 → 日志」页的「刷新」按钮此前只是重新读一遍已经落盘的日志文件——如果后台没有恰好在点击前跑完一轮真实刷新，点了跟没点一样。改名「立即刷新」，新增 `.manualRefreshRequested` 通知，`RefreshCoordinator` 订阅并调用 `refreshNow()`；日志页本身已经在监听 `.providerCheckLogDidChange`，新日志写入时会自动展示，不需要按钮自己重读 #P0
+- [x] [0.10.0-CLEAN-A-002] 删除「通用」页「刷新间隔」/「Provider 刷新超时」两行下方的说明性灰字（用户反馈不需要，设置项名称本身已经足够清晰）#P2
+- [x] [0.10.0-INVESTIGATE-A-001] 排查"诊断日志全刷新完才出来、其余 provider 都卡到 Antigravity 完成才显示"的疑似并发 bug：用 `log stream` 抓取真实 unified log，在本机对同一批 provider 单独触发一轮刷新做对照实验，实测 `withTaskGroup` 里全部 7 个 provider 的 "▶️ start pipeline" 确实在同一毫秒内并发发起，opencode/zcode/kimi/minimax/claude/codex 各自独立在 0.05–2.6 秒内完成并各自 flush 落盘——`RefreshCoordinator`/`FetchPipeline` 的并发设计和逐 provider 落盘逻辑本身没有 bug，只有 Antigravity 因为要拉起临时 `agy` 会话轮询确实需要约 30 秒。用户贴的那段日志之所以"全部堆在同一秒"，最可能的原因是当时同一台机器上同时跑着 2-3 个 Quota Bar 实例（本轮会话过程中多次直接观测到），各自的自动刷新周期互相竞争 CPU/子进程/共享磁盘文件，造成偶发的多秒延迟，不是代码层面的序列化 bug；已在过程中发现并核实一处真实但影响很小的代码坏味道（`AntigravityCLISessionProvider.agyPIDs()` 用同步阻塞的 `Process.waitUntilExit()`，没有像 `CLICommandLocator.locate` 那样包一层后台 continuation），评估后判断修复它需要把 `ManagedSession`/`SessionLauncher` 整条接口改成 async（牵动测试注入点），而这两次 `pgrep` 调用本身只有几十毫秒、不足以解释观测到的数十秒延迟，收益不确定、风险不小，本轮不做，记录为已知的小项债务 #P2 — 结论：不需要代码修复，建议用户平时只保留一个 Quota Bar 实例运行
+- [x] [0.10.0-INVESTIGATE-A-002] 排查"claude 又获取不到额度"：贴的日志显示 `claude-oauth` 因为 Anthropic 服务端限流失败（"Claude usage 端点限流，稍后重试"，瞬时状况非 bug），`claude-webview` 因为 App 内 WebView 会话没有登录态失败（"未登录"），`claude-auth-status-cli` 只贡献档位（Pro/¥136）没有额度；顺手核实了日志里完全没出现 `claude-keychain` 这一行的原因——`QuotaProviderStrategy.supportedLayers` 对含 "keychain" 的 id 只声明 `[.provider]`（`Strategies.swift:42-44`），FetchPipeline 判断"额度层缺失时是否值得重试这个来源"时因为 `.quota` 跟 `[.provider]` 不相交直接 `continue` 跳过，不会调用 `fetch()`，自然也不会有日志——这是刻意设计（Keychain 只能证明凭证存在，从来生成不了额度数字），不是遗漏的 bug，不需要改 #P2 — **注：本条"claude-webview：未登录 = 状态事实非 bug"的结论已被下一条 `0.10.0-BUG-A-019` 推翻，是真 bug，见下条**
+
+### sub/main: claude-webview「未登录」误报的真正根因——WKWebsiteDataStore 冷启动未预热
+
+> 用户对上一条 `0.10.0-INVESTIGATE-A-002` 的结论明确反驳，贴出一段覆盖 11:06–11:58（约 52 分钟、50+ 轮刷新）的完整日志：`claude-webview` 连续约 50 分钟每轮都报"未登录"，用户确认自己全程已经在 App 内 WebView 登录过；直到用户手动重新打开一次登录窗口之后，`claude-webview` 才在当天 11:58:05 首次成功。用户同时提出疑问："之前的某个版本 Claude 能完全正常获取额度、即使不依赖 WebView"，怀疑本轮会话引入了回归。
+
+- [x] [0.10.0-BUG-A-019] 根因定位：全 App 范围内，除了 `WebAuthorizationController.openAuthorization` 这一次性登录窗口外，没有任何代码会创建 `WKWebView` 实例；而 `RefreshCoordinator.start()` 在 `StatusBarController` 初始化时就立即触发第一轮刷新（`AppDelegate.applicationDidFinishLaunching` → `StatusBarController()` → `coordinator.start()`），也就是说冷启动后很可能一次 `WKWebView` 都没创建过，`WKWebsiteDataStore.default()` 背后的 WebKit 网络进程/Cookie 存储从未被真正初始化，`httpCookieStore.allCookies()`（`AppWebViewSessionCookieReader`/`BrowserCookieReader.swift:40`）因此长期停留在"进程未就绪"的空态，即使磁盘上早已持久化了真实登录 Cookie——这跟用户描述的现象（已登录但读不到、手动重开登录窗口后突然恢复）完全吻合。修复：新增 `WebKitSessionWarmup`（`WKWebViewHeadlessLoader.swift`），在 `AppDelegate.applicationDidFinishLaunching` 里于 `StatusBarController()` 构造之前，先创建一个不可见（frame `.zero`、不挂窗口）的 `WKWebView` 并 `await` 一次 `httpCookieStore.allCookies()`，强制该 data store 提前完成初始化——效果等价于用户手动打开一次登录窗口，但不需要用户参与，且发生在第一轮刷新的 Cookie 读取之前 #P0
+- [x] [0.10.0-INVESTIGATE-A-003] 排查用户提出的"回归"疑虑："我什么都没改，但之前的版本 Claude 不依赖 WebView 也能正常获取额度"：贴的日志显示 `claude-oauth` 的失败原因在 11:56:27 从"限流，稍后重试"变成了"Claude OAuth token 已过期，请重新 claude login"——这是本地 OAuth token 真实过期（需要用户重新 `claude login`），是账号/凭证的自然状态变化，不是本项目代码在本轮会话里引入的回归。合理的完整解释：用户本地 OAuth token 在今天之前一直有效，`claude-oauth` 一直单独就能覆盖额度，`claude-webview` 这条本来就存在的冷启动 bug 全程处于"从未被真正需要过、所以从未被注意到"的潜伏状态；今天 token 过期后，`claude-oauth` 第一次真正失效，`claude-webview` 变成唯一还有希望的层，这个潜伏已久的 bug 才第一次变得"要命"、被用户观测到——不是回归，是同一个一直存在的 bug 第一次有了被暴露的条件。已在上条一并修复；同时建议用户重新执行一次 `claude login` 刷新真实 OAuth token（`claude-oauth` 仍然是最直接、最快的额度层，WebView 只是兜底）#P1
+
+### sub/main: dropdown「未获取到授权」误报 + 授权补救优先级规则重新定义
+
+> 用户看到 Antigravity 订阅到期当天，dropdown 显示"未获取到授权"，指出这不合理——Antigravity 明明是"没有额度"（订阅过期），而不是"没有登录"，且质问"同样的代码，昨天还能获取到授权"。借这个具体案例，用户完整定义了一套新的 dropdown 额度提示规则：(1) 任何途径获得额度就如实显示；(1.1) 非授权途径明确判定"已过期/未订阅"时展示对应定论文案（`.subscriptionExpired`/`.notSubscribed`，MiniMax 现状正确）；(2) 所有非授权途径都试过仍无额度时，才展示授权途径引导，且按 FDA（未实现不展示）> WebView > API 的优先级展示第一个这个 provider 真正支持的补救入口；(3) 只有当所有该 provider 支持的授权途径都已确认完成授权但仍无额度时，才展示"没有额度信息"这类终态文案。
+
+- [x] [0.10.0-BUG-A-020] 定位 Antigravity 具体误报根因：`antigravity-cli`/`antigravity-cli-session` 返回的 HTTP 500（`GetCascadeModelConfigData() is nil`）在 `AntigravityDashboardProvider` 里映射成 `QuotaFetchError.transient`（模糊错误，不是明确的"订阅已过期"信号，不满足用户规则 1.1 的"额度信息明确已过期"标准），`RefreshCoordinator.availabilityFallback` 对 `.transient` + 已检测到 App 安装的情况统一映射成 `.needsConfiguration`；而 `MenuView` 的 `.needsConfiguration` 分支此前对"两种授权能力都不支持"的 provider 一律展示"未获取到授权"——但 Antigravity 既不是 `webViewQuotaCapableKinds`（登录窗口只服务到期日抓取，不产出额度，见 `webViewQuotaCapableKinds` 顶部说明）也不是 `apiKeyCapableKinds`，也没有 FDA，对这个 provider 来说根本不存在任何授权补救动作可以提示用户去做——"未获取到授权"是个兑现不了的承诺 #P0
+- [x] [0.10.0-ARCH-L-003] 新增 `ProviderKind.availableAuthRemediationTiers`（`WebAuthorizationController.swift`）：按用户定的 FDA > WebView > API 优先级，只列出这个 provider 真正实现了的补救 tier（目前 FDA 未实现，永远为空）。`MenuView` 的 `.needsConfiguration` 分支和 `QuotaAuthPromptRow`（`.available` + 空 quotas 的兄弟状态，此前只判断 WebView、完全没考虑 API Key，MiniMax 落到这个分支时会静默漏掉 API 引导）统一改用这个属性做展示决策：列表第一项是 `.webView` → 「打开 WebView 授权」按钮；`.apiKey` → 「在 Preferences 中通过 API Key 授权」；列表为空 → 不再展示任何"去授权"文案，改成跟 opencode 现有展示一致的诚实文案"暂无额度数据"。同时修正了此前 `.needsConfiguration` 分支里 API 判断排在 WebView 判断前面的顺序（跟用户"WebView 优先于 API"的规则相反，之前会让 MiniMax 一律先展示 API 引导、永远不会展示 WebView 授权按钮）#P0 — 范围说明：只实现了"按优先级展示第一个可用 tier"，没有实现"如果优先级更高的 tier 已确认完成授权但仍无额度，就自动升级展示下一个 tier"这层更细的判断（那需要单独建模"每个 tier 是否已完成授权"的状态，`QuotaFetchError`/`ProviderAvailability` 目前还没有这个维度），先按优先级固定展示第一个 #P1
+- [x] [0.10.0-INVESTIGATE-A-004] 顺手核实了一处无关但真实存在的问题：跑 `swift test` 时，`ProviderFetchStrategyTests.swift` 里的测试 stub（"quota-source"/"plan-filler"）没有给 `ProviderCheckLog` 注入独立临时文件，写穿了真实用户机器上的 `~/Library/Application Support/QuotaBar/provider-check.log`——已用 `spawn_task` 单独派发（`task_9a5b6e04`），后续由用户在独立会话里跑完：`FetchPipeline` 新增 `checkLog: ProviderCheckLog = .shared` 注入点，测试改成显式构造独立临时文件的 `ProviderCheckLog`，删掉了原来靠 `ProviderCheckLog.resetForTesting()` 直接清空 `.shared` 内存缓冲区的黑魔法；验证过重跑测试后真实日志文件不再新增任何测试数据 #P2
+
+### sub/main: API Key 配置行视觉优化 + opencode 手动 Key 支持
+
+> 用户给了一张「API Key 配置」区块的截图，要求"优化一下这里的视觉呈现，给opencode加上api配置功能"。
+
+- [x] [0.10.0-BUG-A-021] 修复 `APIKeyConfigRow.statusText` 里字面量反引号原样显示的问题：`SettingsRow.subtitle` 原本是 `String?`，走 `Text(_ content: some StringProtocol)` 初始化器，不会像 `Text(_ key: LocalizedStringKey)` 那样解析 Markdown，"当前 `sk-xxx`" 里的反引号只会被渲染成两个字面字符，而不是等宽代码样式。改法：`SettingsRow.subtitle` 类型改成 `Text?`（新增一个 `String?` 重载保持其余 5 处调用点不用改），`statusText` 用 `Text` 插值把技术性的值（占位符当前值 / 掩码后的 key）单独标成等宽字体，跟说明文字拼在一起 #P1
+- [x] [0.10.0-PM-A-017] 「API Key 配置」区块顶部加一行说明文字（"给没有官方登录方式、或不想装官方 CLI 的 Provider 手动粘贴 API Key，仅保存在本机。"），对齐本页其余 section（Claude 额度捕获等）都有说明文字的惯例，之前这个区块顶部只有标题，缺少上下文 #P2
+- [x] [0.10.0-ARCH-L-004] opencode 加入 `ProviderKind.apiKeyCapableKinds`，新增 `OpenCodeManualKeyStore`（`OpenCodeAuthProvider.swift`，跟 `ZCodeManualKeyStore` 同款设计：Quota Bar 自己独占的 `~/Library/Application Support/QuotaBar/opencode-api-key.json`）。`OpenCodeAuthProvider.fetchSnapshot` 在 `~/.local/share/opencode/auth.json` 没有任何已配置 provider 时，回退检查这个手动 key store——存在就返回 `.available` + 空 quotas + 档位 "BYOK"（手动粘贴的 key 反推不出 auth.json 里具体是 Go/Zen 哪一档，统一按最保守的 BYOK 展示）。`OpenCodeAuthProvider` 新增 `manualKeyConfigPath` 注入参数（避免重蹈 `0.10.0-INVESTIGATE-A-004` 的覆辙，测试不碰真实文件）。`APIKeyConfigRow` 的 `reload`/`save`/`missingHint` 三处 switch 补上 `.opencode` 分支；`providerAccessModes` 里 opencode 的获取模式从 `["Config"]` 改成 `["Config", "API"]` #P1 — 新增 `OpenCodeManualKeyStoreTests`（missing-by-default/save-read 掩码/拒绝空 key）+ `OpenCodeAuthProviderTests` 补一条手动 key 回退成功的测试
+
+### sub/main: 「日志」偏好页明显卡顿
+
+> 用户反馈"日志页特别卡，肯定有问题，这么简单的功能（加上我的mac配置很高）其他页面都不卡"。
+
+- [x] [0.10.0-BUG-A-022] 根因：`DiagnosticsSettingsView.logView` 用的是 `VStack`（不是 `LazyVStack`）包住 `ForEach`，而 `ProviderCheckLogStore.readRecentLines()` 默认最多返回 2000 行——`VStack` 会立即创建/布局全部 2000 个 `Text` 行，不管 360pt 高的可视区域实际只显示约 25 行；页面订阅了 `.providerCheckLogDidChange`（一次刷新周期里最多 7 个 provider 各 flush 一次、各触发一次通知）会调用 `reload()`，每次都要重新铺满这 2000 个视图——这正是"这么简单的功能却很卡"的原因：不是日志系统本身重，是这一屏渲染方式选错了容器。改成 `LazyVStack` 后只创建实际进入视口的行，滚动/刷新开销跟总行数基本无关 #P0
+
+### sub/main: 粘贴 API Key 后应用崩溃（真实 SIGSEGV）+ 输入框改用原生 TextField
+
+> 用户反馈"输入api密钥后应用会直接crush（只是粘贴甚至没有回车），以及你的输入框还是很不macos26"。
+
+- [x] [0.10.0-BUG-A-023] 这次没有停留在猜测——直接从 `~/Library/Logs/DiagnosticReports/QuotaBar-2026-07-09-000952.ips` 读到真实崩溃报告：`EXC_BAD_ACCESS`/`SIGSEGV`（空指针解引用），主线程堆栈落在 WebKit 处理来自 WebContent 进程的异步 IPC 消息、提交 remote layer tree 时（`RemoteLayerTreePropertyApplier::applyHierarchyUpdates`），跟 API Key 输入框本身的代码完全不在同一条调用链上——粘贴动作只是恰好跟这次异步 IPC 回调撞在同一个 run loop tick，不是直接因果关系。最可疑的诱因：`0.10.0-BUG-A-019`（昨天）新增的 `WebKitSessionWarmup` 创建了一个 frame `.zero`、**永远不挂任何 `NSWindow`/superview** 的 `WKWebView`，长期存活却从未有真实的宿主环境——这跟 App 里其余所有 `WKWebView` 用法（`WebAuthorizationController` 登录窗口、`WKWebViewHeadlessLoader` 抓取窗口）都不一样，那些全部挂在真实 `NSWindow` 上。修复：给预热用的 `WKWebView` 一个真实的 `NSWindow`（永远不 `orderFront`，屏幕外坐标、不可见，只是给 WebKit 一个正常宿主环境），跟已知稳定的登录窗口用法保持一致 #P0
+- [x] [0.10.0-CLEAN-A-003] 顺手做了一次简化：`APIKeyTextField`/`FocusTextField`（AppKit `NSTextField` 包装 + 两个全局 `NSEvent` 本地监听器拦截 `Cmd+V`/`mouseUp`）最初是专门为 dropdown 里 `NSMenu` tracking-mode 的内联输入框做的变通（`NSMenu` 的 modal 事件循环会挡住标准 Edit 菜单/焦点）——那个内联输入框已经在更早的改动里删掉了，`APIKeyConfigRow` 现在唯一还在用它的地方是 Preferences 的普通 `NSWindow`，那里完全用不上这套 AppKit workaround。改成原生 SwiftUI `TextField`（`.textFieldStyle(.roundedBorder)`），既解决了"还是很不 macOS 26"的视觉反馈，也顺手删掉了两个不再需要、却仍在全局拦截键盘/鼠标事件的 `NSEvent` 监听器（不确定是否跟 `0.10.0-BUG-A-023` 那次崩溃有关，但确认是不必要的额外风险面，删掉没有坏处）#P1
+
+### sub/main: 授权 tier 完成度判断落地 + 已授权时隐藏虚假 WebView 引导
+
+> 用户反馈两点：opencode 粘贴 API Key 后"无事发生"（key 实际保存成功、Preferences 里也显示已配置，但 dropdown 依然提示"在 Preferences 中通过 API Key 授权"）；"webview还是不行，登陆了根本检测不到"（Claude WebView 已登录，dropdown header 仍显示"打开 WebView 授权"）。
+
+- [x] [0.10.0-INVESTIGATE-A-005] 先读真实诊断日志核实"webview 检测不到"：00:33 起**每一轮**都是 `claude-webview：获取到 2 条额度窗口 | 成功`——`0.10.0-BUG-A-019` 的预热修复实际已生效，dropdown 里 Claude 的 89%/29% 额度正是 WebView 会话取到的（statusline/oauth 限流/CLI 同轮全部失败）。真正失败的是过期日层：`claude-billing-settings-page：页面里未提取出日期`（登录态有效、页面能加载，但 DOM 里解析不出日期）。用户看到的"打开 WebView 授权"是 `PlanHeader.canOfferWebAuthorizationForDate` 在日期缺失时的引导——已登录的用户再点一次也不会有任何新结果，这个虚假引导正是"检测不到"错觉的来源（下条修复）#P0
+- [x] [0.10.0-BUG-A-024] 落地此前 `0.10.0-ARCH-L-003` 明确留白的"tier 完成度"判断：新增 `ProviderKind.manualAPIKeyIsConfigured`（各 kind 读各自 key 存储，占位符不算）和 `firstPendingAuthRemediationTier()`（按 FDA > WebView > API 优先级返回第一个**还没完成授权**的 tier；`.webView` 已完成 = App WebView 会话存储有该 provider dashboard 域的 Cookie，`.apiKey` 已完成 = 手动 key 已真实配置；全部完成或没有任何 tier 返回 nil）。`MenuView` 的 `.needsConfiguration` 分支抽成 `NeedsConfigurationRow`、`QuotaAuthPromptRow` 一并改用这个异步判断（初值用静态能力列表第一项避免闪烁，`.task(id: fetchedAt)` 每轮刷新后重判）：待完成 tier 是 `.webView` → 授权按钮，`.apiKey` → 灰字指 Preferences，nil → 终态"暂无额度数据"。opencode 配好 key 后现在正确显示终态文案 #P0
+- [x] [0.10.0-BUG-A-025] `PlanHeader` 的两处"打开 WebView 授权"引导（`missingTierNeedsAuth` 档位缺失、`canOfferWebAuthorizationForDate` 日期缺失）都加上 `!webViewSessionAuthorized` 条件（`.task(id: fetchedAt)` 异步查 `appSessionHasCookies`，初值 false——未知时宁可多显示引导也不隐藏真正需要的入口）：已登录的 provider 不再展示一个已经兑现过的授权承诺，Claude 现在 header 右侧只显示价格、不再有误导性的授权链接 #P0
+- [x] [0.10.0-INVESTIGATE-A-006] claude.ai 账单/设置页的订阅到期日提取持续失败（"页面里未提取出日期"）——用户澄清根因：**iOS（Apple 内购）订阅的到期日只在 Apple 侧可见，claude.ai 网页上根本不存在这个数据**，提取不出来是数据不存在而非解析 bug。结论：(1) 隐藏兜底已到位（`0.10.0-BUG-A-025`：已授权时不显示假引导，日期一栏留空）；(2) 直接付款（网页 Stripe）用户的提取路径保留 `ClaudeHarvester` 不动，等有直接付款账号的真实样本再验证其选择器是否有效 #P2
+
+### sub/main: opencode WebView 额度层（workspace Go 页）
+
+> 用户提供了真实入口："浏览器额度，其中长的占位符登陆了就会有：https://opencode.ai/workspace/wrk_.../go"；"订阅日期"在 Stripe 客户门户（短期 session 链接）；"cli指令我不确定"。要求给 opencode 接上浏览器侧的额度和过期日。
+
+- [x] [0.10.0-DATA-B-019] 新增 `OpenCodeWorkspaceProvider`（`opencode-webview`）：读 sst/opencode 真实源码确认 console 是 SolidStart 应用、数据走 `"use server"` 内部 RPC 没有公开 JSON API，因此走 headlessDOM：先加载 `https://opencode.ai/auth`（已登录时 302 到 `/workspace/{lastSeenWorkspaceID}`，`routes/auth/index.ts`），正则出 `wrk_` id，再加载 `/workspace/{id}/go`，按 `data-slot="usage-item"/"usage-value"/"reset-time"` 结构锚点（`lite-section.tsx`）解析 Rolling/Weekly/Monthly 三条**已用**百分比——标签是 i18n 的，解析只认结构和顺序不认文字。周期标签按 5h/7d/30d 映射（rolling 窗口时长是服务端配置 ZEN_LIMITS，代码里读不到，按当前产品实际 5 小时标注并在注释里声明该假设）。reset 文案（"Resets in 3 hours 25 minutes"/中文等价）尽力解析成秒得出 `resetsAt`，解析不出不阻塞额度展示 #P1 — `OpenCodeWorkspaceProviderTests`：wrk_ id 提取、结构顺序解析、未订阅推广页零结果、reset 文案中英/兜底/不可识别 4 组测试
+- [x] [0.10.0-DATA-B-020] opencode 订阅续费日：Stripe 客户门户的 session URL 是服务端动态生成的短期链接（`Billing.generateSessionUrl` server action），无法预先构造、不接。替代：Go 的月用量窗口锚定在订阅日（`analyzeMonthlyUsage(timeSubscribed:)`），monthly 重置时刻即下一个月度账单日——用解析出的 monthly reset 作为续费日代理，`subscriptionExpiresAtSource = .headlessDOM`、confidence `.medium` #P2
+- [x] [0.10.0-ARCH-L-005] opencode 接入 WebView 授权体系：`webAuthorizationURL = https://opencode.ai/auth`（已登录/未登录两种状态都落在正确页面）、加入 `webViewQuotaCapableKinds`、`dashboardCookieDomains = ["opencode.ai"]`、pipeline 追加 `opencode-webview` 层、Preferences 获取模式改 `["Config", "Web", "API"]`。dropdown 的授权引导按既定优先级自动生效：未登录 WebView 时显示「打开 WebView 授权」（现在是真实可兑现的入口），WebView/API 都完成仍无额度才显示终态文案 #P1
+- opencode CLI 指令：调研未发现 opencode CLI 有额度查询命令（docs 无相关子命令），用户自己也说"cli指令我不确定"——不接，等官方出了再说。
+
+### sub/main: opencode Go 页解析器真实首跑 0 结果的修复
+
+> `0.10.0-DATA-B-019` 刚接入就被用户实测的真实日志打脸：`opencode-webview` 能正确发现 workspace id、加载 Go 页，但连续多轮都是"Go 页面已加载但未解析出额度条"——解析器完全没工作。
+
+- [x] [0.10.0-BUG-A-026] 根因：`parseUsageItems` 最初是照 sst/opencode 仓库里的原始 JSX 源码写的正则，但 console 是 SolidStart 应用，真实渲染出的 HTML 会被 SSR hydration 在每段动态文本前后插入 `<!--$-->`/`<!--/-->` 注释标记（如 `<span data-slot="usage-value"><!--$-->0<!--/-->%</span>`），源码里根本看不出这层——数字和 `%`/文字之间被注释隔开，旧正则 `\d+\s*%`（数字/百分号相邻）和 `[^<]*`（reset-time 取值遇到第一个 `<` 就停）两种写法都直接失配。定位方式：给 `fetchSnapshot` 加了一段临时调试代码，在解析失败时把渲染后的 HTML 落盘到 App 自己的数据目录，重新打包、等真实一轮刷新命中失败分支后，直接读这个文件拿到了用户真实登录会话下的原始 DOM——不是继续对着 GitHub 源码猜。修复：`usage-value`/`reset-time` 都先用非贪婪正则拿到 `<span>...</span>` 之间的完整内容，新增 `stripHydrationComments` 统一剥掉里面的 HTML 注释再解析纯文本。用真实落盘的 HTML 直接验证过（三条用量：滚动 0%/重置 5 小时、每周 57%/重置 3 天 22 小时、每月 28%/重置 29 天 15 小时，跟页面上 SolidJS 传过来的 `resetInSec` 原始数据吻合），验证通过后删掉了临时调试代码 #P0 — 用真实抓到的 DOM 片段替换了 `OpenCodeWorkspaceProviderTests` 里原来手写的 fixture，新增一条 `stripHydrationComments` 单测；真机重新打包验证 `opencode-webview：获取到 3 条额度窗口`，过期日也顺带对上（月度重置日代理）
+- [x] [0.10.0-BUG-A-027] 用户截图指出 opencode 三条额度的重置时间栏跟其余 provider 格式不统一（显示 opencode.ai 页面原文"重置于 5 小时..."/"重置于 3 天 22..."，其余 provider 是统一的 "4h59m"/"6d15h" 紧凑格式）。根因：`OpenCodeWorkspaceProvider` 直接把页面上的 i18n 原文塞进了 `refreshDescription`，没有走 MiniMax/Z Code 等其余 provider 都在用的共享格式化函数 `QuotaResetText.description(for:relativeTo:)`。修复：改成用已经解析出的 `resetsAt` 时间调用同一个函数生成 `refreshDescription`，页面原文只留作 `parseResetSeconds` 的解析输入，不再直接展示给用户。真机验证（`snapshots.json` 落盘结果）：三条额度分别是 `5h0m`/`3d22h`/`29d15h`，跟 Codex/Claude 那一栏的格式完全一致 #P1
+
+### sub/main: API Key 配置行展开态的对齐问题
+
+> 用户给了一张 Z Code 展开编辑态的截图，指出三点：不应该多一条分割线；输入框应该直接代替原来的灰字占位符；输入框左端要跟名称对齐、保存按钮要跟取消按钮对齐。
+
+- [x] [0.10.0-BUG-A-028] 根因：`APIKeyConfigRow` 展开编辑态之前是叠两个 `SettingsRow` + 一个 `SettingsDivider(leading: 36)` 拼出来的——多出的分割线就是这么来的；输入框那一整行（`TextField` + 「保存」按钮）传给的是第二个 `SettingsRow` 的 `label:` 参数而不是 `subtitle:`（`SettingsRow.subtitle` 类型是 `Text`，塞不进一个可交互控件），导致同时传的 `subtitleLeading: 36` 对它完全不生效——`label` 从 `horizontalPadding`（16pt）算起，没有对齐到名称文字的 36pt 起始位置；「保存」按钮也不在跟「取消」同一个 trailing 列里，是紧跟在 `label` HStack 内部的输入框右边。修复：不再复用 `SettingsRow`，改成手动拼一个 `VStack`（跟 `SettingsRow` 完全一致的 padding/字号/颜色常量保持视觉统一）：名称行和「取消/配置」按钮共享一个 `HStack`（trailing 列），下面直接跟一行——非编辑态是灰字状态说明，编辑态换成 `TextField` + 「保存」按钮，`.padding(.leading, 36)` 手动对齐到名称文字下方；「保存」跟随 `TextField` 在同一个 `HStack` 里、贴着行末，跟上一行「取消」按钮共享同一个右边界。整个过程没有再引入任何分割线 #P1
+
+### sub/main: opencode Go 价格固定 $10/月
+
+> 用户反馈 opencode 一直显示"价格=未获取"，指出目前 opencode Go 只有一档订阅（$10/月），可以先写死这个价格占位，同时要做好本地化换算。
+
+- [x] [0.10.0-DATA-B-021] `ProviderPricing.usdMonthlyPrice` 的 `(kind, tier)` 价格表里补上 `(.opencode, "go") → 10`（对应 `OpenCodeWorkspaceProvider` 里硬编码传入的 `tier: "Go"`——不是从页面解析出来的，只要 workspace 确认订阅了 Go 就是这个价格，官网目前只有这一档）。价格表已有的本地化换算逻辑（`localizedMonthlyPrice`：美元区直接显示 `$10/月`，人民币区按 `ExchangeRateProvider` 实时汇率换算显示 `¥XX/月`）自动生效，不需要额外写换算代码 #P2 — 真机验证：`opencode-webview：档位=Go，价格=¥68/月`（$10 × 当前汇率）。如果 opencode 以后上线多档定价，这里要同步改成从页面解析，注释里已经留了提醒。
 
 
 ## Phase - v0.11.0 - 真实自动更新（ad-hoc 预开发版）+ semver 发版

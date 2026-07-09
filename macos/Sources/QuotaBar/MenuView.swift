@@ -92,7 +92,6 @@ struct MenuView: View {
     /// 菜单打开期间刷新循环更新 `coordinator.state` 时，NSHostingView 内的 SwiftUI 树
     /// 会原地重渲染，不需要重建 NSMenuItem / 避免 dropdown 必须开关才看到新数据。
     @ObservedObject var coordinator: RefreshCoordinator
-    let onSaveKey: ((ProviderKind, String) -> Void)?
     let onHideKind: ((ProviderKind) -> Void)?
     @State private var preferencesRevision = 0
 
@@ -103,11 +102,9 @@ struct MenuView: View {
 
     init(
         coordinator: RefreshCoordinator,
-        onSaveKey: ((ProviderKind, String) -> Void)? = nil,
         onHideKind: ((ProviderKind) -> Void)? = nil
     ) {
         self.coordinator = coordinator
-        self.onSaveKey = onSaveKey
         self.onHideKind = onHideKind
     }
 
@@ -136,9 +133,9 @@ struct MenuView: View {
         if state.isEmpty {
             EmptyStateView()
         } else if state.isInitialLoading {
-            LoadingStateView(state: state, onSaveKey: onSaveKey, onHideKind: onHideKind)
+            LoadingStateView(state: state, onHideKind: onHideKind)
         } else {
-            ReadyStateView(state: state, isRefreshing: isRefreshing, onSaveKey: onSaveKey, onHideKind: onHideKind)
+            ReadyStateView(state: state, isRefreshing: isRefreshing, onHideKind: onHideKind)
         }
     }
 }
@@ -203,7 +200,6 @@ private struct EmptyStateView: View {
 
 private struct LoadingStateView: View {
     let state: DashboardState
-    let onSaveKey: ((ProviderKind, String) -> Void)?
     let onHideKind: ((ProviderKind) -> Void)?
 
     var body: some View {
@@ -224,7 +220,6 @@ private struct LoadingStateView: View {
                     index: index,
                     allSnapshots: state.snapshots,
                     isLoading: true,
-                    onSaveKey: onSaveKey,
                     onHideKind: onHideKind
                 )
 
@@ -249,7 +244,6 @@ private struct LoadingStateView: View {
 private struct ReadyStateView: View {
     let state: DashboardState
     let isRefreshing: Bool
-    let onSaveKey: ((ProviderKind, String) -> Void)?
     let onHideKind: ((ProviderKind) -> Void)?
 
     var body: some View {
@@ -272,7 +266,6 @@ private struct ReadyStateView: View {
                     index: index,
                     allSnapshots: state.snapshots,
                     isLoading: snapshot.availability == .loading,
-                    onSaveKey: onSaveKey,
                     onHideKind: onHideKind
                 )
 
@@ -351,7 +344,6 @@ private struct SummaryView: View {
 private struct PlanSection: View {
     let snapshot: ProviderSnapshot
     let isLoading: Bool
-    let onSaveKey: ((ProviderKind, String) -> Void)?
     let onHideKind: ((ProviderKind) -> Void)?
 
     /// 该 provider 的订阅组（按用户订阅组排序）及其 quota list。
@@ -381,7 +373,7 @@ private struct PlanSection: View {
                 } else if snapshot.quotas.isEmpty {
                     // 非授权流程只拿到了 provider 存在的信号（如 tier-only CLI 兜底层），
                     // 额度本身还没有——额度栏自己请求授权，不依赖 header 那边的按钮。
-                    QuotaAuthPromptRow(kind: snapshot.kind)
+                    QuotaAuthPromptRow(kind: snapshot.kind, fetchedAt: snapshot.fetchedAt)
                 } else if hasMultipleSubscriptionGroups {
                     // 多订阅组 provider：子组作为拖拽边界存在，但不渲染额外标签行。
                     // 状态灯仍只在 provider header 上显示，组内多条 quota 作为整组移动。
@@ -408,33 +400,13 @@ private struct PlanSection: View {
                 // 服务端已经明确告知"没有有效订阅"（不是获取失败、不是不清楚）：
                 // 直接显示灰色定论文案，不拼接原始技术性 reason（那是给日志看的）。
                 StatusRow(text: "未订阅或订阅已过期")
-            case .needsConfiguration(let reason):
-                if snapshot.kind == .minimax, let onSaveKey {
-                    MiniMaxKeyInputField(
-                        reason: reason,
-                        onSave: { key in onSaveKey(snapshot.kind, key) }
-                    )
-                } else if snapshot.kind.webAuthorizationURL != nil && ProviderKind.webViewQuotaCapableKinds.contains(snapshot.kind) {
-                    // 还不清楚这个 provider 到底有没有订阅（拿数据失败/凭证问题等，
-                    // 不是服务端明确告知"未订阅"）：只给一个清晰的操作入口，不展示
-                    // 原始技术性 reason 文本（例如内部拼接的多条错误信息），要么点开
-                    // WebView 授权，要么等下一轮非授权流程再试。
-                    //
-                    // 同 `missingTierNeedsAuth`/`QuotaAuthPromptRow`：额外要求
-                    // `webViewQuotaCapableKinds`，因为 Antigravity/Z Code 的
-                    // WebView 登录窗口没有接入任何能解出额度的 dashboard 接口，
-                    // 在这里展示这个按钮同样是个兑现不了的承诺。
-                    InlineActionButton(
-                        title: Self.webAuthorizationTitle(for: snapshot.kind),
-                        action: { WebAuthorizationController.shared.openAuthorization(for: snapshot.kind) }
-                    )
-                    .frame(height: 16)
-                    .padding(.top, MenuDashboardStyle.quotaRowTop)
-                    .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
-                } else {
-                    // 没有 WebView 授权入口可给：只能展示原始 reason，没有更好的选择。
-                    StatusRow(text: "待配置 · \(reason)")
-                }
+            case .needsConfiguration:
+                // 还不清楚这个 provider 到底有没有订阅（拿数据失败/凭证问题等，不是
+                // 服务端明确告知"未订阅"）。不展示原始技术性 reason（那种内部拼接的
+                // 多条错误信息、HTTP 状态码 JSON 之类的只写进日志，不应该出现在
+                // dropdown 上——2026-07-08 用户反馈 Antigravity/Z Code 曾经在这里
+                // 直接展示过原始报错）。授权引导的选择逻辑见 `NeedsConfigurationRow`。
+                NeedsConfigurationRow(kind: snapshot.kind, fetchedAt: snapshot.fetchedAt)
             case .notInstalled:
                 StatusRow(text: "未安装")
             case .fetchFailed(let reason):
@@ -460,6 +432,57 @@ private struct PlanSection: View {
             parts.append("到期 \(f.string(from: expiredAt))")
         }
         return parts.joined(separator: " · ")
+    }
+
+}
+
+/// `.needsConfiguration` 状态下的授权引导行。
+///
+/// 按 `ProviderKind.firstPendingAuthRemediationTier()` 的结果展示（FDA > WebView >
+/// API 优先级，且**跳过已经完成授权的 tier**——2026-07-09 用户实测 opencode 保存
+/// key 后 dropdown 依然提示"通过 API Key 授权"，是因为之前只看"支不支持"、不看
+/// "是否已配置"）：
+/// - `.webView` → 可点击的「打开 WebView 授权」按钮；
+/// - `.apiKey` → 灰字指向 Preferences（真正的输入框在「偏好设置 → 模型」页）；
+/// - `nil`（没有任何 tier，或全部 tier 都已完成授权但仍无额度）→ 诚实的终态文案
+///   "暂无额度数据"，不再展示任何兑现不了的"去授权"承诺。
+///
+/// tier 判断里的 WebView 部分需要异步读 Cookie 存储，所以先用"静态能力列表第一项"
+/// 作为初值渲染（绝大多数情况下跟异步结果一致，避免闪烁），`.task` 解析完成后再
+/// 修正；`fetchedAt` 作为 task id，保证每轮刷新后重新判断（比如用户刚在 Preferences
+/// 里保存了 key，`.providerCredentialsDidChange` 触发的刷新会带来新的 fetchedAt）。
+private struct NeedsConfigurationRow: View {
+    let kind: ProviderKind
+    let fetchedAt: Date
+
+    @State private var pendingTier: ProviderKind.AuthRemediationTier?
+
+    init(kind: ProviderKind, fetchedAt: Date) {
+        self.kind = kind
+        self.fetchedAt = fetchedAt
+        _pendingTier = State(initialValue: kind.availableAuthRemediationTiers.first)
+    }
+
+    var body: some View {
+        Group {
+            switch pendingTier {
+            case .webView:
+                InlineActionButton(
+                    title: Self.webAuthorizationTitle(for: kind),
+                    action: { WebAuthorizationController.shared.openAuthorization(for: kind) }
+                )
+                .frame(height: 16)
+                .padding(.top, MenuDashboardStyle.quotaRowTop)
+                .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
+            case .apiKey:
+                StatusRow(text: "在 Preferences 中通过 API Key 授权")
+            case nil:
+                StatusRow(text: "暂无额度数据")
+            }
+        }
+        .task(id: fetchedAt) {
+            pendingTier = await kind.firstPendingAuthRemediationTier()
+        }
     }
 
     private static func webAuthorizationTitle(for kind: ProviderKind) -> String {
@@ -571,7 +594,6 @@ private struct DraggablePlanSection: View {
     let index: Int
     let allSnapshots: [ProviderSnapshot]
     let isLoading: Bool
-    let onSaveKey: ((ProviderKind, String) -> Void)?
     let onHideKind: ((ProviderKind) -> Void)?
 
     @State private var isDropTarget = false
@@ -580,7 +602,6 @@ private struct DraggablePlanSection: View {
         PlanSection(
             snapshot: snapshot,
             isLoading: isLoading,
-            onSaveKey: onSaveKey,
             onHideKind: onHideKind
         )
         .contentShape(Rectangle())
@@ -658,228 +679,9 @@ private struct ProviderDropDelegate: DropDelegate {
     }
 }
 
-// MARK: - MiniMax Key 输入字段
-
-/// 在 dropdown 里显示 MiniMax API Key 状态，并提供「输入/修改」按钮。
-/// 按钮点击后弹出 NSAlert（避免 NSMenu modal 循环导致 NSTextField 焦点丢失），
-/// 用户在 alert 中输入 API Key 后保存到 ~/.mavis/config.yaml。
-private struct MiniMaxKeyInputField: View {
-    let reason: String
-    let onSave: (String) -> Void
-
-    @State private var keyInput: String = ""
-    @State private var savedKeyState: MiniMaxConfigProvider.KeyInputState =
-        MiniMaxConfigProvider.currentKeyState()
-    @State private var lastError: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            switch savedKeyState {
-            case .missing:
-                Text("待输入 Key · \(reason)")
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundStyle(Palette.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            case .placeholder(let current):
-                Text("待替换占位符 · 当前 `\(current)`")
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundStyle(Palette.warning)
-                    .fixedSize(horizontal: false, vertical: true)
-            case .configured(let masked):
-                Text("Key 已配置 · \(masked)（重新输入会覆盖）")
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundStyle(Palette.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            HStack(spacing: 6) {
-                APIKeyTextField(
-                    text: $keyInput,
-                    placeholder: "粘贴或输入 MiniMax API Key",
-                    onSubmit: { save() }
-                )
-
-                Button(action: save) {
-                    Text("保存")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .controlSize(.regular)
-                .disabled(keyInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-
-            if let lastError {
-                Text(lastError)
-                    .font(.system(size: 10))
-                    .foregroundStyle(Color(hex: "#FF453A"))
-            }
-        }
-        .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
-    }
-
-    private func save() {
-        let trimmed = keyInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        do {
-            try MiniMaxConfigProvider.save(apiKey: trimmed)
-            keyInput = ""
-            savedKeyState = MiniMaxConfigProvider.currentKeyState()
-            lastError = nil
-            onSave(trimmed)
-        } catch {
-            lastError = error.localizedDescription
-        }
-    }
-}
-
-// MARK: - AppKit TextField（在 NSMenu 的 custom view 中保持焦点和输入）
+// MARK: - 隐藏按钮（NSButton 包装，解决 NSMenu 中 SwiftUI Button 点击被拦截）
 
 import AppKit
-
-/// 在 NSMenu 的 trackMouse 循环中保持焦点和输入能力。
-///
-/// 关键：acceptsFirstMouse = true，让 NSTextField 在窗口非 key 时也能接收 mouseDown。
-/// mouseDown 中直接请求 firstResponder，不调用 super.mouseDown（避免 NSMenu 关闭）。
-/// mouseUp 也不调用 super，并通过 Coordinator 的 NSEvent 拦截器阻止 NSMenu 收到 mouseUp。
-private final class FocusTextField: NSTextField {
-    override var acceptsFirstResponder: Bool { true }
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-
-    override func mouseDown(with event: NSEvent) {
-        window?.makeFirstResponder(self)
-    }
-
-    override func mouseUp(with event: NSEvent) {
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-    }
-}
-
-/// 用 AppKit NSTextField 包装成 SwiftUI 的 NSViewRepresentable，
-/// 确保在 NSMenu 的 custom view 中能正常获取焦点和接收键盘输入。
-///
-/// 使用 `bezelStyle = .roundedBezel` + `controlSize = .regular`，外观接近原生 SwiftUI `.roundedBorder`。
-/// 同时注册 `NSEvent` 本地监听器拦截 `Cmd+V`（解决 NSMenu 中 Paste 不可用）和 `mouseUp`（阻止菜单关闭）。
-struct APIKeyTextField: NSViewRepresentable {
-    @Binding var text: String
-    let placeholder: String
-    let onSubmit: () -> Void
-
-    func makeNSView(context: Context) -> NSTextField {
-        let textField = FocusTextField()
-        textField.placeholderString = placeholder
-        textField.isEditable = true
-        textField.isSelectable = true
-        textField.isBezeled = true
-        textField.bezelStyle = .roundedBezel
-        textField.isBordered = true
-        textField.controlSize = .regular
-        textField.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
-        textField.focusRingType = .default
-        textField.usesSingleLineMode = true
-        textField.lineBreakMode = .byTruncatingTail
-        textField.drawsBackground = false
-        textField.backgroundColor = NSColor.clear
-        textField.textColor = NSColor.labelColor
-        textField.delegate = context.coordinator
-        textField.target = context.coordinator
-        textField.action = #selector(Coordinator.submit)
-        textField.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        textField.translatesAutoresizingMaskIntoConstraints = false
-
-        // 右键菜单支持 Paste
-        let menu = NSMenu()
-        let pasteItem = NSMenuItem(title: "粘贴", action: #selector(Coordinator.pasteMenuItem), keyEquivalent: "")
-        pasteItem.target = context.coordinator
-        menu.addItem(pasteItem)
-        textField.menu = menu
-
-        context.coordinator.textField = textField
-        return textField
-    }
-
-    func updateNSView(_ nsView: NSTextField, context: Context) {
-        if nsView.stringValue != text {
-            nsView.stringValue = text
-        }
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-
-    class Coordinator: NSObject, NSTextFieldDelegate {
-        var parent: APIKeyTextField
-        weak var textField: NSTextField?
-        private var pasteMonitor: Any?
-        private var mouseUpMonitor: Any?
-
-        init(_ parent: APIKeyTextField) {
-            self.parent = parent
-            super.init()
-
-            // 拦截 mouseUp，阻止 NSMenu 在点击输入框时关闭菜单
-            mouseUpMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
-                guard let self = self else { return event }
-                let location = event.locationInWindow
-                let field = self.textField
-                Task { @MainActor in
-                    guard let f = field else { return }
-                    let point = f.convert(location, from: nil)
-                    if f.hitTest(point) != nil {
-                        // 点击在 textField 上，不返回事件（NSMenu 不关闭）
-                    }
-                }
-                return event
-            }
-
-            // 拦截 Cmd+V 粘贴（NSMenu 的 modal 事件循环会阻断标准 Edit 菜单）
-            pasteMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-                guard let self = self else { return event }
-                if event.modifierFlags.contains(.command) && event.keyCode == 9 {
-                    // keyCode 9 = V key
-                    let field = self.textField
-                    Task { @MainActor in
-                        if let f = field {
-                            NSApp.sendAction(#selector(NSText.paste(_:)), to: f, from: nil)
-                        }
-                    }
-                    return nil
-                }
-                return event
-            }
-        }
-
-        func controlTextDidChange(_ obj: Notification) {
-            if let textField = obj.object as? NSTextField {
-                parent.text = textField.stringValue
-            }
-        }
-
-        @MainActor
-        @objc func submit() {
-            parent.onSubmit()
-        }
-
-        @MainActor
-        @objc func pasteMenuItem() {
-            if let field = textField {
-                NSApp.sendAction(#selector(NSText.paste(_:)), to: field, from: nil)
-            }
-        }
-
-        deinit {
-            if let monitor = mouseUpMonitor {
-                NSEvent.removeMonitor(monitor)
-            }
-            if let monitor = pasteMonitor {
-                NSEvent.removeMonitor(monitor)
-            }
-        }
-    }
-}
-
-// MARK: - 隐藏按钮（NSButton 包装，解决 NSMenu 中 SwiftUI Button 点击被拦截）
 
 private struct HideButton: NSViewRepresentable {
     let action: () -> Void
@@ -940,12 +742,21 @@ private struct PlanHeader: View {
     /// 对 Antigravity/Z Code 这种只用 WebView 登录窗口抓订阅到期日、完全没有档位
     /// 来源的 provider，会展示一个登录了也没用的虚假授权引导（2026-07-08 用户实测
     /// 反馈）。
+    /// App 内 WebView 会话是否已经有这个 provider 的登录 Cookie。已登录时不再展示
+    /// 任何"打开 WebView 授权"引导——那是个已经兑现过的承诺，再点一次也不会带来新
+    /// 信息（2026-07-09 用户实测：Claude WebView 已登录、额度也正是从 webview 层取到
+    /// 的，但因为账单页日期提取失败，header 右侧仍显示"打开 WebView 授权"，让用户
+    /// 误以为登录根本没被检测到）。由下方 `.task` 异步填充，初值 false（未知时宁可
+    /// 多显示引导，也不隐藏一个真正需要的入口）。
+    @State private var webViewSessionAuthorized = false
+
     private var missingTierNeedsAuth: Bool {
         snapshot.availability == .available
             && tierName == nil
             && !snapshot.quotas.isEmpty
             && snapshot.kind.webAuthorizationURL != nil
             && ProviderKind.webViewQuotaCapableKinds.contains(snapshot.kind)
+            && !webViewSessionAuthorized
     }
 
     /// 触发「显示到期日」的前置条件：必须有到期日、且处于已配置可用状态。
@@ -996,6 +807,7 @@ private struct PlanHeader: View {
             && snapshot.subscriptionExpiresAt == nil
             && snapshot.kind.webAuthorizationURL != nil
             && SubscriptionExpirySources.sources(for: snapshot.kind).contains { $0.kind == .headlessDOM }
+            && !webViewSessionAuthorized
     }
 
     private static let authPromptText = "打开 WebView 授权"
@@ -1098,6 +910,14 @@ private struct PlanHeader: View {
                 .help("隐藏此订阅（等同于在偏好设置「模型」页关闭）")
             }
         }
+        .task(id: snapshot.fetchedAt) {
+            let domains = snapshot.kind.dashboardCookieDomains
+            guard !domains.isEmpty else {
+                webViewSessionAuthorized = false
+                return
+            }
+            webViewSessionAuthorized = await WKWebViewHeadlessLoader.appSessionHasCookies(for: domains)
+        }
     }
 }
 
@@ -1109,24 +929,38 @@ private struct PlanHeader: View {
 /// 都不带——颜色本身已经足够表明"可点击"，蓝色 + 下划线是过度强调。
 private struct QuotaAuthPromptRow: View {
     let kind: ProviderKind
+    let fetchedAt: Date
 
-    /// 同 `PlanHeader.missingTierNeedsAuth`：只有真的注册了 WebView 会话额度策略的
-    /// provider 才展示可点击的授权引导，否则会承诺一个登录了也拿不到额度的假入口
-    /// （2026-07-08 用户实测 Antigravity 反馈）。
-    private var canOfferWebAuthorization: Bool {
-        kind.webAuthorizationURL != nil && ProviderKind.webViewQuotaCapableKinds.contains(kind)
+    @State private var pendingTier: ProviderKind.AuthRemediationTier?
+
+    init(kind: ProviderKind, fetchedAt: Date) {
+        self.kind = kind
+        self.fetchedAt = fetchedAt
+        _pendingTier = State(initialValue: kind.availableAuthRemediationTiers.first)
     }
 
     var body: some View {
         Group {
-            if canOfferWebAuthorization {
+            // 跟 `NeedsConfigurationRow` 同一套判断（`firstPendingAuthRemediationTier`：
+            // FDA > WebView > API 优先级 + 跳过已完成授权的 tier），保证同一个 provider
+            // 不会因为落在不同的 availability 分支（这里是 `.available` + 空 quotas，
+            // 那边是 `.needsConfiguration`）而展示两套不一致的引导文案。没有任何待完成
+            // tier 时（Antigravity/opencode 等本来就不支持，或者像 opencode 配好 key
+            // 之后所有 tier 都已完成）只能诚实展示"暂无额度数据"，不能承诺一个登录/
+            // 填 key 了也没用的假入口（2026-07-08/09 用户两次实测反馈）。
+            switch pendingTier {
+            case .webView:
                 Text("打开 WebView 授权")
                     .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .medium))
                     .foregroundStyle(Palette.blue)
                     .onTapGesture {
                         WebAuthorizationController.shared.openAuthorization(for: kind)
                     }
-            } else {
+            case .apiKey:
+                Text("在 Preferences 中通过 API Key 授权")
+                    .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
+                    .foregroundStyle(Palette.secondary)
+            case nil:
                 Text("暂无额度数据")
                     .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
                     .foregroundStyle(Palette.secondary)
@@ -1134,6 +968,9 @@ private struct QuotaAuthPromptRow: View {
         }
         .padding(.top, MenuDashboardStyle.quotaRowTop)
         .padding(.leading, MenuDashboardStyle.leadingGlyphColumn)
+        .task(id: fetchedAt) {
+            pendingTier = await kind.firstPendingAuthRemediationTier()
+        }
     }
 }
 

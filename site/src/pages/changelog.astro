@@ -1,0 +1,157 @@
+---
+// 更新日志页面 — 站内独立页面，不跳转 GitHub CHANGELOG.md。
+// 内容按版本倒序列出，每个版本一段：version + date + title + 面向用户的要点列表。
+// 复用 Layout / Nav / Footer，保持视觉与首页一致。
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+const ENTRIES = [
+  { key: "v10", bullets: 3 },
+  { key: "v9", bullets: 4 },
+  { key: "v5", bullets: 2 },
+  { key: "v2", bullets: 3 },
+  { key: "v1", bullets: 2 },
+];
+---
+
+<Layout
+  title="Changelog — Quota Bar"
+  description="Quota Bar 更新日志：每个版本都在做什么。"
+>
+  <Nav />
+  <main class="site-main">
+    <section class="changelog section">
+      <div class="container-content">
+        <a class="changelog__back" href="/" data-i18n="changelog.back">← Back to home</a>
+
+        <div class="changelog__header">
+          <h1 class="changelog__heading" data-i18n="changelog.heading">Changelog</h1>
+          <p class="changelog__subheading" data-i18n="changelog.subheading">
+            What's new in Quota Bar, straight from the build log.
+          </p>
+        </div>
+
+        <ol class="changelog__list">
+          {ENTRIES.map((entry) => (
+            <li class="changelog__entry">
+              <div class="changelog__meta">
+                <span class="changelog__version" data-i18n={`changelog.${entry.key}.version`}></span>
+                <span class="changelog__date" data-i18n={`changelog.${entry.key}.date`}></span>
+              </div>
+              <h2 class="changelog__title" data-i18n={`changelog.${entry.key}.title`}></h2>
+              <ul class="changelog__bullets">
+                {Array.from({ length: entry.bullets }).map((_, i) => (
+                  <li data-i18n={`changelog.${entry.key}.bullet${i + 1}`}></li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .site-main {
+    /* 给 fixed nav 留出空间，与首页一致 */
+    padding-top: 8rem;     /* 128px */
+    padding-bottom: 6rem;  /* 96px */
+  }
+
+  .changelog__back {
+    display: inline-block;
+    font-size: var(--text-sm);  /* 13px */
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-7);  /* 32px */
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+  .changelog__back:hover {
+    color: var(--text-primary);
+  }
+
+  .changelog__header {
+    margin-bottom: var(--space-8);  /* 48px */
+  }
+
+  .changelog__heading {
+    font-size: var(--text-5xl);  /* 60px — 页面级标题，比 section h2 更重 */
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    margin-bottom: var(--space-3);  /* 12px */
+  }
+  @media (max-width: 768px) {
+    .changelog__heading {
+      font-size: 40px;
+    }
+  }
+
+  .changelog__subheading {
+    font-size: var(--text-lg);  /* 18px */
+    color: var(--text-secondary);
+  }
+
+  .changelog__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);  /* 24px */
+    list-style: none;
+  }
+
+  .changelog__entry {
+    padding: var(--space-7);  /* 32px */
+    background: var(--bg-glass);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);  /* 16px */
+  }
+
+  .changelog__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);  /* 12px */
+    margin-bottom: var(--space-3);  /* 12px */
+  }
+
+  .changelog__version {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);  /* 12px */
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .changelog__date {
+    font-size: var(--text-xs);  /* 12px */
+    color: var(--text-muted);
+  }
+
+  .changelog__title {
+    font-size: var(--text-xl);  /* 22px */
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.005em;
+    margin-bottom: var(--space-4);  /* 16px */
+  }
+
+  .changelog__bullets {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);  /* 8px */
+    font-size: var(--text-sm);  /* 13px */
+    line-height: 1.6;
+    color: var(--text-secondary);
+    padding-left: var(--space-5);  /* 20px */
+    list-style: disc;
+  }
+  .changelog__bullets li::marker {
+    color: var(--text-muted);
+  }
+</style>

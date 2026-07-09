@@ -12,6 +12,10 @@ final class ZCodeAuthProvider: QuotaProvider, @unchecked Sendable {
 
     init(
         configPaths: [String] = [
+            // Quota Bar 自己的手动输入 key 存储（见 `ZCodeManualKeyStore`）放在最前——
+            // 用户在「偏好设置 → 模型」手动填的 key 应该优先于自动探测到的第三方
+            // CLI 配置文件，即便后者存在但已经失效/过期。
+            ZCodeManualKeyStore.defaultConfigPath,
             "~/.zcode/v2/config.json",
             "~/.zcode/v2/credentials.json",
             "~/.zcode/config.json",
@@ -685,5 +689,76 @@ private enum FlexibleQuotaDate: Decodable {
 private extension String {
     var nilIfEmpty: String? {
         isEmpty ? nil : self
+    }
+}
+
+// MARK: - 手动输入 API Key（偏好设置 → 模型）
+
+/// Z Code 官方 CLI 会把 API key 写进 `~/.zcode/v2/config.json` 等文件，但如果用户
+/// 没装那个 CLI、只是想在 Quota Bar 里手动粘贴一个 key，此前完全没有入口——`Strategies`
+/// 里也没有任何策略会写文件。这里用一个 Quota Bar 自己独占的 JSON 文件
+/// （不是任何第三方 CLI 的真实配置格式，纯粹是我们自己存一个 `{"apiKey": "..."}`），
+/// `ZCodeAuthProvider.configPaths` 已经把它排在最前面——复用其现成的
+/// `flattenStrings` + `isLikelyAPIKey` 通用解析逻辑即可识别，不需要额外写解析代码。
+enum ZCodeManualKeyStore {
+    /// Key 输入状态：跟 `MiniMaxConfigProvider.KeyInputState` 同类设计，但没有
+    /// "占位符" 这一档——这个文件只有 Quota Bar 自己写，不会像 mavis 的 YAML 模板
+    /// 那样带着 `sk-xxx` 占位符发布给用户。
+    enum KeyInputState: Equatable {
+        case missing
+        case configured(masked: String)
+
+        var isConfigured: Bool {
+            if case .configured = self { return true }
+            return false
+        }
+    }
+
+    static var defaultConfigPath: String {
+        QuotaBarDataDirectory.defaultURL().appendingPathComponent("zcode-api-key.json").path
+    }
+
+    static func currentKeyState(configPath: String = defaultConfigPath) -> KeyInputState {
+        guard let key = readAPIKey(configPath: configPath), !key.isEmpty else {
+            return .missing
+        }
+        let prefix = String(key.prefix(8))
+        return .configured(masked: "\(prefix)···\(key.suffix(4))")
+    }
+
+    static func readAPIKey(configPath: String = defaultConfigPath) -> String? {
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: String],
+              let key = json["apiKey"]?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !key.isEmpty
+        else { return nil }
+        return key
+    }
+
+    enum PersistError: LocalizedError {
+        case emptyKey
+        case writeFailed(underlying: String)
+
+        var errorDescription: String? {
+            switch self {
+            case .emptyKey: return "API Key 不能为空"
+            case .writeFailed(let detail): return "保存失败：\(detail)"
+            }
+        }
+    }
+
+    static func save(apiKey: String, configPath: String = defaultConfigPath) throws {
+        let trimmed = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw PersistError.emptyKey }
+
+        let url = URL(fileURLWithPath: configPath)
+        do {
+            try QuotaBarDataDirectory.ensureExists(url.deletingLastPathComponent())
+            let data = try JSONSerialization.data(withJSONObject: ["apiKey": trimmed])
+            try data.write(to: url, options: .atomic)
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        } catch {
+            throw PersistError.writeFailed(underlying: error.localizedDescription)
+        }
     }
 }

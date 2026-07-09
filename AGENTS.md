@@ -264,6 +264,16 @@
 - 每次修改 `VERSION` 文件都必须在当次 agent-log 里明确写出：改了哪一位、为什么这么判断（对应哪个改动/Phase），不能只改文件不留痕迹。
 - 不需要每次任务都 bump——大多数常规修复任务改完代码后 `VERSION` 保持不变即可，只有确实达到上面判断标准时才动它。
 
+### 打包/推送时的 site 同步规则
+
+- 每次打包（`make app`）或推送 main（触发 Release workflow）时，如果本次改动更新了 `VERSION` 文件（即版本号发生了 bump），必须同步在 `site/src/pages/changelog.astro` 对应的 `site/src/i18n/dict.ts` 里追加一条新版本记录（`changelog.v<majorminor>.version` / `.date` / `.title` / `.bullet1..N`，中英文都要写），面向用户总结这次改动带来的可感知变化；不要照抄 commit message 或 `CHANGELOG.md` 的开发者向措辞。
+- 每次打包或推送时，如果本次改动增加或减少了 macOS 应用支持的 Provider（`ProviderKind` 新增/移除成员），必须同步更新营销主页：
+  - `site/src/components/Hero.astro` 的 `AGENTS_EN` / `AGENTS_ZH` 打字机轮播数组。
+  - `site/src/components/SupportedServices.astro` 的 `PROVIDERS` 数组。
+  - `site/src/layouts/Layout.astro` 的默认 `description`（SEO 描述里列举的服务名单）。
+- 上述 Provider 名单变化通常也构成一次版本号 bump（新 Provider 属于用户可感知新能力，见上文版本号维护规则），因此按第一条规则同步更新 changelog 即可，不需要重复记录。
+- 如果一次任务既没有 bump 版本号、也没有增删 Provider，不需要触碰 `site/` 下的上述文件。
+
 ### 文档入口
 
 - 项目说明：`README.md`

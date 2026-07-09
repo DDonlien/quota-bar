@@ -291,16 +291,22 @@ enum ProviderPipelines {
         )
     }
 
-    /// opencode 没有官方额度百分比接口（见 `OpenCodeAuthProvider` 顶部注释），
-    /// 目前只有「已配置」这一层：`~/.local/share/opencode/auth.json` 存在且至少配置
-    /// 了一个下游 provider。没有额外 fallback 层——不引入浏览器 cookie 抓取未公开
-    /// dashboard 的方案。
+    /// opencode 两层：
+    /// 1. `opencode-auth`（配置文件）：读 `~/.local/share/opencode/auth.json` 确认
+    ///    已配置 + 推断档位（Go/Zen/BYOK），不产出额度；
+    /// 2. `opencode-webview`（App WebView 会话）：headless 加载 console 的 workspace
+    ///    Go 页，解析 Rolling/Weekly/Monthly 三条真实用量 + 以 monthly 重置日作为
+    ///    续费日代理（2026-07-09 用户提供真实页面路径后接入，见
+    ///    `OpenCodeWorkspaceProvider` 顶部说明；此前这里注释写"不引入抓未公开
+    ///    dashboard 的方案"——console 页面结构现在有稳定的 data-slot 锚点且用户
+    ///    明确要这条能力，立场更新）。
     @MainActor
     private static func opencodePipeline() -> FetchPipeline {
         FetchPipeline(
             kind: .opencode,
             strategies: [
                 QuotaProviderStrategy(OpenCodeAuthProvider()),
+                QuotaProviderStrategy(OpenCodeWorkspaceProvider()),
             ],
             runMode: .sequential
         )

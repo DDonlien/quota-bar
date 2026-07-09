@@ -851,6 +851,12 @@ enum ProviderPricing {
         // 未经真实账号验证，不猜测映射，保持 nil（README 标注为待验证）。
         case (.claude, "pro"):
             return 20
+        // opencode Go：官网目前只有一档订阅，固定 $10/月（`OpenCodeWorkspaceProvider`
+        // 里 tier 写死传"Go"，不是从页面解析的——只要 workspace 确认订阅了 Go 就是
+        // 这个价格）。2026-07-09 用户反馈价格一直显示"未获取"时补的占位固定值；
+        // 如果 opencode 以后上线多档定价，这里要同步改成从页面解析。
+        case (.opencode, "go"):
+            return 10
         default:
             return nil
         }

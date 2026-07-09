@@ -17,15 +17,21 @@ final class OpenCodeAuthProvider: QuotaProvider, @unchecked Sendable {
     var displayName: String { kind.displayName }
 
     private let authPaths: [String]
+    private let manualKeyConfigPath: String
     private let dateProvider: () -> Date
 
     init(
         authPaths: [String] = OpenCodeAuthProvider.defaultAuthPaths(
             environment: ProcessInfo.processInfo.environment
         ),
+        // 注入点：测试用来避免读写 `OpenCodeManualKeyStore.defaultConfigPath` 背后
+        // 真实用户机器上的 `~/Library/Application Support/QuotaBar/opencode-api-key.json`
+        // （同类问题见 `FetchPipeline` 的 `checkLog` 注入点）。
+        manualKeyConfigPath: String = OpenCodeManualKeyStore.defaultConfigPath,
         dateProvider: @escaping () -> Date = Date.init
     ) {
         self.authPaths = authPaths
+        self.manualKeyConfigPath = manualKeyConfigPath
         self.dateProvider = dateProvider
     }
 
@@ -42,19 +48,34 @@ final class OpenCodeAuthProvider: QuotaProvider, @unchecked Sendable {
 
     func fetchSnapshot(timeout: TimeInterval) async throws -> ProviderSnapshot {
         let fetchedAt = dateProvider()
-        guard let providerIDs = loadConfiguredProviderIDs(), !providerIDs.isEmpty else {
-            throw QuotaFetchError.missingCredentials(
-                detail: "未找到 opencode 凭证（~/.local/share/opencode/auth.json），请先运行 `opencode auth login`"
+        if let providerIDs = loadConfiguredProviderIDs(), !providerIDs.isEmpty {
+            return ProviderSnapshot(
+                kind: .opencode,
+                subscriptionTier: Self.tierSummary(providerIDs: providerIDs),
+                availability: .available,
+                quotas: [],
+                monthlyPrice: nil,
+                fetchedAt: fetchedAt
             )
         }
 
-        return ProviderSnapshot(
-            kind: .opencode,
-            subscriptionTier: Self.tierSummary(providerIDs: providerIDs),
-            availability: .available,
-            quotas: [],
-            monthlyPrice: nil,
-            fetchedAt: fetchedAt
+        // 没装官方 CLI（找不到 auth.json）时，用户可能已经在「偏好设置 → 模型」页手动
+        // 粘贴过一个 API Key（`OpenCodeManualKeyStore`）——跟 auth.json 里具体是哪个
+        // 下游 provider 不同，手动粘贴的 key 无法反推出 Go/Zen/BYOK 里的具体档位，
+        // 统一按 BYOK 展示（见 `OpenCodeManualKeyStore` 顶部说明）。
+        if OpenCodeManualKeyStore.currentKeyState(configPath: manualKeyConfigPath).isConfigured {
+            return ProviderSnapshot(
+                kind: .opencode,
+                subscriptionTier: "BYOK",
+                availability: .available,
+                quotas: [],
+                monthlyPrice: nil,
+                fetchedAt: fetchedAt
+            )
+        }
+
+        throw QuotaFetchError.missingCredentials(
+            detail: "未找到 opencode 凭证（~/.local/share/opencode/auth.json），请先运行 `opencode auth login`，或在「偏好设置 → 模型」里手动粘贴 API Key"
         )
     }
 
@@ -99,5 +120,74 @@ final class OpenCodeAuthProvider: QuotaProvider, @unchecked Sendable {
         if providerIDs.contains("opencode-go") { return "Go" }
         if providerIDs.contains("opencode") { return "Zen" }
         return "BYOK"
+    }
+}
+
+// MARK: - 手动 API Key 存储
+
+/// opencode 没有官方额度接口（见文件顶部说明），手动粘贴的 key 唯一的作用是让
+/// 没装官方 CLI（找不到 `~/.local/share/opencode/auth.json`）的用户也能让 Quota Bar
+/// 确认"我已经配置好了"，展示成 `.available` + 空 quotas + "BYOK" 档位——跟真实
+/// auth.json 解析出的 Go/Zen 具体档位不同，纯手动 key 拿不到那一层信息，统一按最
+/// 保守的 BYOK 展示。存储格式和 `ZCodeAuthProvider.ZCodeManualKeyStore` 完全一致
+/// （Quota Bar 自己独占的 JSON 文件，`{"apiKey": "..."}`），复制一份而不是共享类型
+/// 是因为两者语义不同（Z Code 的 key 是真实调用凭证，这里只是"已配置"的确认信号）。
+enum OpenCodeManualKeyStore {
+    enum KeyInputState: Equatable {
+        case missing
+        case configured(masked: String)
+
+        var isConfigured: Bool {
+            if case .configured = self { return true }
+            return false
+        }
+    }
+
+    static var defaultConfigPath: String {
+        QuotaBarDataDirectory.defaultURL().appendingPathComponent("opencode-api-key.json").path
+    }
+
+    static func currentKeyState(configPath: String = defaultConfigPath) -> KeyInputState {
+        guard let key = readAPIKey(configPath: configPath), !key.isEmpty else {
+            return .missing
+        }
+        let prefix = String(key.prefix(8))
+        return .configured(masked: "\(prefix)···\(key.suffix(4))")
+    }
+
+    static func readAPIKey(configPath: String = defaultConfigPath) -> String? {
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: String],
+              let key = json["apiKey"]?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !key.isEmpty
+        else { return nil }
+        return key
+    }
+
+    enum PersistError: LocalizedError {
+        case emptyKey
+        case writeFailed(underlying: String)
+
+        var errorDescription: String? {
+            switch self {
+            case .emptyKey: return "API Key 不能为空"
+            case .writeFailed(let detail): return "保存失败：\(detail)"
+            }
+        }
+    }
+
+    static func save(apiKey: String, configPath: String = defaultConfigPath) throws {
+        let trimmed = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw PersistError.emptyKey }
+
+        let url = URL(fileURLWithPath: configPath)
+        do {
+            try QuotaBarDataDirectory.ensureExists(url.deletingLastPathComponent())
+            let data = try JSONSerialization.data(withJSONObject: ["apiKey": trimmed])
+            try data.write(to: url, options: .atomic)
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        } catch {
+            throw PersistError.writeFailed(underlying: error.localizedDescription)
+        }
     }
 }

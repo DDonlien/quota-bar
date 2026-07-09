@@ -7,8 +7,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         Self.installMainMenu()
-        statusBarController = StatusBarController()
-        notifyIfLastUpdateFailed()
+        // 必须先于 `StatusBarController()`（内部会立即 `coordinator.start()` 触发
+        // 第一轮刷新）完成——见 `WebKitSessionWarmup` 顶部说明：冷启动后如果没有
+        // 任何 WKWebView 被创建过，`WKWebsiteDataStore.default()` 的 Cookie 存储
+        // 可能长期读不到已持久化的登录态，导致 claude-webview 等一直误报"未登录"。
+        Task { @MainActor in
+            await WebKitSessionWarmup.warmUp()
+            statusBarController = StatusBarController()
+            notifyIfLastUpdateFailed()
+        }
     }
 
     /// v0.11.0-TOOL-A-004：helper 替换失败会写 update-error.log；

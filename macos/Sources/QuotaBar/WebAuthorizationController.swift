@@ -145,6 +145,10 @@ extension ProviderKind {
             return URL(string: "https://antigravity.google/g1-upgrade")
         case .zcode:
             return URL(string: "https://z.ai/")
+        case .opencode:
+            // `/auth` 已登录时 302 到 `/workspace/{lastSeenWorkspaceID}`、未登录时进
+            // 登录流程（`routes/auth/index.ts`）——两种状态都落在正确的页面上。
+            return URL(string: "https://opencode.ai/auth")
         default:
             return nil
         }
@@ -165,5 +169,90 @@ extension ProviderKind {
     /// 来说这个提示从一开始就是个不可能兑现的承诺。修改 `Strategies.swift` 里对应
     /// pipeline 的 `-webview` 策略时，必须同步维护这个集合，否则两边会像
     /// `refreshIntervalSeconds` 那次一样出现"看着接通了、实际没有"的漂移。
-    static let webViewQuotaCapableKinds: Set<ProviderKind> = [.codex, .openai, .claude, .minimax, .kimi]
+    static let webViewQuotaCapableKinds: Set<ProviderKind> = [.codex, .openai, .claude, .minimax, .kimi, .opencode]
+
+    /// Provider kinds where Quota Bar accepts a **manually pasted** API key（在
+    /// 「偏好设置 → 模型」页有对应的输入框）：MiniMax（`MiniMaxConfigProvider`，写
+    /// `~/.mavis/config.yaml`）、Z Code（`ZCodeManualKeyStore`，写 Quota Bar 自己的
+    /// `zcode-api-key.json`，见该类型顶部说明）。跟 `webViewQuotaCapableKinds` 一样
+    /// 是手动维护的能力声明——新增/移除一个 provider 的手动 key 输入支持时要同步改
+    /// 这里，否则 dropdown 里的引导文案会跟实际能力脱节（2026-07-08 用户反馈"agy/
+    /// opencode/zcode 为什么不显示打开 WebView 授权"时定的这套两级判断规则）。
+    static let apiKeyCapableKinds: Set<ProviderKind> = [.minimax, .zcode, .opencode]
+
+    /// 授权补救途径，按用户 2026-07-08 定的优先级排列：FDA（伤害性最小且一次性，
+    /// 目前未实现，永远不会出现在结果里）> WebView（App 内一次性登录，见
+    /// `webViewQuotaCapableKinds`）> API Key（手动粘贴，见 `apiKeyCapableKinds`）。
+    enum AuthRemediationTier {
+        case webView
+        case apiKey
+    }
+
+    /// 这个 provider 实际可用的授权补救途径，按上面的优先级排好序——只包含真正
+    /// 实现了的能力，没有的 tier（目前是 FDA）不会出现在列表里。
+    ///
+    /// 背景：用户反馈 Antigravity 在非授权途径（本地 CLI/RPC）全部失败后，dropdown
+    /// 显示"未获取到授权"——但 Antigravity 既不支持 WebView 额度会话（登录窗口只服务
+    /// 于到期日抓取，见 `webViewQuotaCapableKinds` 顶部说明）也不支持手动 API Key，
+    /// 也就是说根本没有任何授权补救动作可以提示用户去做，"未获取到授权"这句话是
+    /// 一个兑现不了的承诺。用这个数组的「是否为空」来判断：为空就不该展示任何"去
+    /// 授权"文案，只能诚实展示"暂无额度数据"（跟 opencode 这类纯 BYOK provider 现有
+    /// 的展示逻辑保持一致，见 `QuotaAuthPromptRow`）。
+    ///
+    /// 注：这里只解决"该展示哪个 tier 的入口文案"，不实现"如果优先级更高的 tier
+    /// 已经完成授权但还是拿不到额度，就展示下一个 tier"这层更细的升级判断——那需要
+    /// 单独追踪"每个 tier 是否已经完成授权"的状态，目前的 `QuotaFetchError`/
+    /// `ProviderAvailability` 还没有为此建模，先按优先级固定展示第一个可用 tier。
+    var availableAuthRemediationTiers: [AuthRemediationTier] {
+        var tiers: [AuthRemediationTier] = []
+        if webAuthorizationURL != nil && ProviderKind.webViewQuotaCapableKinds.contains(self) {
+            tiers.append(.webView)
+        }
+        if ProviderKind.apiKeyCapableKinds.contains(self) {
+            tiers.append(.apiKey)
+        }
+        return tiers
+    }
+
+    /// 该 provider 的手动 API Key 是否已经真实配置（占位符不算）。
+    /// 各 kind 读各自的 key 存储，跟「偏好设置 → 模型」页 `APIKeyConfigRow`
+    /// 展示"已配置"状态用的是同一套判断。
+    var manualAPIKeyIsConfigured: Bool {
+        switch self {
+        case .minimax:
+            if case .configured = MiniMaxConfigProvider.currentKeyState() { return true }
+            return false
+        case .zcode:
+            return ZCodeManualKeyStore.currentKeyState().isConfigured
+        case .opencode:
+            return OpenCodeManualKeyStore.currentKeyState().isConfigured
+        default:
+            return false
+        }
+    }
+
+    /// 按优先级返回第一个**还没完成授权**的补救 tier；全部已完成（或本来就没有任何
+    /// tier）返回 nil——nil 意味着 UI 不该再展示任何"去授权"引导，只能显示
+    /// "暂无额度数据"这类终态文案。
+    ///
+    /// 这是用户 2026-07-08 规则里"如果上一个授权形式完成了授权但没有获取到额度，
+    /// 就提示下一个；全部授权完了才显示没有额度信息"那一层的落地（此前只实现了
+    /// "按优先级展示第一个可用 tier"，不看它是否已经完成——2026-07-09 用户实测
+    /// opencode 保存 key 后 dropdown 依然提示"在 Preferences 中通过 API Key 授权"，
+    /// 命中的正是这个缺口）：
+    /// - `.webView` 已完成 = App 内 WebView 会话存储里有该 provider dashboard 域的
+    ///   Cookie（跟 `claude-webview` 等策略判断"已登录"是同一个检查）；
+    /// - `.apiKey` 已完成 = 对应的手动 key 存储里有真实 key（见上）。
+    func firstPendingAuthRemediationTier() async -> AuthRemediationTier? {
+        for tier in availableAuthRemediationTiers {
+            switch tier {
+            case .webView:
+                let authorized = await WKWebViewHeadlessLoader.appSessionHasCookies(for: dashboardCookieDomains)
+                if !authorized { return .webView }
+            case .apiKey:
+                if !manualAPIKeyIsConfigured { return .apiKey }
+            }
+        }
+        return nil
+    }
 }

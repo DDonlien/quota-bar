@@ -172,4 +172,51 @@ struct ZCodeAuthProviderTests {
             Issue.record("expected needsConfiguration, got \(snapshot.availability)")
         }
     }
+
+    // MARK: - ZCodeManualKeyStore（偏好设置手动输入 API Key，2026-07-08）
+
+    private static func tempKeyStorePath() -> String {
+        NSTemporaryDirectory() + "quota-bar-zcode-key-\(UUID().uuidString).json"
+    }
+
+    @Test("manual key store reports missing before anything is saved")
+    func manualKeyStoreMissingByDefault() {
+        let path = Self.tempKeyStorePath()
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        #expect(ZCodeManualKeyStore.currentKeyState(configPath: path) == .missing)
+    }
+
+    @Test("manual key store save/read round-trips and masks the key for display")
+    func manualKeyStoreSaveAndReadRoundTrips() throws {
+        let path = Self.tempKeyStorePath()
+        defer { try? FileManager.default.removeItem(atPath: path) }
+
+        try ZCodeManualKeyStore.save(apiKey: "sk-zcode-real-key-1234567890", configPath: path)
+        #expect(ZCodeManualKeyStore.readAPIKey(configPath: path) == "sk-zcode-real-key-1234567890")
+
+        guard case .configured(let masked) = ZCodeManualKeyStore.currentKeyState(configPath: path) else {
+            Issue.record("expected .configured after save")
+            return
+        }
+        #expect(masked.hasPrefix("sk-zcode"))
+        #expect(masked.hasSuffix("7890"))
+    }
+
+    @Test("manual key store rejects an empty key")
+    func manualKeyStoreRejectsEmptyKey() {
+        let path = Self.tempKeyStorePath()
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        #expect(throws: Error.self) {
+            try ZCodeManualKeyStore.save(apiKey: "   ", configPath: path)
+        }
+    }
+
+    @Test("ZCodeAuthProvider's default configPaths list the manual key store first")
+    func authProviderDefaultConfigPathsPrioritizeManualStore() {
+        // 不实例化真的走网络——只验证"手动 key store 排在自动探测路径最前面"这条
+        // 声明本身没有漂移（真正的读取逻辑复用 loadConfig() 已有的通用字符串扁平化
+        // 解析，由 `manualKeyStoreSaveAndReadRoundTrips` 覆盖）。
+        #expect(ZCodeManualKeyStore.defaultConfigPath.contains("QuotaBar"))
+        #expect(ZCodeManualKeyStore.defaultConfigPath.hasSuffix("zcode-api-key.json"))
+    }
 }

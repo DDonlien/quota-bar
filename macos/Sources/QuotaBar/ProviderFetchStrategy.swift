@@ -53,6 +53,8 @@ final class FetchPipeline {
     /// nil / 空 = 只要有额度窗口就视为 quota 层完整。
     let expectedQuotaScopes: Set<String>
     private let sourceIndexStore: ProviderSourceIndexStore
+    /// 注入点：测试用来避免写入 `ProviderCheckLog.shared` 背后的真实诊断日志文件。
+    private let checkLog: ProviderCheckLog
 
     private(set) var lastSnapshots: [String: ProviderSnapshot] = [:]
     private(set) var lastErrors: [String: QuotaFetchError] = [:]
@@ -62,13 +64,15 @@ final class FetchPipeline {
         strategies: [ProviderFetchStrategy],
         runMode: RunMode = .parallel,
         expectedQuotaScopes: Set<String> = [],
-        sourceIndexStore: ProviderSourceIndexStore = .shared
+        sourceIndexStore: ProviderSourceIndexStore = .shared,
+        checkLog: ProviderCheckLog = .shared
     ) {
         self.providerKind = kind
         self.strategies = strategies
         self.runMode = runMode
         self.expectedQuotaScopes = expectedQuotaScopes
         self.sourceIndexStore = sourceIndexStore
+        self.checkLog = checkLog
     }
 
     func run(timeout: TimeInterval) async throws -> ProviderSnapshot {
@@ -190,7 +194,7 @@ final class FetchPipeline {
             guard let preferredId = sourceIndexStore.preferredSourceID(for: providerKind, layer: layer) else { continue }
             let step: ProviderCheckLog.CheckStep = layer == .quota ? .quota : .plan
             let triedFirst = ordered.first?.id == preferredId
-            await ProviderCheckLog.shared.record(
+            await checkLog.record(
                 kind: providerKind, step: step, method: "上次成功来源索引",
                 outcome: triedFirst ? .success : .failure,
                 detail: triedFirst
@@ -256,7 +260,7 @@ final class FetchPipeline {
                 outcome = .failure
                 content = "无结果"
             }
-            await ProviderCheckLog.shared.record(kind: providerKind, step: step, method: method, outcome: outcome, detail: "来源 \(strategy.id)：\(content)")
+            await checkLog.record(kind: providerKind, step: step, method: method, outcome: outcome, detail: "来源 \(strategy.id)：\(content)")
         }
     }
 

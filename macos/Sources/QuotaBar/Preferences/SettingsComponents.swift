@@ -197,7 +197,11 @@ struct SettingsGroup<Content: View>: View {
 /// - 可选 subtitle（caption secondary）放在 label 下方，贴近 macOS 系统设置列表行
 struct SettingsRow<Label: View, Trailing: View>: View {
     @ViewBuilder let label: Label
-    let subtitle: String?
+    /// `Text` 而不是 `String`：部分行需要混合字体的 subtitle（比如一段说明文字
+    /// 里嵌一小段等宽字体的技术性值，如 API Key 掩码），`Text` 可以用 `+` 拼接
+    /// 不同样式的片段，纯 `String` 做不到（2026-07-08 用户反馈"API Key 配置"行
+    /// 里字面量反引号没有渲染成等宽样式，见 `APIKeyConfigRow.statusText`）。
+    let subtitle: Text?
     let subtitleLeading: CGFloat
     let separatesSubtitle: Bool
     let horizontalPadding: CGFloat
@@ -206,7 +210,7 @@ struct SettingsRow<Label: View, Trailing: View>: View {
 
     init(
         @ViewBuilder label: () -> Label,
-        subtitle: String? = nil,
+        subtitle: Text? = nil,
         subtitleLeading: CGFloat = 0,
         separatesSubtitle: Bool = false,
         horizontalPadding: CGFloat = 16,
@@ -222,6 +226,26 @@ struct SettingsRow<Label: View, Trailing: View>: View {
         self.trailing = trailing()
     }
 
+    init(
+        @ViewBuilder label: () -> Label,
+        subtitle: String?,
+        subtitleLeading: CGFloat = 0,
+        separatesSubtitle: Bool = false,
+        horizontalPadding: CGFloat = 16,
+        verticalPadding: CGFloat = 9,
+        @ViewBuilder trailing: @escaping () -> Trailing = { EmptyView() }
+    ) {
+        self.init(
+            label: label,
+            subtitle: subtitle.map(Text.init),
+            subtitleLeading: subtitleLeading,
+            separatesSubtitle: separatesSubtitle,
+            horizontalPadding: horizontalPadding,
+            verticalPadding: verticalPadding,
+            trailing: trailing
+        )
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 12) {
@@ -231,12 +255,12 @@ struct SettingsRow<Label: View, Trailing: View>: View {
                 Spacer(minLength: 12)
                 trailing
             }
-            if let subtitle, !subtitle.isEmpty {
+            if let subtitle {
                 if separatesSubtitle {
                     Divider()
                         .padding(.vertical, 5)
                 }
-                Text(subtitle)
+                subtitle
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

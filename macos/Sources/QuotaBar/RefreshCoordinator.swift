@@ -93,6 +93,23 @@ final class RefreshCoordinator: ObservableObject {
                 self?.refreshNow()
             }
             .store(in: &cancellables)
+
+        // 用户在「偏好设置 → 模型」里保存了 API key 后立即刷新一次，原理同上。
+        NotificationCenter.default.publisher(for: .providerCredentialsDidChange)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.refreshNow()
+            }
+            .store(in: &cancellables)
+
+        // 「偏好设置 → 日志」页的「刷新」按钮：Preferences 窗口跟 StatusBarController
+        // 是两套独立的视图层级，没有直接持有 RefreshCoordinator 的引用，用通知解耦。
+        NotificationCenter.default.publisher(for: .manualRefreshRequested)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.refreshNow()
+            }
+            .store(in: &cancellables)
     }
 
     /// 跟 `applyRefreshIntervalChange()` 同一类问题：`advanced.providerTimeoutSeconds`

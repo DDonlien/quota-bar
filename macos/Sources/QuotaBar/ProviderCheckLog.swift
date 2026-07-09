@@ -93,14 +93,6 @@ actor ProviderCheckLog {
         return lines
     }
 
-    static func resetForTesting() async {
-        await shared.reset()
-    }
-
-    private func reset() {
-        buffers.removeAll()
-    }
-
     private static let formatter: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")

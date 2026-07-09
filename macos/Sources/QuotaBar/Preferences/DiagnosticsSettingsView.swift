@@ -19,7 +19,13 @@ struct DiagnosticsSettingsView: View {
                             .fixedSize(horizontal: false, vertical: true)
 
                         HStack(spacing: 8) {
-                            Button("刷新") { reload() }
+                            // 此前这个按钮只是重新读一遍已经落盘的日志文件——如果
+                            // 后台没有恰好在点击前跑完一轮真实刷新，点了跟没点一样，
+                            // 看起来像坏了（2026-07-08 用户反馈）。改成触发一次真正
+                            // 的额度刷新；日志本身会随刷新过程逐条实时写入并自动
+                            // 展示（见下方 `.providerCheckLogDidChange` 订阅），不需要
+                            // 这个按钮自己再手动重读。
+                            Button("立即刷新") { requestRefresh() }
                             Button("复制全部") { copyAll() }
                             Button("清空") { clearAll() }
                             Spacer()
@@ -42,7 +48,14 @@ struct DiagnosticsSettingsView: View {
 
     private var logView: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 1) {
+            // `LazyVStack`（不是 `VStack`）：日志最多可以有 2000 行（`readRecentLines`
+            // 默认 limit），`VStack` 会把全部 2000 个 `Text` 行立即创建/布局，不管当前
+            // 视口（360pt 高，实际只显示约 25 行）能不能看到——每次 `.providerCheckLogDidChange`
+            // 通知触发 `reload()`（一次刷新周期里最多 7 个 provider 各触发一次）都要重新
+            // 铺满这 2000 个视图，是"日志页特别卡"的真正原因（2026-07-08 用户反馈，机器
+            // 配置很高、其余页面都不卡，明确指向这个页面自己的渲染开销）。`LazyVStack`
+            // 只创建实际进入视口的行，滚动/刷新开销跟总行数基本无关。
+            LazyVStack(alignment: .leading, spacing: 1) {
                 if lines.isEmpty {
                     Text("暂无日志——刷新一次额度后回到这里查看。")
                         .font(.system(size: 11))
@@ -70,6 +83,10 @@ struct DiagnosticsSettingsView: View {
 
     private func reload() {
         lines = ProviderCheckLogStore.shared.readRecentLines()
+    }
+
+    private func requestRefresh() {
+        NotificationCenter.default.post(name: .manualRefreshRequested, object: nil)
     }
 
     private func copyAll() {

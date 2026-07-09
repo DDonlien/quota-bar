@@ -29,8 +29,6 @@ struct GeneralSettingsView: View {
             SettingsGroup {
                 SettingsRow(
                     label: { Text("刷新间隔") },
-                    subtitle: "Quota Bar 会按此间隔自动刷新各 Provider 的额度数据。",
-                    separatesSubtitle: true,
                     trailing: {
                         Picker("", selection: bindingRefreshInterval) {
                             ForEach(RefreshIntervalOption.allCases) { option in
@@ -46,8 +44,6 @@ struct GeneralSettingsView: View {
                 SettingsDivider()
                 SettingsRow(
                     label: { Text("Provider 刷新超时") },
-                    subtitle: "单个 Provider 单次拉取额度的最长等待时间；部分方案（如 Antigravity 的临时 CLI 会话）本身较慢，超时太短容易在系统稍有波动时被判定为失败。",
-                    separatesSubtitle: true,
                     trailing: {
                         Picker("", selection: bindingProviderTimeout) {
                             ForEach(ProviderTimeoutOption.allCases) { option in

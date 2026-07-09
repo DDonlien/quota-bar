@@ -502,4 +502,19 @@ final class PreferencesStore {
 
 extension Notification.Name {
     static let quotaPreferencesDidChange = Notification.Name("com.quotabar.preferencesDidChange")
+
+    /// 用户在「偏好设置 → 模型」里手动保存/更新了某个 provider 的 API key（不是
+    /// `QuotaPreferences` 里的字段，是外部凭证文件，所以单独一个通知，不复用
+    /// `.quotaPreferencesDidChange`）。`RefreshCoordinator` 订阅后立即触发一次刷新，
+    /// 不用等下一个自动周期——跟 `.webAuthorizationWindowDidClose` 是同一类"用户刚
+    /// 做完授权动作，应该立刻看到结果"诉求。
+    static let providerCredentialsDidChange = Notification.Name("com.quotabar.providerCredentialsDidChange")
+
+    /// 「偏好设置 → 日志」页的「刷新」按钮点击。这个按钮此前只是重新读一遍已经落盘
+    /// 的日志文件——如果后台没有恰好在这之前跑完一轮真实刷新，点了跟没点一样，
+    /// 看起来像坏了（2026-07-08 用户反馈"日志里的刷新按钮没用"）。`RefreshCoordinator`
+    /// 订阅后触发一次真正的 `refreshNow()`，日志页面本身已经在监听
+    /// `.providerCheckLogDidChange`，新日志写入时会自动跟着刷新，不需要日志页自己
+    /// 再手动重读一次。
+    static let manualRefreshRequested = Notification.Name("com.quotabar.manualRefreshRequested")
 }
