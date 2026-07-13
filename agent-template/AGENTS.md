@@ -197,30 +197,32 @@
 
 ### 9. Worktree 工作目录模式
 
-- 对于使用 Git worktree 且需要兼容 GitHub Desktop、IDE 和 AI Agent 的项目，推荐采用“`main` 保留在项目根目录，其他长期分支放入单数 `worktree/` 目录”的结构：
+- 对于使用 Git worktree 的项目，推荐采用“项目容器目录不直接开发，`main/` 有独立工作区，其他分支与 `main/` 平级”的结构：
 
 ```text
-<project-name>/              ← main 分支工作区，也是工具默认打开目录
-├── .git/                    ← Git 元数据
-├── AGENTS.md
-├── README.md
-├── REQUIREMENTS.md
-├── DESIGN.md
-├── <deliverable-dir>/       ← 例如 macos/、site/、ios/
-└── worktree/
-    ├── <worktree-name>/     ← 其他分支工作区
-    ├── <worktree-name>/
-    └── <worktree-name>/
+<project-name>/              ← 项目容器目录，只收纳工作区，不作为任何分支的开发工作区
+├── main/                    ← main 分支工作区，也是工具默认打开目录
+│   ├── .git/                ← Git 元数据
+│   ├── AGENTS.md
+│   ├── README.md
+│   ├── REQUIREMENTS.md
+│   ├── DESIGN.md
+└── <deliverable-dir>/       ← 例如 macos/、site/、ios/、web/、admin/
+│
+├── <branch-worktree-name>/  ← 其他分支工作区
+├── <branch-worktree-name>/
+└── _builds/                 ← 本地打包产物，不进 Git
 ```
 
-- `<project-name>/` 默认对应 `main` 分支工作区；GitHub Desktop、Codex、其他 AI Agent 和 IDE 应优先打开这个根目录，以便识别 repo、读取根文档，并发现 `worktree/` 下的其他工作区。
-- `worktree/` 使用单数目录名，和其他职责目录一样保持单数形式。
-- `worktree/` 下的每个子目录对应一个非 `main` 分支的实际工作区。目录名应由用户或项目约定决定；当项目没有更具体规则时，推荐与 branch 名称保持一致。
+- `<project-name>/` 是项目容器目录，只负责收纳 `main/` 和其他 branch worktree，不直接开发。
+- `main/` 默认对应仓库默认主分支工作区；GitHub Desktop、Codex、其他 AI Agent 和 IDE 应优先打开 `main/` 目录，以便识别 repo、读取根文档，并发现同层其他 branch worktree。
+- 其他 branch worktree 与 `main/` 平级，目录名应由用户或项目约定决定；当项目没有更具体规则时，推荐与 branch 名称保持一致。
+- branch 名称中的 `/` 等不适合作为目录名的字符，在本地 worktree 目录名中替换为 `-` 或项目约定的安全分隔符。
 - branch/worktree 名称推荐保持 `a/b` 的两段式格式；如果 `b` 暂不明确，使用 `main`，例如 `sub/main`，以保留后续扩展性。
-- 仓库默认主分支 `main` 是特殊稳定分支，默认不放入 `worktree/main/`，除非用户明确要求牺牲 GUI / Agent 发现能力以换取更严格的容器化布局。
+- 仓库默认主分支 `main` 是特殊稳定分支，默认对应 `main/` 工作区。
 - 每个 worktree 应对应一个明确的 Git branch；除非用户或项目规则另有说明，不在多个 worktree 中复用同一个 branch 作为长期开发工作区。
 - 如果 branch 名称发生变更，关联的 worktree 本地目录名也应同步调整；如果 worktree 本地目录名发生变更，关联 branch 名称也应同步调整，以保持检索、定位和文档记录的一致性。
-- 上述示例强调的是目录组织方式；`<project-name>` 和 `<worktree-name>` 只是占位符，不是强制命名规范。
+- 上述示例强调的是目录组织方式；`<project-name>`、`<branch-worktree-name>` 和 `_builds/` 只是占位符，不是强制命名规范。
 - 如果用户已经明确指定 feature、branch 或 worktree，且当前目录不匹配，Agent 可以按项目规则优先进入已有 worktree；如确需创建对应 branch/worktree，应确保不会覆盖现有路径，并在执行前说明将要创建的 branch/worktree。
 - 如果用户没有明确指定目标分支或 feature，Agent 不得自行猜测并切换分支、创建分支或创建 worktree；应在当前分支继续，或停止并询问用户。
 - 禁止在未获得用户明确授权的情况下执行 `git worktree remove`、`git worktree move` 等会破坏或重定位 worktree 的命令。

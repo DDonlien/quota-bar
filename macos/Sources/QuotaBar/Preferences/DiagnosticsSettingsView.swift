@@ -7,6 +7,7 @@ import SwiftUI
 /// 不做任何过滤/搜索（先满足"能看到真实执行顺序"这个核心诉求，复杂交互按需再加）。
 struct DiagnosticsSettingsView: View {
     @State private var lines: [String] = []
+    @State private var store = PreferencesStore.shared
 
     var body: some View {
         SettingsPage(.diagnostics) {
@@ -29,6 +30,15 @@ struct DiagnosticsSettingsView: View {
                             Button("复制全部") { copyAll() }
                             Button("清空") { clearAll() }
                             Spacer()
+                            Picker("", selection: bindingLogRetention) {
+                                ForEach(LogRetentionOption.allCases) { option in
+                                    Text("保留 \(option.displayName)").tag(option)
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .fixedSize()
+                            .controlSize(.small)
                             Text("\(lines.count) 行")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
@@ -62,11 +72,18 @@ struct DiagnosticsSettingsView: View {
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 8)
                 } else {
-                    ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                        Text(line)
-                            .font(.system(size: 10.5, design: .monospaced))
-                            .foregroundStyle(.primary)
+                    ForEach(Self.rows(from: lines)) { row in
+                        // 刷新轮次分隔头（`[刷新额度] … - 时间戳`）单独加大上下 padding、
+                        // 加粗——存储层没有保真字面空行（见 `ProviderCheckLogStore.
+                        // beginCycle` 顶部说明），视觉上的"换行 + 换行"间隔在这里实现。
+                        // 同一轮内不同 provider 之间也补一段上间距，便于分组阅读
+                        // （2026-07-11 用户反馈：provider 之间要有换行便于阅读）。
+                        Text(row.text)
+                            .font(.system(size: 10.5, weight: row.isHeader ? .semibold : .regular, design: .monospaced))
+                            .foregroundStyle(row.isHeader ? Color.accentColor : Color.primary)
                             .textSelection(.enabled)
+                            .padding(.top, row.topGap)
+                            .padding(.bottom, row.isHeader ? 4 : 0)
                     }
                 }
             }
@@ -83,6 +100,58 @@ struct DiagnosticsSettingsView: View {
 
     private func reload() {
         lines = ProviderCheckLogStore.shared.readRecentLines()
+    }
+
+    /// 一条可渲染的日志行：携带是否为轮次分隔头、以及该行上方需要留多少间距。
+    /// `id` 用行号保证 `ForEach` 稳定（同一行内容可能重复出现，不能用文本当 id）。
+    private struct LogRow: Identifiable {
+        let id: Int
+        let text: String
+        let isHeader: Bool
+        let topGap: CGFloat
+    }
+
+    /// 把纯文本日志行转成带分组间距的 `LogRow`：
+    /// - 轮次分隔头（`[刷新额度]` 开头）上方留 10pt（除第一行外）。
+    /// - 同一轮内 provider 名切换时，新 provider 的首行上方留 6pt，形成"换行"分组感。
+    ///
+    /// provider 名从行内 ` - <ProviderName> | …` 结构里解析；解析不出来（异常行）
+    /// 时不额外留白，安全降级。
+    private static func rows(from lines: [String]) -> [LogRow] {
+        var result: [LogRow] = []
+        result.reserveCapacity(lines.count)
+        var previousProvider: String? = nil
+        for (index, line) in lines.enumerated() {
+            let isHeader = line.hasPrefix("[刷新额度]")
+            var topGap: CGFloat = 0
+            if isHeader {
+                topGap = index > 0 ? 10 : 0
+                // 新一轮开始，重置 provider 追踪，避免跨轮误判"同一个 provider"。
+                previousProvider = nil
+            } else if let provider = providerName(from: line) {
+                if let prev = previousProvider, prev != provider {
+                    topGap = 6
+                }
+                previousProvider = provider
+            }
+            result.append(LogRow(id: index, text: line, isHeader: isHeader, topGap: topGap))
+        }
+        return result
+    }
+
+    /// 从 `<时间戳> - <ProviderName> | <CheckStep> | …` 里取出 `<ProviderName>`。
+    private static func providerName(from line: String) -> String? {
+        guard let dashRange = line.range(of: " - ") else { return nil }
+        let afterDash = line[dashRange.upperBound...]
+        guard let pipeRange = afterDash.range(of: " | ") else { return nil }
+        return String(afterDash[..<pipeRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+    }
+
+    private var bindingLogRetention: Binding<LogRetentionOption> {
+        Binding(
+            get: { store.currentLogRetentionOption },
+            set: { store.setLogRetentionCycles($0) }
+        )
     }
 
     private func requestRefresh() {

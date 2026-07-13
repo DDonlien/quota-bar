@@ -102,4 +102,61 @@ struct ProviderCheckLogTests {
         let line = try #require(store.readRecentLines().first)
         #expect(line.contains("| 跳过 |"))
     }
+
+    // MARK: - 刷新轮次分隔 + 保留轮数 + 新的在最上面（2026-07-10 新增）
+
+    @Test("beginCycle 写入分隔头，readRecentLines 把最新一轮排在最上面、轮内顺序不变")
+    func beginCycleOrdersNewestFirst() async throws {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("quota-bar-check-log-cycle-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let fileURL = dir.appendingPathComponent("provider-check.log")
+        let store = ProviderCheckLogStore(fileURL: fileURL)
+        let log = ProviderCheckLog(store: store)
+
+        // 第一轮（自动）
+        store.beginCycle(at: Date(timeIntervalSince1970: 1000), triggerLabel: "自动刷新", retainCycles: 20)
+        await log.record(kind: .codex, step: .provider, method: "cli:codex", outcome: .success, detail: "第一轮")
+        await log.flush(kind: .codex)
+
+        // 第二轮（手动）
+        store.beginCycle(at: Date(timeIntervalSince1970: 2000), triggerLabel: "手动刷新", retainCycles: 20)
+        await log.record(kind: .claude, step: .provider, method: "cli:claude", outcome: .success, detail: "第二轮")
+        await log.flush(kind: .claude)
+
+        let lines = store.readRecentLines()
+        // 最新的一轮（第二轮：头 + 一行）应该排在最前面，其次才是第一轮。
+        #expect(lines[0].hasPrefix("[刷新额度]"))
+        // 分隔头标注了触发方式，且仍以 [刷新额度] 前缀开头供切块识别。
+        #expect(lines[0].contains("手动刷新"))
+        #expect(lines[1].contains("第二轮"))
+        #expect(lines[2].hasPrefix("[刷新额度]"))
+        #expect(lines[2].contains("自动刷新"))
+        #expect(lines[3].contains("第一轮"))
+    }
+
+    @Test("超过 retainCycles 时旧轮次从磁盘裁掉")
+    func beginCycleTrimsOldestCyclesBeyondRetention() async throws {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("quota-bar-check-log-retain-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let fileURL = dir.appendingPathComponent("provider-check.log")
+        let store = ProviderCheckLogStore(fileURL: fileURL)
+        let log = ProviderCheckLog(store: store)
+
+        for i in 1...5 {
+            store.beginCycle(at: Date(timeIntervalSince1970: Double(i * 1000)), triggerLabel: "自动刷新", retainCycles: 2)
+            await log.record(kind: .codex, step: .provider, method: "cli:codex", outcome: .success, detail: "第 \(i) 轮")
+            await log.flush(kind: .codex)
+        }
+
+        let lines = store.readRecentLines()
+        // 只保留最近 2 轮（第 4、5 轮），且新的在最上面。
+        let contentLines = lines.filter { !$0.hasPrefix("[刷新额度]") }
+        #expect(contentLines.count == 2)
+        #expect(contentLines[0].contains("第 5 轮"))
+        #expect(contentLines[1].contains("第 4 轮"))
+        #expect(!lines.contains { $0.contains("第 3 轮") })
+        #expect(!lines.contains { $0.contains("第 1 轮") })
+    }
 }

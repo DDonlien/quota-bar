@@ -111,7 +111,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     /// 与 dropdown 中最紧迫周期的读数一致。
     /// **`.loading` 画 dimmed 50% 占位 bar**，streaming refresh 时随着 provider 一个个
     /// 完成，bar 从"dimmed 占位"渐变为"实际高度"。
-    private static func makeBarsImage(from snapshots: [ProviderSnapshot]) -> NSImage {
+    // 三处从 `private` 松到默认 internal（`makeBarsImage`/`layeredFractions`/
+    // `BarsImageLayout`）：分层显示这套自定义绘图逻辑第一次写，靠单元测试直接验证
+    // 选层/几何计算，比只靠人工截图靠谱——真实截图这个 accessory 模式 + 未签名
+    // 开发态包又拿不到（这个会话里反复踩过这个坑），能测的部分就应该测。
+    static func makeBarsImage(from snapshots: [ProviderSnapshot]) -> NSImage {
         let snapshots = drawableSnapshots(from: snapshots)
 
         // 兜底：零订阅 → ? 图标
@@ -141,24 +145,92 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         borderPath.lineWidth = layout.borderWidth
         borderPath.stroke()
 
-        // 填充 bars（白色，居底对齐）。最左侧 bar 左下角圆角。
-        // `.loading` snapshot 画 dimmed 50% bar（alpha 0.4），与其他 bar 视觉上
-        // 区分开（让用户看到「这个 provider 还在刷新」），同时保持可见以体现"动态增长"。
+        // 分层显示（2026-07-09 新增）：每个 bar 最多画两层——实心层固定对应最短周期
+        // 额度（比如 5 小时），虚线/纹理层固定对应次短周期额度（比如周额度），只有
+        // 一条 quota 的 provider 退化成单层（跟改动前一样）。叠放顺序取决于谁更高：
+        // 更高的那层先画在底层，更矮的那层后画、叠在前面——保证矮的那层不会被高的
+        // 那层完全盖住（用户提供的参考图示范了两种叠放情况）。
+        // `.loading` snapshot 两层都用 dimmed alpha，跟其他 bar 视觉上区分开
+        // （让用户看到「这个 provider 还在刷新」），同时保持可见以体现"动态增长"。
         for (i, snap) in snapshots.enumerated() {
-            let remaining = remainingFraction(for: snap)
-            let rect = layout.barRect(at: i, remainingFraction: CGFloat(remaining))
-            guard rect.height > 0 else { continue }
-            let path = layout.barPath(at: i, rect: rect)
-            if case .loading = snap.availability {
-                NSColor(white: 1.0, alpha: 0.4).setFill()
-            } else {
-                NSColor.white.setFill()
+            let isLoading: Bool
+            if case .loading = snap.availability { isLoading = true } else { isLoading = false }
+            let solidAlpha: CGFloat = isLoading ? 0.4 : 1.0
+            let hatchAlpha: CGFloat = isLoading ? 0.25 : 0.45
+
+            let (primaryFraction, secondaryFraction) = layeredFractions(for: snap)
+            let primaryRect = layout.barRect(at: i, remainingFraction: CGFloat(primaryFraction))
+
+            guard let secondaryFraction else {
+                guard primaryRect.height > 0 else { continue }
+                let path = layout.barPath(at: i, rect: primaryRect)
+                NSColor(white: 1.0, alpha: solidAlpha).setFill()
+                path.fill()
+                continue
             }
-            path.fill()
+
+            let secondaryRect = layout.barRect(at: i, remainingFraction: CGFloat(secondaryFraction))
+            let solidPath = primaryRect.height > 0 ? layout.barPath(at: i, rect: primaryRect) : nil
+            let hatchedPath = secondaryRect.height > 0 ? layout.barPath(at: i, rect: secondaryRect) : nil
+
+            if secondaryRect.height >= primaryRect.height {
+                // 次短周期剩余更多（更常见情况）：它更高，先画成底层背景——这时纹理层
+                // 底下还是透明画布，用普通半透明白色斜线就能跟深色菜单栏背景形成对比；
+                // 最短周期（实心）更矮，叠在它前面。
+                if let hatchedPath { fillHatched(hatchedPath, alpha: hatchAlpha, erasing: false) }
+                if let solidPath {
+                    NSColor(white: 1.0, alpha: solidAlpha).setFill()
+                    solidPath.fill()
+                }
+            } else {
+                // 次短周期剩余更少（比如周额度快用完了，但当前 5 小时窗口刚重置）：
+                // 实心层更高，先画成底；纹理层更矮，叠在前面——这时纹理层底下已经是
+                // 不透明的实心白色，半透明白色斜线在纯白底上完全看不出来，改用
+                // `.destinationOut` 直接在实心层上"擦"出斜线镂空，让菜单栏背景从
+                // 缝隙里透出来，不管底下是透明画布还是已经填满的实心层都看得清。
+                if let solidPath {
+                    NSColor(white: 1.0, alpha: solidAlpha).setFill()
+                    solidPath.fill()
+                }
+                if let hatchedPath { fillHatched(hatchedPath, alpha: hatchAlpha, erasing: true) }
+            }
         }
 
         image.unlockFocus()
         return image
+    }
+
+    /// 虚线/纹理层的画法：45° 斜线阵列，裁剪到传入的 bar 形状内。用手绘斜线而不是
+    /// 平铺 pattern image——图标只有个位数 pt 宽，`NSColor(patternImage:)` 那套在
+    /// 这个尺度下没有直接手绘线条精确可控。
+    ///
+    /// `erasing`：纹理层叠在已经画满的实心层前面时（次短周期比最短周期矮的场景），
+    /// 半透明白色斜线画在纯白底上完全没有对比度、视觉上等于什么都没画——这种情况
+    /// 改用 `.destinationOut` 复合模式把斜线"擦"进已经画好的实心区域，露出底下的
+    /// 菜单栏背景，不管背景是透明画布还是已经不透明都能看出纹理。纹理层是背景层
+    /// （画在透明画布上）时正常画半透明白色斜线即可，`erasing` 传 `false`。
+    private static func fillHatched(_ path: NSBezierPath, alpha: CGFloat, erasing: Bool) {
+        NSGraphicsContext.saveGraphicsState()
+        path.addClip()
+        let bounds = path.bounds
+        let spacing: CGFloat = 2.0
+        let lineWidth: CGFloat = 0.75
+        if erasing {
+            NSGraphicsContext.current?.compositingOperation = .destinationOut
+            NSColor(white: 0, alpha: alpha).setStroke()
+        } else {
+            NSColor(white: 1.0, alpha: alpha).setStroke()
+        }
+        var x = bounds.minX - bounds.height
+        while x < bounds.maxX {
+            let segment = NSBezierPath()
+            segment.lineWidth = lineWidth
+            segment.move(to: NSPoint(x: x, y: bounds.minY))
+            segment.line(to: NSPoint(x: x + bounds.height, y: bounds.maxY))
+            segment.stroke()
+            x += spacing
+        }
+        NSGraphicsContext.restoreGraphicsState()
     }
 
     private static func statusItemLength(for image: NSImage) -> CGFloat {
@@ -213,7 +285,31 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         return snapshot.primarySubscriptionGroupWorstQuota(itemOrder: groupOrder)
     }
 
-    private struct BarsImageLayout {
+    /// 菜单栏图标分层显示（2026-07-09 新增）：每个 bar 最多同时画两层——
+    /// `primary` 固定对应最短周期额度（比如 5 小时），`secondary`（存在的话）固定对应
+    /// 次短周期额度（比如周额度）。跟 `remainingFraction`（单层、按"剩余最少"取值）
+    /// 是两套并行逻辑：单层場景（loading/needsConfiguration/subscriptionExpired/
+    /// notSubscribed，以及只有一条 quota 的 provider）复用同样的固定值语义，`secondary`
+    /// 为 nil，退化成原来的单层画法。
+    static func layeredFractions(for snapshot: ProviderSnapshot, now: Date = Date()) -> (primary: Double, secondary: Double?) {
+        switch snapshot.availability {
+        case .loading, .needsConfiguration:
+            return (0.5, nil)
+        case .subscriptionExpired, .notSubscribed:
+            return (0, nil)
+        default:
+            break
+        }
+        let groupOrder = PreferencesStore.shared.subscriptionGroupOrder(for: snapshot.kind)
+        guard let pair = snapshot.primarySubscriptionGroupTopTwoQuotasByPeriod(itemOrder: groupOrder) else {
+            return (0, nil)
+        }
+        let primary = max(0, min(1, pair.shortest.remainingFraction))
+        let secondary = pair.secondShortest.map { max(0, min(1, $0.remainingFraction)) }
+        return (primary, secondary)
+    }
+
+    struct BarsImageLayout {
         let count: Int
 
         let imageHeight: CGFloat = 18
@@ -250,9 +346,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             )
         }
 
+        var maxBarHeight: CGFloat {
+            imageHeight - 2 * borderWidth - 2 * verticalPadding
+        }
+
         func barRect(at index: Int, remainingFraction: CGFloat) -> NSRect {
             let clampedFraction = max(0, min(1, remainingFraction))
-            let maxBarHeight = imageHeight - 2 * borderWidth - 2 * verticalPadding
             let barHeight = clampedFraction * maxBarHeight
             return NSRect(
                 x: borderWidth + barToLinePadding + CGFloat(index) * (barWidth + gap),
@@ -262,81 +361,101 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             )
         }
 
+        /// 顶部圆角按"bar 顶边离容器顶边的距离"自然过渡：距离为 0（bar 顶到頂、
+        /// 满额度）时给足 `barRadius`，距离达到 `barRadius` 或更远时收缩到 0——
+        /// 一个远低于容器顶部的短 bar 不应该还带着一个视觉上跟顶边毫无关系、凭空
+        /// 浮在中间的圆角（2026-07-09 用户反馈）。底部圆角不受此影响，bar 永远贴底，
+        /// 底边圆角固定跟容器底边圆角保持一致。
+        private func adaptiveTopRadius(for rect: NSRect) -> CGFloat {
+            let containerTopY = borderWidth + verticalPadding + maxBarHeight
+            let gap = max(0, containerTopY - rect.maxY)
+            guard gap < barRadius else { return 0 }
+            return barRadius * (1 - gap / barRadius)
+        }
+
+        /// 最左/最右 bar 的圆角矩形路径：底部固定 `barRadius`，顶部用
+        /// `adaptiveTopRadius` 自然过渡；中间 bar 直接返回普通矩形（跟改动前一样，
+        /// 不受影响）。分层显示下，实心层和纹理层各自独立调用这个函数、各自按
+        /// 自己的高度算顶部圆角——哪一层的顶边离容器顶边近，哪一层就该有顶部圆角，
+        /// 跟另一层的高度无关。
         func barPath(at index: Int, rect: NSRect) -> NSBezierPath {
-            let radius = min(barRadius, rect.width / 2, rect.height / 2)
-            guard radius > 0 else {
-                return NSBezierPath(rect: rect)
-            }
+            guard rect.width > 0, rect.height > 0 else { return NSBezierPath(rect: rect) }
 
             let isFirst = index == 0
             let isLast = index == count - 1
+            guard isFirst || isLast else { return NSBezierPath(rect: rect) }
 
-            if isFirst && isLast {
-                // 只有一个 bar，四个角都圆角
-                return NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
-            } else if isFirst {
-                // 最左 bar，只绘制左侧圆角（左上和左下）
-                let path = NSBezierPath()
-                let minX = rect.minX
-                let maxX = rect.maxX
-                let minY = rect.minY
-                let maxY = rect.maxY
+            let bottomRadius = min(barRadius, rect.width / 2, rect.height / 2)
+            let topRadius = min(adaptiveTopRadius(for: rect), rect.width / 2, rect.height / 2)
+            let topLeft = isFirst ? topRadius : 0
+            let topRight = isLast ? topRadius : 0
+            let bottomLeft = isFirst ? bottomRadius : 0
+            let bottomRight = isLast ? bottomRadius : 0
 
-                // 从左上圆角的起点开始
-                path.move(to: NSPoint(x: minX, y: maxY - radius))
-                path.curve(
-                    to: NSPoint(x: minX + radius, y: maxY),
-                    controlPoint1: NSPoint(x: minX, y: maxY - radius * 0.45),
-                    controlPoint2: NSPoint(x: minX + radius * 0.45, y: maxY)
-                )
-                // 上边
-                path.line(to: NSPoint(x: maxX, y: maxY))
-                // 右边
-                path.line(to: NSPoint(x: maxX, y: minY))
-                // 下边
-                path.line(to: NSPoint(x: minX + radius, y: minY))
-                // 左下圆角
-                path.curve(
-                    to: NSPoint(x: minX, y: minY + radius),
-                    controlPoint1: NSPoint(x: minX + radius * 0.45, y: minY),
-                    controlPoint2: NSPoint(x: minX, y: minY + radius * 0.45)
-                )
-                path.close()
-                return path
-            } else if isLast {
-                // 最右 bar，只绘制右侧圆角（右上和右下）
-                let path = NSBezierPath()
-                let minX = rect.minX
-                let maxX = rect.maxX
-                let minY = rect.minY
-                let maxY = rect.maxY
-
-                // 从左上开始
-                path.move(to: NSPoint(x: minX, y: maxY))
-                // 上边
-                path.line(to: NSPoint(x: maxX - radius, y: maxY))
-                // 右上圆角
-                path.curve(
-                    to: NSPoint(x: maxX, y: maxY - radius),
-                    controlPoint1: NSPoint(x: maxX - radius * 0.45, y: maxY),
-                    controlPoint2: NSPoint(x: maxX, y: maxY - radius * 0.45)
-                )
-                // 右边
-                path.line(to: NSPoint(x: maxX, y: minY + radius))
-                // 右下圆角
-                path.curve(
-                    to: NSPoint(x: maxX - radius, y: minY),
-                    controlPoint1: NSPoint(x: maxX, y: minY + radius * 0.45),
-                    controlPoint2: NSPoint(x: maxX - radius * 0.45, y: minY)
-                )
-                // 下边
-                path.line(to: NSPoint(x: minX, y: minY))
-                path.close()
-                return path
-            } else {
-                // 中间 bar，不绘制圆角
+            guard topLeft > 0 || topRight > 0 || bottomLeft > 0 || bottomRight > 0 else {
                 return NSBezierPath(rect: rect)
             }
+            return Self.roundedRectPath(
+                rect: rect,
+                topLeft: topLeft, topRight: topRight,
+                bottomLeft: bottomLeft, bottomRight: bottomRight
+            )
+        }
+
+        /// 支持四个角各自独立半径的圆角矩形路径（半径为 0 的角画成直角）。
+        private static func roundedRectPath(
+            rect: NSRect,
+            topLeft: CGFloat, topRight: CGFloat,
+            bottomLeft: CGFloat, bottomRight: CGFloat
+        ) -> NSBezierPath {
+            let minX = rect.minX, maxX = rect.maxX, minY = rect.minY, maxY = rect.maxY
+            let path = NSBezierPath()
+
+            path.move(to: NSPoint(x: minX, y: maxY - topLeft))
+            if topLeft > 0 {
+                path.curve(
+                    to: NSPoint(x: minX + topLeft, y: maxY),
+                    controlPoint1: NSPoint(x: minX, y: maxY - topLeft * 0.45),
+                    controlPoint2: NSPoint(x: minX + topLeft * 0.45, y: maxY)
+                )
+            } else {
+                path.line(to: NSPoint(x: minX, y: maxY))
+            }
+
+            path.line(to: NSPoint(x: maxX - topRight, y: maxY))
+            if topRight > 0 {
+                path.curve(
+                    to: NSPoint(x: maxX, y: maxY - topRight),
+                    controlPoint1: NSPoint(x: maxX - topRight * 0.45, y: maxY),
+                    controlPoint2: NSPoint(x: maxX, y: maxY - topRight * 0.45)
+                )
+            } else {
+                path.line(to: NSPoint(x: maxX, y: maxY))
+            }
+
+            path.line(to: NSPoint(x: maxX, y: minY + bottomRight))
+            if bottomRight > 0 {
+                path.curve(
+                    to: NSPoint(x: maxX - bottomRight, y: minY),
+                    controlPoint1: NSPoint(x: maxX, y: minY + bottomRight * 0.45),
+                    controlPoint2: NSPoint(x: maxX - bottomRight * 0.45, y: minY)
+                )
+            } else {
+                path.line(to: NSPoint(x: maxX, y: minY))
+            }
+
+            path.line(to: NSPoint(x: minX + bottomLeft, y: minY))
+            if bottomLeft > 0 {
+                path.curve(
+                    to: NSPoint(x: minX, y: minY + bottomLeft),
+                    controlPoint1: NSPoint(x: minX + bottomLeft * 0.45, y: minY),
+                    controlPoint2: NSPoint(x: minX, y: minY + bottomLeft * 0.45)
+                )
+            } else {
+                path.line(to: NSPoint(x: minX, y: minY))
+            }
+            path.close()
+            return path
         }
     }
 

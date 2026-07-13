@@ -197,30 +197,31 @@
 
 ### 9. Worktree 工作目录模式
 
-- 对于使用 Git worktree 且需要兼容 GitHub Desktop、IDE 和 AI Agent 的项目，推荐采用“`main` 保留在项目根目录，其他长期分支放入单数 `worktree/` 目录”的结构：
+- 对于使用 Git worktree 的项目，采用“项目容器目录不直接开发，`main/` 有独立工作区，其他分支与 `main/` 平级”的结构：
 
 ```text
-<project-name>/              ← main 分支工作区，也是工具默认打开目录
-├── .git/                    ← Git 元数据
-├── AGENTS.md
-├── README.md
-├── REQUIREMENTS.md
-├── DESIGN.md
-├── <deliverable-dir>/       ← 例如 macos/、site/、ios/
-└── worktree/
-    ├── <worktree-name>/     ← 其他分支工作区
-    ├── <worktree-name>/
-    └── <worktree-name>/
+<project-name>/              ← 项目容器目录，只收纳工作区，不作为任何分支的开发工作区
+├── main/                    ← main 分支工作区，也是工具默认打开目录
+│   ├── .git/                ← Git 元数据
+│   ├── AGENTS.md
+│   ├── README.md
+│   ├── REQUIREMENTS.md
+│   ├── DESIGN.md
+│   └── <deliverable-dir>/   ← 例如 macos/、site/、ios/、web/、admin/
+├── <branch-worktree-name>/  ← 其他分支工作区，与 main/ 平级
+├── <branch-worktree-name>/
+└── _builds/                 ← 本地打包产物，不进 Git
 ```
 
-- `<project-name>/` 默认对应 `main` 分支工作区；GitHub Desktop、Codex、其他 AI Agent 和 IDE 应优先打开这个根目录，以便识别 repo、读取根文档，并发现 `worktree/` 下的其他工作区。
-- `worktree/` 使用单数目录名，和其他职责目录一样保持单数形式。
-- `worktree/` 下的每个子目录对应一个非 `main` 分支的实际工作区。目录名应由用户或项目约定决定；当项目没有更具体规则时，推荐与 branch 名称保持一致。
+- `<project-name>/` 是项目容器目录，只负责收纳 `main/` 和其他 branch worktree，不直接开发。
+- `main/` 默认对应 `main` 分支工作区；GitHub Desktop、Codex、其他 AI Agent 和 IDE 应优先打开 `main/` 目录，以便识别 repo、读取根文档，并发现同层其他 branch worktree。
+- 其他 branch worktree 与 `main/` 平级，目录名由用户或项目约定决定；当前 Quota Bar 使用 `dropdown-main`、`preferences-main` 等安全目录名。
+- branch 名称中的 `/` 等不适合作为目录名的字符，在本地 worktree 目录名中替换为 `-` 或项目约定的安全分隔符。
 - branch/worktree 名称推荐保持 `a/b` 的两段式格式；如果 `b` 暂不明确，使用 `main`，例如 `sub/main`，以保留后续扩展性。
-- 仓库默认主分支 `main` 是特殊稳定分支，默认不放入 `worktree/main/`，除非用户明确要求牺牲 GUI / Agent 发现能力以换取更严格的容器化布局。
+- 仓库默认主分支 `main` 是特殊稳定分支，默认对应 `main/` 工作区。
 - 每个 worktree 应对应一个明确的 Git branch；除非用户或项目规则另有说明，不在多个 worktree 中复用同一个 branch 作为长期开发工作区。
 - 如果 branch 名称发生变更，关联的 worktree 本地目录名也应同步调整；如果 worktree 本地目录名发生变更，关联 branch 名称也应同步调整，以保持检索、定位和文档记录的一致性。
-- 上述示例强调的是目录组织方式；`<project-name>` 和 `<worktree-name>` 只是占位符，不是强制命名规范。
+- 上述示例强调的是目录组织方式；`<project-name>`、`<branch-worktree-name>` 和 `_builds/` 只是占位符，不是强制命名规范。
 - 如果用户已经明确指定 feature、branch 或 worktree，且当前目录不匹配，Agent 可以按项目规则优先进入已有 worktree；如确需创建对应 branch/worktree，应确保不会覆盖现有路径，并在执行前说明将要创建的 branch/worktree。
 - 如果用户没有明确指定目标分支或 feature，Agent 不得自行猜测并切换分支、创建分支或创建 worktree；应在当前分支继续，或停止并询问用户。
 - 禁止在未获得用户明确授权的情况下执行 `git worktree remove`、`git worktree move` 等会破坏或重定位 worktree 的命令。
@@ -239,7 +240,7 @@
 - 项目名称：Quota Bar
 - 产品简介：macOS 菜单栏下拉应用，用于展示 AI 订阅费用与额度状态；同时包含官方营销主页。
 - 主要用户：需要集中查看多项 AI 服务订阅与额度的个人用户，以及想了解 / 下载 Quota Bar 的访客。
-- 当前阶段：macOS 应用已进入真实 Provider 接入、订阅到期日和发布自动化阶段；营销主页首版已落地；仓库结构采用 `main` 在根目录、其他分支在 `worktree/` 的模式。
+- 当前阶段：macOS 应用已进入真实 Provider 接入、订阅到期日和发布自动化阶段；营销主页首版已落地；仓库结构采用项目容器 + `main/` + 平铺 branch worktree + `_builds/` 的模式。
 
 ### 技术栈与命令
 
@@ -255,7 +256,7 @@
 ### 版本号维护规则
 
 - 格式：`vX.Y.Z-<git-short-sha>`（如 `v0.10.0-dcfff71`）。`X.Y.Z` 是唯一的“新旧”判断依据——`UpdateChecker` 纯比语义化版本号，不看发布时间、构建时间戳或 sha；`-<sha>` 只标识"具体是哪次构建"，同一个 `X.Y.Z` 重复打包（哪怕 sha 不同）不会被判定为"有更新"。这是 2026-07-07 从"按发布/构建时间比较"改过来的，起因是时区解析 bug 导致的虚假更新提示——只要还依赖时间比较就永遍有踩时区/时钟的风险，所以彻底改成纯版本号比较。
-- 唯一权威来源：仓库根目录的 [`VERSION`](../VERSION) 文件，内容就是 `X.Y.Z`（无前导 `v`，无 sha）。`macos/scripts/build-app.sh` 和 `.github/workflows/release.yml` 都从这个文件读取，不再有 nightly/stable 两条通道或 workflow_dispatch 手动输入版本号的机制。
+- 唯一权威来源：`main/` 工作区根目录的 [`VERSION`](VERSION) 文件，内容就是 `X.Y.Z`（无前导 `v`，无 sha）。`macos/scripts/build-app.sh` 和 `.github/workflows/release.yml` 都从这个文件读取，不再有 nightly/stable 两条通道或 workflow_dispatch 手动输入版本号的机制。
 - **`X.Y.Z` 由 Agent 维护，每次执行修改任务时自行判断是否需要 bump、bump 哪一位**：
   - 只是 bug 修复、文案/样式调整、不影响用户可感知功能范围 → 一般不 bump，或 bump PATCH（Z）；
   - 新增功能、新 Provider、新一层获取策略、UI 交互规则调整等用户可感知的新能力 → bump MINOR（Y），通常对应 REQUIREMENTS.md 新开一个 `## Phase - vX.Y.0`；
@@ -283,11 +284,11 @@
 
 ### 目录索引
 
-- 根目录：`main` 分支实际工作区，也是 GitHub Desktop、Codex、其他 Agent 和 IDE 的默认打开目录。
-- `.git/`：主仓库 Git 元数据。
-- `worktree/<name>/`：非 `main` 分支的 Git worktree 工作区，目录名按分支或项目约定命名。
-- `macos/`：macOS 原生菜单栏应用（SwiftPM 包，`Package.swift` 与 `Sources/QuotaBar` 目录遵循 PascalCase 硬约束）。
-- `site/`：官方营销主页 / 落地页（Astro 静态站，部署到 `quotabar.ddonlien.com`）。
+- `<project-name>/`：项目容器目录，不直接开发。
+- `main/`：`main` 分支工作区，包含 `.git/`、根文档和交付物目录。
+- `<branch-worktree-name>/`：非 `main` 分支的 Git worktree 工作区，与 `main/` 平级。
+- `_builds/`：容器级本地打包产物，不进 Git。
+- `<deliverable>/`：交付物目录，如 `macos/`、`site/`；其中 `macos/` 是 SwiftPM macOS 原生菜单栏应用，`site/` 是 Astro 营销主页。
 - `agent-template/`：Agent 协作文档模板；只保留模板文件和日志模板，不保留嵌套 `.git` 或模板历史日志。
 - `agent-log/`：当前工作区执行日志。
 - `reference/`：参考资料，不默认视为项目代码。
@@ -301,7 +302,7 @@
 ### 项目特殊约束
 
 - 语言与命名：面向用户的文案默认中文；Swift 类型、属性、文件名沿用英文；目录名按新模板优先表达交付物 / 职责，使用小写和连字符。
-- Worktree 约束：`main` 保留在项目根目录；其他长期分支放入单数 `worktree/`。日常任务未指定分支时在根目录 `main` 执行；指定分支时进入对应 `worktree/<name>/`。
+- Worktree 约束：项目容器不直接开发；`main` 保留在 `main/`，其他长期分支与 `main/` 平级。日常任务未指定分支时在 `main/` 执行；指定分支时进入对应的平级 worktree 目录。
 - 设计原则：macOS 应用优先贴近 macOS 26 Liquid Glass 风格，保持菜单栏下拉面板轻量、紧凑、可扫读；营销主页保持克制、可信、聚焦产品。
 - 架构限制：Provider 额度、订阅到期日、订阅组排序和数据存储以本地解析为主；不得把用户 token、cookie 或额度数据上传到外部服务器。
 - 授权与引用边界：`reference/`、外部参考项目和 `agent-template/` 的演示内容不默认纳入项目自身范围；引用第三方实现时保留来源说明。

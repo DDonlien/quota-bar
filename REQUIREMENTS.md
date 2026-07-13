@@ -418,6 +418,7 @@
 - [x] [0.8.0-DOC-A-009] 同步 README、AGENTS、REQUIREMENTS、日志中的 `.repo/` + `worktree/` 结构说明 #docs #P1 #cut 已改为 main 根目录 + 单数 `worktree/` 结构说明
 - [x] [0.8.0-DOC-A-010] 将 `main` 分支恢复到项目根目录，保留其他分支在单数 `worktree/` 下，兼容 GitHub Desktop / Codex / Agent 发现模型 #docs #P1
 - [x] [0.8.0-DOC-A-011] 修改 `agent-template/AGENTS.md`：`main` 默认保留在根目录，非 `main` worktree 使用单数 `worktree/` #docs #P1
+- [x] [0.8.0-DOC-A-012] 按 `agent-template/app-agent-template/AGENTS.md` 将项目整理为容器目录 + `main/` + 平铺 branch worktree + `_builds/` 结构，并同步当前 `AGENTS.md` / `README.md` 参考内容 #docs #P1
 
 ## Phase - v0.9.0 - 持久化、来源索引与启动兜底
 
@@ -738,6 +739,32 @@
 > 用户反馈 opencode 一直显示"价格=未获取"，指出目前 opencode Go 只有一档订阅（$10/月），可以先写死这个价格占位，同时要做好本地化换算。
 
 - [x] [0.10.0-DATA-B-021] `ProviderPricing.usdMonthlyPrice` 的 `(kind, tier)` 价格表里补上 `(.opencode, "go") → 10`（对应 `OpenCodeWorkspaceProvider` 里硬编码传入的 `tier: "Go"`——不是从页面解析出来的，只要 workspace 确认订阅了 Go 就是这个价格，官网目前只有这一档）。价格表已有的本地化换算逻辑（`localizedMonthlyPrice`：美元区直接显示 `$10/月`，人民币区按 `ExchangeRateProvider` 实时汇率换算显示 `¥XX/月`）自动生效，不需要额外写换算代码 #P2 — 真机验证：`opencode-webview：档位=Go，价格=¥68/月`（$10 × 当前汇率）。如果 opencode 以后上线多档定价，这里要同步改成从页面解析，注释里已经留了提醒。
+
+### sub/main: 菜单栏图标分层显示（新功能）
+
+> 用户提供两张参考 SVG（"2 sub.svg"/"2 sub-front.svg"）+ 需求描述：实心 bar 固定显示最短周期额度（比如 5 小时），一个虚线/纹理层显示次短周期额度（比如周额度）；如果次短周期比最短周期剩得少，纹理层要叠在实心层前面（参考图 2 的叠放关系）；最左/最右两个 bar 的顶部外侧圆角只在接近容器顶部时才有，bar 变矮后圆角要自然过渡消失，不能凭空浮在中间。
+
+- [x] [0.10.0-FEAT-A-001] `QuotaModels.swift` 新增 `ProviderSnapshot.primarySubscriptionGroupTopTwoQuotasByPeriod(itemOrder:)`：按周期长短（不是剩余多少）从第一个订阅组里排出最短 + 次短两条额度——跟已有的 `primarySubscriptionGroupWorstQuota`（按"剩余最少"选值，可能是 5 小时也可能是周额度，取决于哪个更紧张）是完全不同的选择逻辑，这里身份固定，不会因为剩余比例变化而互换 #P1
+- [x] [0.10.0-FEAT-A-002] `StatusBarController` 新增 `layeredFractions(for:)`：套用新的选层方法算出 primary（固定最短周期）/secondary（固定次短周期，只有一条 quota 时为 nil）两个比例；`makeBarsImage` 每个 bar 最多画两层，叠放顺序按谁更高决定——次短周期更高（更常见）时纹理层先画成背景、实心层叠在前面；次短周期更矮时实心层先画、纹理层叠在前面。纹理层的画法是裁剪到 bar 形状内的 45° 手绘斜线阵列（图标只有个位数 pt 宽，`NSColor(patternImage:)` 那套在这个尺度下不好精确控制）——关键坑点：纹理层叠在**已经画满的实心层前面**时，半透明白色斜线画在纯白底上完全没有对比度，视觉上等于没画；改用 `.destinationOut` 复合模式把斜线"擦"进已经画好的实心区域、露出底下的菜单栏背景，不管纹理层底下是透明画布还是已经不透明都看得清（这个 bug 是渲染测试图直接肉眼看出来的，不是靠猜） #P0
+- [x] [0.10.0-FEAT-A-003] `BarsImageLayout.barPath` 重写：最左/最右 bar 的顶部圆角改成跟"bar 顶边离容器顶边的距离"挂钩的 `adaptiveTopRadius`——距离为 0（bar 顶到頂）给足 `barRadius`，距离达到 `barRadius` 或更远收缩到 0，中间线性过渡；底部圆角固定不受影响（bar 永远贴底）。原来的三个重复分支（单 bar/最左/最右各自手写贝塞尔路径）合并成一个支持四角各自独立半径的 `roundedRectPath` 辅助函数，减少重复代码。分层显示下两层各自独立按自己的高度算顶部圆角，不受另一层影响 #P1
+- [x] [0.10.0-QA-A-001] 把 `makeBarsImage`/`layeredFractions`/`BarsImageLayout` 从 `private` 松到默认 internal，配合 `@testable import` 直接单元测试（`StatusBarLayeredBarsTests`，8 个测试：选层逻辑、`layeredFractions` 各状态分支、顶部圆角自然过渡、中间 bar 恒定直角）。另外写了一个临时渲染脚本，把真实渲染结果导出成放大 8 倍的 PNG（叠一层深色背景，因为图标本身是白色内容+透明背景，直接看白底 PNG 完全看不见）直接肉眼核对——就是靠这张图发现了上面 `0.10.0-FEAT-A-002` 里说的"白色斜线叠在纯白底上完全看不见"的 bug，验证完两种叠放情况 + 圆角自然过渡都正确后删掉了这个临时脚本，不留在正式测试里 #P1
+
+### sub/main: Claude 又刷新不到额度——排查是否是 bug
+
+> "看下log，又刷新不到 claude了，which肯定是可用的，感觉是某种bug"（附一段真实诊断日志，2026.07.10 起 Claude 的额度获取开始出现新的失败原因："Cookie 已过期，请重新登录"）。
+
+- [x] [0.10.0-INVESTIGATE-A-007] 读真实诊断日志核实：`claude-webview` 层这次的失败详情从此前的"获取到 N 条额度窗口｜成功"变成了"来源 claude-webview：Cookie 已过期，请重新登录｜失败"——这是 `BrowserCookieProvider.performRequest` 收到 Anthropic 服务端返回的 `401/403` 后产生的信号，代表 App 本地存的 Cookie 对象确实还在、但服务端已经不认这个会话了（真实的服务端 session 过期，不是"没登录"，也不是本地判断逻辑的 bug）。同一轮里 CLI 层（`claude-auth-status-cli`）拿到了档位/价格但拿不到额度窗口、oauth 层被限流——三层凑不出完整数据，所以 dropdown 目前展示的是"暂无额度数据"这个终态文案。修复方式是用户手动重新走一次 WebView 授权（重新登录 claude.ai），不是代码改动 #P1
+- [x] [0.10.0-BUG-A-029] 顺带定位到一个真实 UX 缺口：`firstPendingAuthRemediationTier()` 判断 WebView tier"已完成"只看本地是否存有该 provider dashboard 域的 Cookie 对象（`appSessionHasCookies`），不看服务端这次请求实际是否还认这个 Cookie；所以"Cookie 对象还在、但服务端已判定过期"这种情况下，dropdown 会误判 WebView tier 已完成、直接展示终态"暂无额度数据"，而不是重新引导用户去重新授权——这本该是最贴切的修复提示。这次没有动这处：要把"上一次请求具体是哪种失败"这个信号一路传回 `ProviderSnapshot` 目前没有现成字段，属于有真实架构成本的改动，先记录、留作后续单独任务，不在这次顺手改掉 #P2
+
+### sub/main: 诊断日志按刷新轮次分隔 + 可配置保留轮数 + 新的在最上面
+
+> "看下log...另外日志增加2个功能：\n* 每一次刷新之间做分割，做成：换行 / [刷新额度] - yyyy.dd.mm - hh.mm.ss / 换行\n* 然后增加一个保留次数功能，决定保存最近几次刷新的日志，不要像现在这样无限保存\n* 确保是新的在上面"
+
+- [x] [0.10.0-FEAT-A-004] `RefreshCoordinator.runRefreshCycle()` 最前面（早于任何 provider 的 record/flush）新增调用 `ProviderCheckLog.shared.beginCycle(retainCycles:)`，往日志文件写入一条 `[刷新额度] - <时间戳>` 分隔头，让这一轮的全部日志行都跟在这条头后面。时间戳格式沿用日志本来就在用的 `yyyy.MM.dd_HH.mm.ss`（跟用户原话里的 `yyyy.dd.mm` 不完全一致，为了跟已有每行时间戳格式统一没有另起一套）#P1
+- [x] [0.10.0-FEAT-A-005] `ProviderCheckLogStore` 新增 `readRecentLines()` 的分轮解析：先按 `[刷新额度]` 分隔头把文件切成一个个轮次块，再把**块的顺序**整体反转（块内每一行原有的先后顺序不变），使最新一轮排在最上面——磁盘上的物理写入顺序完全不变，只有读出来展示的顺序变了，不需要改动任何 append 逻辑 #P1
+- [x] [0.10.0-FEAT-A-006] 新增可配置的保留轮数：`AdvancedPreferences.logRetentionCycles`（默认 20）+ `LogRetentionOption`（10/20/50/100 档）+ `PreferencesStore.setLogRetentionCycles`/`currentLogRetentionOption`；`DiagnosticsSettingsView` 按钮行里加一个 `Picker` 让用户直接切换。`beginCycle` 每次写分隔头之后都会调用新增的 `truncateToRecentCycles`，超出保留轮数的最旧轮次直接从磁盘删掉，替换掉原来"只按 4000 行硬截断、轮次概念上无限保存"的行为（`truncateIfNeeded` 按行数硬截断保留作为兜底，两者不冲突）#P1
+- [x] [0.10.0-CLEAN-A-004] 设计取舍：一开始按用户原话字面加了"换行 + 头 + 换行"，但 `readRecentLines()`/`truncateIfNeeded()` 全部用 `content.split(separator: "\n", omittingEmptySubsequences: true)` 解析文件——这个选项会把文件里所有字面空行在读取/截断这两步全部吃掉，字面空行永远不可能真正保留下来、更不可能展示出来。改成分隔头本身不含字面空行（跟其余日志行一样只带一个尾随换行符），"换行"的视觉间隔改在 `DiagnosticsSettingsView.logView` 展示层实现：识别 `line.hasPrefix("[刷新额度]")` 的行，加大上下 padding + 加粗 + 强调色，效果等价但不依赖一个实际上不可能生效的存储层假设 #P2
+- [x] [0.10.0-QA-A-002] `swift test` 全量 205 个测试通过（原 203 基线 + `ProviderCheckLogTests` 新增 2 条：`beginCycleOrdersNewestFirst` 验证跨轮次新的在最上面、轮内顺序不乱；`beginCycleTrimsOldestCyclesBeyondRetention` 验证超出保留轮数后旧轮次被截断）。重新打包、真机重启验证：真实日志文件里 `[刷新额度] - 2026.07.10_11.28.08` 分隔头正确插入在这一轮全部 provider 日志之前 #P1
 
 
 ## Phase - v0.11.0 - 真实自动更新（ad-hoc 预开发版）+ semver 发版

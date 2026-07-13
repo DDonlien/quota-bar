@@ -183,18 +183,18 @@ cd macos
 ./scripts/build-app.sh
 ```
 
-每次运行都会在 `macos/build/` 下生成一个以当前时间命名的子文件夹：
+每次运行都会在项目容器级 `_builds/` 下生成一个以当前时间和分支命名的子文件夹：
 
 ```text
-macos/build/
-├── 20260620-193559/
+_builds/
+├── 20260713-120000-main/
 │   └── Quota Bar.app
-├── latest -> 20260620-193559/
+├── latest -> 20260713-120000-main/
 └── ...
 ```
 
 - 历史版本按时间保留，方便回滚对比
-- `build/latest/Quota Bar.app` 是相对软链，始终指向 `build/` 同级时间戳目录中最新的一次构建，适合固定验证入口
+- `_builds/latest/Quota Bar.app` 是相对软链，始终指向 `_builds/` 同级时间戳目录中最新的一次构建，适合固定验证入口
 - 可以拖到 Applications，或直接从 Finder 双击打开
 
 > 注意：未签名 + 未公证的 .app 第一次启动需要右键 → 打开。
@@ -205,15 +205,17 @@ macos/build/
 
 ### 本地 worktree 布局
 
-本机协作环境保留 `main` 在项目根目录，其他长期分支放在单数 `worktree/` 目录下。GitHub Desktop、Codex、其他 Agent 和 IDE 默认打开项目根目录即可识别 repo、读取根文档，并看到其他 worktree。
+本机协作环境使用项目容器目录收纳工作区：`main/` 是默认工作区，其他 branch worktree 与它平级，构建产物统一放在容器级 `_builds/`。GitHub Desktop、Codex、其他 Agent 和 IDE 默认打开 `main/` 即可识别 repo、读取根文档，并看到其他 worktree。
 
 ```text
 quota-bar/
-├── .git/           # Git 元数据
-├── macos/          # main 分支中的 macOS 应用
-├── site/           # main 分支中的营销主页
-└── worktree/
-    └── ...         # 其他分支工作区
+├── main/           # main 分支工作区
+│   ├── macos/       # macOS 原生应用
+│   └── site/        # 营销主页
+├── dropdown-main/  # dropdown/main 等非 main 分支工作区
+├── preferences-main/
+├── sub-main/
+└── _builds/        # 本地打包产物，不进 Git
 ```
 
 ### 目录结构

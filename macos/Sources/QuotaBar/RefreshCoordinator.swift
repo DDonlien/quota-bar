@@ -18,6 +18,22 @@ protocol QuotaProvider: AnyObject, Sendable {
 
 @MainActor
 final class RefreshCoordinator: ObservableObject {
+    /// 一轮刷新是自动周期触发还是用户手动触发——只用于诊断日志的分隔头标注
+    /// （`[刷新额度] 手动刷新/自动刷新 - 时间戳`），不影响刷新逻辑本身。
+    /// 所有经 `refreshNow()` 进来的（日志页「立即刷新」按钮、WebView 授权关闭、
+    /// 保存 API key 等）都算手动；只有 `runAutoRefreshLoop` 里的定时周期算自动。
+    enum RefreshTrigger {
+        case manual
+        case auto
+
+        var logLabel: String {
+            switch self {
+            case .manual: return "手动刷新"
+            case .auto: return "自动刷新"
+            }
+        }
+    }
+
     struct ProviderInstallSummary: Sendable {
         let detections: [InstallDetectorProvider.InstallDetection]
 
@@ -177,7 +193,7 @@ final class RefreshCoordinator: ObservableObject {
     }
 
     private func runAutoRefreshLoop() async {
-        await runRefreshCycle()
+        await runRefreshCycle(trigger: .auto)
         while !Task.isCancelled {
             do {
                 try await Task.sleep(nanoseconds: UInt64(refreshInterval * 1_000_000_000))
@@ -185,7 +201,7 @@ final class RefreshCoordinator: ObservableObject {
                 return
             }
             if Task.isCancelled { return }
-            await runRefreshCycle()
+            await runRefreshCycle(trigger: .auto)
         }
     }
 
@@ -197,12 +213,12 @@ final class RefreshCoordinator: ObservableObject {
                 _ = await existing.value
                 guard let self else { return }
                 if Task.isCancelled { return }
-                await self.runRefreshCycle()
+                await self.runRefreshCycle(trigger: .manual)
             }
             return
         }
         inFlightTask = Task { [weak self] in
-            await self?.runRefreshCycle()
+            await self?.runRefreshCycle(trigger: .manual)
         }
     }
 
@@ -259,7 +275,7 @@ final class RefreshCoordinator: ObservableObject {
 
     /// 单次刷新循环（streaming 版本）：
     ///
-    /// 1. **探测安装**：跑 `detectInstallReasons()` 找出哪些 kind 真的装了。
+    /// 1. **探测安装**：对已启用的 provider 跑 `detectInstallReasons(for:)` 找出哪些 kind 真的装了。
     /// 2. **立刻 seed placeholder**：对每个 active + 未隐藏的 kind，注入
     ///    `ProviderSnapshot.loading(kind:)` 到 `state.snapshots`，按用户偏好顺序排好。
     ///    UI 立即看到 provider 行 + 骨架占位，不需要等任何 pipeline 完成。
@@ -275,20 +291,33 @@ final class RefreshCoordinator: ObservableObject {
     /// - 任何时刻 `state.snapshots` 都保持「已安装且未隐藏」的全部 kind（loading 或 completed）。
     /// - 之前在 state 里、但本轮不再 active 的 kind 会被剔除（不再显示）。
     /// - `state.lastUpdated` 每次有 provider 完成时都向前推（不是等所有完成）。
-    private func runRefreshCycle() async {
+    private func runRefreshCycle(trigger: RefreshTrigger) async {
         isRefreshing = true
         defer { isRefreshing = false }
 
-        // 1. 前置检测：哪些 service 真的装了 App/CLI/凭证？
-        //    没装的 kind 直接跳过 pipeline，UI 不会显示。
-        let installReasons = await detectInstallReasons()
-        NSLog("QuotaBar: installReasons = \(installReasons.keys.sorted { $0.rawValue < $1.rawValue })")
-        removeCacheForUndetectedProviders(detectedKinds: Set(installReasons.keys))
+        // 0. 日志分隔头——必须在任何 provider 的 record/flush 之前写入，保证这一轮
+        // 的全部日志行都跟在这条头的后面（2026-07-10 用户反馈：日志应该按刷新
+        // 轮次分隔展示、可配置保留最近几轮；2026-07-11 追加：标明手动/自动）。
+        await ProviderCheckLog.shared.beginCycle(
+            triggerLabel: trigger.logLabel,
+            retainCycles: PreferencesStore.shared.preferences.advanced.logRetentionCycles
+        )
 
-        // 2. 跑 installed kind 的 pipeline（并发），只对「已装且用户未关闭」的 kind seed
-        //    placeholder。是否启用统一读 `PreferencesStore.isEnabled`——dropdown 隐藏
-        //    按钮和 Preferences 开关写的是同一份持久化状态，这里只需要读一处。
-        let activeProviders = providers.filter { installReasons[$0.kind] != nil && PreferencesStore.shared.isEnabled(kind: $0.kind) }
+        // 1. 前置检测：哪些 service 真的装了 App/CLI/凭证？没装的 kind 直接跳过
+        //    pipeline，UI 不会显示。只对「用户已启用」的 provider 做安装探测——
+        //    被隐藏/关闭的 provider 本来就不会进入下面的 fetch 阶段，提前把它们排除
+        //    在探测之外，让启用的 provider 优先占用探测/网络并发资源，别被一堆
+        //    用不上的 provider 拖慢（2026-07-11 用户反馈：刷新应优先处理已启用的 provider）。
+        let enabledProviders = providers.filter { PreferencesStore.shared.isEnabled(kind: $0.kind) }
+        let enabledKinds = Set(enabledProviders.map(\.kind))
+        let installReasons = await detectInstallReasons(for: enabledKinds)
+        NSLog("QuotaBar: installReasons = \(installReasons.keys.sorted { $0.rawValue < $1.rawValue })")
+        // 只在「本轮实际尝试探测的（即已启用的）」kind 范围内清理缓存，避免把只是
+        // 临时被关闭、这轮压根没探测的 provider 的缓存误删。
+        removeCacheForUndetectedProviders(detectedKinds: Set(installReasons.keys), amongKinds: enabledKinds)
+
+        // 2. 跑 installed kind 的 pipeline（并发）：已启用 + 已装的 kind seed placeholder。
+        let activeProviders = enabledProviders.filter { installReasons[$0.kind] != nil }
         NSLog("QuotaBar: activeProviders = \(activeProviders.map { $0.kind.rawValue })")
 
         // 未检测到安装 / 已隐藏的 kind 不会进入下面的 per-provider 并发阶段，
@@ -597,20 +626,26 @@ final class RefreshCoordinator: ObservableObject {
 
     // MARK: - 辅助
 
-    /// 并行跑所有 `InstallDetectorProvider`，返回 kind → install reason。
+    /// 并行跑 `InstallDetectorProvider`，返回 kind → install reason。
     /// 没装的 kind 不会出现在结果里。
     /// reason 后续用于 pipeline 失败时 fallback 显示「已安装 X / Y」的文案。
-    private func detectInstallReasons() async -> [ProviderKind: ProviderInstallSummary] {
-        guard !installDetectors.isEmpty else {
-            return Dictionary(uniqueKeysWithValues: providers.map { ($0.kind, ProviderInstallSummary(detections: [])) })
+    ///
+    /// `kinds`：只探测这批 kind（本轮实际为「已启用」的 provider）；被关闭的
+    /// provider 不做探测，让启用的 provider 优先占用探测并发资源。
+    private func detectInstallReasons(for kinds: Set<ProviderKind>) async -> [ProviderKind: ProviderInstallSummary] {
+        let relevantDetectors = installDetectors.filter { kinds.contains($0.key) }
+        guard !relevantDetectors.isEmpty else {
+            return Dictionary(uniqueKeysWithValues: providers
+                .filter { kinds.contains($0.kind) }
+                .map { ($0.kind, ProviderInstallSummary(detections: [])) })
         }
 
-        let preferredSourceIds = Dictionary(uniqueKeysWithValues: installDetectors.keys.map {
+        let preferredSourceIds = Dictionary(uniqueKeysWithValues: relevantDetectors.keys.map {
             ($0, sourceIndexStore.preferredSourceID(for: $0, layer: .provider))
         })
 
         return await withTaskGroup(of: (ProviderKind, ProviderInstallSummary?).self) { group in
-            for (kind, detector) in installDetectors {
+            for (kind, detector) in relevantDetectors {
                 let preferredSourceId = preferredSourceIds[kind] ?? nil
                 group.addTask {
                     let detections = await detector.detectSources(preferredSourceId: preferredSourceId)
@@ -681,9 +716,15 @@ final class RefreshCoordinator: ObservableObject {
         }
     }
 
-    private func removeCacheForUndetectedProviders(detectedKinds: Set<ProviderKind>) {
+    /// 清理「本轮探测过、但没探测到安装」的 provider 缓存。`amongKinds` 把清理范围
+    /// 限制在本轮实际尝试探测的（已启用的）kind 上——被关闭、这轮压根没探测的
+    /// provider 不在此列，避免误删它们上一次的缓存。
+    private func removeCacheForUndetectedProviders(detectedKinds: Set<ProviderKind>, amongKinds: Set<ProviderKind>) {
         let managedKinds = Set(providers.map(\.kind))
-        for snapshot in snapshotCacheStore.loadAll() where managedKinds.contains(snapshot.kind) && !detectedKinds.contains(snapshot.kind) {
+        for snapshot in snapshotCacheStore.loadAll()
+        where managedKinds.contains(snapshot.kind)
+            && amongKinds.contains(snapshot.kind)
+            && !detectedKinds.contains(snapshot.kind) {
             snapshotCacheStore.remove(kind: snapshot.kind)
         }
     }

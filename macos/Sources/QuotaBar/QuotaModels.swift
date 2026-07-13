@@ -604,6 +604,24 @@ struct ProviderSnapshot: Identifiable, Hashable, Sendable {
         return firstGroup.items.min { $0.remainingFraction < $1.remainingFraction }
     }
 
+    /// 取用户排序后第一个订阅组里，按周期**长短**（不是剩余多少）排出的前两条额度。
+    ///
+    /// 跟 `primarySubscriptionGroupWorstQuota`（按"剩余最少"选值，可能是 5 小时也
+    /// 可能是周额度，取决于哪个当下更紧张）是完全不同的选择逻辑——这里固定按周期
+    /// 长度排序，第一条永远是最短周期（比如 5 小时），第二条永远是次短周期（比如
+    /// 周额度），不会因为剩余比例变化而互换身份。用于菜单栏图标的分层显示（2026-07-09
+    /// 新增）：实心层固定对应最短周期，虚线/纹理层固定对应次短周期。
+    /// 没有 `periodSeconds` 的额度排在最后（跟 `ClaudeUsageWindowParser` 等既有排序
+    /// 惯例一致）。只有一条额度时 `secondShortest` 为 nil。
+    func primarySubscriptionGroupTopTwoQuotasByPeriod(itemOrder: [String]) -> (shortest: QuotaWindow, secondShortest: QuotaWindow?)? {
+        guard let firstGroup = subscriptionGroups(customOrder: itemOrder).first else { return nil }
+        let sorted = firstGroup.items.sorted {
+            ($0.periodSeconds ?? .greatestFiniteMagnitude) < ($1.periodSeconds ?? .greatestFiniteMagnitude)
+        }
+        guard let shortest = sorted.first else { return nil }
+        return (shortest, sorted.count > 1 ? sorted[1] : nil)
+    }
+
     /// 取整组中剩余比例最低的额度对象（保留旧 API，备用）。
     ///
     /// **注意**：新代码优先用 `primarySubscriptionGroupWorstQuota`，它会在多订阅组时按用户

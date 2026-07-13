@@ -228,8 +228,29 @@ struct AdvancedPreferences: Codable, Equatable, Sendable {
     /// 和 `RefreshCoordinator.applyProviderTimeoutChange()`。
     var providerTimeoutSeconds: TimeInterval
 
-    init(providerTimeoutSeconds: TimeInterval = 10) {
+    /// 「日志」页诊断日志保留的刷新轮数（不是行数）。2026-07-10 用户反馈：日志之前
+    /// 只按总行数截断（`ProviderCheckLogStore.maxLines`，4000 行），没有一个用户能
+    /// 直接理解的"保留几轮"概念，而且默认无限攒到截断阈值才清；现在按轮次分隔
+    /// （每轮开头有 `[刷新额度] - 时间戳` 标记），这里控制保留最近几轮，旧的整轮
+    /// 直接从磁盘删掉。
+    var logRetentionCycles: Int
+
+    init(providerTimeoutSeconds: TimeInterval = 10, logRetentionCycles: Int = 20) {
         self.providerTimeoutSeconds = providerTimeoutSeconds
+        self.logRetentionCycles = logRetentionCycles
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case providerTimeoutSeconds
+        case logRetentionCycles
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            providerTimeoutSeconds: try container.decodeIfPresent(TimeInterval.self, forKey: .providerTimeoutSeconds) ?? 10,
+            logRetentionCycles: try container.decodeIfPresent(Int.self, forKey: .logRetentionCycles) ?? 20
+        )
     }
 }
 
@@ -259,6 +280,34 @@ enum ProviderTimeoutOption: Int, CaseIterable, Identifiable, Codable, Sendable {
 
     static func nearest(to seconds: TimeInterval) -> ProviderTimeoutOption {
         allCases.min(by: { abs($0.seconds - seconds) < abs($1.seconds - seconds) }) ?? .tenSeconds
+    }
+}
+
+/// 「日志」页「保留轮数」下拉框的固定选项，跟 `RefreshIntervalOption`/
+/// `ProviderTimeoutOption` 同一套设计。
+enum LogRetentionOption: Int, CaseIterable, Identifiable, Codable, Sendable {
+    case one = 1
+    case two = 2
+    case five = 5
+    case ten = 10
+    case twenty = 20
+    case fifty = 50
+
+    var id: Int { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .one: return "1 轮"
+        case .two: return "2 轮"
+        case .five: return "5 轮"
+        case .ten: return "10 轮"
+        case .twenty: return "20 轮"
+        case .fifty: return "50 轮"
+        }
+    }
+
+    static func nearest(to cycles: Int) -> LogRetentionOption {
+        allCases.min(by: { abs($0.rawValue - cycles) < abs($1.rawValue - cycles) }) ?? .twenty
     }
 }
 
@@ -363,6 +412,19 @@ final class PreferencesStore {
 
     func setProviderTimeout(_ option: ProviderTimeoutOption) {
         setProviderTimeout(option.seconds)
+    }
+
+    func setLogRetentionCycles(_ cycles: Int) {
+        preferences.advanced.logRetentionCycles = max(1, min(500, cycles))
+        _ = try? persist()
+    }
+
+    func setLogRetentionCycles(_ option: LogRetentionOption) {
+        setLogRetentionCycles(option.rawValue)
+    }
+
+    var currentLogRetentionOption: LogRetentionOption {
+        LogRetentionOption.nearest(to: preferences.advanced.logRetentionCycles)
     }
 
     var currentProviderTimeoutOption: ProviderTimeoutOption {
