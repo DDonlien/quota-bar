@@ -1,0 +1,109 @@
+---
+// 隐私政策 — 站内独立页面，复用 Layout / Nav / Footer，保持视觉与首页一致。
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+const SECTIONS = ["s1", "s2", "s3", "s4", "s5", "s6", "s7"];
+// s3 和 s4 各有 2 段正文，其余每节 1 段——跟 dict.ts 里实际写的 body1/body2 对应。
+const EXTRA_BODY: Record<string, number> = { s1: 3, s3: 2 };
+---
+
+<Layout
+  title="Privacy Policy — Quota Bar"
+  description="Quota Bar 隐私政策：App 和网站分别接触哪些数据、绝不会做什么。"
+>
+  <Nav />
+  <main class="site-main">
+    <section class="legal section">
+      <div class="container-content">
+        <a class="legal__back" href="/" data-i18n="privacy.back">← Back to home</a>
+
+        <div class="legal__header">
+          <h1 class="legal__heading" data-i18n="privacy.heading">Privacy Policy</h1>
+          <p class="legal__updated" data-i18n="privacy.updated">Last updated: July 18, 2026</p>
+        </div>
+
+        <p class="legal__intro" data-i18n="privacy.intro"></p>
+
+        {SECTIONS.map((key) => (
+          <div class="legal__section">
+            <h2 data-i18n={`privacy.${key}.title`}></h2>
+            <p data-i18n={`privacy.${key}.body1`}></p>
+            {Array.from({ length: (EXTRA_BODY[key] ?? 1) - 1 }).map((_, i) => (
+              <p data-i18n={`privacy.${key}.body${i + 2}`}></p>
+            ))}
+          </div>
+        ))}
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .site-main {
+    padding-top: 8rem;
+    padding-bottom: 6rem;
+  }
+
+  .legal__back {
+    display: inline-block;
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-7);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+  .legal__back:hover {
+    color: var(--text-primary);
+  }
+
+  .legal__header {
+    margin-bottom: var(--space-6);
+  }
+
+  .legal__heading {
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+  }
+
+  .legal__updated {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+  }
+
+  .legal__intro {
+    font-size: var(--text-lg);
+    line-height: 1.7;
+    color: var(--text-secondary);
+    max-width: 68ch;
+    margin-bottom: var(--space-8);
+    padding-bottom: var(--space-7);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .legal__section {
+    max-width: 68ch;
+    margin-bottom: var(--space-7);
+  }
+  .legal__section h2 {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.005em;
+    margin-bottom: var(--space-3);
+  }
+  .legal__section p {
+    font-size: var(--text-base);
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-3);
+  }
+  .legal__section p:last-child {
+    margin-bottom: 0;
+  }
+</style>

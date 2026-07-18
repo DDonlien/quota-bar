@@ -15,6 +15,54 @@
     </div>
 
     <div class="pricing__card-wrap">
+      <div class="pricing__card pricing__card--outline">
+        <span class="pricing__badge pricing__badge--neutral" data-i18n="pricing.opensource.badge">Open Source</span>
+
+        <div class="pricing__plan">
+          <h3 class="pricing__plan-name">
+            <span data-i18n="pricing.opensource.plan.name">Build it yourself</span>
+          </h3>
+          <div class="pricing__amount">
+            <span class="pricing__amount-current" data-i18n="pricing.opensource.amount">Free</span>
+          </div>
+        </div>
+
+        <p class="pricing__note">
+          <span data-i18n="pricing.opensource.note">Full source on GitHub · same features</span>
+        </p>
+
+        <ul class="pricing__bullets">
+          <li>
+            <svg class="pricing__check" fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="pricing.opensource.bullet.source">Complete, unrestricted source code</span>
+          </li>
+          <li>
+            <svg class="pricing__check" fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="pricing.opensource.bullet.features">Same features as the official build</span>
+          </li>
+          <li>
+            <svg class="pricing__check" fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="pricing.opensource.bullet.compile">Compile and sign it yourself</span>
+          </li>
+          <li>
+            <svg class="pricing__check" fill="none" height="14" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span data-i18n="pricing.opensource.bullet.community">Community support via GitHub Issues</span>
+          </li>
+        </ul>
+
+        <a class="pricing__cta pricing__cta--outline" href="https://github.com/DDonlien/quota-bar" target="_blank" rel="noopener">
+          <span data-i18n="pricing.opensource.cta">View on GitHub</span>
+        </a>
+      </div>
+
       <div class="pricing__card">
         <div class="pricing__glow" aria-hidden="true"></div>
 
@@ -98,14 +146,22 @@
     color: var(--text-secondary);
   }
 
+  /* 两卡并排：≥768px 左右并排（开源在左、付费在右，跟 Hero 的
+   * "先引导 GitHub 自编译，再看付费版" 顺序一致）；<768px 堆叠。
+   * align-items: stretch 让两张卡高度一致，视觉上是平级选项，不是主次关系。 */
   .pricing__card-wrap {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
+    align-items: stretch;
+    gap: var(--space-6);  /* 24px */
   }
 
   .pricing__card {
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     max-width: var(--max-w-pricing);  /* 380px */
     padding: var(--space-7);  /* 32px — 偏紧 vibeisland */
@@ -114,6 +170,12 @@
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);  /* 16px */
+  }
+
+  /* 开源卡片：跟付费卡同尺寸同结构，只是不用暖橙强调（那是付费卡的"限时"信号），
+   * 边框稍弱一点，视觉上安静地并排存在，而不是抢主卡的注意力。 */
+  .pricing__card--outline {
+    border-color: var(--border-strong);
   }
 
   /* 右上角装饰光晕 */
@@ -141,6 +203,14 @@
     font-size: var(--text-xs);  /* 12px */
     font-weight: 600;
     letter-spacing: 0.02em;
+  }
+
+  /* 开源徽标：中性灰而不是暖橙——暖橙是付费卡"限时"的专属信号，
+   * 开源这条路径本身不需要制造紧迫感。 */
+  .pricing__badge--neutral {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    border-color: var(--border-strong);
   }
 
   /* Plan 行：plan-name 左 + amount 右，row + wrap 防溢出。
@@ -226,11 +296,25 @@
     font-weight: 500;
     font-size: var(--text-base);  /* 14px */
     border-radius: var(--radius-md);  /* 12px */
+    text-align: center;
     transition: background var(--duration-fast) var(--ease-out);
     margin-bottom: var(--space-3);
+    /* .pricing__cta 现在也用在 <a> 上（开源卡跳 GitHub），撑住 flex 卡片底部对齐。 */
+    margin-top: auto;
   }
   .pricing__cta:hover {
     background: #f0f0f0;
+  }
+
+  /* 开源卡的 CTA：outline 而不是实心白——两张卡视觉平级，但同一行并排放两个
+   * 实心白按钮会显得重复；outline 是"同样重要、路径不同"的常规表达，不是弱化。 */
+  .pricing__cta--outline {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+  }
+  .pricing__cta--outline:hover {
+    background: rgba(255, 255, 255, 0.06);
   }
 
   .pricing__support {
