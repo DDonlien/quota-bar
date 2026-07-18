@@ -966,3 +966,77 @@
 - [x] [0.13.0-QA-A-000] 单元测试 `OpenCodeAuthProviderTests`：多 provider 解析、tier 优先级（Go > Zen > BYOK）、有凭证时返回 available + 空 quotas、无凭证时 missingCredentials
 - [x] [0.13.0-QA-A-001] `swift build` + `swift test`（185 个测试全过，含新增 4 个）；并用本机真实 `~/.local/share/opencode/auth.json`（已配置 `opencode-go`）实测 `swift run` 全链路：探测成功 → 档位=Go、价格=未获取 → 诊断日志确认无额度层伪造
 - [x] [0.13.0-DOC-A-000] `README.md`「支持的 Provider」加入 opencode，并补充独立说明段落解释为什么它不进四层获取矩阵
+
+## Phase - v0.14.0 - 大陆可达性兜底 + 额度节奏指示 + Kimi 额度修复
+
+> **背景**：用户截图显示应用内「检查更新」报错「无法连接到 GitHub，请检查网络」——`UpdateChecker.swift`
+> 直连 `api.github.com` 检查版本、直连 `github.com/.../releases/download/...` 下载 dmg，这两条请求在中国大陆
+> 网络环境下都可能不可达。同一问题也存在于官网：`site/src/pages/index.astro` 的 `UPDATE_DOWNLOAD` 脚本
+> 同样在**访客浏览器端**直连 `api.github.com` 取最新 dmg 直链，官网下载按钮在大陆同样可能失效。
+>
+> 用户参考了附带的 ChatGPT 对话（推荐"客户端永远只访问自己的域名，GitHub 只做构建/发布源"的架构），
+> 但明确简化为自己的落地方案："两步备份验证：1. 优先访问 GitHub 更新下载；2. 不行则自动访问 Vercel，
+> Vercel 上应该总是能获取到最新的包。" 采用**实时服务端代理**而不是 CI 构建时同步镜像文件：
+> Vercel Serverless Function 在请求时现查 GitHub Releases API + 现拉 dmg 资产转发，无需改动
+> `.github/workflows/release.yml`（发布流水线不变、风险最小），因为 Vercel 项目 Root Directory 是仓库根目录
+> （`.vercel/repo.json` 的 `directory: "."` 已确认），新增 `/api/*.js` 在仓库根目录生效。
+>
+> **成本提示**：QuotaBar.app 当前约 6.5MB，dmg 预计个位数到十几 MB，每次 fallback 触发的流式转发对 Vercel
+> 带宽成本可忽略；仅在 GitHub 直连失败时才会触发，日常不产生额外流量。
+>
+> **执行中发现的意外前提（2026-07-18）**：调研发现 GitHub 仓库 `DDonlien/quota-bar` 当时是 **private**——
+> 未认证请求（包括本来要写的 Vercel 代理、以及所有访客浏览器）访问 `api.github.com` 一律 404，这不是"大陆连不上"
+> 而是"谁都连不上"（404，不是超时/连接失败）。这也解释了官网下载按钮为什么一直在悄悄 fallback 到构建时
+> hardcode 的旧 dmg 直链（`catch` 静默吞掉了失败）。跟用户确认后（见本 phase 顶部决策），已执行
+> `gh repo edit --visibility public`（执行前完整扫描过 git 全部历史的文件名 + 内容 pickaxe，确认没有真实
+> 泄漏的密钥/私钥/token，只有测试 fixture 里的占位字符串如 `sk-ant-xxx`）。仓库现在是 public，本 phase 的
+> 代理函数按"两者都是未认证的正常直连"实现，不需要额外的 `GITHUB_TOKEN`。
+
+### update/main: 更新检查与下载的 GitHub → Vercel 两步兜底
+
+- [x] [0.14.0-BE-A-000] 仓库根目录新增 `api/latest-release.mjs` + `api/_lib/releases.mjs`（Vercel Node Serverless Function，零配置 `/api` 约定，Web-standard `export async function GET()` 签名，经 vercel-functions 官方 skill 确认是当前推荐写法）：服务端请求 `https://api.github.com/repos/DDonlien/quota-bar/releases?per_page=30`，原样转发 GitHub 的 JSON 数组结构（不改形状，客户端复用现有 `UpdateReleaseParser.parse`），带 `Cache-Control: s-maxage=60, stale-while-revalidate=300`
+- [x] [0.14.0-BE-A-001] 仓库根目录新增 `api/download-latest.mjs`：服务端解析当前最新可安装 release（tag 能解析出语义化版本号 + 有 `.dmg` 资产），把上游 `fetch()` 拿到的 `ReadableStream` 直接作为 `Response` body 转发（零配置流式，不缓冲整份文件），`Content-Type`/`Content-Disposition`/`Content-Length` 透传；只代理固定的"最新版"目标，不接受任意 URL 参数
+- [x] [0.14.0-FE-A-000] `UpdateChecker.performCheck` 重构为 `fetchReleasesData(from:)` 两次调用（GitHub 直连 → 失败后 Vercel `fallbackReleasesURL`）；限流（403 + `X-RateLimit-Remaining: 0`）直接报限流文案、不浪费一次 fallback；两者都失败才进最终错误态，文案改为不点名具体平台的「暂时无法检查更新，请稍后重试」
+- [x] [0.14.0-FE-A-001] `UpdateChecker.downloadAndInstall`：拆出 `startDownload(from:)` + `retryDownloadWithFallbackOrFail`，网络层失败**或 `hdiutil verify` 校验失败**（某些网络环境会用 HTTP 200 返回假内容而不是直接连接失败，只有校验能发现）都会触发一次 `fallbackDownloadURL` 重试；`downloadTriedFallback` 标记避免死循环，两次都失败才提示"下载失败，请稍后重试或前往官网手动下载"
+- [x] [0.14.0-FE-A-002] `site/src/pages/index.astro` 的 `UPDATE_DOWNLOAD` 脚本重构为 `resolveFromGitHub()` ?? `resolveFromFallback()`：GitHub 失败时改请求同源 `/api/latest-release`，且下载链接本身也改成同源 `/api/download-latest`（不是原始 github.com 直链——GitHub 都连不上，直链大概率也连不上）；sessionStorage 缓存的是最终 href 而不是 release 对象，两条路径共享同一份缓存逻辑
+- [x] [0.14.0-QA-A-000] 新增 `UpdateCheckerFallbackTests.swift`（4 个测试：primary 成功不碰 fallback / primary 失败自动 fallback 成功 / 两者都失败报通用错误不点名平台 / 限流直接报错不浪费 fallback）；顺带给 `PreferencesStore` 补一个 `init(fileURL:)` 测试专用入口（原来硬编码单例真实路径，没法在测试里隔离，现在跟其余 store 的临时目录注入模式对齐）。`swift test` 217/217 通过
+- [x] [0.14.0-QA-A-001] 真实验证（非 mock）：本地 `node` 直接跑 `api/_lib/releases.mjs` против真实 GitHub API，`pickLatestDmgRelease` 选出 `v0.10.0-cdc842c`；`api/latest-release.mjs`/`api/download-latest.mjs` 的 `GET()` 直接调用，下载流字节数（2,545,835）与 GitHub 资产 `size` 字段完全一致；新增 `.claude/launch.json` 的 `vercel-dev` 配置 + `vercel.json` 的 `devCommand`（原来没有，`vercel dev` 会在仓库根目录找不到 `astro` 命令），通过 Browser 面板跑起 `vercel dev`，确认 `/api/latest-release`、`/api/download-latest` 都是 200、字节数对得上；把官网下载脚本的 `resolveFromGitHub`/`resolveFromFallback` 原样搬到浏览器里跑，用 monkeypatch 的 `fetch` 模拟 GitHub 不可达，确认真的会切到 `/api/download-latest`
+
+### sub/main: 额度条节奏指示（linear pacing marker）
+
+> 需求原文："在 drop down 的进度条上，应该标识出根据当前剩余更新时间推荐的使用量。例如：如果剩余 7 天，
+> 今天是第 1 天，则应标识在 1/7 的位置。这个标识本身应该是个非常简洁的指示条或者指示点，不应该特别的张扬。"
+>
+> **语义确认**（本次实现采用的解释，如与用户预期不符可调整方向）：`ProgressPill` 的填充语义是"剩余比例"
+> （`remainingFraction`，从左边缘铺满，值越大填充越宽）。指示点标的是"如果按线性节奏消耗，此刻理论上应该
+> 还剩多少"——公式 `idealRemainingFraction = 1 - elapsedFraction = timeUntilReset / periodSeconds`。
+> 用户例子（周期 7 天，今天第 1 天，已过 1/7）对应 `idealRemainingFraction = 6/7`，指示点落在**靠右侧**（应该
+> 还剩 6/7）；如果实际填充（真实 remainingFraction）比指示点更靠左，说明消耗快于线性节奏。只对有明确
+> `periodSeconds` + `resetsAt` 的额度窗口显示，固定额度包（`periodSeconds == nil`）不显示。
+
+- [x] [0.14.0-DATA-B-000] `QuotaWindow` 新增方法 `idealRemainingFraction(relativeTo now: Date = Date()) -> Double?`：`periodSeconds`/`resetsAt` 任一缺失返回 `nil`；否则 `max(0, min(1, resetsAt.timeIntervalSince(now) / periodSeconds))`
+- [x] [0.14.0-FE-B-000] `ProgressPill` 新增可选参数 `paceMarkerFraction: Double?`：非 nil 时在该 x 位置画一条 1.5pt 宽、`progressHeight+2` 高的低对比度竖线（`Palette.paceMarker = Color.primary.opacity(0.45)`，不使用状态色，避免和 track/fill 的红橙绿混淆）
+- [x] [0.14.0-FE-B-001] `QuotaRow` 传入 `quota.idealRemainingFraction()` 给 `ProgressPill`
+- [x] [0.14.0-QA-B-000] 新增 `QuotaWindowTests.swift`：周期起点（1.0）/day-1-of-7（6/7）/终点（0）/resetsAt 陈旧夹到 0/无 periodSeconds 返回 nil/无 resetsAt 返回 nil，共 6 个测试，`swift test` 213/213 通过
+- [ ] [0.14.0-QA-B-001] `swift run` 目测验证：不同剩余比例 + 不同节奏（超前/落后/持平）下指示点位置和视觉观感符合"简洁不张扬"的要求 #P1 #blocked — 菜单栏 App 无 Dock 图标，本次会话未接入 computer-use 做截图验证，只验证到单元测试 + build 通过；打包后请用户实机看一眼
+
+### sub/main: Kimi CLI OAuth 5 小时/周额度丢失修复
+
+> 现象：用户反馈 Kimi 现在只能拿到月额度（Work，来自 `KimiDesktopTokenProvider`），拿不到 5 小时/周额度
+> （Code，来自 `KimiAuthProvider`）。本机诊断日志（`provider-check.log`）复现同一症状，`kimi-auth` 持续报
+> "Kimi refresh_token 已失效，请重新 kimi login"，而 `kimi-desktop-token` 持续成功。
+>
+> **根因分析**：`KimiAuthProvider` 是当前 Kimi pipeline 里唯一会**写回**凭证文件的 provider——刷新
+> access_token 后调用 `persistCredentials` 把新 token 写回 `~/.kimi-code/credentials/kimi-code.json`，
+> 而这份文件是 `kimi` CLI 自己的凭证存储，CLI 本身也可能独立管理/轮换这份凭证。`KimiDesktopTokenProvider`
+> （一直工作正常）从不写回它读的 token store，是纯只读消费者。Kimi 的 OAuth 服务端大概率对 `refresh_token`
+> 做单次轮换（用一次即失效换新），两个独立写者（真实 kimi CLI + Quota Bar 后台每 5 分钟一次的静默刷新）
+> 竞争同一份 refresh_token 时，任何一方在另一方之后用"已经被对方用掉"的旧 refresh_token 去刷新，
+> 服务端就会拒绝——这与观察到的"曾经能用、现在永久失败"的症状一致。
+>
+> 本次修复只解决"Quota Bar 主动写回、制造竞争"这一条架构性风险；如果用户本地 refresh_token 在修复前
+> 已经被判定失效，仍需手动 `kimi login` 一次让 CLI 重新签发凭证——这一步无法通过代码修复回溯解决。
+
+- [x] [0.14.0-BUG-A-000] `KimiAuthProvider.ensureFreshCredentials`/`forceRefresh` 仍在内存中执行 OAuth refresh（当次请求仍能成功），但去掉 `persistCredentials` 写回调用，不再往 `~/.kimi-code/credentials/kimi-code.json` 写任何内容——与 `KimiDesktopTokenProvider` 对齐为纯只读消费者，避免与真实 `kimi` CLI 竞争 refresh_token 轮换；已删除现在无调用方的 `persistCredentials` 方法本身
+- [x] [0.14.0-QA-C-000] 新增 `KimiAuthProviderTests`：过期 access_token 触发 refresh 后凭证文件字节级不变；未过期 access_token 完全跳过 refresh endpoint。`swift test` 207/207 通过（含新增 2 个）
+- [x] [0.14.0-DOC-B-000] `README.md` Kimi 一行补充说明：只读消费凭证文件、5 小时/周额度依赖 `kimi` CLI 自己的登录态，长期显示登录过期时需手动 `kimi login`

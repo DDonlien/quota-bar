@@ -84,3 +84,40 @@
 - [ ] [0.2.0-FE-A-000] 添加 sitemap.xml 和 robots.txt #FE #P2 #deferred
 - [ ] [0.2.0-FE-A-001] 添加 JSON-LD 结构化数据（SoftwareApplication） #FE #P2 #deferred
 - [ ] [0.2.0-FE-A-002] 中英双语切换 #FE #P3 #deferred
+
+> **文档漂移说明（2026-07-18）**：v0.2.0 之后主页实际经历了一次未被本文件记录的重大改版（"vibeisland"
+> 暗色 + 暖橙强调视觉、i18n 双语字典、Pricing/FAQ/SupportedServices 等新组件），`site/DESIGN.md` 的颜色
+> token 也随之整体替换但文档未同步更新。本次（v0.3.0）不回溯补写这段历史，只从当前真实代码状态继续推进；
+> `site/DESIGN.md` 会在本 phase 顺带修正为实际 token（详见下方 DOC 任务）。
+
+## Phase - v0.3.0 - 开源/付费双轨定价卡 + Creem 合规必需页面
+
+> **背景**：用户提供了两份 ChatGPT 对话记录。第一份是更新检查大陆可达性问题（对应根目录
+> `REQUIREMENTS.md` v0.14.0 phase）。第二份是商业模式讨论，最终结论是"完整开源、自行编译永久免费；
+> 官方签名版一次性付费；不做 Provider 数量限制"的双轨模式（类似 Keka），但**付费版的激活机制本身
+> 用户明确要求暂不实现**（还在考虑接入 Creem 还是自建）。本 phase 只做官网呈现层：在 `#pricing` 区块
+> 并排放置「开源自行编译」和「付费官方版」两张卡片，不涉及任何实际支付/授权逻辑改动。
+>
+> 同时，用户在申请 Creem 收款渠道时被拒，原因是页脚 Privacy / Terms / Compare / Manage License /
+> Affiliate 全部指向死的 `#` hash 链接、且没有可访问的 Privacy Policy / Terms of Service 内容。
+> Creem 审核意见明确给出两个选项："make the footer links functional or remove them"——
+> Privacy 和 Terms 是收款渠道审核的硬性要求，必须做成真实页面；Compare / Manage License / Affiliate
+> 对应的功能（价格对比页、授权管理后台、联盟推广计划）目前都不存在，选择**移除**而不是做假的占位页面。
+
+### site/main: 官网 Design Tokens 文档纠偏
+
+- [ ] [0.3.0-DOC-A-000] 重写 `site/DESIGN.md` 的颜色/字体/间距 token 表，与 `site/src/styles/global.css` 当前真实值对齐（暗色背景 `--bg:#0f0f11`、暖橙强调 `--accent:#FF8C00`、Mono Sans 字体栈等），不再描述已废弃的浅色 Liquid Glass 方案 #P2
+
+### site/main: 开源 / 付费双轨定价卡片
+
+- [x] [0.3.0-UI-A-000] `Pricing.astro` 的 `.pricing__card-wrap` 从单卡改为两卡并排（`display:flex; flex-wrap:wrap; align-items:stretch; gap:24px`，超出可用宽度自动换行堆叠，不需要额外写断点），保留现有 Pro 卡片内容和逻辑不变，新增一张「开源自行编译」卡片，`.pricing__card { display:flex; flex-direction:column }` + CTA `margin-top:auto` 让两卡等高、按钮底部对齐
+- [x] [0.3.0-UI-A-001] 开源卡片内容："Build it yourself"（自行编译）、中性灰徽标（跟付费卡的暖橙"限时"徽标区分开，避免暗示这条路径也是限时的）、说明源码功能与官方版一致需自行编译签名、outline 风格 CTA 按钮跳转 `https://github.com/DDonlien/quota-bar`（新标签页）；同宽（380px）同圆角/边框语言，视觉平级而非主次关系
+- [x] [0.3.0-UI-A-002] i18n：`dict.ts` 新增 9 个 `pricing.opensource.*` key（badge/plan.name/amount/note/4 条 bullet/cta），中英文都补全
+- [x] [0.3.0-QA-A-000] `npm run build` 通过；Browser 面板实测（`getBoundingClientRect` 精确几何验证，规避了本次会话里 screenshot 工具的一个滚动后截图偶发失败的环境问题）：桌面宽度两卡 380×442px 严格等高、同一行（top 相同）、间距 24px、水平居中；收窄到移动宽度后自动换行堆叠（同 left、不同 top）；DOM 内容核对 badge/plan name/amount/CTA 文案与链接全部正确
+
+### site/main: Privacy Policy + Terms of Service + 页脚死链接修复
+
+- [x] [0.3.0-CONTENT-A-000] 新增 `site/src/pages/privacy.astro`：真实 Privacy Policy 内容（7 节，中英双语 i18n key），如实描述 Quota Bar 的数据处理方式——调研确认 macOS App 无任何 telemetry SDK、无账号系统，Provider 凭证只用于直连各服务商自己的官方 API，从不上传到 Quota Bar 自己的服务器；App 唯一会碰的自有域名请求是 v0.14.0 新增的匿名更新检查；官网本身无第三方 analytics/广告追踪/追踪 Cookie，仅用 localStorage/sessionStorage 做语言偏好和下载链接缓存两个功能性用途
+- [x] [0.3.0-CONTENT-A-001] 新增 `site/src/pages/terms.astro`：真实 Terms of Service 内容（7 节，中英双语），软件按现状提供、免责声明、开源自行编译与官方签名版的关系（官方版定价/授权细节明确写"待最终确定"，不提前承诺具体条款）、合理使用范围
+- [x] [0.3.0-FE-C-000] `Footer.astro`：`footer.link.privacy`/`footer.link.terms` 改为真实 `href="/privacy"`/`href="/terms"`；移除整个 PRODUCT 列（`footer.link.compare`/`footer.link.manage`/`footer.link.affiliate`/`footer.col.product` 连同 i18n key 一并删除——对应功能不存在，遵循 Creem 审核意见"移除"而非做假页面），页脚从两列变一列（LEGAL）
+- [x] [0.3.0-QA-B-000] `npm run build` 通过，生成 `/privacy/index.html`、`/terms/index.html`；用 Browser 面板跑 `astro dev` 实测：中文（默认）和英文（切 locale）两个语言版本内容都完整渲染、7 个小节标题和正文都对得上；`read_page` 确认页脚只剩 LEGAL 一列、Privacy/Terms 是真实 `/privacy`/`/terms` 链接，点击 Terms 链接真的跳转到 Terms 页且标题正确；全站搜索确认不再有任何 `href="#"` 死链接
