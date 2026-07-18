@@ -14,6 +14,15 @@ import Foundation
 /// `managed:kimi-code` provider 配置（与 JWT 内 `client_id` claim 一致）。
 ///
 /// 同身份合并：access_token 即同一身份标识，OAuth 同一 sub 即视为同一用户。
+///
+/// **只读消费者**：`~/.kimi-code/credentials/kimi-code.json` 是 `kimi` CLI 自己的凭证存储，
+/// CLI 本身会独立管理/轮换这份凭证。本 provider 需要 refresh 时只在内存里刷新（当次请求仍能
+/// 成功），**不再把新 token 写回这份文件**——2026-07 实测发现 Kimi 的 OAuth 服务端对
+/// `refresh_token` 做单次轮换（用一次即失效换新），如果 Quota Bar 后台每隔几分钟静默刷新一次
+/// 并写回文件，会跟真实 kimi CLI 的刷新竞争同一个 refresh_token：谁用的是"已经被对方用掉"的
+/// 旧 token，服务端就会拒绝——表现为一开始能用、之后永久 "refresh_token 已失效"。
+/// `KimiDesktopTokenProvider`（一直工作正常）就是纯只读消费者，从不写回它读的 token store，
+/// 这里对齐同一模式。
 final class KimiAuthProvider: QuotaProvider, @unchecked Sendable {
 
     let id = "kimi-auth"
@@ -111,9 +120,8 @@ final class KimiAuthProvider: QuotaProvider, @unchecked Sendable {
 
         defer { clearRefreshTask() }
 
-        let refreshed = try await task.value
-        try? persistCredentials(refreshed)
-        return refreshed
+        // 只在内存里用，不写回 ~/.kimi-code/credentials/kimi-code.json——见 class 顶部注释。
+        return try await task.value
     }
 
     /// 服务端返回 401 时调用：无视本地 expires_at 强制 refresh 一次。
@@ -140,9 +148,8 @@ final class KimiAuthProvider: QuotaProvider, @unchecked Sendable {
 
         defer { clearRefreshTask() }
 
-        let refreshed = try await task.value
-        try? persistCredentials(refreshed)
-        return refreshed
+        // 只在内存里用，不写回 ~/.kimi-code/credentials/kimi-code.json——见 class 顶部注释。
+        return try await task.value
     }
 
     private func performRefresh(using current: Credentials) async throws -> Credentials {
@@ -252,14 +259,6 @@ final class KimiAuthProvider: QuotaProvider, @unchecked Sendable {
             expiresAt = Date(timeIntervalSince1970: exp)
         }
         return Credentials(accessToken: access, refreshToken: refresh, expiresAt: expiresAt)
-    }
-
-    private func persistCredentials(_ c: Credentials) throws {
-        var dict: [String: Any] = ["access_token": c.accessToken]
-        if let rt = c.refreshToken { dict["refresh_token"] = rt }
-        if let exp = c.expiresAt { dict["expires_at"] = exp.timeIntervalSince1970 }
-        let data = try JSONSerialization.data(withJSONObject: dict, options: [.sortedKeys])
-        try data.write(to: URL(fileURLWithPath: credentialsPath), options: [.atomic])
     }
 
     private static func shouldRefresh(_ c: Credentials, now: Date) -> Bool {
