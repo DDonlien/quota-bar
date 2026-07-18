@@ -3,6 +3,7 @@
   "buildCommand": "cd site && npm ci && npm run build",
   "outputDirectory": "site/dist",
   "installCommand": "cd site && npm ci",
+  "devCommand": "cd site && npx astro dev --port $PORT",
   "framework": "astro",
   "cleanUrls": true,
   "trailingSlash": false,

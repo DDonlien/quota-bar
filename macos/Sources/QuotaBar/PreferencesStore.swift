@@ -332,8 +332,15 @@ final class PreferencesStore {
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
-    init() {
-        self.fileURL = PreferencesStore.preferencesFileURL()
+    convenience init() {
+        self.init(fileURL: PreferencesStore.preferencesFileURL())
+    }
+
+    /// 测试专用入口：注入临时文件路径，避免测试读写真实用户的 `preferences.json`
+    /// （`.shared` 单例硬编码真实路径，历史上没有其他 store 那样的临时目录注入支持，
+    /// 这里补上，跟 `ProviderSourceIndexStore`/`ProviderSnapshotCacheStore` 的模式一致）。
+    init(fileURL: URL) {
+        self.fileURL = fileURL
         self.encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         self.encoder.dateEncodingStrategy = .iso8601
         self.decoder.dateDecodingStrategy = .iso8601

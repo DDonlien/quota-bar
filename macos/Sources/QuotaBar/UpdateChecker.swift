@@ -164,10 +164,18 @@ final class UpdateChecker: NSObject, ObservableObject {
 
     /// GitHub Releases API 地址（测试可注入 mock URLProtocol 的 session）。
     private let releasesURL: URL
+    /// 大陆可达性兜底（v0.14.0）：`releasesURL` 直连失败时改请求这个同源 Vercel endpoint，
+    /// 它服务端原样转发 GitHub 的 release 数组（见仓库根目录 `api/latest-release.mjs`），
+    /// 客户端复用同一套 `UpdateReleaseParser`，不需要额外的解析逻辑。
+    private let fallbackReleasesURL: URL
+    /// 同上，dmg 资产下载的兜底：服务端流式转发当前最新 release 的 dmg（`api/download-latest.mjs`）。
+    private let fallbackDownloadURL: URL
     private let session: URLSession
     private let preferences: PreferencesStore
     private var downloadTask: URLSessionDownloadTask?
     private var downloadCandidate: UpdateCandidate?
+    /// 本轮下载是否已经尝试过 Vercel 兜底——避免死循环重复 fallback。
+    private var downloadTriedFallback = false
 
     var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
@@ -179,10 +187,14 @@ final class UpdateChecker: NSObject, ObservableObject {
 
     init(
         releasesURL: URL = URL(string: "https://api.github.com/repos/DDonlien/quota-bar/releases?per_page=30")!,
+        fallbackReleasesURL: URL = URL(string: "https://quotabar.ddonlien.com/api/latest-release")!,
+        fallbackDownloadURL: URL = URL(string: "https://quotabar.ddonlien.com/api/download-latest")!,
         session: URLSession? = nil,
         preferences: PreferencesStore = .shared
     ) {
         self.releasesURL = releasesURL
+        self.fallbackReleasesURL = fallbackReleasesURL
+        self.fallbackDownloadURL = fallbackDownloadURL
         if let session {
             self.session = session
         } else {
@@ -213,31 +225,52 @@ final class UpdateChecker: NSObject, ObservableObject {
         }
     }
 
-    private func performCheck(userInitiated: Bool) async {
-        var request = URLRequest(url: releasesURL)
+    private enum ReleaseFetchOutcome {
+        case success(Data)
+        case rateLimited
+        case failed
+    }
+
+    /// 单次尝试：请求给定 URL 的 release 列表。`releasesURL`（GitHub 直连）和
+    /// `fallbackReleasesURL`（Vercel 兜底）都走这个方法，返回同一套结果类型。
+    private func fetchReleasesData(from url: URL) async -> ReleaseFetchOutcome {
+        var request = URLRequest(url: url)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("QuotaBar", forHTTPHeaderField: "User-Agent")
-
-        let data: Data
         do {
             let (body, response) = try await session.data(for: request)
-            guard let http = response as? HTTPURLResponse else {
-                state = .error(message: "无法连接到 GitHub，请检查网络")
-                return
-            }
+            guard let http = response as? HTTPURLResponse else { return .failed }
             if http.statusCode == 403,
                (http.value(forHTTPHeaderField: "X-RateLimit-Remaining") ?? "") == "0" {
-                state = .error(message: "检查过于频繁，请稍后重试")
-                return
+                return .rateLimited
             }
-            guard (200..<300).contains(http.statusCode) else {
-                state = .error(message: "无法连接到 GitHub，请检查网络")
-                return
-            }
-            data = body
+            guard (200..<300).contains(http.statusCode) else { return .failed }
+            return .success(body)
         } catch {
-            state = .error(message: "无法连接到 GitHub，请检查网络")
+            return .failed
+        }
+    }
+
+    /// 两步兜底（v0.14.0）：优先 GitHub 直连；失败（网络错误/超时/非 2xx，不含限流）时
+    /// 自动改请求 Vercel 同源 endpoint；限流直接报限流文案，不浪费一次 fallback 尝试
+    /// （限流是 GitHub 自己的问题，Vercel 服务端可能同样受限）。两者都失败才报通用错误，
+    /// 错误文案不再点名具体平台——技术细节留给调用方自行看日志，不是这里的职责。
+    private func performCheck(userInitiated: Bool) async {
+        let data: Data
+        switch await fetchReleasesData(from: releasesURL) {
+        case .success(let body):
+            data = body
+        case .rateLimited:
+            state = .error(message: "检查过于频繁，请稍后重试")
             return
+        case .failed:
+            switch await fetchReleasesData(from: fallbackReleasesURL) {
+            case .success(let body):
+                data = body
+            case .rateLimited, .failed:
+                state = .error(message: "暂时无法检查更新，请稍后重试")
+                return
+            }
         }
 
         preferences.setLastUpdateCheck(Date())
@@ -291,9 +324,13 @@ final class UpdateChecker: NSObject, ObservableObject {
             return
         }
         downloadCandidate = candidate
+        downloadTriedFallback = false
         state = .downloading(progress: 0)
+        startDownload(from: assetURL)
+    }
 
-        let task = session.downloadTask(with: assetURL) { [weak self] tempURL, response, error in
+    private func startDownload(from url: URL) {
+        let task = session.downloadTask(with: url) { [weak self] tempURL, response, error in
             Task { @MainActor [weak self] in
                 self?.handleDownloadCompletion(tempURL: tempURL, response: response, error: error)
             }
@@ -306,6 +343,7 @@ final class UpdateChecker: NSObject, ObservableObject {
     func cancelDownload() {
         downloadTask?.cancel()
         downloadTask = nil
+        downloadTriedFallback = false
         if let candidate = downloadCandidate {
             state = .updateAvailable(candidate)
         } else {
@@ -331,12 +369,8 @@ final class UpdateChecker: NSObject, ObservableObject {
             state = .idle
             return
         }
-        if error != nil {
-            state = .error(message: "下载失败，请稍后重试或前往 GitHub 手动下载")
-            return
-        }
-        guard let tempURL else {
-            state = .error(message: "下载失败，请稍后重试或前往 GitHub 手动下载")
+        guard error == nil, let tempURL else {
+            retryDownloadWithFallbackOrFail(candidate: candidate)
             return
         }
 
@@ -365,10 +399,25 @@ final class UpdateChecker: NSObject, ObservableObject {
         let ok = await Self.runProcess("/usr/bin/hdiutil", ["verify", dmgPath.path])
         guard ok else {
             try? FileManager.default.removeItem(at: dmgPath)
-            state = .error(message: "更新包校验失败，已删除下载文件")
+            // 校验失败也走兜底重试，不只是网络层失败——某些网络环境会用 HTTP 200
+            // 返回一段假内容（而不是直接连接失败/超时），这种"看起来下载成功但内容
+            // 不对"的情况只有 dmg 结构校验这一步能发现。
+            retryDownloadWithFallbackOrFail(candidate: candidate)
             return
         }
         state = .downloaded(candidate, dmgPath: dmgPath)
+    }
+
+    /// 下载/校验失败的统一兜底入口（v0.14.0）：第一次失败自动改用 Vercel 兜底地址重试；
+    /// 已经是第二次失败（`downloadTriedFallback == true`）才真正报错，避免死循环。
+    private func retryDownloadWithFallbackOrFail(candidate: UpdateCandidate) {
+        guard !downloadTriedFallback else {
+            state = .error(message: "下载失败，请稍后重试或前往官网手动下载")
+            return
+        }
+        downloadTriedFallback = true
+        state = .downloading(progress: 0)
+        startDownload(from: fallbackDownloadURL)
     }
 
     // MARK: 安装（helper 替换，v0.11.0-TOOL-A）
