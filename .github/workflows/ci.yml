@@ -8,12 +8,12 @@ on:
 
 jobs:
   build:
-    name: swift build (macOS ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-14, macos-15]
+    # 之前是 macos-14/macos-15 的双系统矩阵，但项目 Package.swift 要求 Swift
+    # 6.2（swift-tools-version），这两台机器预装的工具链是 5.10，`swift package
+    # resolve` 一步就直接报错，矩阵测的两边全灭，没有任何实际验证价值。改成跟
+    # release.yml 一致的 macos-26（预装 Swift 6.2+），矩阵也就没有必要保留。
+    name: swift build (macOS 26)
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
@@ -23,9 +23,9 @@ jobs:
           path: |
             macos/.build
             macos/.swiftpm
-          key: ${{ runner.os }}-spm-${{ matrix.os }}-${{ hashFiles('macos/Package.swift', 'macos/Package.resolved') }}
+          key: ${{ runner.os }}-spm-macos-26-${{ hashFiles('macos/Package.swift', 'macos/Package.resolved') }}
           restore-keys: |
-            ${{ runner.os }}-spm-${{ matrix.os }}-
+            ${{ runner.os }}-spm-macos-26-
 
       - name: Show Swift toolchain
         working-directory: macos
