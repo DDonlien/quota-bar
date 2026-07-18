@@ -47,8 +47,15 @@ enum DashboardEndpoints {
                 parser: MiniMaxDashboardParser()
             )
         case .kimi:
+            // 2026-07-19 之前这里指向 GetSubscriptionStat——用真实凭证直连验证过，
+            // 该端点服务端已经 404（跟 KimiDesktopTokenProvider 里的兼容路径迁移是
+            // 同一次服务端下线），意味着"kimi-webview"这层 fallback 一直在悄悄打一个
+            // 死接口：未授权时报"未登录"，掩盖了即使授权了也一样会失败的事实。改成跟
+            // `KimiDesktopTokenProvider.subscriptionEndpoint` 一致的 GetSubscription +
+            // KimiSubscriptionParser（只给 Work，Code 5h/周不在网页可达的接口里，
+            // 只能靠 kimi-auth CLI OAuth 补）。
             return Endpoint(
-                url: URL(string: "https://www.kimi.com/apiv2/kimi.gateway.membership.v2.MembershipService/GetSubscriptionStat")!,
+                url: URL(string: "https://www.kimi.com/apiv2/kimi.gateway.membership.v2.MembershipService/GetSubscription")!,
                 method: "POST",
                 body: Data("{}".utf8),
                 headers: [
@@ -56,7 +63,7 @@ enum DashboardEndpoints {
                     "Origin": "https://www.kimi.com",
                     "Referer": "https://www.kimi.com/"
                 ],
-                parser: KimiSubscriptionStatParser(),
+                parser: KimiSubscriptionParser(),
                 bearerTokenCookieName: "kimi-auth"
             )
         case .gemini:
@@ -778,8 +785,14 @@ struct KimiSubscriptionParser: DashboardParser {
             guard let usedRatio = parseUsedRatio(balance["amountUsedRatio"]) else { continue }
 
             let remainingFraction = max(0, min(1, 1 - usedRatio))
-            // expireTime 是本期余额周期的截止时间，只进 refreshDescription，
-            // 不写 resetsAt（Work 月度窗口与订阅到期日是不同概念，见 0.6.0-DATA-A-002）。
+            // expireTime 是本期余额周期的截止时间。2026-07-18 之前这里故意不写
+            // resetsAt（"Work 月度窗口与订阅到期日是不同概念"，见 0.6.0-DATA-A-002）——
+            // 当时的顾虑是 ProviderSnapshot.subscriptionExpiresAt 有一个从
+            // max(quotas.resetsAt) 推断的 fallback，写了 resetsAt 可能被那个 fallback
+            // 误用成"订阅到期日"。v0.6.0 已经把那条 fallback 整个删掉了（找不到真实
+            // 到期日就直接不展示，不再瞎推断），这个顾虑不再成立；expireTime 本来就已经
+            // 在下面驱动 refreshText（用户看到的"30d6h"就是它），写进 resetsAt 只是让
+            // 额度条节奏指示点（v0.14.0）也能用上同一个日期，不引入新的不确定性。
             let expireTime = parseDate(balance["expireTime"])
                 ?? parseDate((balance["upcomingExpiration"] as? [String: Any])?["timestamp"])
             let refreshText = expireTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
@@ -787,7 +800,7 @@ struct KimiSubscriptionParser: DashboardParser {
                 title: "Work",
                 remainingFraction: remainingFraction,
                 refreshDescription: refreshText,
-                resetsAt: nil,
+                resetsAt: expireTime,
                 periodSeconds: 30 * 86400,
                 scope: "work",
                 subscriptionGroup: ProviderKind.kimi.rawValue

@@ -7,7 +7,7 @@ import Testing
 @Suite("KimiSubscriptionParser balances", .serialized)
 struct KimiSubscriptionParserBalancesTests {
 
-    @Test("parses Work window from GetSubscription balances")
+    @Test("parses Work window from GetSubscription balances, including resetsAt for the pace indicator")
     func parsesWorkFromBalances() throws {
         let parser = KimiSubscriptionParser()
         let windows = try #require(parser.parse(data: Self.subscriptionWithBalances()))
@@ -16,7 +16,10 @@ struct KimiSubscriptionParserBalancesTests {
         #expect(work.title == "Work")
         #expect(work.scope == "work")
         #expect(work.remainingFraction == 0)
-        #expect(work.resetsAt == nil)
+        // 2026-07-19 起 resetsAt 复用跟 refreshDescription 同一个 expireTime——
+        // 之前留空是为了避开一个已经被删掉的 subscriptionExpiresAt 推断 fallback，
+        // 那个顾虑不再成立，见本文件旁的 DashboardEndpoints.swift 里的注释。
+        #expect(work.resetsAt == ISO8601DateFormatter().date(from: "2026-07-10T00:00:00Z"))
         #expect(work.subscriptionGroup == ProviderKind.kimi.rawValue)
     }
 
