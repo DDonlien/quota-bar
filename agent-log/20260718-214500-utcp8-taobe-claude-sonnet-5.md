@@ -102,4 +102,28 @@
 
 - 本次仓库可见性变更（private → public）是应用户明确选择执行的，执行前做了历史扫描但不构成法律意义上的"这个仓库绝对不含任何敏感信息"的保证——如果用户后续发现历史提交里有不想公开的内容，可能需要 BFG/filter-repo 级别的历史重写（超出本次任务范围，未处理）。
 - Privacy/Terms 文案是尽力而为的合理起点，用于解除 Creem 审核的死链接问题，不是律师审阅过的正式法律文件；条款里"官方版定价/授权细节待最终确定"是有意留白，避免在用户自己还没决定 Creem vs 自建授权体系之前抢先做出具体承诺。
-- 全程未做：提交（commit）、打包（`make app`）、部署（`vercel --prod`）——按惯例留给用户明确要求后再执行。
+
+---
+
+## 补充 prompt（2026-07-18 21:58 +0800）
+
+> "do it"（用户对"要提交、打包、部署官网吗"的确认）
+
+## 补充执行记录
+
+按用户确认，把上述 5 项改动拆成 5 个按主题划分的 commit（`3610061` 更新兜底、`11e5086` Kimi 修复、`4fdf89e` 节奏指示点、`09cd69d` 官网双卡+法律页、`3fe2684` 文档），推到 `origin/main`。
+
+`git push` 同时触发了 GitHub Actions（CI + Release 两个 workflow）和 Vercel 的 git 集成部署：
+- **Vercel**：自动构建部署成功（`dpl_5iekAqXx9Hre3kAFsdwc21niwikv`，`state: READY`），不需要额外操作。
+- **CI workflow 失败**（`macos-14`/`macos-15` runner 报 `package 'macos' is using Swift tools version 6.2.0 but the installed version is 5.10.0`）——核实过这是**跟本次改动完全无关的既有问题**：`Package.swift` 要求 Swift 6.2，但 `ci.yml` 用的 runner 镜像（`macos-14`/`macos-15`）预装的还是 Swift 5.10；`release.yml` 用的是 `macos-26`，工具链版本对得上。未处理（不在本次任务范围，且是纯 CI 配置问题，修复方案是把 `ci.yml` 的 runner 也换成 `macos-26`，留给用户或后续任务决定）。
+- **Release workflow 第一次也失败**，但原因是另一个真实、跟本次 5 项任务无关的既有 bug：`build-app.sh` 早前一次"仓库整理"改成把产物输出到 checkout **父目录**下的 `_builds/latest`（配合本机"`main` + 平级 worktree 目录"布局），但 `.github/workflows/release.yml` 的"Build .dmg"步骤还在找旧路径 `$GITHUB_WORKSPACE/macos/build/latest`——从那次改动之后，Release 应该一直在这一步失败。这个 bug 直接挡住了本次"打包部署"的验收，且修复范围极小、明确（改一行路径），所以单独开一个 commit（`b57b78b`）修掉并重新推送，未跟前面 5 个 commit 混在一起。
+
+第二次 Release run（`29647287531`）Swift build + 打包 + 发布全部成功，生成 `v0.10.0-b57b78b` release。用真实请求核对了完整链路：GitHub Release 的 dmg 资产 2,588,312 字节；`https://quotabar.ddonlien.com/api/latest-release` 认出的最新 tag 就是 `v0.10.0-b57b78b`；`https://quotabar.ddonlien.com/api/download-latest` 返回同样 2,588,312 字节；`https://quotabar.ddonlien.com/privacy`、`/terms` 都是 HTTP 200。本次会话新增的 GitHub → Vercel 兜底链路，以及官网的 Privacy/Terms/双卡改动，都已经在生产环境验证通过，不只是本地。
+
+本地 `make app` 打的包（`0.10.0-3fe2684`，在提交 CI 修复之前）已经被这次真正的 CI 发布（`0.10.0-b57b78b`）取代，仅作为发布前的快速验证用途，未再单独处理。
+
+## 补充完成工作
+
+- `.github/workflows/release.yml`：修正 dmg 打包步骤的 `APP` 路径，从旧的 `$GITHUB_WORKSPACE/macos/build/latest` 改为 `$(dirname "$GITHUB_WORKSPACE")/_builds/latest`，对齐 `build-app.sh` 实际的产物位置。
+- 5 个功能 commit + 1 个 CI 修复 commit 已推送到 `origin/main`。
+- 官网已通过 Vercel 自动部署上线；macOS App 新版本已通过 GitHub Release 发布（`v0.10.0-b57b78b`）。
