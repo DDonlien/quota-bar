@@ -125,5 +125,9 @@
 ## 补充完成工作
 
 - `.github/workflows/release.yml`：修正 dmg 打包步骤的 `APP` 路径，从旧的 `$GITHUB_WORKSPACE/macos/build/latest` 改为 `$(dirname "$GITHUB_WORKSPACE")/_builds/latest`，对齐 `build-app.sh` 实际的产物位置。
-- 5 个功能 commit + 1 个 CI 修复 commit 已推送到 `origin/main`。
+- 5 个功能 commit + 2 个 CI 修复 commit 已推送到 `origin/main`。
 - 官网已通过 Vercel 自动部署上线；macOS App 新版本已通过 GitHub Release 发布（`v0.10.0-b57b78b`）。
+
+## 补充（2026-07-18 22:10 +0800）：CI workflow runner 版本修复
+
+用户追问"CI WORKFLOW 是什么"，说明后用户确认"顺手修了"。`ci.yml` 的 `macos-14`/`macos-15` 矩阵改成单一 `macos-26`（跟 `release.yml` 保持一致），去掉了已经没有实际验证价值的双系统矩阵（两边工具链都太旧，`swift package resolve` 一步就全灭）。推送后确认 CI 转绿（`29648586058`，1m14s 通过）。commit `220b4f9`。
