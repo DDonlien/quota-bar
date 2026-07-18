@@ -101,7 +101,10 @@ jobs:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          APP="$GITHUB_WORKSPACE/macos/build/latest/${APP_BUNDLE_NAME}.app"
+          # build-app.sh 输出到 checkout 父目录下的 _builds/latest（跟本地"main + 平级
+          # worktree 目录"布局一致的约定），不是仓库内部的 macos/build/latest——
+          # 后者是重构前的旧路径，CI 一直没跟着更新，导致 release 一直在这一步失败。
+          APP="$(dirname "$GITHUB_WORKSPACE")/_builds/latest/${APP_BUNDLE_NAME}.app"
           test -d "$APP" || { echo "build-app.sh did not produce $APP"; exit 1; }
           STAGE="$RUNNER_TEMP/dmg-stage"
           rm -rf "$STAGE"
