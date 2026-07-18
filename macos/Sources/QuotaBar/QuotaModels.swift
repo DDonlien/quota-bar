@@ -302,6 +302,22 @@ struct QuotaWindow: Identifiable, Hashable, Sendable {
         let period = periodSeconds.map { String(Int($0)) } ?? "fixed"
         return "\(title)|\(period)"
     }
+
+    /// 「如果按线性节奏消耗，此刻理论上应该还剩多少」——额度条上节奏指示点的位置。
+    ///
+    /// 与 `remainingFraction`（真实剩余比例，决定 bar 的填充宽度）共用同一条 x 轴：
+    /// `idealRemainingFraction = timeUntilReset / periodSeconds`，周期刚开始时接近 1（应该
+    /// 几乎全满），临近重置时趋近 0（应该几乎耗尽）。真实填充比指示点更靠左 = 消耗快于线性
+    /// 节奏；更靠右 = 慢于节奏、还有余量。
+    ///
+    /// 只对有明确周期 + 明确重置时间的额度窗口有意义；固定额度包（`periodSeconds == nil`）
+    /// 或缺重置时间时返回 `nil`，不画指示点。
+    func idealRemainingFraction(relativeTo now: Date = Date()) -> Double? {
+        guard let periodSeconds, periodSeconds > 0,
+              let resetsAt else { return nil }
+        let timeUntilReset = resetsAt.timeIntervalSince(now)
+        return max(0, min(1, timeUntilReset / periodSeconds))
+    }
 }
 
 // MARK: - Provider 可用性

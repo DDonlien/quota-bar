@@ -83,6 +83,8 @@ private enum Palette {
     static let muted = Color.primary.opacity(0.35)
     static let warning = Color(hex: "#FF9F0A")
     static let warningBackground = Color(hex: "#FF9F0A").opacity(0.12)
+    /// 额度条节奏指示点：比 track 明显、但不用任何状态色，避免和红/橙/绿混淆。
+    static let paceMarker = Color.primary.opacity(0.45)
 }
 
 // MARK: - 入口视图
@@ -1087,7 +1089,11 @@ private struct QuotaRow: View {
                     .frame(width: MenuDashboardStyle.percentWidth, alignment: .trailing)
             }
 
-            ProgressPill(value: quota.remainingFraction, tint: Self.healthColor(for: quota.remainingFraction))
+            ProgressPill(
+                value: quota.remainingFraction,
+                tint: Self.healthColor(for: quota.remainingFraction),
+                paceMarkerFraction: quota.idealRemainingFraction()
+            )
         }
         .padding(.top, MenuDashboardStyle.quotaRowTop)
     }
@@ -1271,6 +1277,9 @@ private struct InlineActionButton: NSViewRepresentable {
 private struct ProgressPill: View {
     let value: Double
     var tint: Color = Palette.blue
+    /// 节奏指示点位置（0...1，与 `value` 同一条 x 轴）。`nil` 时不画——
+    /// 语义见 `QuotaWindow.idealRemainingFraction`。
+    var paceMarkerFraction: Double? = nil
 
     private var clampedValue: Double {
         min(max(value, 0), 1)
@@ -1285,6 +1294,14 @@ private struct ProgressPill: View {
                 Capsule()
                     .fill(tint)
                     .frame(width: proxy.size.width * clampedValue)
+
+                if let paceMarkerFraction {
+                    let clampedMarker = min(max(paceMarkerFraction, 0), 1)
+                    Capsule()
+                        .fill(Palette.paceMarker)
+                        .frame(width: 1.5, height: MenuDashboardStyle.progressHeight + 2)
+                        .offset(x: proxy.size.width * clampedMarker - 0.75)
+                }
             }
         }
         .frame(height: MenuDashboardStyle.progressHeight)
