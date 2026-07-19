@@ -169,3 +169,12 @@
 - [x] [0.3.3-CONTENT-A-000] 开源卡 bullet 从 4 条砍到 2 条，只保留 `pricing.opensource.bullet.source`（完整无限制源代码）和 `pricing.opensource.bullet.community`（GitHub Issues 社区支持）；删掉 `pricing.opensource.bullet.features`（"功能与官方版一致"——一旦付费卡结构上继承开源卡内容，这句话变成多余的自我指涉）和 `pricing.opensource.bullet.compile`（"自行编译自行签名"，跟保留的"源代码"一条语义重叠），连同 i18n key 一起删除
 - [x] [0.3.3-CONTENT-A-001] 付费卡 bullet 改成 5 条：前 2 条直接复用 `pricing.opensource.bullet.source`/`pricing.opensource.bullet.community` 这两个 key（不新建重复文案，避免以后开源卡文案改了付费卡忘记同步），后 3 条是新的付费专属项——`pricing.bullet.autoupdate`（自动更新）、`pricing.bullet.oneclick`（一键安装）、`pricing.bullet.support`（优先技术支持，沿用原 key）；删掉不再是真正付费专属的 `pricing.bullet.unlimited`（无限服务追踪）和 `pricing.bullet.swift`（Swift 原生级性能——这两者开源自编译版本功能上其实完全一样，写成付费专属是误导），`pricing.bullet.updates`（"无限会话及后续更新"）用更明确的 `pricing.bullet.autoupdate` 取代
 - [x] [0.3.3-QA-A-000] `npm run build` 通过；全文 grep 确认删除的 5 个 key 无残留引用；Browser 面板 `get_page_text` 完整读出两张卡片渲染后的 bullet 列表，逐条核对跟预期一致（开源卡 2 条、付费卡 5 条且前 2 条与开源卡文案完全相同）——本次 Browser 面板的 `getBoundingClientRect`/`window.innerWidth` 精确几何读取再次失效（返回 `width:66`/`innerWidth:0` 等明显不合理的值，多个 tab 结果一致但截图也变全黑，判断是同一个 session 内已知的环境问题），`get_page_text` 不受影响、内容校验仍然可靠；等高对齐机制（`align-items: stretch` + `.pricing__cta { margin-top: auto }`）本身未改动，且上一版本改动（4 vs 4 条 bullet）时已用几何数据验证过有效
+
+### site/main: 定价卡 CTA 按钮对齐
+
+> **背景**：用户看着实际渲染截图指出两张卡片的 CTA 按钮不在同一水平线上——根因是付费卡按钮下面还有
+> 一行"付款问题请联系…"支付提示，把按钮往上顶了一截，开源卡没有对应内容、按钮直接贴卡片底部，两边
+> 因为按钮之后的内容高度不同，被 `.pricing__cta { margin-top: auto }` 顶出了不同的位置。
+
+- [x] [0.3.4-FE-A-000] 开源卡 CTA 按钮下面加一个 `.pricing__support.pricing__support--placeholder`（`aria-hidden="true"`，内容是 `&nbsp;`）：跟付费卡真正的支付提示段落用同一个基础 class（同字号、同 `margin-top`），只加 `visibility: hidden` 隐藏，这样两张卡"按钮之后还有多高的内容"完全一致，`margin-top: auto` 把两个按钮顶到同一条线上是结构上保证的，不是靠肉眼调 margin 数值凑出来的
+- [x] [0.3.4-QA-A-000] `npm run build` 通过；`get_page_text` 确认占位段落不泄漏可见文本（GitHub 按钮和下方 FAQ 区块之间没有多余空行/文字，`aria-hidden` + 空内容按预期不进可访问性文本流）——本次 Browser 面板 `getBoundingClientRect`/`window.innerWidth` 精确几何读取和滚动截图都失效（重启预览服务器、开新 tab 两种恢复手段都试了，仍然拿不到可用的像素级对齐证据，判断是本 session 里反复出现的同一个环境问题），未能补一张实际对齐后的截图；对齐结论基于 CSS 机制推理——占位元素复用真实支付提示行的同一个 class（相同 `font-size`/`margin-top`/单行文本），两者贡献的布局高度在 CSS 层面就是恒等的，不依赖内容长度巧合吻合

@@ -49,6 +49,10 @@
         <a class="pricing__cta pricing__cta--outline" href="https://github.com/DDonlien/quota-bar" target="_blank" rel="noopener">
           <span data-i18n="pricing.opensource.cta">View on GitHub</span>
         </a>
+
+        <!-- 隐形占位——付费卡 CTA 下面还有一行支付提示文字，把按钮往上顶；这张卡没有对应内容，
+             用同高度的占位段落补上，保证两个 CTA 按钮贴同一条水平线，不是靠肉眼调 margin 凑。 -->
+        <p class="pricing__support pricing__support--placeholder" aria-hidden="true">&nbsp;</p>
       </div>
 
       <div class="pricing__card">
@@ -309,5 +313,11 @@
     font-size: var(--text-xs);  /* 12px */
     color: var(--text-muted);
     margin-top: var(--space-3);
+  }
+
+  /* 只占位、不可见：撑出跟付费卡支付提示行一样的高度，让两张卡的 CTA 按钮对齐到
+   * 同一条水平线，见上面 HTML 里的说明。 */
+  .pricing__support--placeholder {
+    visibility: hidden;
   }
 </style>
