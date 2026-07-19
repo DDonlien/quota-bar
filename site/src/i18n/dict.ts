@@ -67,10 +67,9 @@ const en: Dict = {
   "pricing.subheading": "Every download includes a full 7-day free trial of Pro — no credit card required.",
   "pricing.plan.name": "Quota Bar Pro",
   "pricing.plan.note": "One-time purchase · includes future updates",
-  "pricing.bullet.unlimited": "Unlimited Services Tracking",
+  "pricing.bullet.autoupdate": "Automatic updates",
+  "pricing.bullet.oneclick": "One-click install",
   "pricing.bullet.support": "Priority Support",
-  "pricing.bullet.updates": "Unlimited sessions & future updates",
-  "pricing.bullet.swift": "Native Swift Performance",
   "pricing.cta": "Start Free Trial",
   "pricing.support.hint": "Payment issues? taobe@ddonlien.com",
 
@@ -80,8 +79,6 @@ const en: Dict = {
   "pricing.opensource.amount": "Free",
   "pricing.opensource.note": "Full source on GitHub · same features",
   "pricing.opensource.bullet.source": "Complete, unrestricted source code",
-  "pricing.opensource.bullet.features": "Same features as the official build",
-  "pricing.opensource.bullet.compile": "Compile and sign it yourself",
   "pricing.opensource.bullet.community": "Community support via GitHub Issues",
   "pricing.opensource.cta": "View on GitHub",
 
@@ -234,10 +231,9 @@ const zh: Dict = {
   "pricing.subheading": "每次下载都包含 7 天完整功能免费试用，无需信用卡。",
   "pricing.plan.name": "Quota Bar Pro",
   "pricing.plan.note": "一次性购买 · 包含未来更新",
-  "pricing.bullet.unlimited": "无限服务追踪",
+  "pricing.bullet.autoupdate": "自动更新",
+  "pricing.bullet.oneclick": "一键安装",
   "pricing.bullet.support": "优先技术支持",
-  "pricing.bullet.updates": "无限会话及后续更新",
-  "pricing.bullet.swift": "Swift 原生级性能",
   "pricing.cta": "开始免费试用",
   "pricing.support.hint": "付款问题请联系 taobe@ddonlien.com",
 
@@ -247,8 +243,6 @@ const zh: Dict = {
   "pricing.opensource.amount": "免费",
   "pricing.opensource.note": "GitHub 完整源码 · 功能相同",
   "pricing.opensource.bullet.source": "完整、无限制的源代码",
-  "pricing.opensource.bullet.features": "功能与官方版完全一致",
-  "pricing.opensource.bullet.compile": "自行编译、自行签名",
   "pricing.opensource.bullet.community": "通过 GitHub Issues 获得社区支持",
   "pricing.opensource.cta": "前往 GitHub",
 
