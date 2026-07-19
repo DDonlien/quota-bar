@@ -18,6 +18,10 @@ struct ModelsSettingsView: View {
     // 这里改用真正在跑的 `.zcode`，跟 dropdown 显示的是同一个 kind。
     private let visibleProviders: [ProviderKind] = [.codex, .minimax, .kimi, .claude, .antigravity, .zcode, .opencode]
 
+    /// 哪些 provider 行展开了渠道状态列表（`ProviderChannelStatusView`）——
+    /// 纯 UI 展开态，不持久化，每次打开 Preferences 默认全部收起。
+    @State private var expandedProviders: Set<ProviderKind> = []
+
     var body: some View {
         SettingsPage(.models) {
             VStack(alignment: .leading, spacing: 18) {
@@ -94,6 +98,10 @@ struct ModelsSettingsView: View {
                 ForEach(Array(visibleProviders.enumerated()), id: \.element.id) { index, kind in
                     if index > 0 { SettingsDivider() }
                     providerRow(kind)
+                    if expandedProviders.contains(kind) {
+                        SettingsDivider()
+                        ProviderChannelStatusList(kind: kind)
+                    }
                 }
             }
         }
@@ -119,12 +127,35 @@ struct ModelsSettingsView: View {
             subtitleLeading: 36,
             verticalPadding: 6,
             trailing: {
-                Toggle("", isOn: bindingEnabled(kind))
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .controlSize(.mini)
+                HStack(spacing: 10) {
+                    // 渠道状态展开按钮——回应用户"每个渠道获取的情况应该在
+                    // preference 里能看到"的诉求，见 ProviderChannelStatusList。
+                    Button {
+                        toggleExpanded(kind)
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .rotationEffect(.degrees(expandedProviders.contains(kind) ? 90 : 0))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("查看渠道获取状态")
+
+                    Toggle("", isOn: bindingEnabled(kind))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.mini)
+                }
             }
         )
+    }
+
+    private func toggleExpanded(_ kind: ProviderKind) {
+        if expandedProviders.contains(kind) {
+            expandedProviders.remove(kind)
+        } else {
+            expandedProviders.insert(kind)
+        }
     }
 
     private func providerSubtitle(_ kind: ProviderKind) -> String {

@@ -156,6 +156,31 @@ enum ProviderPipelines {
         ]
     }
 
+    /// 供 Preferences「模型」页的渠道状态展开区使用：某个 provider 声明过的、真正会
+    /// 贡献额度数据的渠道清单（`supportedLayers` 不含 `.quota` 的 strategy，比如各
+    /// provider 末尾兜底的 `xxx-keychain`，只服务安装探测层，过滤掉——展示它只会让
+    /// 用户误以为它是个额度来源）。
+    ///
+    /// 直接复用 `makePipelines()` 而不是另建一份手工维护的 provider→channel 列表：
+    /// 构造 `FetchPipeline`/strategy struct 本身不发起任何网络请求（真正的 I/O 只在
+    /// `.fetch()` 里），调用它取静态元数据是安全的，且保证这份清单永远跟 pipeline
+    /// 实际声明一致，不会产生第二套真相来源（`webViewQuotaCapableKinds` 顶部注释
+    /// 警告过的"两边独立维护、容易漂移"就是这个模式要避免的）。
+    struct ProviderChannelDescriptor: Identifiable {
+        let id: String
+        let sourceKind: ProviderSourceKind
+    }
+
+    @MainActor
+    static func quotaChannels(for kind: ProviderKind) -> [ProviderChannelDescriptor] {
+        makePipelines()
+            .first { $0.providerKind == kind }?
+            .strategies
+            .filter { $0.supportedLayers.contains(.quota) }
+            .map { ProviderChannelDescriptor(id: $0.id, sourceKind: $0.sourceKind) }
+            ?? []
+    }
+
     @MainActor
     private static func codexPipeline() -> FetchPipeline {
         var strategies: [ProviderFetchStrategy] = [

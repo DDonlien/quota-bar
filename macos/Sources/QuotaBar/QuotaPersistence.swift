@@ -80,6 +80,12 @@ final class ProviderSourceIndexStore {
             .first
     }
 
+    /// 供 Preferences「模型」页的渠道状态展开区使用：某个 provider 在某一层的全部渠道
+    /// 最近一次记录（不筛 `succeededAt`，失败的渠道也要返回，UI 需要展示失败原因）。
+    func records(for kind: ProviderKind, layer: ProviderFetchLayer = .quota) -> [ProviderSourceRecord] {
+        records.filter { $0.providerKind == kind && $0.layer == layer }
+    }
+
     func recordSuccess(
         kind: ProviderKind,
         layer: ProviderFetchLayer,
@@ -163,6 +169,9 @@ final class ProviderSourceIndexStore {
         } catch {
             NSLog("QuotaBar: failed to save provider source index: \(error)")
         }
+        // Preferences「模型」页的渠道状态展开区订阅这个通知实时刷新——跟
+        // `ProviderCheckLogStore` 的「落盘后发通知」是同一套模式（见该类型顶部说明）。
+        NotificationCenter.default.post(name: .providerSourceIndexDidChange, object: nil)
     }
 
     private func indexOf(kind: ProviderKind, layer: ProviderFetchLayer, sourceId: String) -> Int? {
@@ -184,6 +193,13 @@ final class ProviderSourceIndexStore {
             return !value.isEmpty && value.count <= 500
         }
     }
+}
+
+extension Notification.Name {
+    /// `ProviderSourceIndexStore` 的持久化记录发生变化（任意 provider/layer/sourceId 的
+    /// 成功或失败）。Preferences「模型」页的渠道状态展开区订阅它才能在停留在该页面时
+    /// 也实时刷新，不用切一次 tab 才看到新状态。
+    static let providerSourceIndexDidChange = Notification.Name("com.quotabar.providerSourceIndexDidChange")
 }
 
 @MainActor

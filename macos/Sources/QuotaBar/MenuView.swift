@@ -28,7 +28,13 @@ enum MenuDashboardStyle {
     // 额度行（6 / 7 号），各 padding 独立
     static let quotaRowTop: CGFloat = 6                  // 6 上 padding
     static let quotaTitleToProgress: CGFloat = 2        // 6 下 padding
-    static let progressHeight: CGFloat = 5              // 7 自身
+    // 2026-07-19 用户反馈：加了节奏指示点（`ProgressPill.paceMarkerFraction`）的
+    // 额度条比没有指示点的粗（指示点比条本身高 2pt，视觉上会poke出来），两种条粗细
+    // 不一致、看着不统一。用户明确认可"加宽后"的粗细，要求全局统一用这个粗细——
+    // 所以这里直接把基准高度从 5 提到 7（原先"5pt 条 + poke 出 2pt 的指示点"到达的
+    // 视觉高度），不再依赖指示点的 poke 来达到这个效果，没有指示点的条（比如固定
+    // 额度包、loading 骨架屏）现在也是同样的粗细。
+    static let progressHeight: CGFloat = 7               // 7 自身
     /// 多条 QuotaRow 之间的纵向间距。
     static let quotaRowsSpacing: CGFloat = 6
     /// 单条 QuotaRow 内 标题行 与 ProgressPill 的纵向间距。
@@ -1297,9 +1303,13 @@ private struct ProgressPill: View {
 
                 if let paceMarkerFraction {
                     let clampedMarker = min(max(paceMarkerFraction, 0), 1)
+                    // 跟条本身齐平（不再 poke 出 2pt）——基准高度已经提到跟"加宽后"
+                    // 一致（见 `progressHeight` 定义处的说明），指示点不需要再靠
+                    // poke 出来对比，`Palette.paceMarker` 本身的低对比度颜色已经
+                    // 足够跟 track/fill 区分开。
                     Capsule()
                         .fill(Palette.paceMarker)
-                        .frame(width: 1.5, height: MenuDashboardStyle.progressHeight + 2)
+                        .frame(width: 1.5, height: MenuDashboardStyle.progressHeight)
                         .offset(x: proxy.size.width * clampedMarker - 0.75)
                 }
             }

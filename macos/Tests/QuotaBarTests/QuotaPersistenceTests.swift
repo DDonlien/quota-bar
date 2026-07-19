@@ -134,6 +134,39 @@ struct QuotaPersistenceTests {
         #expect(store.preferredSourceID(for: .codex, layer: .quota) == "codex-auth")
     }
 
+    @Test("records(for:layer:) returns every channel for that provider+layer, including failed ones")
+    @MainActor
+    func recordsForKindReturnsAllChannelsIncludingFailures() throws {
+        let dir = Self.makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let store = ProviderSourceIndexStore(directoryURL: dir)
+
+        store.recordSuccess(
+            kind: .kimi, layer: .quota, sourceKind: .configFile, sourceId: "kimi-desktop-token",
+            at: Date(timeIntervalSince1970: 100)
+        )
+        store.recordFailure(
+            kind: .kimi, layer: .quota, sourceKind: .browserCookie, sourceId: "kimi-webview",
+            error: "未登录", at: Date(timeIntervalSince1970: 100)
+        )
+        // 别的 provider/别的 layer 的记录不应该混进来。
+        store.recordSuccess(
+            kind: .codex, layer: .quota, sourceKind: .configFile, sourceId: "codex-auth",
+            at: Date(timeIntervalSince1970: 100)
+        )
+        store.recordSuccess(
+            kind: .kimi, layer: .plan, sourceKind: .configFile, sourceId: "kimi-desktop-token",
+            at: Date(timeIntervalSince1970: 100)
+        )
+
+        let records = store.records(for: .kimi, layer: .quota)
+        #expect(records.count == 2)
+        let bySourceId = Dictionary(uniqueKeysWithValues: records.map { ($0.sourceId, $0) })
+        #expect(bySourceId["kimi-desktop-token"]?.succeededAt != nil)
+        #expect(bySourceId["kimi-webview"]?.failureCount == 1)
+        #expect(bySourceId["kimi-webview"]?.lastErrorSummary == "未登录")
+    }
+
     private static func makeTempDirectory() -> URL {
         URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("quota-bar-persistence-tests-\(UUID().uuidString)", isDirectory: true)

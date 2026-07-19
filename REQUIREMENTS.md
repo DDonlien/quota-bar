@@ -1018,7 +1018,14 @@
 - [x] [0.14.0-FE-B-000] `ProgressPill` 新增可选参数 `paceMarkerFraction: Double?`：非 nil 时在该 x 位置画一条 1.5pt 宽、`progressHeight+2` 高的低对比度竖线（`Palette.paceMarker = Color.primary.opacity(0.45)`，不使用状态色，避免和 track/fill 的红橙绿混淆）
 - [x] [0.14.0-FE-B-001] `QuotaRow` 传入 `quota.idealRemainingFraction()` 给 `ProgressPill`
 - [x] [0.14.0-QA-B-000] 新增 `QuotaWindowTests.swift`：周期起点（1.0）/day-1-of-7（6/7）/终点（0）/resetsAt 陈旧夹到 0/无 periodSeconds 返回 nil/无 resetsAt 返回 nil，共 6 个测试，`swift test` 213/213 通过
-- [ ] [0.14.0-QA-B-001] `swift run` 目测验证：不同剩余比例 + 不同节奏（超前/落后/持平）下指示点位置和视觉观感符合"简洁不张扬"的要求 #P1 #blocked — 菜单栏 App 无 Dock 图标，本次会话未接入 computer-use 做截图验证，只验证到单元测试 + build 通过；打包后请用户实机看一眼
+- [x] [0.14.0-QA-B-001] `swift run` 目测验证：不同剩余比例 + 不同节奏（超前/落后/持平）下指示点位置和视觉观感符合"简洁不张扬"的要求——用户打包后实机截图确认，Codex/Claude/Kimi/opencode 各条额度上的指示点位置均正确，样式认可（见下面 FE-B-002 的后续调整）
+
+> **后续追加（用户实机截图反馈）**："我觉得你现在整体加宽后的进度条样式是 OK 的。那你不如就全局都用这个宽的，
+> 不要在没有提示条的时候，进度条就变成窄的，这样很不统一，不太好。" 根因：指示点的 Capsule 比条本身
+> （`progressHeight`）高 2pt，靠"poke 出来"跟条区分，这导致有指示点的条目视觉上比没有指示点的条目
+> （固定额度包、loading 骨架屏）粗，两者不统一。
+
+- [x] [0.14.0-FE-B-002] `progressHeight` 从 5 提到 7（原先"5pt 条 + poke 出 2pt 指示点"达到的视觉高度，直接作为新的统一基准），指示点高度从 `progressHeight+2` 改为跟条本身齐平的 `progressHeight`——不再依赖 poke 出来做区分，`Palette.paceMarker` 的低对比度颜色本身已经够跟 track/fill 区分；现在不管有没有指示点，所有额度条粗细一致
 
 ### sub/main: Kimi CLI OAuth 5 小时/周额度丢失修复
 
@@ -1040,3 +1047,48 @@
 - [x] [0.14.0-BUG-A-000] `KimiAuthProvider.ensureFreshCredentials`/`forceRefresh` 仍在内存中执行 OAuth refresh（当次请求仍能成功），但去掉 `persistCredentials` 写回调用，不再往 `~/.kimi-code/credentials/kimi-code.json` 写任何内容——与 `KimiDesktopTokenProvider` 对齐为纯只读消费者，避免与真实 `kimi` CLI 竞争 refresh_token 轮换；已删除现在无调用方的 `persistCredentials` 方法本身
 - [x] [0.14.0-QA-C-000] 新增 `KimiAuthProviderTests`：过期 access_token 触发 refresh 后凭证文件字节级不变；未过期 access_token 完全跳过 refresh endpoint。`swift test` 207/207 通过（含新增 2 个）
 - [x] [0.14.0-DOC-B-000] `README.md` Kimi 一行补充说明：只读消费凭证文件、5 小时/周额度依赖 `kimi` CLI 自己的登录态，长期显示登录过期时需手动 `kimi login`
+
+> **后续追加（同一 phase 内，用户实机截图反馈）**：上面的 `persistCredentials` 修复上线后，用户反馈
+> Kimi dropdown 里仍然只看到月额度，且 Work 额度条样式（无节奏指示点）跟其他 provider 不一致——追查后
+> 发现是两个独立的遗留问题，跟 `persistCredentials` 无关：
+> 1. `KimiSubscriptionParser`（`kimi-desktop-token` 用的解析器）一直不写 `QuotaWindow.resetsAt`，
+>    当初是为了避开一个"用 `resetsAt` 推断 `subscriptionExpiresAt`"的 fallback（见 0.6.0-DATA-A-002），
+>    但那条 fallback 早在 0.6.0 就整个删掉了，顾虑已经过期——代码没跟着清，导致 v0.14.0 新加的节奏
+>    指示点（sub/main 见上）在 Kimi 上永远没有数据可画。
+> 2. `kimi-webview` 兜底层请求的端点 `GetSubscriptionStat`，用真实凭证直连验证后确认服务端已经
+>    **404**（下线了）——未授权时表现为"未登录"，掩盖了"即使授权了也一样会失败"这个事实。
+>
+> 排查过程中一度怀疑修复没生效，最后定位到是本机同时跑着两个 QuotaBar 进程（一个是前一天的旧包、
+> 一个是当次验证用的 `swift run`），共享同一份 `snapshots.json`/`provider-check.log`，旧进程的过期
+> 写入覆盖了新进程的正确结果——不是代码问题，是本地验证环境污染，记录下来避免以后再被同样的假象
+> 误导排查方向。
+
+- [x] [0.14.0-BUG-B-000] `KimiSubscriptionParser.parse` 的 Work 窗口把 `resetsAt` 从 `nil` 改成
+  `expireTime`（`refreshDescription` 早就在用同一个日期，写进 `resetsAt` 不引入新的不确定性）
+- [x] [0.14.0-BUG-B-001] `DashboardEndpoints.endpoint(for: .kimi)`（`kimi-webview` 用的端点）从
+  `GetSubscriptionStat` + `KimiSubscriptionStatParser` 改成跟 `KimiDesktopTokenProvider` 一致的
+  `GetSubscription` + `KimiSubscriptionParser`
+- [x] [0.14.0-QA-C-001] `KimiSubscriptionParserBalancesTests` 更新第一个测试的 `resetsAt` 断言；
+  `swift test` 217/217 通过
+
+### sub/main: Preferences「每个渠道获取状态」— 模型页展开三态指示器
+
+> 需求原文（用户反馈上面的 Work/Code 部分成功部分失败排查过程后提出）："我知道问题出在哪了。你可能
+> 通过别的方式获取到了 Kimi work（也就是月额度），但是需要通过 web view 或别的方式才能获取到 Kimi 的
+> 小时和周额度。但这时候，我们的交互又没有办法提示用户去做那些操作。我觉得这个事情无法预见，应该在
+> preference 里面，去调整每个渠道获取的情况：1. 自动化获取的：正常显示。2. 当前 provider 没有获取到的：
+> 应该跟获取到的在样式上有所区别。3. Web view：在没有授权的情况下，应该可以点击，展开进行手动授权。"
+>
+> 放置位置跟用户确认过：「模型」设置页每个 provider 行下方展开（而不是新开独立页面）。完整方案见
+> `/Users/taobe/.claude/plans/eventual-sauteeing-leaf.md`。核心结论：`ProviderSourceIndexStore`
+> 已经在每轮刷新时持久化了逐渠道的成功/失败记录（`FetchPipeline.recordSuccess`/`recordError`），
+> `WebAuthorizationController.openAuthorization(for:)` + `WKWebViewHeadlessLoader.appSessionHasCookies`
+> 也已经是 dropdown 现成在用的点击授权实现——这个功能本质是给已有的结构化数据加读取 API + 通知，
+> 再加一层纯展示 UI，不需要改动 fetch pipeline 本身的任何行为。
+
+- [x] [0.14.0-DATA-C-000] `ProviderSourceIndexStore` 新增 `records(for:layer:)` 读取 API + `save()` 末尾发 `.providerSourceIndexDidChange` 通知
+- [x] [0.14.0-DATA-C-001] `Strategies.swift` 新增 `ProviderChannelDescriptor` + `ProviderPipelines.quotaChannels(for:)`（复用 `makePipelines()`，按 `supportedLayers.contains(.quota)` 过滤掉 keychain 这类不贡献额度数据的 strategy）
+- [x] [0.14.0-FE-C-000] 新文件 `Preferences/ProviderChannelStatusView.swift`：`ProviderChannelStatusList`/`ProviderChannelRow`，三态渲染 + webview 未授权时的点击态（复用 `QuotaAuthPromptRow` 的 `.task`+`onTapGesture` 结构）；实现过程中发现并修掉一个真实的状态残留 bug——webview 渠道从"未授权"变成"刚成功"时，`needsWebAuth` 的异步检查不会因为 record 内容变化而重新触发（`.task(id:)` 绑的是不变的 `sourceId`），加了 `&& !isSuccess` 兜底，让"去授权"按钮在刚成功那一刻就消失，不用等下一次巧合触发的重新检查
+- [x] [0.14.0-FE-C-001] `ModelsSettingsView` 加展开交互（`expandedProviders` 状态 + chevron 按钮 + 条件渲染 `ProviderChannelStatusList`），不改动现有静态 `providerSubtitle`/`providerAccessModes`
+- [x] [0.14.0-QA-D-000] 新增测试：`QuotaPersistenceTests.recordsForKindReturnsAllChannelsIncludingFailures`（追加到已有文件，同一个 store 已经在测）+ 新文件 `ProviderChannelDescriptorTests.swift`。`swift test` 220/220 通过
+- [x] [0.14.0-QA-D-001] 实机验证：computer-use 无法识别 `swift run`/本地 ad-hoc 签名的 `.app`（不是 Launch Services 里的正常安装应用，两次 `request_access` 均返回 not-installed），改用直接读取一次真实刷新周期后的 `provider-sources.json` 手工核对三态分类逻辑——真实数据（kimi-desktop-token 成功、kimi-auth 失败带 "refresh_token 已失效"、kimi-webview 未授权且 `failureCount=163`）按 `ProviderChannelRow` 的判定逻辑手工走一遍，三种状态分类结果均正确；像素级视觉效果仍需用户实机确认
