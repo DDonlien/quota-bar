@@ -148,3 +148,13 @@
 - [x] [0.3.1-CONTENT-A-001] 联系邮箱统一改为 `taobe@ddonlien.com`：`Footer.astro` 版权行、`dict.ts` 的 `privacy.s7.body1`/`terms.s7.body1`/`pricing.support.hint`（中英文共 6 处），以及 `Pricing.astro` 里对应的静态 fallback 文案。`grep -rn "hi@quotabar\.app\|taobe@freshli4\.com"` 确认全站无残留，新邮箱精确命中 8 处
 - [x] [0.3.1-CONTENT-A-002] Privacy/Terms 的 "Last updated" 日期（中英文共 4 处）从 2026-07-18 推进到 2026-07-19，跟本次正文变更保持一致（两个页面各自的 `s6`/`terms.s6` 章节本来就承诺"内容有实质变化会更新这个日期"）
 - [x] [0.3.1-QA-A-000] `npm run build` 通过；直接 grep 构建产物 `dist/privacy/index.html`/`dist/terms/index.html`（原始响应 HTML，不是渲染后 DOM）确认正文段落已经是真实文字、不再是空 `<h2></h2>`/`<p></p>`；Browser 面板跑 `astro dev` 实测 `/privacy`、`/terms`、`/` 三个页面，`get_page_text` 逐段核对中文 locale 下的正文（含新的 terms.s2 商业条款）都正确显示；`document.querySelector` 核对 Footer 版权行、Pricing 支付提示、Privacy/Terms 联系方式四处邮箱均为 `taobe@ddonlien.com`
+
+## Phase - v0.3.2 - 定价叙事从"限时免费"改为"$4.99 一次性购买 + 7 天试用"
+
+> **背景**：用户明确要求去掉"Get Pro Free / 限时免费·Beta 专享"这套叙事——不再讲"现在下载就永久
+> 免费"，直接卖 $4.99，用 7 天免费试用替代原本的"Beta 免费转正"钩子。这一步也让上一个 phase 里改到
+> $4.99 的那个"划掉的旧价"数字（`$0` 现价 + `$4.99` 划线价两段式）失去意义，一并简化成单一价格展示。
+
+- [x] [0.3.2-CONTENT-A-000] `Pricing.astro` 付费卡片：徽标从"Limited Time · Beta Exclusive"改成"7-Day Free Trial"；`.pricing__amount` 从"`$0` 现价 + `$4.99` 划线价"两段式简化成单一 `$4.99`（删掉 `.pricing__amount-old` 节点和对应死 CSS 规则）；note 从"Free during Beta · $4.99 at launch"改成"One-time purchase · includes future updates"；CTA 从"Get Pro Free"改成"Start Free Trial"；section 级 `pricing.heading`/`pricing.subheading` 从"免费送 Pro"叙事改成"$4.99 一次性购买 + 7 天试用"叙事；中英文同步，`Pricing.astro` 静态 fallback 跟 `dict.ts` 保持一致
+- [x] [0.3.2-CONTENT-A-001] `terms.s2.body1`（中英文）同步重写：去掉"Beta 下载者上线时自动获得终身 Pro"，改成"官方版自带 7 天完整 Pro 功能免费试用、试用结束后一次性购买 $4.99"；开源免费、授权激活细节待定、vendor-中立 MoR 声明三处不变
+- [x] [0.3.2-QA-A-000] `npm run build` 通过；全文 grep 确认无 "Get Pro Free"/"免费领取 Pro"/"free for life"/"永久免费送"/"Beta 专享"/"Beta Exclusive"/`amount-old` 残留；Browser 面板 `document.querySelector` 精确核对付费卡片 badge/amount/note/cta 四处文案，`getBoundingClientRect` 确认两张定价卡去掉划线价后依然等高对齐（均 444px、同一 top）——本次 Browser 面板滚动截图失效（session 内已知的环境问题，`get_page_text`/`javascript_tool` 不受影响），改用几何数据代替截图验证

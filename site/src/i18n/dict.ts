@@ -62,16 +62,16 @@ const en: Dict = {
   "services.note": "Available quota data varies across app, web, and CLI.",
 
   // Pricing — Beta 限时免费：现在下载即可在正式版发布时自动获得 Pro 授权
-  "pricing.badge": "Limited Time · Beta Exclusive",
-  "pricing.heading": "Download now, get Pro free for life",
-  "pricing.subheading": "We're still in Beta — every Beta downloader gets a full Pro license automatically at launch.",
+  "pricing.badge": "7-Day Free Trial",
+  "pricing.heading": "Quota Bar Pro — $4.99, one time",
+  "pricing.subheading": "Every download includes a full 7-day free trial of Pro — no credit card required.",
   "pricing.plan.name": "Quota Bar Pro",
-  "pricing.plan.note": "Free during Beta · $4.99 at launch",
+  "pricing.plan.note": "One-time purchase · includes future updates",
   "pricing.bullet.unlimited": "Unlimited Services Tracking",
   "pricing.bullet.support": "Priority Support",
   "pricing.bullet.updates": "Unlimited sessions & future updates",
   "pricing.bullet.swift": "Native Swift Performance",
-  "pricing.cta": "Get Pro Free",
+  "pricing.cta": "Start Free Trial",
   "pricing.support.hint": "Payment issues? taobe@ddonlien.com",
 
   // Pricing — Open Source card (build-it-yourself track, sits next to the Pro card)
@@ -169,7 +169,7 @@ const en: Dict = {
   "terms.s1.title": "1. What Quota Bar is",
   "terms.s1.body1": "Quota Bar is a menu bar utility for macOS that reads locally-stored credentials for various AI coding tools and displays your remaining subscription/API quota. It does not modify your accounts, does not consume your quota by itself, and does not act on your behalf with any provider beyond read-only usage queries.",
   "terms.s2.title": "2. Open source and official builds",
-  "terms.s2.body1": "Quota Bar's source code is publicly available on GitHub, and building it yourself is completely free — this path is never gated behind any payment. We also offer an officially signed and notarized build for anyone who prefers a ready-to-run install with automatic updates. During the current Beta, the official build is free; every Beta downloader gets a full Pro license automatically once the official build launches, at no extra cost. After that, the official build is a one-time purchase (not a subscription) and includes future updates. License activation details — such as how many Macs a license covers and how to recover a lost license — will be published on this page before the paid build ships. Checkout, once available, will be handled by our payment provider, who acts as merchant of record for that purchase and is responsible for payment processing, applicable tax, and refunds under its own policy.",
+  "terms.s2.body1": "Quota Bar's source code is publicly available on GitHub, and building it yourself is completely free — this path is never gated behind any payment. We also offer an officially signed and notarized build for anyone who prefers a ready-to-run install with automatic updates: it includes a free 7-day trial of the full Pro feature set, no credit card required. After the trial, continued use is a one-time purchase of $4.99 (not a subscription) that includes future updates. License activation details — such as how many Macs a license covers and how to recover a lost license — will be published on this page before the paid build ships. Checkout, once available, will be handled by our payment provider, who acts as merchant of record for that purchase and is responsible for payment processing, applicable tax, and refunds under its own policy.",
   "terms.s3.title": "3. No warranty",
   "terms.s3.body1": "Quota Bar is provided \"as is,\" without warranty of any kind, express or implied, including but not limited to fitness for a particular purpose, accuracy of displayed quota data, or uninterrupted availability. Quota numbers are read from third-party APIs we don't control and may be delayed, incomplete, or wrong.",
   "terms.s4.title": "4. Limitation of liability",
@@ -229,16 +229,16 @@ const zh: Dict = {
   "services.note": "使用 app、web 和 cli 时，能获取到的额度信息会有所不同。",
 
   // Pricing — Beta 限时免费：现在下载，正式版发布时自动获得 Pro 授权
-  "pricing.badge": "限时免费 · Beta 专享",
-  "pricing.heading": "现在下载，正式版 Pro 永久免费送",
-  "pricing.subheading": "产品仍处于 Beta 阶段，所有当前下载用户都会在正式版发布时自动获得 Pro 授权。",
+  "pricing.badge": "7 天免费试用",
+  "pricing.heading": "Quota Bar Pro，一次性 $4.99",
+  "pricing.subheading": "每次下载都包含 7 天完整功能免费试用，无需信用卡。",
   "pricing.plan.name": "Quota Bar Pro",
-  "pricing.plan.note": "Beta 期间免费 · 正式价 $4.99",
+  "pricing.plan.note": "一次性购买 · 包含未来更新",
   "pricing.bullet.unlimited": "无限服务追踪",
   "pricing.bullet.support": "优先技术支持",
   "pricing.bullet.updates": "无限会话及后续更新",
   "pricing.bullet.swift": "Swift 原生级性能",
-  "pricing.cta": "免费领取 Pro",
+  "pricing.cta": "开始免费试用",
   "pricing.support.hint": "付款问题请联系 taobe@ddonlien.com",
 
   // Pricing — 开源自行编译卡片（跟 Pro 卡片并排）
@@ -336,7 +336,7 @@ const zh: Dict = {
   "terms.s1.title": "1. Quota Bar 是什么",
   "terms.s1.body1": "Quota Bar 是一款 macOS 菜单栏工具，读取本地保存的各类 AI 编程工具凭证，展示你剩余的订阅/API 额度。它不会修改你的账号，不会自行消耗你的额度，除了只读的用量查询之外不会代表你对任何服务商执行任何操作。",
   "terms.s2.title": "2. 开源与官方版本",
-  "terms.s2.body1": "Quota Bar 的源代码公开在 GitHub 上，自行编译使用完全免费——这条路径永远不需要付费。我们也提供经过官方签名和公证的构建版本，供希望开箱即用、并享有自动更新的用户使用。当前 Beta 阶段官方版本免费；Beta 期间下载的用户，会在官方版本正式上线时自动获得完整的 Pro 授权，无需额外付费。此后官方版本是一次性购买（不是订阅），价格已包含未来的功能更新。授权激活的具体细节——例如一份授权覆盖几台 Mac、丢失后如何找回——会在付费版本正式上线前公布在本页面。结算届时将由我们的支付服务商处理，该服务商作为这笔交易的 Merchant of Record，负责支付处理、相关税费与退款，遵循其自身政策。",
+  "terms.s2.body1": "Quota Bar 的源代码公开在 GitHub 上，自行编译使用完全免费——这条路径永远不需要付费。我们也提供经过官方签名和公证的构建版本，供希望开箱即用、并享有自动更新的用户使用：这个版本自带 7 天完整 Pro 功能免费试用，无需信用卡；试用结束后继续使用需要一次性购买 $4.99（不是订阅），价格已包含未来的功能更新。授权激活的具体细节——例如一份授权覆盖几台 Mac、丢失后如何找回——会在付费版本正式上线前公布在本页面。结算届时将由我们的支付服务商处理，该服务商作为这笔交易的 Merchant of Record，负责支付处理、相关税费与退款，遵循其自身政策。",
   "terms.s3.title": "3. 不提供担保",
   "terms.s3.body1": "Quota Bar 按「现状」提供，不提供任何明示或暗示的担保，包括但不限于特定用途适用性、展示额度数据的准确性，或不中断的可用性。额度数字读取自我们不掌控的第三方 API，可能延迟、不完整或有误。",
   "terms.s4.title": "4. 责任限制",
