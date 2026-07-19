@@ -72,7 +72,7 @@ const en: Dict = {
   "pricing.bullet.updates": "Unlimited sessions & future updates",
   "pricing.bullet.swift": "Native Swift Performance",
   "pricing.cta": "Get Pro Free",
-  "pricing.support.hint": "Payment issues? taobe@freshli4.com",
+  "pricing.support.hint": "Payment issues? taobe@ddonlien.com",
 
   // Pricing — Open Source card (build-it-yourself track, sits next to the Pro card)
   "pricing.opensource.badge": "Open Source",
@@ -141,7 +141,7 @@ const en: Dict = {
   // Privacy policy
   "privacy.back": "← Back to home",
   "privacy.heading": "Privacy Policy",
-  "privacy.updated": "Last updated: July 18, 2026",
+  "privacy.updated": "Last updated: July 19, 2026",
   "privacy.intro": "Quota Bar is a macOS menu bar app that reads your locally-stored AI provider credentials (API keys, OAuth tokens, session cookies) to display your remaining usage quotas. This page explains exactly what data the app and this website touch, and — just as importantly — what they never do.",
   "privacy.s1.title": "1. What the macOS app reads, and where it goes",
   "privacy.s1.body1": "To show your quota bars, Quota Bar reads credential files, Keychain entries, and local config that each AI provider's own official tool (Claude Code, Codex, Kimi, MiniMax, Antigravity, Z Code, opencode, etc.) already stores on your Mac. It uses those credentials to call each provider's own official API directly from your machine — the same way their own CLI or app would.",
@@ -159,17 +159,17 @@ const en: Dict = {
   "privacy.s6.title": "6. Changes to this policy",
   "privacy.s6.body1": "If this policy changes in a meaningful way, we'll update the date at the top of this page. Continued use of the app or site after a change means you accept the update.",
   "privacy.s7.title": "7. Contact",
-  "privacy.s7.body1": "Questions about this policy? Email hi@quotabar.app.",
+  "privacy.s7.body1": "Questions about this policy? Email taobe@ddonlien.com.",
 
   // Terms of service
   "terms.back": "← Back to home",
   "terms.heading": "Terms of Service",
-  "terms.updated": "Last updated: July 18, 2026",
+  "terms.updated": "Last updated: July 19, 2026",
   "terms.intro": "These terms govern your use of Quota Bar (the macOS app) and quotabar.ddonlien.com (this website). By downloading, installing, or using Quota Bar, or by using this site, you agree to these terms.",
   "terms.s1.title": "1. What Quota Bar is",
   "terms.s1.body1": "Quota Bar is a menu bar utility for macOS that reads locally-stored credentials for various AI coding tools and displays your remaining subscription/API quota. It does not modify your accounts, does not consume your quota by itself, and does not act on your behalf with any provider beyond read-only usage queries.",
   "terms.s2.title": "2. Open source and official builds",
-  "terms.s2.body1": "Quota Bar's source code is publicly available on GitHub. You are welcome to build it yourself for free. We also offer an officially signed and notarized build for those who prefer a ready-to-run install with automatic updates — pricing and licensing details for the official build are still being finalized and will be published on this site once available. Building the app yourself does not require, and is not gated behind, any payment.",
+  "terms.s2.body1": "Quota Bar's source code is publicly available on GitHub, and building it yourself is completely free — this path is never gated behind any payment. We also offer an officially signed and notarized build for anyone who prefers a ready-to-run install with automatic updates. During the current Beta, the official build is free; every Beta downloader gets a full Pro license automatically once the official build launches, at no extra cost. After that, the official build is a one-time purchase (not a subscription) and includes future updates. License activation details — such as how many Macs a license covers and how to recover a lost license — will be published on this page before the paid build ships. Checkout, once available, will be handled by our payment provider, who acts as merchant of record for that purchase and is responsible for payment processing, applicable tax, and refunds under its own policy.",
   "terms.s3.title": "3. No warranty",
   "terms.s3.body1": "Quota Bar is provided \"as is,\" without warranty of any kind, express or implied, including but not limited to fitness for a particular purpose, accuracy of displayed quota data, or uninterrupted availability. Quota numbers are read from third-party APIs we don't control and may be delayed, incomplete, or wrong.",
   "terms.s4.title": "4. Limitation of liability",
@@ -179,7 +179,7 @@ const en: Dict = {
   "terms.s6.title": "6. Changes",
   "terms.s6.body1": "We may update these terms as the product evolves (for example, once official-build licensing is finalized). We'll update the date at the top of this page when we do.",
   "terms.s7.title": "7. Contact",
-  "terms.s7.body1": "Questions about these terms? Email hi@quotabar.app.",
+  "terms.s7.body1": "Questions about these terms? Email taobe@ddonlien.com.",
 };
 
 // ───── 中文 (zh) ─────
@@ -239,7 +239,7 @@ const zh: Dict = {
   "pricing.bullet.updates": "无限会话及后续更新",
   "pricing.bullet.swift": "Swift 原生级性能",
   "pricing.cta": "免费领取 Pro",
-  "pricing.support.hint": "付款问题请联系 taobe@freshli4.com",
+  "pricing.support.hint": "付款问题请联系 taobe@ddonlien.com",
 
   // Pricing — 开源自行编译卡片（跟 Pro 卡片并排）
   "pricing.opensource.badge": "开源",
@@ -308,7 +308,7 @@ const zh: Dict = {
   // Privacy policy
   "privacy.back": "← 返回首页",
   "privacy.heading": "隐私政策",
-  "privacy.updated": "最后更新：2026 年 7 月 18 日",
+  "privacy.updated": "最后更新：2026 年 7 月 19 日",
   "privacy.intro": "Quota Bar 是一款 macOS 菜单栏应用，读取你本地已保存的 AI 服务凭证（API Key、OAuth token、会话 Cookie）来展示剩余额度。这个页面准确说明 App 和本网站到底会接触哪些数据——以及同样重要的：它们绝不会做什么。",
   "privacy.s1.title": "1. macOS App 读取什么数据，数据去了哪里",
   "privacy.s1.body1": "为了显示额度条，Quota Bar 会读取各个 AI 服务自己官方工具（Claude Code、Codex、Kimi、MiniMax、Antigravity、Z Code、opencode 等）本来就保存在你 Mac 上的凭证文件、Keychain 条目和本地配置。它用这些凭证直接从你的电脑向各服务商自己的官方 API 发起请求——跟它们自己的 CLI 或 App 做的事情完全一样。",
@@ -326,17 +326,17 @@ const zh: Dict = {
   "privacy.s6.title": "6. 政策变更",
   "privacy.s6.body1": "如果本政策发生实质性变化，我们会更新本页顶部的日期。变更后继续使用本 App 或本网站，即视为你接受该更新。",
   "privacy.s7.title": "7. 联系方式",
-  "privacy.s7.body1": "对本政策有疑问？发邮件到 hi@quotabar.app。",
+  "privacy.s7.body1": "对本政策有疑问？发邮件到 taobe@ddonlien.com。",
 
   // Terms of service
   "terms.back": "← 返回首页",
   "terms.heading": "服务条款",
-  "terms.updated": "最后更新：2026 年 7 月 18 日",
+  "terms.updated": "最后更新：2026 年 7 月 19 日",
   "terms.intro": "本条款约束你对 Quota Bar（macOS App）和 quotabar.ddonlien.com（本网站）的使用。下载、安装或使用 Quota Bar，或使用本网站，即表示你同意本条款。",
   "terms.s1.title": "1. Quota Bar 是什么",
   "terms.s1.body1": "Quota Bar 是一款 macOS 菜单栏工具，读取本地保存的各类 AI 编程工具凭证，展示你剩余的订阅/API 额度。它不会修改你的账号，不会自行消耗你的额度，除了只读的用量查询之外不会代表你对任何服务商执行任何操作。",
   "terms.s2.title": "2. 开源与官方版本",
-  "terms.s2.body1": "Quota Bar 的源代码公开在 GitHub 上，你可以免费自行编译使用。我们也提供经过官方签名和公证的构建版本，供希望开箱即用、并享有自动更新的用户使用——官方版本的定价与授权细节仍在最终确定中，确定后会公布在本网站上。自行编译使用不需要付费，也不受任何付费限制。",
+  "terms.s2.body1": "Quota Bar 的源代码公开在 GitHub 上，自行编译使用完全免费——这条路径永远不需要付费。我们也提供经过官方签名和公证的构建版本，供希望开箱即用、并享有自动更新的用户使用。当前 Beta 阶段官方版本免费；Beta 期间下载的用户，会在官方版本正式上线时自动获得完整的 Pro 授权，无需额外付费。此后官方版本是一次性购买（不是订阅），价格已包含未来的功能更新。授权激活的具体细节——例如一份授权覆盖几台 Mac、丢失后如何找回——会在付费版本正式上线前公布在本页面。结算届时将由我们的支付服务商处理，该服务商作为这笔交易的 Merchant of Record，负责支付处理、相关税费与退款，遵循其自身政策。",
   "terms.s3.title": "3. 不提供担保",
   "terms.s3.body1": "Quota Bar 按「现状」提供，不提供任何明示或暗示的担保，包括但不限于特定用途适用性、展示额度数据的准确性，或不中断的可用性。额度数字读取自我们不掌控的第三方 API，可能延迟、不完整或有误。",
   "terms.s4.title": "4. 责任限制",
@@ -346,7 +346,7 @@ const zh: Dict = {
   "terms.s6.title": "6. 条款变更",
   "terms.s6.body1": "随着产品迭代（例如官方版本授权方案最终确定后），我们可能会更新本条款。变更时会更新本页顶部的日期。",
   "terms.s7.title": "7. 联系方式",
-  "terms.s7.body1": "对本条款有疑问？发邮件到 hi@quotabar.app。",
+  "terms.s7.body1": "对本条款有疑问？发邮件到 taobe@ddonlien.com。",
 };
 
 export const dictionaries: Record<Locale, Dict> = { en, zh };

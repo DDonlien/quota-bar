@@ -1,11 +1,19 @@
 ---
 // 隐私政策 — 站内独立页面，复用 Layout / Nav / Footer，保持视觉与首页一致。
+//
+// 正文直接用 dictionaries.en 渲染进 HTML（而不是像其余 data-i18n 节点一样留空、
+// 靠 Layout.astro 的同步头部脚本填充）——Creem 复审 / 链接预览器 / 不跑 JS 的抓取
+// 路径也必须在原始响应里就读到完整正文，不能依赖脚本执行才有内容。data-i18n 属性
+// 原样保留，真实浏览器里该脚本依然会按访客 locale 正常覆盖（含中文）；直接引用
+// dictionaries.en 而不是在这里手抄一份文案，避免以后改 dict.ts 忘记同步这个页面。
 import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
+import { dictionaries } from "../i18n/dict";
 
+const en = dictionaries.en;
 const SECTIONS = ["s1", "s2", "s3", "s4", "s5", "s6", "s7"];
-// s3 和 s4 各有 2 段正文，其余每节 1 段——跟 dict.ts 里实际写的 body1/body2 对应。
+// s1 有 3 段正文、s3 有 2 段，其余每节 1 段——跟 dict.ts 里实际写的 body1/2/3 对应。
 const EXTRA_BODY: Record<string, number> = { s1: 3, s3: 2 };
 ---
 
@@ -24,14 +32,14 @@ const EXTRA_BODY: Record<string, number> = { s1: 3, s3: 2 };
           <p class="legal__updated" data-i18n="privacy.updated">Last updated: July 18, 2026</p>
         </div>
 
-        <p class="legal__intro" data-i18n="privacy.intro"></p>
+        <p class="legal__intro" data-i18n="privacy.intro">{en["privacy.intro"]}</p>
 
         {SECTIONS.map((key) => (
           <div class="legal__section">
-            <h2 data-i18n={`privacy.${key}.title`}></h2>
-            <p data-i18n={`privacy.${key}.body1`}></p>
+            <h2 data-i18n={`privacy.${key}.title`}>{en[`privacy.${key}.title`]}</h2>
+            <p data-i18n={`privacy.${key}.body1`}>{en[`privacy.${key}.body1`]}</p>
             {Array.from({ length: (EXTRA_BODY[key] ?? 1) - 1 }).map((_, i) => (
-              <p data-i18n={`privacy.${key}.body${i + 2}`}></p>
+              <p data-i18n={`privacy.${key}.body${i + 2}`}>{en[`privacy.${key}.body${i + 2}`]}</p>
             ))}
           </div>
         ))}

@@ -121,3 +121,30 @@
 - [x] [0.3.0-CONTENT-A-001] 新增 `site/src/pages/terms.astro`：真实 Terms of Service 内容（7 节，中英双语），软件按现状提供、免责声明、开源自行编译与官方签名版的关系（官方版定价/授权细节明确写"待最终确定"，不提前承诺具体条款）、合理使用范围
 - [x] [0.3.0-FE-C-000] `Footer.astro`：`footer.link.privacy`/`footer.link.terms` 改为真实 `href="/privacy"`/`href="/terms"`；移除整个 PRODUCT 列（`footer.link.compare`/`footer.link.manage`/`footer.link.affiliate`/`footer.col.product` 连同 i18n key 一并删除——对应功能不存在，遵循 Creem 审核意见"移除"而非做假页面），页脚从两列变一列（LEGAL）
 - [x] [0.3.0-QA-B-000] `npm run build` 通过，生成 `/privacy/index.html`、`/terms/index.html`；用 Browser 面板跑 `astro dev` 实测：中文（默认）和英文（切 locale）两个语言版本内容都完整渲染、7 个小节标题和正文都对得上；`read_page` 确认页脚只剩 LEGAL 一列、Privacy/Terms 是真实 `/privacy`/`/terms` 链接，点击 Terms 链接真的跳转到 Terms 页且标题正确；全站搜索确认不再有任何 `href="#"` 死链接
+
+## Phase - v0.3.1 - Creem 复审前的法律页面 SSR 化 + Terms 内容更新 + 联系邮箱统一
+
+> **背景**：用户提供第二份 ChatGPT 对话记录，内容是拿 v0.3.0 修完后的线上网站再核对一遍 Creem 的三点
+> dead-link 反馈。结论：Footer/Privacy/Terms 三处死链接在代码层面确实已经解决，但顺带发现两个新问题：
+> 1. `privacy.astro`/`terms.astro` 的正文 `<h2>`/`<p>` 全部是空标签，靠 `Layout.astro` 里的同步
+>    `data-i18n` 脚本在客户端注入文字——真实浏览器里因为脚本在 `<head>` 同步跑完才解析 `<body>`，
+>    不会有可见的空白闪烁，但不跑 JS 的抓取路径（审核机器人、链接预览器、纯文本工具）拿到的原始
+>    HTML 里正文是空的，只有标题。对隐私/条款这类合规敏感页面，这是真实缺陷，不是"能用就行"。
+> 2. `terms.s2`（开源与官方版本）还写着"官方版本的定价与授权细节仍在最终确定中"，但首页 `#pricing`
+>    区块此时已经在展示确定的 $14.99 一次性价格、Beta 下载者上线时自动转终身 Pro——条款文本和
+>    实际售卖页面互相矛盾。
+>
+> 另外用户本次明确要求：联系邮箱统一为 `taobe@ddonlien.com`。现状是三处不一致：Footer 版权行 +
+> Privacy/Terms 联系方式用的是从未验证过是否收信的 `hi@quotabar.app`（Creem 上一轮反馈里也点名问过
+> 这个地址是否真实可用）；Pricing 卡片的支付支持提示用的是另一个不相关域名 `taobe@freshli4.com`。
+
+### site/main: 法律页面正文改为 SSR 直出
+
+- [x] [0.3.1-FE-A-000] `privacy.astro`/`terms.astro`：frontmatter 改为 `import { dictionaries } from "../i18n/dict"` 取 `dictionaries.en`，原本空着的 `<h2 data-i18n=…></h2>`/`<p data-i18n=…></p>` 改为直接把对应 key 的英文原文当子节点渲染；`data-i18n` 属性原样保留不动，`Layout.astro` 现有的同步头部脚本在真实浏览器里依然会按访客 locale 正常覆盖——只是不再需要脚本执行才有内容，不跑 JS 的抓取路径也能读到完整英文正文。直接引用 `dictionaries.en` 而不是在 `.astro` 里手抄一份文案，避免以后改 `dict.ts` 忘记同步这两个页面。顺带修正 `privacy.astro` 里一处过时注释（原写"s3 和 s4 各有 2 段正文"，实际是 s1 有 3 段、s3 有 2 段，s4 只有 1 段）
+
+### site/main: Terms 商业条款更新 + 联系邮箱统一
+
+- [x] [0.3.1-CONTENT-A-000] `dict.ts` 的 `terms.s2.body1`（中英文）重写：去掉"pricing ... still being finalized"占位语言，改为陈述跟 `Pricing.astro` 一致的已确定事实——自行编译永远免费不受付费限制；官方版一次性购买（不是订阅），价格含未来更新；Beta 期间免费，Beta 下载者上线时自动获得完整 Pro 授权。授权激活的具体机制（一份授权覆盖几台 Mac、丢失后如何找回）仍未定案，如实写"会在付费版上线前公布"，不编造具体数字。加一句 vendor-中立的结算声明（支付服务商作为 Merchant of Record 负责支付/税费/退款），不点名 Creem——支付渠道本身还没最终决定
+- [x] [0.3.1-CONTENT-A-001] 联系邮箱统一改为 `taobe@ddonlien.com`：`Footer.astro` 版权行、`dict.ts` 的 `privacy.s7.body1`/`terms.s7.body1`/`pricing.support.hint`（中英文共 6 处），以及 `Pricing.astro` 里对应的静态 fallback 文案。`grep -rn "hi@quotabar\.app\|taobe@freshli4\.com"` 确认全站无残留，新邮箱精确命中 8 处
+- [x] [0.3.1-CONTENT-A-002] Privacy/Terms 的 "Last updated" 日期（中英文共 4 处）从 2026-07-18 推进到 2026-07-19，跟本次正文变更保持一致（两个页面各自的 `s6`/`terms.s6` 章节本来就承诺"内容有实质变化会更新这个日期"）
+- [x] [0.3.1-QA-A-000] `npm run build` 通过；直接 grep 构建产物 `dist/privacy/index.html`/`dist/terms/index.html`（原始响应 HTML，不是渲染后 DOM）确认正文段落已经是真实文字、不再是空 `<h2></h2>`/`<p></p>`；Browser 面板跑 `astro dev` 实测 `/privacy`、`/terms`、`/` 三个页面，`get_page_text` 逐段核对中文 locale 下的正文（含新的 terms.s2 商业条款）都正确显示；`document.querySelector` 核对 Footer 版权行、Pricing 支付提示、Privacy/Terms 联系方式四处邮箱均为 `taobe@ddonlien.com`

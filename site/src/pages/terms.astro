@@ -1,10 +1,15 @@
 ---
 // 服务条款 — 站内独立页面，复用 Layout / Nav / Footer，保持视觉与首页一致。
 // 结构和样式跟 privacy.astro 完全一致（同一批 legal__* class），保持两个法律页面视觉统一。
+//
+// 正文直接用 dictionaries.en 渲染进 HTML，理由和做法跟 privacy.astro 顶部注释一致
+// （SSR 直出完整英文正文，data-i18n 属性保留给 Layout.astro 的客户端覆盖用）。
 import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
+import { dictionaries } from "../i18n/dict";
 
+const en = dictionaries.en;
 const SECTIONS = ["s1", "s2", "s3", "s4", "s5", "s6", "s7"];
 ---
 
@@ -23,12 +28,12 @@ const SECTIONS = ["s1", "s2", "s3", "s4", "s5", "s6", "s7"];
           <p class="legal__updated" data-i18n="terms.updated">Last updated: July 18, 2026</p>
         </div>
 
-        <p class="legal__intro" data-i18n="terms.intro"></p>
+        <p class="legal__intro" data-i18n="terms.intro">{en["terms.intro"]}</p>
 
         {SECTIONS.map((key) => (
           <div class="legal__section">
-            <h2 data-i18n={`terms.${key}.title`}></h2>
-            <p data-i18n={`terms.${key}.body1`}></p>
+            <h2 data-i18n={`terms.${key}.title`}>{en[`terms.${key}.title`]}</h2>
+            <p data-i18n={`terms.${key}.body1`}>{en[`terms.${key}.body1`]}</p>
           </div>
         ))}
       </div>
