@@ -125,10 +125,27 @@ enum UpdateReleaseParser {
         return text
     }
 
-    /// 在候选中挑「比当前版本号更高的最新版本」。纯语义化版本号比较，不看发布
-    /// 时间/构建时间——同一个版本号（哪怕是不同 commit、不同次打包）不算更新，
-    /// 避免"重复打包同一个版本被误判成有更新"。解析不出当前版本号时保守返回
+    /// 在候选中挑「比当前版本号更高的最新版本」。解析不出当前版本号时保守返回
     /// nil（不弹提示，而不是猜）。
+    ///
+    /// 2026-07-19 修正：2026-07-07 那版把比较收窄成"只看 X.Y.Z，完全不看 sha"，
+    /// 是为了避免"同一个 commit 重复打包（时间戳不同、内容相同）被误判成有更新"。
+    /// 但实际发布节奏是"每次 push main 都发一个新 release，`VERSION` 文件只在
+    /// 完整功能阶段（如 v0.11.0/v0.12.0）完成时才 bump"——绝大多数发布之间
+    /// X.Y.Z 完全相同、只有 sha 不同，纯语义化版本号比较会让这些发布永远不被
+    /// 判定为"有更新"，用户装的旧包会一直卡在"已是最新"（这个 bug 本身就是
+    /// 这样被发现的：装了 07-09 的包，07-19 已经发了 7 个新版本，检查更新
+    /// 还是显示"已是最新版本"）。
+    ///
+    /// 修法：X.Y.Z 相同时，改看 git short sha 后缀是否不同。sha 是内容寻址的——
+    /// 同一个 commit 的 sha 恒定，"重复打包同一个 commit"依然会被正确识别成
+    /// "sha 相同、不算更新"，07-07 真正要避免的那个场景没有被重新引入；变化的
+    /// 只是"X.Y.Z 相同但 sha 不同"这一半——现在会被正确识别成有更新。
+    ///
+    /// 只有当前版本**自己也带 sha 后缀**时才走这条新路径——早期手动
+    /// `workflow_dispatch` 发的纯 `vX.Y.Z`（没有 sha）代表一个明确完成的里程碑，
+    /// 不该因为存在同版本号的 ad-hoc sha 构建（很可能是这个里程碑之前的过程
+    /// 产物）就被当成"该更新"，维持这条边界跟 07-07 那版一致。
     static func pickUpdate(
         candidates: [UpdateCandidate],
         currentVersion: String
@@ -137,9 +154,54 @@ enum UpdateReleaseParser {
         let best = candidates
             .filter { $0.assetURL != nil }
             .max { $0.semanticVersion < $1.semanticVersion }
-        guard let best, best.semanticVersion > currentSemantic else { return nil }
-        return best
+        guard let best else { return nil }
+        if best.semanticVersion > currentSemantic { return best }
+        if best.semanticVersion == currentSemantic,
+           let currentSuffix = buildSuffix(of: currentVersion),
+           let bestSuffix = buildSuffix(of: best.tag),
+           bestSuffix != currentSuffix {
+            return best
+        }
+        return nil
     }
+
+    /// 取版本号/tag 里 `-` 之后的部分（通常是 git short sha）。早期手动发布的
+    /// 纯 `vX.Y.Z`（没有 sha 后缀）返回 nil。
+    static func buildSuffix(of tag: String) -> String? {
+        var raw = tag
+        if raw.hasPrefix("v") { raw.removeFirst() }
+        guard let dashIndex = raw.firstIndex(of: "-") else { return nil }
+        return String(raw[raw.index(after: dashIndex)...])
+    }
+}
+
+// MARK: - 更新检查日志（2026-07-19 用户反馈：装了旧包检查不到更新，但看不出
+// 为什么——补一份可读的过程记录）
+//
+// 直接写进跟「获取日志」页面同一份文件（`ProviderCheckLogStore`），不单独开
+// 新日志入口：用户已经习惯在那个页面排查"为什么没发生预期的事"，更新检查
+// 复用这个既有心智模型比新增一个 UI 更省心。不复用 `ProviderCheckLog` 那个
+// actor——那是为并发多 provider 场景设计的按 kind 缓冲，更新检查是单一顺序
+// 流程，直接格式化后 append 即可，不需要那层缓冲。行格式照抄
+// `<时间戳> - <名称> | <阶段> | <方式> | <结果> | <详情>`，"名称"固定用
+// "更新检查"，保持跟其余日志行同一套可扫读的视觉结构。
+enum UpdateCheckLog {
+    /// `store` 默认 `.shared`（真实落盘位置），测试注入临时目录的 store，
+    /// 避免每次跑 `UpdateChecker` 测试都往真实用户的日志文件里写内容
+    /// （跟 `ProviderCheckLogStore`/`PreferencesStore` 已有的测试注入原则一致）。
+    static func record(step: String, method: String, outcome: String, detail: String, store: ProviderCheckLogStore = .shared) {
+        let timestamp = formatter.string(from: Date())
+        let line = "\(timestamp) - 更新检查 | \(step) | \(method) | \(outcome) | \(detail)"
+        store.append(lines: [line])
+    }
+
+    private static let formatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone.current
+        f.dateFormat = "yyyy.MM.dd_HH.mm.ss"
+        return f
+    }()
 }
 
 // MARK: - UpdateChecker（v0.11.0-FE-A-000...012）
@@ -172,6 +234,9 @@ final class UpdateChecker: NSObject, ObservableObject {
     private let fallbackDownloadURL: URL
     private let session: URLSession
     private let preferences: PreferencesStore
+    /// `UpdateCheckLog` 落盘位置——默认 `.shared`（真实「获取日志」文件），
+    /// 测试注入临时目录的 store，见该类型上的说明。
+    private let checkLogStore: ProviderCheckLogStore
     private var downloadTask: URLSessionDownloadTask?
     private var downloadCandidate: UpdateCandidate?
     /// 本轮下载是否已经尝试过 Vercel 兜底——避免死循环重复 fallback。
@@ -190,7 +255,8 @@ final class UpdateChecker: NSObject, ObservableObject {
         fallbackReleasesURL: URL = URL(string: "https://quotabar.ddonlien.com/api/latest-release")!,
         fallbackDownloadURL: URL = URL(string: "https://quotabar.ddonlien.com/api/download-latest")!,
         session: URLSession? = nil,
-        preferences: PreferencesStore = .shared
+        preferences: PreferencesStore = .shared,
+        checkLogStore: ProviderCheckLogStore = .shared
     ) {
         self.releasesURL = releasesURL
         self.fallbackReleasesURL = fallbackReleasesURL
@@ -203,6 +269,7 @@ final class UpdateChecker: NSObject, ObservableObject {
             self.session = URLSession(configuration: config)
         }
         self.preferences = preferences
+        self.checkLogStore = checkLogStore
         super.init()
     }
 
@@ -233,20 +300,30 @@ final class UpdateChecker: NSObject, ObservableObject {
 
     /// 单次尝试：请求给定 URL 的 release 列表。`releasesURL`（GitHub 直连）和
     /// `fallbackReleasesURL`（Vercel 兜底）都走这个方法，返回同一套结果类型。
-    private func fetchReleasesData(from url: URL) async -> ReleaseFetchOutcome {
+    /// `label` 只用于日志（"GitHub"/"Vercel 兜底"），不影响请求本身。
+    private func fetchReleasesData(from url: URL, label: String) async -> ReleaseFetchOutcome {
         var request = URLRequest(url: url)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("QuotaBar", forHTTPHeaderField: "User-Agent")
         do {
             let (body, response) = try await session.data(for: request)
-            guard let http = response as? HTTPURLResponse else { return .failed }
+            guard let http = response as? HTTPURLResponse else {
+                UpdateCheckLog.record(step: "获取发布列表", method: label, outcome: "失败", detail: "响应不是 HTTP 响应", store: checkLogStore)
+                return .failed
+            }
             if http.statusCode == 403,
                (http.value(forHTTPHeaderField: "X-RateLimit-Remaining") ?? "") == "0" {
+                UpdateCheckLog.record(step: "获取发布列表", method: label, outcome: "失败", detail: "限流（HTTP 403，X-RateLimit-Remaining=0）", store: checkLogStore)
                 return .rateLimited
             }
-            guard (200..<300).contains(http.statusCode) else { return .failed }
+            guard (200..<300).contains(http.statusCode) else {
+                UpdateCheckLog.record(step: "获取发布列表", method: label, outcome: "失败", detail: "HTTP \(http.statusCode)", store: checkLogStore)
+                return .failed
+            }
+            UpdateCheckLog.record(step: "获取发布列表", method: label, outcome: "成功", detail: "\(body.count) 字节", store: checkLogStore)
             return .success(body)
         } catch {
+            UpdateCheckLog.record(step: "获取发布列表", method: label, outcome: "失败", detail: error.localizedDescription, store: checkLogStore)
             return .failed
         }
     }
@@ -257,14 +334,14 @@ final class UpdateChecker: NSObject, ObservableObject {
     /// 错误文案不再点名具体平台——技术细节留给调用方自行看日志，不是这里的职责。
     private func performCheck(userInitiated: Bool) async {
         let data: Data
-        switch await fetchReleasesData(from: releasesURL) {
+        switch await fetchReleasesData(from: releasesURL, label: "GitHub") {
         case .success(let body):
             data = body
         case .rateLimited:
             state = .error(message: "检查过于频繁，请稍后重试")
             return
         case .failed:
-            switch await fetchReleasesData(from: fallbackReleasesURL) {
+            switch await fetchReleasesData(from: fallbackReleasesURL, label: "Vercel 兜底") {
             case .success(let body):
                 data = body
             case .rateLimited, .failed:
@@ -276,16 +353,27 @@ final class UpdateChecker: NSObject, ObservableObject {
         preferences.setLastUpdateCheck(Date())
 
         let candidates = UpdateReleaseParser.parse(data: data)
+        let best = candidates.filter { $0.assetURL != nil }.max { $0.semanticVersion < $1.semanticVersion }
+        UpdateCheckLog.record(
+            step: "版本比较",
+            method: "本地",
+            outcome: "-",
+            detail: "当前 \(currentVersion)；候选 \(candidates.count) 个；最新候选 \(best?.tag ?? "无")",
+            store: checkLogStore
+        )
         guard var update = UpdateReleaseParser.pickUpdate(
             candidates: candidates,
             currentVersion: currentVersion
         ) else {
+            UpdateCheckLog.record(step: "版本比较", method: "本地", outcome: "无更新", detail: "已是最新版本 \(currentVersion)", store: checkLogStore)
             state = .upToDate(currentVersion: currentVersion)
             return
         }
+        UpdateCheckLog.record(step: "版本比较", method: "本地", outcome: "发现新版本", detail: "\(currentVersion) → \(update.tag)", store: checkLogStore)
 
         // 用户主动点「检查更新」时无视忽略列表；自动检查尊重忽略列表。
         if !userInitiated, preferences.preferences.ignoredVersions.contains(update.tag) {
+            UpdateCheckLog.record(step: "版本比较", method: "本地", outcome: "跳过", detail: "\(update.tag) 在用户忽略列表里", store: checkLogStore)
             state = .upToDate(currentVersion: currentVersion)
             return
         }
@@ -370,6 +458,13 @@ final class UpdateChecker: NSObject, ObservableObject {
             return
         }
         guard error == nil, let tempURL else {
+            UpdateCheckLog.record(
+                step: "下载安装包",
+                method: downloadTriedFallback ? "Vercel 兜底" : "GitHub",
+                outcome: "失败",
+                detail: error?.localizedDescription ?? "无临时文件",
+                store: checkLogStore
+            )
             retryDownloadWithFallbackOrFail(candidate: candidate)
             return
         }
@@ -383,9 +478,17 @@ final class UpdateChecker: NSObject, ObservableObject {
             try? FileManager.default.removeItem(at: target)
             try FileManager.default.moveItem(at: tempURL, to: target)
         } catch {
+            UpdateCheckLog.record(step: "下载安装包", method: "本地文件系统", outcome: "失败", detail: error.localizedDescription, store: checkLogStore)
             state = .error(message: "无法保存更新文件：\(error.localizedDescription)")
             return
         }
+        UpdateCheckLog.record(
+            step: "下载安装包",
+            method: downloadTriedFallback ? "Vercel 兜底" : "GitHub",
+            outcome: "成功",
+            detail: "\(candidate.tag) → \(target.lastPathComponent)",
+            store: checkLogStore
+        )
 
         state = .verifying
         Task { [weak self] in
@@ -399,12 +502,14 @@ final class UpdateChecker: NSObject, ObservableObject {
         let ok = await Self.runProcess("/usr/bin/hdiutil", ["verify", dmgPath.path])
         guard ok else {
             try? FileManager.default.removeItem(at: dmgPath)
+            UpdateCheckLog.record(step: "校验安装包", method: "hdiutil verify", outcome: "失败", detail: "\(candidate.tag) 的 dmg 结构校验未通过", store: checkLogStore)
             // 校验失败也走兜底重试，不只是网络层失败——某些网络环境会用 HTTP 200
             // 返回一段假内容（而不是直接连接失败/超时），这种"看起来下载成功但内容
             // 不对"的情况只有 dmg 结构校验这一步能发现。
             retryDownloadWithFallbackOrFail(candidate: candidate)
             return
         }
+        UpdateCheckLog.record(step: "校验安装包", method: "hdiutil verify", outcome: "成功", detail: candidate.tag, store: checkLogStore)
         state = .downloaded(candidate, dmgPath: dmgPath)
     }
 
@@ -412,6 +517,7 @@ final class UpdateChecker: NSObject, ObservableObject {
     /// 已经是第二次失败（`downloadTriedFallback == true`）才真正报错，避免死循环。
     private func retryDownloadWithFallbackOrFail(candidate: UpdateCandidate) {
         guard !downloadTriedFallback else {
+            UpdateCheckLog.record(step: "下载安装包", method: "Vercel 兜底", outcome: "失败", detail: "两个来源都失败，放弃自动下载", store: checkLogStore)
             state = .error(message: "下载失败，请稍后重试或前往官网手动下载")
             return
         }

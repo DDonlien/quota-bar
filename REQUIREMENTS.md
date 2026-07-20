@@ -1092,3 +1092,19 @@
 - [x] [0.14.0-FE-C-001] `ModelsSettingsView` 加展开交互（`expandedProviders` 状态 + chevron 按钮 + 条件渲染 `ProviderChannelStatusList`），不改动现有静态 `providerSubtitle`/`providerAccessModes`
 - [x] [0.14.0-QA-D-000] 新增测试：`QuotaPersistenceTests.recordsForKindReturnsAllChannelsIncludingFailures`（追加到已有文件，同一个 store 已经在测）+ 新文件 `ProviderChannelDescriptorTests.swift`。`swift test` 220/220 通过
 - [x] [0.14.0-QA-D-001] 实机验证：computer-use 无法识别 `swift run`/本地 ad-hoc 签名的 `.app`（不是 Launch Services 里的正常安装应用，两次 `request_access` 均返回 not-installed），改用直接读取一次真实刷新周期后的 `provider-sources.json` 手工核对三态分类逻辑——真实数据（kimi-desktop-token 成功、kimi-auth 失败带 "refresh_token 已失效"、kimi-webview 未授权且 `failureCount=163`）按 `ProviderChannelRow` 的判定逻辑手工走一遍，三种状态分类结果均正确；像素级视觉效果仍需用户实机确认
+
+## Phase - v0.14.1 - 更新检查的版本比较 bug + 检查过程写日志
+
+> **背景**：用户装的是 07-09 的旧包（`0.10.0-cdc842c`），「关于」页点检查更新显示"已是最新版本"，
+> 但仓库当天（07-19）已经因为本 session 的一串修复发了 7 个新 release（全部还是 `0.10.0-*`，只有
+> git sha 不同——见 `UpdateChecker.swift` 顶部注释，`VERSION` 文件只在 v0.11.0/v0.12.0 这类完整功能
+> 阶段完成时才 bump，日常修复走"每次 push main 都发新 release"，不 bump 版本号）。用户最初要求"把
+> 更新检查加入日志方便看问题"，但读代码直接定位到了根因：`UpdateReleaseParser.pickUpdate` 是
+> 2026-07-07 那次改版定下的规则——只比较 `X.Y.Z`，完全忽略 git sha 后缀，本意是防"同一个 commit
+> 重复打包被误判成有更新"；但实际发布节奏下，绝大多数发布之间 `X.Y.Z` 完全相同、只有 sha 不同，这条
+> 规则会让这些发布永远不被判定为"有更新"——不是这次新引入的 bug，是环境（发布节奏）变了之后一条
+> 旧决策反而错了，跟本 session 前面 Kimi `resetsAt` 那次是同一类情况。
+
+- [x] [0.14.1-BUG-A-000] `UpdateReleaseParser.pickUpdate`：`X.Y.Z` 相同时新增一层判断——当前版本自己也带 sha 后缀时，改看 sha 是否不同（sha 内容寻址，同一个 commit 恒定，"重复打包同一个 commit"依然正确识别成不算更新，07-07 真正要避免的场景没有被重新引入）；当前版本是没有 sha 后缀的纯 `vX.Y.Z`（早期手动稳定版）时维持原规则不变，避免把"同版本号下的 ad-hoc 过程构建"误判成对一个已完成里程碑的更新
+- [x] [0.14.1-DATA-A-000] 新增 `UpdateCheckLog`：直接复用「获取日志」页面的存储（`ProviderCheckLogStore`），不新开日志入口/UI；在 `fetchReleasesData`（GitHub/Vercel 两次尝试）、版本比较结果、下载、dmg 校验几个关键节点各记一行，格式跟现有 provider 日志行一致。`UpdateChecker` 新增 `checkLogStore` 注入点（默认 `.shared`），避免测试往真实日志文件写内容
+- [x] [0.14.1-QA-A-000] 更新 `UpdateCheckerTests.swift`：原 `sameVersionDifferentShaIsNotAnUpdate` 断言的正是被本次修正推翻的旧行为，改写成 `sameVersionDifferentShaIsAnUpdate`（相同 X.Y.Z、不同 sha → 应识别成更新）+ 新增 `sameVersionSameShaIsNotAnUpdate`（相同 X.Y.Z、相同 sha → 仍不算更新，覆盖 07-07 真正想防的场景）；`onlyUpgradesToHigherSemver` 原有断言（纯 `vX.Y.Z` 不该被同版本号的 sha 构建判定为更新）保持通过，验证了"仅当前版本自带 sha 才触发新规则"这条边界是对的。`UpdateCheckerFallbackTests.swift` 补 `ephemeralCheckLogStore()` 注入点。`swift test` 221/221 通过；核实测试运行前后真实 `provider-check.log` 的大小/mtime 均未变化，确认注入生效

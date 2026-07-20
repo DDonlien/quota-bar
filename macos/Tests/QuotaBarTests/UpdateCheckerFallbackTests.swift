@@ -29,7 +29,8 @@ struct UpdateCheckerFallbackTests {
             fallbackReleasesURL: Self.fallbackURL,
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
-            preferences: Self.ephemeralPreferences()
+            preferences: Self.ephemeralPreferences(),
+            checkLogStore: Self.ephemeralCheckLogStore()
         )
         checker.check(userInitiated: true)
         let state = await Self.waitUntilSettled(checker)
@@ -58,7 +59,8 @@ struct UpdateCheckerFallbackTests {
             fallbackReleasesURL: Self.fallbackURL,
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
-            preferences: Self.ephemeralPreferences()
+            preferences: Self.ephemeralPreferences(),
+            checkLogStore: Self.ephemeralCheckLogStore()
         )
         checker.check(userInitiated: true)
         let state = await Self.waitUntilSettled(checker)
@@ -81,7 +83,8 @@ struct UpdateCheckerFallbackTests {
             fallbackReleasesURL: Self.fallbackURL,
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
-            preferences: Self.ephemeralPreferences()
+            preferences: Self.ephemeralPreferences(),
+            checkLogStore: Self.ephemeralCheckLogStore()
         )
         checker.check(userInitiated: true)
         let state = await Self.waitUntilSettled(checker)
@@ -116,7 +119,8 @@ struct UpdateCheckerFallbackTests {
             fallbackReleasesURL: Self.fallbackURL,
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
-            preferences: Self.ephemeralPreferences()
+            preferences: Self.ephemeralPreferences(),
+            checkLogStore: Self.ephemeralCheckLogStore()
         )
         checker.check(userInitiated: true)
         let state = await Self.waitUntilSettled(checker)
@@ -177,6 +181,14 @@ struct UpdateCheckerFallbackTests {
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("quota-bar-update-checker-tests-\(UUID().uuidString)", isDirectory: true)
         return PreferencesStore(fileURL: dir.appendingPathComponent("preferences.json"))
+    }
+
+    /// 临时文件路径的 `ProviderCheckLogStore`，不碰真实用户的「获取日志」文件
+    /// （`UpdateCheckLog` 写日志用的就是这个 store）。
+    private static func ephemeralCheckLogStore() -> ProviderCheckLogStore {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("quota-bar-update-checker-tests-\(UUID().uuidString)", isDirectory: true)
+        return ProviderCheckLogStore(fileURL: dir.appendingPathComponent("provider-check.log"))
     }
 }
 

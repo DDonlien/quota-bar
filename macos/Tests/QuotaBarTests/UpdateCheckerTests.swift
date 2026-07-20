@@ -62,17 +62,33 @@ struct UpdateCheckerTests {
         #expect(UpdateReleaseParser.pickUpdate(candidates: candidates, currentVersion: "v0.10.2")?.tag == "v0.11.0-dcfff71")
     }
 
-    /// 回归测试：2026-07-07 用户明确要求——同一个版本号重复打包（比如两次不同的
-    /// commit 但没有 bump `VERSION` 文件，或者同一个 commit 打两次包）不应该被
-    /// 判断为"有更新"。这是这次改版的核心目的：只比版本号，不比时间/sha 是否
-    /// 相同。
-    @Test("rebuilding the exact same version is not offered as an update to itself")
-    func sameVersionDifferentShaIsNotAnUpdate() {
+    /// 2026-07-19 修正：2026-07-07 那版把"同一个 X.Y.Z、不同 sha"整体判定成"不算
+    /// 更新"，本意是防"同一个 commit 重复打包被误判成有更新"，但实际发布节奏是
+    /// "每次 push main 都发新 release，VERSION 只在完整功能阶段完成时才 bump"——
+    /// 这导致绝大多数真实发布之间 X.Y.Z 完全相同，只有 sha 不同，全部被那版逻辑
+    /// 挡在外面：装了旧包的用户会一直卡在"已是最新版本"，即使中间已经发了一串
+    /// 新版本。改成用 sha 是否相同判断（sha 是内容寻址的，同一个 commit 恒定），
+    /// 既能识别出真实的新发布，又不会把"重复打包同一个 commit"误判成更新——
+    /// 见下面 `sameVersionSameShaIsNotAnUpdate` 那个测试，覆盖的正是 07-07 真正
+    /// 想防的场景。
+    @Test("same X.Y.Z but a different build sha is offered as an update")
+    func sameVersionDifferentShaIsAnUpdate() {
         let candidates = UpdateReleaseParser.parse(data: Self.releasesJSON([
             Self.release(tag: "v0.10.0-dcfff71", prerelease: false, published: "2026-07-07T04:49:52Z", asset: "n.dmg"),
         ]))
         let picked = UpdateReleaseParser.pickUpdate(candidates: candidates, currentVersion: "v0.10.0-eeeeeee")
-        #expect(picked == nil, "相同 X.Y.Z、不同 sha 不应该被识别成待更新的新版本")
+        #expect(picked?.tag == "v0.10.0-dcfff71", "相同 X.Y.Z 但 sha 不同——说明有一次新发布没有 bump 版本号，应该被识别成待更新")
+    }
+
+    /// 07-07 真正想避免的场景：同一个 commit（sha 相同）重复打包，不该被判断成
+    /// "有更新"——sha 是内容寻址的，同一个 commit 的 sha 恒定，天然满足这个要求。
+    @Test("rebuilding the exact same commit is not offered as an update to itself")
+    func sameVersionSameShaIsNotAnUpdate() {
+        let candidates = UpdateReleaseParser.parse(data: Self.releasesJSON([
+            Self.release(tag: "v0.10.0-dcfff71", prerelease: false, published: "2026-07-07T04:49:52Z", asset: "n.dmg"),
+        ]))
+        let picked = UpdateReleaseParser.pickUpdate(candidates: candidates, currentVersion: "v0.10.0-dcfff71")
+        #expect(picked == nil, "相同 X.Y.Z、相同 sha（同一个 commit 重复打包）不应该被识别成待更新的新版本")
     }
 
     @Test("empty release list means up to date")
