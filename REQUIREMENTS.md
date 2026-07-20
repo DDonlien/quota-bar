@@ -1108,3 +1108,13 @@
 - [x] [0.14.1-BUG-A-000] `UpdateReleaseParser.pickUpdate`：`X.Y.Z` 相同时新增一层判断——当前版本自己也带 sha 后缀时，改看 sha 是否不同（sha 内容寻址，同一个 commit 恒定，"重复打包同一个 commit"依然正确识别成不算更新，07-07 真正要避免的场景没有被重新引入）；当前版本是没有 sha 后缀的纯 `vX.Y.Z`（早期手动稳定版）时维持原规则不变，避免把"同版本号下的 ad-hoc 过程构建"误判成对一个已完成里程碑的更新
 - [x] [0.14.1-DATA-A-000] 新增 `UpdateCheckLog`：直接复用「获取日志」页面的存储（`ProviderCheckLogStore`），不新开日志入口/UI；在 `fetchReleasesData`（GitHub/Vercel 两次尝试）、版本比较结果、下载、dmg 校验几个关键节点各记一行，格式跟现有 provider 日志行一致。`UpdateChecker` 新增 `checkLogStore` 注入点（默认 `.shared`），避免测试往真实日志文件写内容
 - [x] [0.14.1-QA-A-000] 更新 `UpdateCheckerTests.swift`：原 `sameVersionDifferentShaIsNotAnUpdate` 断言的正是被本次修正推翻的旧行为，改写成 `sameVersionDifferentShaIsAnUpdate`（相同 X.Y.Z、不同 sha → 应识别成更新）+ 新增 `sameVersionSameShaIsNotAnUpdate`（相同 X.Y.Z、相同 sha → 仍不算更新，覆盖 07-07 真正想防的场景）；`onlyUpgradesToHigherSemver` 原有断言（纯 `vX.Y.Z` 不该被同版本号的 sha 构建判定为更新）保持通过，验证了"仅当前版本自带 sha 才触发新规则"这条边界是对的。`UpdateCheckerFallbackTests.swift` 补 `ephemeralCheckLogStore()` 注入点。`swift test` 221/221 通过；核实测试运行前后真实 `provider-check.log` 的大小/mtime 均未变化，确认注入生效
+
+> **追加背景**：用户进一步指出这个 bug 频繁出现的深层原因——"自动编号机制完全不编号 patch"。
+> 读 `AGENTS.md`「版本号维护规则」确认：规则字面上写的是"一般不 bump，或 bump PATCH"，技术上
+> 允许 bump PATCH，但默认措辞（"大多数常规修复任务...VERSION 保持不变即可"）在实践中变成了
+> "几乎从不 bump"——当天验证到的证据是同一个 `0.10.0` 底下堆了 7+ 次真实发布。这不是某次任务
+> 执行疏忽，是规则默认值本身导向了错误的常态，直接把 0.14.1-BUG-A-000 那个 bug 的触发概率
+> 拉到最高。修规则 + 立即应用（bump 当前累积的改动）。
+
+- [x] [0.14.1-DOC-A-000] 改写 `AGENTS.md`「版本号维护规则」：默认行为从"常规修复一般不 bump，或 bump PATCH"改成"任何会被推到 main、触发 Release workflow 打出新包的提交都必须 bump PATCH"，只保留纯文档/`agent-log`/`REQUIREMENTS.md` 勾选这类完全不会被打包发布的改动作为不 bump 的例外；删掉"大多数常规修复任务...VERSION 保持不变即可"这条跟新默认矛盾的表述
+- [x] [0.14.1-DOC-A-001] 立即应用新规则：`VERSION` 0.10.0 → 0.10.1；按 `AGENTS.md` 既有的"VERSION bump 必须同步 changelog"规则，`site/src/pages/changelog.astro` 新增 `v10-1` 条目、`site/src/i18n/dict.ts` 补齐中英文 version/date/title/bullet 文案，总结当天用户可感知变化（Preferences 渠道状态、Kimi 修复、更新检查修复），不照抄 commit message；`npm run build` 通过，Browser 面板 `get_page_text` 确认新条目在 `/changelog` 页面正确渲染在最上面
