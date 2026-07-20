@@ -257,13 +257,12 @@
 
 - 格式：`vX.Y.Z-<git-short-sha>`（如 `v0.10.0-dcfff71`）。`X.Y.Z` 是唯一的“新旧”判断依据——`UpdateChecker` 纯比语义化版本号，不看发布时间、构建时间戳或 sha；`-<sha>` 只标识"具体是哪次构建"，同一个 `X.Y.Z` 重复打包（哪怕 sha 不同）不会被判定为"有更新"。这是 2026-07-07 从"按发布/构建时间比较"改过来的，起因是时区解析 bug 导致的虚假更新提示——只要还依赖时间比较就永遍有踩时区/时钟的风险，所以彻底改成纯版本号比较。
 - 唯一权威来源：`main/` 工作区根目录的 [`VERSION`](VERSION) 文件，内容就是 `X.Y.Z`（无前导 `v`，无 sha）。`macos/scripts/build-app.sh` 和 `.github/workflows/release.yml` 都从这个文件读取，不再有 nightly/stable 两条通道或 workflow_dispatch 手动输入版本号的机制。
-- **`X.Y.Z` 由 Agent 维护，每次执行修改任务时自行判断是否需要 bump、bump 哪一位**：
-  - 只是 bug 修复、文案/样式调整、不影响用户可感知功能范围 → 一般不 bump，或 bump PATCH（Z）；
-  - 新增功能、新 Provider、新一层获取策略、UI 交互规则调整等用户可感知的新能力 → bump MINOR（Y），通常对应 REQUIREMENTS.md 新开一个 `## Phase - vX.Y.0`；
-  - 破坏性变更（数据格式不兼容、架构性重写、需要用户手动干预迁移）→ bump MAJOR（X）；
-  - 拿不准时，优先看这次改动是否已经在 REQUIREMENTS.md 里对应一个新 Phase：对应新 Phase 就跟着 bump MINOR，只是 Phase 内的常规任务/修复就不 bump 或 bump PATCH。
-- 每次修改 `VERSION` 文件都必须在当次 agent-log 里明确写出：改了哪一位、为什么这么判断（对应哪个改动/Phase），不能只改文件不留痕迹。
-- 不需要每次任务都 bump——大多数常规修复任务改完代码后 `VERSION` 保持不变即可，只有确实达到上面判断标准时才动它。
+- **`X.Y.Z` 由 Agent 维护，每次执行修改任务时自行判断 bump 哪一位**（2026-07-19 修正：这条规则原来写的是"常规修复一般不 bump，或 bump PATCH"，实践下来变成了"几乎从不 bump PATCH"——同一个 `X.Y.Z` 底下堆了几十次真实发布，版本号本身失去辨识度，`UpdateChecker` 也一度因此漏判"有更新"，见 `UpdateChecker.swift` 里 2026-07-19 那条注释。现在把默认行为改成"必须 bump PATCH"，不再留"一般不 bump"这个退路）：
+  - **默认：任何会被推到 main、触发 Release workflow 打出新包的提交，都必须 bump PATCH（Z）**——bug 修复、文案/样式调整、依赖升级等不引入用户可感知新能力的改动都算在内；
+  - 新增功能、新 Provider、新一层获取策略、UI 交互规则调整等用户可感知的新能力 → bump MINOR（Y）（顺带把 PATCH 归零），通常对应 REQUIREMENTS.md 新开一个 `## Phase - vX.Y.0`；
+  - 破坏性变更（数据格式不兼容、架构性重写、需要用户手动干预迁移）→ bump MAJOR（X）（顺带把 MINOR/PATCH 归零）；
+  - 不 bump 的例外——仅限完全不会被打包发布的改动：纯文档/注释、`agent-log/` 记录、`REQUIREMENTS.md` 勾选状态更新、`DESIGN.md` 这类不影响任何代码或站点内容的文件。拿不准时按"要 bump"处理，而不是按"不 bump"处理——错判的代价是版本号多跳一位（无害），不是漏跳导致更新机制再次失效。
+- 每次修改 `VERSION` 文件都必须在当次 agent-log 里明确写出：改了哪一位、为什么这么判断（对应哪个改动/Phase）。
 
 ### 打包/推送时的 site 同步规则
 
