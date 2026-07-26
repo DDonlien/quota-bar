@@ -15,10 +15,24 @@
   <div class="container-content">
     <div class="product-preview__window">
       <!-- 3 张占位 mockup：根据 active tab 切换可见性 + fade -->
+      <!-- 三段演示视频。2026-07-26 用户反馈"视频不见了"（慢网络下 tab 栏已渲染、
+           视频区域一片空白）后的两处修正：
+
+           1. **必须有 poster**。原来只有 `preload="metadata"`：元数据不含任何画面帧，
+              在第一帧解码出来之前 <video> 就是一个完全空的盒子，没有任何东西可显示。
+              带上 poster 后，首屏立刻有画面，视频数据到了再无缝接替。
+           2. **只预加载当前 tab 的那一个**。原来三个都带 autoplay，等于开屏就抢着下
+              三份视频（改造前合计 13MB），可见的那个反而更慢。现在只有默认激活的
+              monitor 带 autoplay，另外两个 `preload="none"`——切到它们时由下方脚本
+              的 `vid.play()` 触发加载，切换体验不受影响。
+
+           视频本身也从 7–8Mbps 重新编码到 CRF 26（-tune stillimage，UI 录屏专用），
+           13.06MB → 1.69MB，2 倍放大下文字与原始无肉眼差别。 -->
       <div class="product-preview__image" data-tab-image="monitor" aria-hidden="false">
         <video
           class="mockup mockup--video"
           src="/preview.mp4"
+          poster="/preview-poster.jpg"
           autoplay
           muted
           playsinline
@@ -33,10 +47,10 @@
         <video
           class="mockup mockup--video"
           src="/detail.mp4"
-          autoplay
+          poster="/detail-poster.jpg"
           muted
           playsinline
-          preload="metadata"
+          preload="none"
           width="1662"
           height="1080"
           aria-label="Quota Bar details: drill down into per-model quota breakdowns"
@@ -47,10 +61,10 @@
         <video
           class="mockup mockup--video"
           src="/reorder.mp4"
-          autoplay
+          poster="/reorder-poster.jpg"
           muted
           playsinline
-          preload="metadata"
+          preload="none"
           width="1662"
           height="1080"
           aria-label="Quota Bar reorder: drag a provider card or a quota row to rearrange its order in the menu bar dropdown"
