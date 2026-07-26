@@ -106,9 +106,19 @@
           </li>
         </ul>
 
-        <button class="pricing__cta" type="button">
+        <!-- Creem 结账（v0.15.0）。`data-creem-checkout` 由 Layout.astro 引入的
+             embed.js 接管，点击后开同域弹层而不是整页跳走；脚本没加载成功时这仍然
+             是一个普通链接，直接跳 Creem 托管页——不会变成一个点了没反应的死按钮。
+             刻意没有照搬 Creem 官方片段自带的内联样式（#FFBE98 底 + 硬阴影），
+             那套配色跟本站暗色系统冲突；这里只保留行为所需的 data 属性。 -->
+        <a
+          class="pricing__cta"
+          href="https://www.creem.io/payment/prod_4NN9fUOfr2BU4L5NbaqFmo"
+          data-creem-checkout
+          data-creem-theme="dark"
+        >
           <span data-i18n="pricing.cta">Start Free Trial</span>
-        </button>
+        </a>
 
         <p class="pricing__support">
           <span data-i18n="pricing.support.hint">Payment issues? taobe@ddonlien.com</span>

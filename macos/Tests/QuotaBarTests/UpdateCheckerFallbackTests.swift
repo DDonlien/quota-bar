@@ -2,11 +2,14 @@ import Foundation
 import Testing
 @testable import QuotaBar
 
-/// v0.14.0：GitHub 直连失败时自动改用 Vercel 同源 endpoint 兜底——覆盖检查更新和
-/// 下载两条路径。用同一个 mock session 区分 primary（GitHub 形状）URL 和 fallback
-/// （Vercel）URL。
+/// 两源查询的降级行为。
+///
+/// v0.14.0 引入时是「GitHub 优先 → Vercel 兜底」；v0.15.0 安装包迁到 Vercel Blob 后
+/// **调换成「官网优先 → GitHub 降级」**（原因见 `UpdateChecker.primaryReleasesURL`
+/// 的说明：继续先问 GitHub 会永久判定"已是最新"）。这里的 `primaryURL` 因此代表
+/// 官网 endpoint、`legacyURL` 代表 GitHub。
 @MainActor
-@Suite("UpdateChecker GitHub → Vercel fallback", .serialized)
+@Suite("UpdateChecker primary → legacy fallback", .serialized)
 struct UpdateCheckerFallbackTests {
     private static let primaryURL = URL(string: "https://api.test/primary/releases")!
     private static let fallbackURL = URL(string: "https://vercel.test/api/latest-release")!
@@ -25,8 +28,8 @@ struct UpdateCheckerFallbackTests {
         }
 
         let checker = UpdateChecker(
-            releasesURL: Self.primaryURL,
-            fallbackReleasesURL: Self.fallbackURL,
+            primaryReleasesURL: Self.primaryURL,
+            legacyReleasesURL: Self.fallbackURL,
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
             preferences: Self.ephemeralPreferences(),
@@ -55,8 +58,8 @@ struct UpdateCheckerFallbackTests {
         }
 
         let checker = UpdateChecker(
-            releasesURL: Self.primaryURL,
-            fallbackReleasesURL: Self.fallbackURL,
+            primaryReleasesURL: Self.primaryURL,
+            legacyReleasesURL: Self.fallbackURL,
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
             preferences: Self.ephemeralPreferences(),
@@ -79,8 +82,8 @@ struct UpdateCheckerFallbackTests {
         }
 
         let checker = UpdateChecker(
-            releasesURL: Self.primaryURL,
-            fallbackReleasesURL: Self.fallbackURL,
+            primaryReleasesURL: Self.primaryURL,
+            legacyReleasesURL: Self.fallbackURL,
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
             preferences: Self.ephemeralPreferences(),
@@ -97,26 +100,27 @@ struct UpdateCheckerFallbackTests {
         #expect(!message.contains("Vercel"))
     }
 
-    @Test("primary rate-limited: reports rate-limit message without trying fallback")
-    func rateLimitSkipsFallback() async throws {
-        var fallbackCalled = false
+    /// 限流是 GitHub 特有的失败形态，v0.15.0 调换顺序后它落在**降级源**那一侧：
+    /// 官网先失败、再问 GitHub 又撞上限流时，要给出"过于频繁"这个具体原因，
+    /// 而不是笼统的"暂时无法检查更新"——两者的用户动作不同（等一会 vs 查网络）。
+    @Test("legacy source rate-limited: reports the rate-limit message specifically")
+    func legacyRateLimitReportsRateLimitMessage() async throws {
         UpdateFallbackMockURLProtocol.responseHandler = { request in
             if request.url == Self.primaryURL {
-                let response = HTTPURLResponse(
-                    url: request.url!,
-                    statusCode: 403,
-                    httpVersion: nil,
-                    headerFields: ["X-RateLimit-Remaining": "0"]
-                )!
-                return (response, Data())
+                throw URLError(.notConnectedToInternet)
             }
-            fallbackCalled = true
-            return (Self.http(request, status: 200), Data("[]".utf8))
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: 403,
+                httpVersion: nil,
+                headerFields: ["X-RateLimit-Remaining": "0"]
+            )!
+            return (response, Data())
         }
 
         let checker = UpdateChecker(
-            releasesURL: Self.primaryURL,
-            fallbackReleasesURL: Self.fallbackURL,
+            primaryReleasesURL: Self.primaryURL,
+            legacyReleasesURL: Self.fallbackURL,
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
             preferences: Self.ephemeralPreferences(),
@@ -130,7 +134,6 @@ struct UpdateCheckerFallbackTests {
             return
         }
         #expect(message.contains("频繁"))
-        #expect(!fallbackCalled)
     }
 
     // MARK: - helpers

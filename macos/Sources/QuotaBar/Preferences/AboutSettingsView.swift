@@ -8,12 +8,14 @@ import SwiftUI
 struct AboutSettingsView: View {
     @State private var store = PreferencesStore.shared
     @ObservedObject private var updateChecker = UpdateChecker.shared
+    @ObservedObject private var license = LicenseManager.shared
     @State private var showResetConfirmation = false
 
     var body: some View {
         SettingsPage(.about) {
             VStack(alignment: .leading, spacing: 20) {
                 appInfoGroup
+                licenseGroup
                 updateGroup
                 resetSection
             }
@@ -72,6 +74,59 @@ struct AboutSettingsView: View {
                 label: { Text("开发者") },
                 trailing: { Text("Taobe").foregroundStyle(.secondary) }
             )
+        }
+    }
+
+    /// 授权状态摘要（v0.15.0）。放在「检查更新」上方——它解释的正是下方那组按钮
+    /// 为什么可能是降级状态，顺序上先因后果。详细操作在「激活」页，这里只做提示。
+    private var licenseGroup: some View {
+        SettingsGroup {
+            SettingsRow(
+                label: {
+                    SettingsIconLabel(licenseTitle, symbol: licenseSymbol, tint: licenseTint)
+                },
+                subtitle: licenseSubtitle,
+                subtitleLeading: 36,
+                verticalPadding: 8
+            )
+        }
+    }
+
+    private var licenseTitle: String {
+        switch license.state {
+        case .trial(let days): return "试用中 · 剩余 \(days) 天"
+        case .trialExpired: return "试用已结束"
+        case .licensed: return "已激活"
+        case .licenseInvalid: return "授权无效"
+        }
+    }
+
+    private var licenseSymbol: String {
+        switch license.state {
+        case .trial: return "clock"
+        case .trialExpired: return "lock.shield"
+        case .licensed: return "checkmark.seal"
+        case .licenseInvalid: return "exclamationmark.triangle"
+        }
+    }
+
+    private var licenseTint: Color {
+        switch license.state {
+        case .trial: return .blue
+        case .trialExpired: return .orange
+        case .licensed: return .green
+        case .licenseInvalid: return .red
+        }
+    }
+
+    private var licenseSubtitle: String {
+        switch license.state {
+        case .trial:
+            return "自动更新可用。试用结束后额度获取照常工作，只有自动更新会停用。"
+        case .trialExpired, .licenseInvalid:
+            return "自动更新已停用，额度获取不受影响。在「激活」页输入许可证即可恢复。"
+        case .licensed:
+            return "自动更新已启用。"
         }
     }
 
@@ -154,13 +209,32 @@ struct AboutSettingsView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(6)
                 }
-                HStack(spacing: 12) {
-                    Button("立即下载并安装") { updateChecker.downloadAndInstall() }
+                // 未激活时不给"立即下载并安装"——那是付费换来的便利。但仍然如实
+                // 告知有新版本、并给出官网手动下载这条任何人都走得通的路径，
+                // 不把用户堵在死胡同里（v0.15.0）。
+                if updateChecker.requiresLicenseForInstall {
+                    HStack(spacing: 12) {
+                        Button("前往官网下载") {
+                            NSWorkspace.shared.open(URL(string: "https://quotabar.ddonlien.com/")!)
+                        }
                         .controlSize(.small)
-                    Button("查看 GitHub Release") { NSWorkspace.shared.open(candidate.releaseURL) }
-                        .controlSize(.small)
-                    Button("稍后提醒") { updateChecker.ignoreCurrentUpdate() }
-                        .controlSize(.small)
+                        Button("查看 GitHub Release") { NSWorkspace.shared.open(candidate.releaseURL) }
+                            .controlSize(.small)
+                        Button("稍后提醒") { updateChecker.ignoreCurrentUpdate() }
+                            .controlSize(.small)
+                    }
+                    Text("App 内一键安装需要激活；手动下载安装不受限制。")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.tertiary)
+                } else {
+                    HStack(spacing: 12) {
+                        Button("立即下载并安装") { updateChecker.downloadAndInstall() }
+                            .controlSize(.small)
+                        Button("查看 GitHub Release") { NSWorkspace.shared.open(candidate.releaseURL) }
+                            .controlSize(.small)
+                        Button("稍后提醒") { updateChecker.ignoreCurrentUpdate() }
+                            .controlSize(.small)
+                    }
                 }
             }
         case .downloading(let progress):

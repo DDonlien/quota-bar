@@ -251,7 +251,12 @@
 - 构建命令：`make build`（等价于 `cd macos && swift build`）；站点构建为 `make site`。
 - 应用打包：`make app`（等价于 `cd macos && ./scripts/build-app.sh`）。
 - 发布命令：`make deploy`（部署 `site/` 到 Vercel，首次需先 `make link`）。
-- 发版流程（ad-hoc 预开发版）：本地 `make app` 或推 main 都会读取根目录 `VERSION` 文件 + 当前 commit short sha，产出 `v<VERSION>-<sha>` 的 ad-hoc 签名包并在 push main / 手动触发 `Release` workflow 时发布同名 GitHub Release（首次打开需「右键 → 打开」）。签名升级（Developer ID + notarize）见 REQUIREMENTS v0.12.0。
+- 发版流程（ad-hoc 预开发版）：本地 `make app` 或推 main 都会读取根目录 `VERSION` 文件 + 当前 commit short sha，产出 `v<VERSION>-<sha>` 的 ad-hoc 签名包（首次打开需「右键 → 打开」）。签名升级（Developer ID + notarize）见 REQUIREMENTS v0.12.0。
+- **安装包分发（v0.15.0 起）**：CI 把 dmg 上传到 **Vercel Blob**，同时写一份 `releases/latest.json` manifest（见 `scripts/upload-release.mjs`）；GitHub Release 只保留 tag 与源码归档，**不再附带 dmg**。客户端与官网都通过 `api/latest-release.mjs` / `api/download-latest.mjs` 拿版本信息和安装包，下载流量始终走自有域名。
+  - 兼容闸门：`BLOB_READ_WRITE_TOKEN`（GitHub Actions Secret）没配时，`release.yml` 自动退回旧路径把 dmg 挂到 GitHub Release，发版不会中断。
+  - 已知既成事实：迁移完成后，**≤v0.10.1 的旧客户端会永久失去自动更新**——它们先问 GitHub，那边返回"有 release 但无 dmg 资产"就不会再走兜底，于是永远判定"已是最新"。这不是 bug，需要手动装一次新包才能重新接上更新链路。
+  - 因此 `UpdateChecker` 的查询顺序从 v0.15.0 起是「官网 endpoint 优先 → GitHub 降级」，跟 v0.14.0 时相反；改动这个顺序前先读 `UpdateChecker.primaryReleasesURL` 上的说明。
+- **付费与授权（v0.15.0 起）**：7 天试用，到期后**只停用自动更新**，额度获取等核心功能不受影响（开源可自编译，锁核心功能会让付费版不如免费版好用）。授权走 Creem license key，校验必须经 `api/activate.mjs` / `api/validate.mjs` 服务端代理——`CREEM_API_KEY` 绝不能进客户端二进制。复验对网络/服务端故障 **fail open**，只有 Creem 明确返回非 active 才降级。
 
 ### 版本号维护规则
 

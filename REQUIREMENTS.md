@@ -1118,3 +1118,72 @@
 
 - [x] [0.14.1-DOC-A-000] 改写 `AGENTS.md`「版本号维护规则」：默认行为从"常规修复一般不 bump，或 bump PATCH"改成"任何会被推到 main、触发 Release workflow 打出新包的提交都必须 bump PATCH"，只保留纯文档/`agent-log`/`REQUIREMENTS.md` 勾选这类完全不会被打包发布的改动作为不 bump 的例外；删掉"大多数常规修复任务...VERSION 保持不变即可"这条跟新默认矛盾的表述
 - [x] [0.14.1-DOC-A-001] 立即应用新规则：`VERSION` 0.10.0 → 0.10.1；按 `AGENTS.md` 既有的"VERSION bump 必须同步 changelog"规则，`site/src/pages/changelog.astro` 新增 `v10-1` 条目、`site/src/i18n/dict.ts` 补齐中英文 version/date/title/bullet 文案，总结当天用户可感知变化（Preferences 渠道状态、Kimi 修复、更新检查修复），不照抄 commit message；`npm run build` 通过，Browser 面板 `get_page_text` 确认新条目在 `/changelog` 页面正确渲染在最上面
+
+## Phase - v0.15.0 - 7 天试用 + Creem 授权激活 + 发布链路迁移到 Vercel Blob
+
+> **背景**：官网定价已经在 v0.3.2 改成"$4.99 一次性购买 + 7 天免费试用"，但 App 侧完全没有对应实现——
+> `ActivationSettingsView` 只是个 UI 空壳（存一个 `activationEmail`，`isActivated` 硬编码 `false`），既没有
+> 试用期概念也没有任何授权校验，官网也还没有真正的购买入口。本 phase 把这条链路补齐。
+>
+> **用户提供的 Creem 信息**：产品 ID `prod_4NN9fUOfr2BU4L5NbaqFmo`，checkout 链接
+> `https://www.creem.io/payment/prod_4NN9fUOfr2BU4L5NbaqFmo`，以及官方 embed.js 按钮片段。
+>
+> **两个关键产品决策（跟用户确认过）**：
+> 1. **试用到期只锁自动更新，额度功能照常**。理由：项目开源、任何人都能免费自行编译，硬锁核心功能会让
+>    付费版反而不如免费自编译版好用；付费真正卖的是"签名公证 + 自动更新 + 一键安装"这份省事，所以惩罚
+>    点落在便利性上才自洽。
+> 2. **构建包托管走 Vercel Blob**（GitHub Action 构建完上传，`/api/download-latest` 改为从 Blob 取），
+>    GitHub Release 只保留源码。
+>
+> **架构约束**：Creem 的 license 校验 API 需要 `x-api-key`（密钥），绝对不能进客户端二进制——必须在
+> Vercel 上加一层服务端代理，App 只跟自己的域名说话。
+>
+> **已知破坏性影响（用户已知悉并接受）**：GitHub Release 不再带 dmg 后，所有已安装的 ≤v0.10.1 客户端
+> 会永久失去自动更新——旧客户端是"GitHub 直连成功就不再走 Vercel 兜底"，而 GitHub 侧会返回"有 release
+> 但没有 .dmg 资产"，`pickUpdate` 因此永远返回 nil。当前处于 Beta、实际用户仅开发者本人，判断可接受；
+> 迁移后需要手动安装一次新包才能重新接上更新链路。
+>
+> **需要用户在外部系统完成的前置动作（Agent 无法代劳，涉及密钥/后台设置）**：
+> - Creem 后台确认 `prod_4NN9fUOfr2BU4L5NbaqFmo` 已开启 **License Keys**（未开启则买家收不到 key，整套激活无从谈起）
+> - Vercel 项目 Settings → Environment Variables 添加 `CREEM_API_KEY`
+> - Vercel 开通 Blob 存储，并把 `BLOB_READ_WRITE_TOKEN` 同时配到 Vercel 环境变量和 GitHub Actions Secrets
+
+### sub/main: macOS 试用期与授权状态模型
+
+- [x] [0.15.0-DATA-A-000] `PreferencesStore.Preferences` 新增试用/授权字段：`firstLaunchAt`（Date?，首次启动时写入且只写一次）、`licenseKey`、`licenseInstanceId`、`licenseStatus`、`licenseActivatedAt`、`licenseLastValidatedAt`、`licenseExpiresAt`；沿用现有 `decodeIfPresent` + 默认值模式保证旧 `preferences.json` 平滑升级
+- [x] [0.15.0-DATA-A-001] 新增 `LicenseState`（`.trial(daysRemaining:)` / `.trialExpired` / `.licensed` / `.licenseInvalid(reason:)`）+ 纯函数式的状态判定逻辑（输入首次启动时间、当前时间、授权记录），不依赖单例，便于单测覆盖边界（第 0 天 / 第 6 天 / 第 7 天 / 第 8 天）
+- [x] [0.15.0-DATA-A-002] 试用期定义 7 天，起点为 `firstLaunchAt`；诚实实现，不做反破解（源码公开，任何人可自编译，做设备指纹/加密存档只会增加复杂度而不增加实际约束力）
+
+### sub/main: Creem 激活的服务端代理（Vercel）
+
+- [x] [0.15.0-BE-A-000] 新增 `api/activate.mjs`：`POST {key, instanceName}` → 服务端带 `CREEM_API_KEY` 调 `POST https://api.creem.io/v1/licenses/activate` → 回传精简结果（`status`/`instanceId`/`expiresAt`/`activation`/`activationLimit`），绝不回传或记录 API key；入参做长度与字符校验，避免被当成任意转发代理
+- [x] [0.15.0-BE-A-001] 新增 `api/validate.mjs`：`POST {key, instanceId}` → 代理 `POST https://api.creem.io/v1/licenses/validate`，供 App 定期复验
+- [x] [0.15.0-BE-A-002] 两个 endpoint 共用 `api/_lib/creem.mjs`（base URL、鉴权头、错误归一化）；`CREEM_API_KEY` 缺失时返回明确的 503 而不是 500，方便区分"没配环境变量"和"Creem 侧故障"
+
+### sub/main: macOS 激活 UI 与自动更新门禁
+
+- [x] [0.15.0-FE-A-000] `ActivationSettingsView` 接真实逻辑：许可证 key 输入框（替换现在的邮箱框）+ 激活按钮 + 激活中/成功/失败状态 + 已激活时显示到期日与设备数；「移除激活」改为真实清除本地授权记录
+- [x] [0.15.0-FE-A-001] 新增 `LicenseManager`：负责调用 `/api/activate`、`/api/validate`、持久化结果、暴露 `@Published var state: LicenseState`；复验失败时 **fail open**（网络错误/服务端 5xx 不吊销本地授权，只更新 `lastValidatedAt`），只有 Creem 明确返回 `status != active` 才降级
+- [x] [0.15.0-FE-A-002] `UpdateChecker` 接入门禁：`.trialExpired` 时停止自动检查与 App 内下载/安装；手动「检查更新」仍可查看是否有新版本（诚实告知），但安装入口改为"前往官网下载"外链——只锁便利性、不锁知情权
+- [x] [0.15.0-FE-A-003] `AboutSettingsView` 展示当前授权状态（试用剩余天数 / 已激活 / 试用结束），试用结束时提供购买入口
+
+### sub/main: 官网购买入口
+
+- [x] [0.15.0-FE-B-000] `Pricing.astro` 付费卡 CTA 从占位 `<button>` 改为 Creem checkout 链接（`https://www.creem.io/payment/prod_4NN9fUOfr2BU4L5NbaqFmo`）；`Layout.astro` 引入 `https://www.creem.io/embed.js`（async）并给链接加 `data-creem-checkout`，走 Creem 官方弹层结账而不是整页跳走
+- [x] [0.15.0-FE-B-001] 按钮沿用站点现有 vibeisland 视觉，不照搬 Creem 片段里那套 `#FFBE98` + 硬阴影的默认样式（跟本站暗色系统冲突）；仅保留其行为所需的 `data-creem-*` 属性
+
+### sub/main: 发布链路迁移到 Vercel Blob
+
+- [x] [0.15.0-CI-A-000] `release.yml`：构建出 dmg 后上传到 Vercel Blob，并同时上传一份 `latest.json` manifest（`version`/`tag`/`notes`/`downloadUrl`/`publishedAt`/`size`）；GitHub Release 仍然创建（保留 tag 与源码归档）但不再附带 dmg 资产
+- [x] [0.15.0-BE-B-000] `api/latest-release.mjs` 改为读 Blob 上的 `latest.json`，并**仍然输出 GitHub Release 数组的形状**（合成 `assets[0].browser_download_url` 指向 `/api/download-latest`）——这样彻底摆脱对 GitHub API 的运行时依赖（顺带解决大陆可达性），同时不需要为新老客户端维护两套解析
+- [x] [0.15.0-BE-B-001] `api/download-latest.mjs` 改为从 Blob 流式转发 dmg，不再现查 GitHub release
+- [x] [0.15.0-DOC-A-000] `AGENTS.md` 发版流程章节同步更新为新链路（Blob 托管 + Release 只放源码），并记录"≤v0.10.1 客户端会失去自动更新"这一既成事实，避免以后有人误以为是 bug
+
+### sub/main: 仓库协作规则
+
+- [ ] [0.15.0-OPS-A-000] GitHub 仓库保持 public，但开启 `main` 分支保护：禁止直接 push、要求 PR、仅仓库 owner 可合并（用 `gh api` 配置 branch protection / ruleset，配置前把具体规则念给用户确认）
+
+### sub/main: 验证
+
+- [x] [0.15.0-QA-A-000] 新增单测：`LicenseState` 边界（第 0/6/7/8 天、已激活时忽略试用期、`licenseInvalid` 降级）、`LicenseManager` 的 fail-open 行为（mock 5xx 不吊销授权、明确 `status: expired` 才降级）；沿用现有 `URLProtocol` mock + 临时目录 store 注入模式，不碰真实用户状态
+- [ ] [0.15.0-QA-A-001] 端到端验证：Creem endpoint 在 `CREEM_API_KEY` 配好后用真实 key 走通一次激活；Blob 链路在 `BLOB_READ_WRITE_TOKEN` 配好后跑通一次 Action → Blob → `/api/download-latest` 下载校验；官网购买按钮在 Browser 面板确认 Creem 弹层能正常打开

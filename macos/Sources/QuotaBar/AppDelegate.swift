@@ -11,10 +11,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 第一轮刷新）完成——见 `WebKitSessionWarmup` 顶部说明：冷启动后如果没有
         // 任何 WKWebView 被创建过，`WKWebsiteDataStore.default()` 的 Cookie 存储
         // 可能长期读不到已持久化的登录态，导致 claude-webview 等一直误报"未登录"。
+        // 试用起点要在任何 UI 读取授权状态之前落盘，否则第一次启动时
+        // 「关于」「激活」两个页面会各自算出一个略有偏差的起点。
+        LicenseManager.shared.refreshState()
+
         Task { @MainActor in
             await WebKitSessionWarmup.warmUp()
             statusBarController = StatusBarController()
             notifyIfLastUpdateFailed()
+            // 复验放在最后、且是 fail-open 的：它既不该拖慢启动，也不该在
+            // 网络不通时影响任何既有功能（见 `LicenseManager.revalidateIfDue`）。
+            await LicenseManager.shared.revalidateIfDue()
         }
     }
 

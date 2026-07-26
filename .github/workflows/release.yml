@@ -121,7 +121,64 @@ jobs:
           echo "DMG=$DMG" >> "$GITHUB_ENV"
           ls -lh "$DMG"
 
-      - name: Upload GitHub Release
+      # v0.15.0 发布链路迁移：安装包托管到 Vercel Blob，GitHub Release 只留 tag +
+      # 源码归档。
+      #
+      # `if: env.BLOB_READ_WRITE_TOKEN != ''` 是有意的兼容闸门——token 配好之前，
+      # 这一步整个跳过，下面两步会退回旧的"dmg 挂 GitHub Release"路径。这样这次
+      # 迁移的代码可以先合进 main 而不会把发版打断，等 token 配好后自动切换。
+      # 单独一步探测：步骤级 `if:` 读不到同一步骤 `env:` 块里定义的变量，
+      # 必须先把"有没有配 token"变成一个 step output 才能被后面的 if 使用。
+      - name: Check Vercel Blob configuration
+        id: blobcfg
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          if [ -n "${BLOB_READ_WRITE_TOKEN:-}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::BLOB_READ_WRITE_TOKEN 未配置，本次沿用旧路径把 dmg 挂到 GitHub Release"
+          fi
+
+      - name: Upload dmg + manifest to Vercel Blob
+        id: blob
+        if: steps.blobcfg.outputs.configured == 'true'
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          BASE_VERSION="$(tr -d '[:space:]' < VERSION)"
+          NOTES="$RUNNER_TEMP/release-notes.txt"
+          cat > "$NOTES" <<'NOTE'
+          Automated build from this commit. Install: open the dmg and drag Quota Bar into Applications.
+          First launch requires right-click → Open (unsigned / not notarized; Developer ID signing lands in v0.12.0).
+          NOTE
+          npm install --no-save @vercel/blob
+          node scripts/upload-release.mjs "$DMG" "$TAG" "$BASE_VERSION" "$NOTES"
+          echo "uploaded=true" >> "$GITHUB_OUTPUT"
+
+      # 迁移完成后的常态：Release 不带任何构建产物，只作为 tag + 源码归档的载体。
+      - name: Create GitHub Release (source only)
+        if: steps.blob.outputs.uploaded == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Quota Bar ${{ steps.version.outputs.tag }}
+          body: |
+            Automated build from `${{ github.sha }}`.
+
+            **下载安装包**：<https://quotabar.ddonlien.com/>
+
+            安装包不再作为 Release 附件分发，改为托管在官网（Vercel Blob）。
+            本 Release 只保留 tag 与源码归档；源码始终开源，可自行编译。
+          draft: false
+          prerelease: false
+
+      # 兼容路径：BLOB_READ_WRITE_TOKEN 尚未配置时沿用旧行为，保证发版不中断。
+      - name: Create GitHub Release (with dmg — legacy fallback)
+        if: steps.blob.outputs.uploaded != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}

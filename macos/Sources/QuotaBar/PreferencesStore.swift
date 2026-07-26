@@ -52,8 +52,16 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
     /// 字段新增于 v0.3.0-PM-A-007，向后兼容（旧配置反序列化时获得 `false`）。
     var launchAtLogin: Bool
 
-    /// 激活邮箱。当前激活体系尚未接入后端，只持久化用户输入。
+    /// 激活邮箱。v0.15.0 起真正的凭证是 `license`（Creem license key），这个字段
+    /// 只作为可选的联系方式保留，不参与任何授权判定。
     var activationEmail: String
+
+    /// 首次启动时间，用于计算 7 天试用期（v0.15.0）。只在第一次发现它为 nil 时
+    /// 写入一次，之后不再改动，见 `PreferencesStore.markFirstLaunchIfNeeded()`。
+    var firstLaunchAt: Date?
+
+    /// 本地授权记录；nil 表示尚未激活（可能在试用期内，也可能试用已结束）。
+    var license: StoredLicense?
 
     /// 上一次成功检查更新的时间（v0.11.0-FE-A-007，5 分钟内不重复请求 GitHub API）。
     var lastUpdateCheck: Date?
@@ -80,6 +88,8 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         advanced: AdvancedPreferences = AdvancedPreferences(),
         launchAtLogin: Bool = false,
         activationEmail: String = "",
+        firstLaunchAt: Date? = nil,
+        license: StoredLicense? = nil,
         lastUpdateCheck: Date? = nil,
         ignoredVersions: [String] = [],
         claudeStatusLineHookEnabled: Bool = false
@@ -95,6 +105,8 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         self.advanced = advanced
         self.launchAtLogin = launchAtLogin
         self.activationEmail = activationEmail
+        self.firstLaunchAt = firstLaunchAt
+        self.license = license
         self.lastUpdateCheck = lastUpdateCheck
         self.ignoredVersions = ignoredVersions
         self.claudeStatusLineHookEnabled = claudeStatusLineHookEnabled
@@ -112,6 +124,8 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
         case advanced
         case launchAtLogin
         case activationEmail
+        case firstLaunchAt
+        case license
         case lastUpdateCheck
         case ignoredVersions
         case claudeStatusLineHookEnabled
@@ -131,6 +145,8 @@ struct QuotaPreferences: Codable, Equatable, Sendable {
             advanced: try container.decodeIfPresent(AdvancedPreferences.self, forKey: .advanced) ?? AdvancedPreferences(),
             launchAtLogin: try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false,
             activationEmail: try container.decodeIfPresent(String.self, forKey: .activationEmail) ?? "",
+            firstLaunchAt: try container.decodeIfPresent(Date.self, forKey: .firstLaunchAt),
+            license: try container.decodeIfPresent(StoredLicense.self, forKey: .license),
             lastUpdateCheck: try container.decodeIfPresent(Date.self, forKey: .lastUpdateCheck),
             ignoredVersions: try container.decodeIfPresent([String].self, forKey: .ignoredVersions) ?? [],
             claudeStatusLineHookEnabled: try container.decodeIfPresent(Bool.self, forKey: .claudeStatusLineHookEnabled) ?? false
@@ -464,6 +480,34 @@ final class PreferencesStore {
 
     func setActivationEmail(_ email: String) {
         preferences.activationEmail = email
+        _ = try? persist()
+    }
+
+    // MARK: 试用期与授权（v0.15.0）
+
+    /// 首次启动时记录时间戳，用于计算 7 天试用期。已经有值时什么都不做——
+    /// 试用起点一旦确定就不再改，否则每次启动都会把试用期重新续上。
+    /// 返回最终生效的首次启动时间，方便调用方直接拿去算状态。
+    @discardableResult
+    func markFirstLaunchIfNeeded(now: Date = Date()) -> Date {
+        if let existing = preferences.firstLaunchAt { return existing }
+        preferences.firstLaunchAt = now
+        _ = try? persist()
+        return now
+    }
+
+    func setLicense(_ license: StoredLicense?) {
+        preferences.license = license
+        _ = try? persist()
+    }
+
+    /// 复验成功后只更新状态与时间戳，不动 key / instanceId（那两个是激活时确定的身份）。
+    func updateLicenseValidation(status: String, expiresAt: Date?, validatedAt: Date = Date()) {
+        guard var license = preferences.license else { return }
+        license.status = status
+        license.expiresAt = expiresAt
+        license.lastValidatedAt = validatedAt
+        preferences.license = license
         _ = try? persist()
     }
 

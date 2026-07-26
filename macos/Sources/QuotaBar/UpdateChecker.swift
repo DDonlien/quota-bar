@@ -224,13 +224,22 @@ final class UpdateChecker: NSObject, ObservableObject {
 
     @Published private(set) var state: State = .idle
 
-    /// GitHub Releases API 地址（测试可注入 mock URLProtocol 的 session）。
-    private let releasesURL: URL
-    /// 大陆可达性兜底（v0.14.0）：`releasesURL` 直连失败时改请求这个同源 Vercel endpoint，
-    /// 它服务端原样转发 GitHub 的 release 数组（见仓库根目录 `api/latest-release.mjs`），
-    /// 客户端复用同一套 `UpdateReleaseParser`，不需要额外的解析逻辑。
-    private let fallbackReleasesURL: URL
-    /// 同上，dmg 资产下载的兜底：服务端流式转发当前最新 release 的 dmg（`api/download-latest.mjs`）。
+    /// 首选查询源：官网自有 endpoint（`api/latest-release.mjs`）。
+    ///
+    /// **v0.15.0 把它从"兜底"提成了"首选"，这是发布链路迁移的必要条件而不是优化**：
+    /// 安装包改为托管在 Vercel Blob 之后，GitHub Release 只剩 tag 和源码，不再带
+    /// dmg 资产。如果继续先问 GitHub，那边会正常返回 200 + 合法 JSON（只是里面
+    /// 没有任何带 dmg 的 release），`fetchReleasesData` 判定为 `.success` 就不会
+    /// 再走第二源，`pickUpdate` 又因为筛不出 `assetURL != nil` 的候选而返回 nil——
+    /// 结果是永远显示"已是最新版本"。必须先问知道 Blob 在哪的那一侧。
+    ///
+    /// 该 endpoint 输出的仍然是 GitHub Releases API 的数组形状，所以客户端这边
+    /// 除了顺序之外不需要任何解析改动。
+    private let primaryReleasesURL: URL
+    /// 降级查询源：GitHub Releases API。迁移期内对"还带着 dmg 资产的历史 release"
+    /// 仍然有效；对迁移后的新 release 拿不到安装包，但那时首选源正常，轮不到它。
+    private let legacyReleasesURL: URL
+    /// dmg 下载地址（服务端流式转发，`api/download-latest.mjs`）。
     private let fallbackDownloadURL: URL
     private let session: URLSession
     private let preferences: PreferencesStore
@@ -251,15 +260,15 @@ final class UpdateChecker: NSObject, ObservableObject {
     }
 
     init(
-        releasesURL: URL = URL(string: "https://api.github.com/repos/DDonlien/quota-bar/releases?per_page=30")!,
-        fallbackReleasesURL: URL = URL(string: "https://quotabar.ddonlien.com/api/latest-release")!,
+        primaryReleasesURL: URL = URL(string: "https://quotabar.ddonlien.com/api/latest-release")!,
+        legacyReleasesURL: URL = URL(string: "https://api.github.com/repos/DDonlien/quota-bar/releases?per_page=30")!,
         fallbackDownloadURL: URL = URL(string: "https://quotabar.ddonlien.com/api/download-latest")!,
         session: URLSession? = nil,
         preferences: PreferencesStore = .shared,
         checkLogStore: ProviderCheckLogStore = .shared
     ) {
-        self.releasesURL = releasesURL
-        self.fallbackReleasesURL = fallbackReleasesURL
+        self.primaryReleasesURL = primaryReleasesURL
+        self.legacyReleasesURL = legacyReleasesURL
         self.fallbackDownloadURL = fallbackDownloadURL
         if let session {
             self.session = session
@@ -276,10 +285,25 @@ final class UpdateChecker: NSObject, ObservableObject {
     // MARK: 检查
 
     /// 触发一次检查。`userInitiated == false`（关于页自动触发）时 5 分钟内不重复请求。
+    ///
+    /// v0.15.0 授权门禁：试用结束/授权失效时**不再自动检查**（省掉一次没有后续动作的
+    /// 网络请求），但用户主动点「检查更新」仍然照常执行——只锁"自动"和"App 内一键
+    /// 安装"这两件便利，不锁"知道有没有新版本"这个知情权。安装入口的降级在
+    /// `downloadAndInstall()` 里做。
     func check(userInitiated: Bool = false) {
         if case .checking = state { return }
         if case .downloading = state { return }
         if case .installing = state { return }
+        if !userInitiated, !licenseAllowsAutomaticUpdates {
+            UpdateCheckLog.record(
+                step: "自动检查",
+                method: "授权门禁",
+                outcome: "跳过",
+                detail: "试用已结束且未激活，自动更新停用（手动检查不受影响）",
+                store: checkLogStore
+            )
+            return
+        }
         if !userInitiated,
            let last = preferences.preferences.lastUpdateCheck,
            Date().timeIntervalSince(last) < 5 * 60 {
@@ -328,23 +352,27 @@ final class UpdateChecker: NSObject, ObservableObject {
         }
     }
 
-    /// 两步兜底（v0.14.0）：优先 GitHub 直连；失败（网络错误/超时/非 2xx，不含限流）时
-    /// 自动改请求 Vercel 同源 endpoint；限流直接报限流文案，不浪费一次 fallback 尝试
-    /// （限流是 GitHub 自己的问题，Vercel 服务端可能同样受限）。两者都失败才报通用错误，
-    /// 错误文案不再点名具体平台——技术细节留给调用方自行看日志，不是这里的职责。
+    /// 两步查询：先问官网自有 endpoint（唯一知道 Blob 上安装包在哪的一侧，见
+    /// `primaryReleasesURL` 的说明），失败（网络错误/超时/非 2xx）时降级到 GitHub。
+    ///
+    /// v0.15.0 之前顺序是反的（GitHub 优先、官网兜底）；发布链路迁移到 Blob 之后
+    /// 那个顺序会永久判定"已是最新"，所以调换是必需的。
+    ///
+    /// 限流分支保留给 GitHub 侧：那是它特有的失败形态，出现时直接报限流文案，
+    /// 不再重试——同一时刻自有 endpoint 已经先失败过了，再试也不会有别的结果。
     private func performCheck(userInitiated: Bool) async {
         let data: Data
-        switch await fetchReleasesData(from: releasesURL, label: "GitHub") {
+        switch await fetchReleasesData(from: primaryReleasesURL, label: "官网") {
         case .success(let body):
             data = body
-        case .rateLimited:
-            state = .error(message: "检查过于频繁，请稍后重试")
-            return
-        case .failed:
-            switch await fetchReleasesData(from: fallbackReleasesURL, label: "Vercel 兜底") {
+        case .rateLimited, .failed:
+            switch await fetchReleasesData(from: legacyReleasesURL, label: "GitHub 降级") {
             case .success(let body):
                 data = body
-            case .rateLimited, .failed:
+            case .rateLimited:
+                state = .error(message: "检查过于频繁，请稍后重试")
+                return
+            case .failed:
                 state = .error(message: "暂时无法检查更新，请稍后重试")
                 return
             }
@@ -404,11 +432,39 @@ final class UpdateChecker: NSObject, ObservableObject {
         preferences.resetIgnoredVersions()
     }
 
+    // MARK: 授权门禁（v0.15.0）
+
+    /// 当前授权状态是否允许自动更新。注入点存在的唯一目的是让测试能构造门禁场景，
+    /// 生产路径始终读 `LicenseManager.shared`。
+    var licenseStateProvider: () -> LicenseState = { LicenseManager.shared.state }
+
+    private var licenseAllowsAutomaticUpdates: Bool {
+        licenseStateProvider().allowsAutomaticUpdates
+    }
+
+    /// UI 用来决定「立即更新」按钮是否要降级成「前往官网下载」。
+    var requiresLicenseForInstall: Bool {
+        !licenseAllowsAutomaticUpdates
+    }
+
     // MARK: 下载
 
     func downloadAndInstall() {
         guard case .updateAvailable(let candidate) = state,
               let assetURL = candidate.assetURL else {
+            return
+        }
+        // 试用结束/授权失效时不提供 App 内下载安装——这正是付费买到的那份便利。
+        // 不静默失败：明确告诉用户为什么，并给出仍然可行的手动路径。
+        guard licenseAllowsAutomaticUpdates else {
+            UpdateCheckLog.record(
+                step: "下载安装包",
+                method: "授权门禁",
+                outcome: "跳过",
+                detail: "试用已结束且未激活，App 内自动安装停用",
+                store: checkLogStore
+            )
+            state = .error(message: "自动更新需要激活。可在「偏好设置 → 激活」输入许可证，或前往官网手动下载新版本。")
             return
         }
         downloadCandidate = candidate
