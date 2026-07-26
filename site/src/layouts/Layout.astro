@@ -155,10 +155,6 @@ const {
       })();
     </script>
 
-    <!-- Creem 结账弹层（v0.15.0）。async + 放在最后：它只服务于定价区那一个按钮，
-         不该参与首屏渲染路径；脚本没加载出来时按钮会退化成普通链接直接跳 Creem
-         托管页，功能不丢（见 Pricing.astro 的说明）。 -->
-    <script src="https://www.creem.io/embed.js" async is:inline></script>
   </head>
   <body>
     <!-- 全局装饰：顶部居中光晕（参考 reference.html） -->
