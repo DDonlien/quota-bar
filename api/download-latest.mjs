@@ -48,6 +48,16 @@ export async function GET() {
   return new Response(assetResponse.body, { status: 200, headers });
 }
 
+// Vercel 不会把 HEAD 自动路由到 GET，不显式导出的话探测请求会拿到 405。
+// 下载器（curl -I、部分代理/CDN、以及习惯先探大小再拉全量的客户端）都会用 HEAD，
+// 让它们撞 405 会被误读成"下载地址挂了"。这里复用 GET 的完整逻辑拿到真实的
+// Content-Length / Content-Disposition，再丢掉 body 返回——比手写一份可能跟
+// GET 不一致的头更可靠。
+export async function HEAD() {
+  const response = await GET();
+  return new Response(null, { status: response.status, headers: response.headers });
+}
+
 function jsonError(message, status) {
   return new Response(JSON.stringify({ error: message }), {
     status,

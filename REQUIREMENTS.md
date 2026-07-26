@@ -1186,4 +1186,6 @@
 ### sub/main: 验证
 
 - [x] [0.15.0-QA-A-000] 新增单测：`LicenseState` 边界（第 0/6/7/8 天、已激活时忽略试用期、`licenseInvalid` 降级）、`LicenseManager` 的 fail-open 行为（mock 5xx 不吊销授权、明确 `status: expired` 才降级）；沿用现有 `URLProtocol` mock + 临时目录 store 注入模式，不碰真实用户状态
-- [ ] [0.15.0-QA-A-001] 端到端验证：Creem endpoint 在 `CREEM_API_KEY` 配好后用真实 key 走通一次激活；Blob 链路在 `BLOB_READ_WRITE_TOKEN` 配好后跑通一次 Action → Blob → `/api/download-latest` 下载校验；官网购买按钮在 Browser 面板确认 Creem 弹层能正常打开
+- [x] [0.15.0-QA-A-001] **Blob 链路端到端已验证**：用 Vercel CLI 建 public blob store（`quota-bar-releases`，自动注入 `BLOB_READ_WRITE_TOKEN` 到三个环境）+ 手动加 `BLOB_PUBLIC_BASE_URL`，token 经管道传入 GitHub Actions Secrets（值未落到任何输出）。`workflow_dispatch` 跑通一次真实发布：Blob 上传步骤执行、legacy fallback 被正确跳过、GitHub Release 不带 dmg；`curl` 确认 Blob 上 manifest 与 dmg 均可公开取到；重新部署后 `/api/latest-release` 已切到 Blob manifest（返回单条、资产 URL 指向 `/api/download-latest`），`/api/download-latest` 完整下载 2734775 字节且 `hdiutil verify` 校验 VALID
+- [ ] [0.15.0-QA-A-002] **Creem 激活端到端待验证**（阻塞于用户侧前置条件）：需要用户在 Creem 后台确认 `prod_4NN9fUOfr2BU4L5NbaqFmo` 已开启 License Keys，并在 Vercel 配置 `CREEM_API_KEY`（密钥，Agent 不经手）。建议先用 Creem test mode 走一遍——`_lib/creem.mjs` 支持用 `CREEM_API_BASE_URL` 指向 `https://test-api.creem.io/v1`
+- [x] [0.15.0-BE-B-002] `api/download-latest.mjs` 补 `HEAD` 导出：Vercel 不会把 HEAD 自动路由到 GET，实测 `curl -I` 撞 405，会被下载器/代理误读成"地址挂了"；复用 GET 逻辑取真实响应头后丢掉 body，避免手写一份跟 GET 不一致的头

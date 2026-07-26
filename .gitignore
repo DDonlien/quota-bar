@@ -38,3 +38,4 @@ worktree/
 reference/project/hidden/
 reference/project/Mos/
 .vercel
+.env*
