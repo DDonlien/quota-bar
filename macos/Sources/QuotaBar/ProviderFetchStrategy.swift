@@ -158,48 +158,75 @@ final class FetchPipeline {
         throw QuotaFetchError.sourceUnavailable(detail: "无可用数据源")
     }
 
-    /// 本轮实际执行顺序：优先试「缓存来源」（若存在且对所需层一致），其余按声明顺序补齐。
+    /// 本轮实际执行顺序：把「上次成功来源」提到最前面，其余按声明顺序补齐。
     ///
-    /// 「一致」指本轮所有传入的 `layers` 的「上次成功来源索引」都指向**同一个** strategy id
-    /// ——也就是上次有一个来源一次性把这几层都拿全了，这次可以放心先只试它，省掉明知
-    /// 会失败的前面几层。如果不同层指向不同来源、或者压根没有缓存记录，说明"没有单一
-    /// 来源覆盖过全部所需信息"，这时不做任何取巧，直接按 pipeline 声明顺序完整跑一遍
-    /// （这也是为什么 `quotaOnlySourceCannotShadowFullSource` 测试里"只给 quota 层缓存"
-    /// 不会让这个部分来源抢到声明在前、真正完整的来源前面——它跟 `.plan` 层没有达成一致）。
+    /// **2026-07-27 放宽了提前条件。** 原来要求所有 `layers` 的缓存都指向**同一个**
+    /// strategy 才提前，任何一层不一致就整个放弃、完整按声明顺序重跑。这条规则对
+    /// Claude 是永久失效的：它的 quota 来自 `claude-webview`、plan 历史上来自
+    /// `claude-auth-status-cli`，两层天然不同源，于是每一轮刷新都要先白跑
+    /// statusline → oauth → auth-status-cli 三个已知会失败的来源（其中
+    /// auth-status-cli 还要起一个子进程），才轮到唯一能成的 webview。用户日志里
+    /// 每一轮都能看到那两行「与其他层不一致，本轮按声明顺序完整探测」，Claude 因此
+    /// 成为耗时最长、最容易在中途出问题的 provider。
     ///
-    /// 缓存来源试过之后无论成不成功都不会在下面的完整 fallback 里重复出现（避免同一轮
-    /// 内对同一个 strategy 打两次一模一样的请求）；但如果缓存来源失败或没能完整覆盖，
-    /// 完整 fallback 依然会把**其余全部** strategy 按声明顺序跑一遍，不会因为"试过缓存"
-    /// 就少跑本该跑的层。
+    /// 现在改成取各层缓存来源的**并集**，按 `layers` 给定的顺序（quota 在前）去重后
+    /// 整体提前。Claude 于是会直接先试 webview。
+    ///
+    /// **但覆盖面更窄的来源不允许插队。** `mergeLayers` 是 base 优先，所以第一个成功的
+    /// 来源会成为基底；如果让一个只声明 `.quota` 的来源（如 `kimi-auth`）插到声明了
+    /// 全部层的来源前面，它顺带返回的 tier 就会锁死基底、后面真正负责档位的来源再也
+    /// 覆盖不掉——`quotaOnlySourceCannotShadowFullSource` 和 `fallsBackWhenBaseFails`
+    /// 两个测试正是这条边界。判据：只有当缓存来源的 `supportedLayers` 不是它要越过的
+    /// 某个来源的真子集时，才允许提前。
+    ///
+    /// Claude 的四个来源都声明了完整层，不受这条限制影响——它要的提前照常生效。
+    ///
+    /// 提前试过的来源不会在后面重复出现，避免同一轮内对同一个 strategy 打两次请求。
     private func effectiveOrder(for layers: [ProviderFetchLayer]) -> [ProviderFetchStrategy] {
-        guard let cachedFirst = cachedFirstStrategy(for: layers) else { return strategies }
-        return [cachedFirst] + strategies.filter { $0.id != cachedFirst.id }
+        let promotedIds = cachedSourceIds(for: layers).filter { canPromote(id: $0) }
+        guard !promotedIds.isEmpty else { return strategies }
+        let promoted = promotedIds.compactMap { id in strategies.first { $0.id == id } }
+        return promoted + strategies.filter { !promotedIds.contains($0.id) }
     }
 
-    private func cachedFirstStrategy(for layers: [ProviderFetchLayer]) -> ProviderFetchStrategy? {
-        // `compactMap` 会悄悄丢掉"这一层压根没有缓存记录"的情况，让它跟"缺失"混同成
-        // "被忽略、其余层达成一致"——这不是"一致"，是"信息不全"，必须一并算作不一致。
-        // 所以这里保留每一层原始的 `String?`（包括 nil），逐一跟第一层的值比较。
-        let preferredIds = layers.map { sourceIndexStore.preferredSourceID(for: providerKind, layer: $0) }
-        guard let first = preferredIds.first, let onlyId = first,
-              preferredIds.allSatisfy({ $0 == onlyId }) else {
-            return nil
+    /// 把 `id` 提到最前面是否安全：它不能比任何一个被它越过的来源覆盖面更窄。
+    private func canPromote(id: String) -> Bool {
+        guard let index = strategies.firstIndex(where: { $0.id == id }) else { return false }
+        let candidateLayers = strategies[index].supportedLayers
+        // 只需检查排在它前面、会被它越过的那些。
+        return !strategies[..<index].contains { earlier in
+            candidateLayers.isStrictSubset(of: earlier.supportedLayers)
         }
-        return strategies.first { $0.id == onlyId }
     }
 
-    /// 记录「上次成功来源索引」缓存里存了什么，以及本轮是否因此把它排到了最前面。
+    /// 各层「上次成功来源」的并集，按传入的 `layers` 顺序去重。
+    /// 只保留本 pipeline 真的声明过的 id——索引里可能残留已经被移除的旧 strategy。
+    private func cachedSourceIds(for layers: [ProviderFetchLayer]) -> [String] {
+        var ids: [String] = []
+        for layer in layers {
+            guard let id = sourceIndexStore.preferredSourceID(for: providerKind, layer: layer),
+                  !ids.contains(id),
+                  strategies.contains(where: { $0.id == id })
+            else { continue }
+            ids.append(id)
+        }
+        return ids
+    }
+
+    /// 记录「上次成功来源索引」缓存里存了什么，以及本轮是否因此把它排到了前面。
     private func logSourceOrdering(_ ordered: [ProviderFetchStrategy]) async {
+        let promotedIds = Set(cachedSourceIds(for: [.quota, .plan]))
         for layer in [ProviderFetchLayer.quota, .plan] {
             guard let preferredId = sourceIndexStore.preferredSourceID(for: providerKind, layer: layer) else { continue }
             let step: ProviderCheckLog.CheckStep = layer == .quota ? .quota : .plan
-            let triedFirst = ordered.first?.id == preferredId
+            let promoted = promotedIds.contains(preferredId)
+            let position = ordered.firstIndex { $0.id == preferredId }.map { $0 + 1 }
             await checkLog.record(
                 kind: providerKind, step: step, method: "上次成功来源索引",
-                outcome: triedFirst ? .success : .failure,
-                detail: triedFirst
-                    ? "命中缓存，优先尝试：\(preferredId)"
-                    : "缓存来源 \(preferredId) 与其他层不一致，本轮按声明顺序完整探测"
+                outcome: promoted ? .success : .failure,
+                detail: promoted
+                    ? "命中缓存，提前到第 \(position ?? 1) 位尝试：\(preferredId)"
+                    : "缓存来源 \(preferredId) 已不在当前 pipeline 声明中，按声明顺序探测"
             )
         }
     }
@@ -248,10 +275,16 @@ final class FetchPipeline {
                         content = "获取到 \(snapshot.quotas.count) 条额度窗口"
                     }
                 case .plan:
-                    outcome = .success
-                    let tier = snapshot.subscriptionTier ?? "未获取"
-                    let price = snapshot.monthlyPrice ?? "未获取"
-                    content = "档位=\(tier)，价格=\(price)"
+                    // 2026-07-27：这里原来无条件记 .success，于是日志里会出现
+                    // 「成功 | 档位=未获取，价格=未获取」这种自相矛盾的行——排查
+                    // "为什么这个 provider 没有档位"时反而误导人。跟 quota 层对齐：
+                    // 两个字段都没拿到就是失败。注意 `successfulLayers(from:)` 里
+                    // 判定要不要写来源索引用的一直是同一个条件，所以这只是把日志
+                    // 摆正，不改变任何实际行为。
+                    let tier = snapshot.subscriptionTier
+                    let price = snapshot.monthlyPrice
+                    outcome = (tier == nil && price == nil) ? .failure : .success
+                    content = "档位=\(tier ?? "未获取")，价格=\(price ?? "未获取")"
                 default:
                     outcome = .success
                     content = ""

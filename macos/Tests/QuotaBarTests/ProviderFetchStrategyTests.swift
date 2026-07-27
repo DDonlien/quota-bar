@@ -32,6 +32,43 @@ struct ProviderFetchStrategyTests {
         #expect(snapshot.subscriptionTier == "Full")
     }
 
+    /// 2026-07-27 回归：各层缓存指向**不同**来源时，也要能一起提前，而不是整个放弃。
+    ///
+    /// 这正是 Claude 的真实形态（quota 来自 webview、plan 来自 auth-status-cli），
+    /// 旧的"全层一致才提前"规则对它永久失效，导致每轮都要先白跑三个已知失败的来源。
+    @Test("cached sources pointing at different layers are all promoted, not discarded")
+    @MainActor
+    func differentCachedSourcesPerLayerAreStillPromoted() async throws {
+        let dir = Self.makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let store = ProviderSourceIndexStore(directoryURL: dir)
+        // quota 上次成功来源是声明在最后的 "late"，plan 是中间的 "mid"
+        store.recordSuccess(kind: .kimi, layer: .quota, sourceKind: .configFile, sourceId: "late")
+        store.recordSuccess(kind: .kimi, layer: .plan, sourceKind: .configFile, sourceId: "mid")
+
+        let recorder = OrderRecordingBox()
+        let pipeline = FetchPipeline(
+            kind: .kimi,
+            strategies: [
+                RecordingStrategy(id: "first", recorder: recorder, shouldFail: true),
+                RecordingStrategy(id: "mid", recorder: recorder, shouldFail: true),
+                RecordingStrategy(id: "late", recorder: recorder, shouldFail: false),
+            ],
+            runMode: .sequential,
+            sourceIndexStore: store
+        )
+
+        _ = try await pipeline.run(timeout: 1)
+
+        // 关键：quota 的缓存来源 late 被第一个尝试，而不是像旧规则那样因为
+        // "plan 指向另一个来源" 就整体放弃提前、从声明第一位的 first 开始跑。
+        #expect(recorder.order.first == "late", "quota 的上次成功来源应该被第一个尝试")
+        // late 一次就把 quota + plan 都拿全了，pipeline 正确短路——声明在最前、
+        // 已知会失败的 first 完全不该被调用（这正是 Claude 每轮白跑三个来源的病根）。
+        #expect(!recorder.order.contains("first"), "已知失败且非缓存来源的 strategy 不该被白跑")
+        #expect(recorder.order == ["late"])
+    }
+
     @Test("cached source agreeing across all requested layers is tried before an earlier-declared strategy")
     @MainActor
     func cachedSourceAgreeingAcrossLayersTriesFirst() async throws {
@@ -197,6 +234,51 @@ private struct ThrowingBothLayersStubStrategy: ProviderFetchStrategy {
 
     func fetch(timeout: TimeInterval) async throws -> ProviderSnapshot {
         throw QuotaFetchError.sourceUnavailable(detail: "stub 故意失败，模拟 IDE 未运行")
+    }
+}
+
+/// 记录 strategy 的实际调用顺序，用来断言 `effectiveOrder` 的排序结果。
+private final class OrderRecordingBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _order: [String] = []
+    var order: [String] {
+        lock.lock(); defer { lock.unlock() }
+        return _order
+    }
+    func append(_ id: String) {
+        lock.lock(); defer { lock.unlock() }
+        _order.append(id)
+    }
+}
+
+private struct RecordingStrategy: ProviderFetchStrategy {
+    let id: String
+    let recorder: OrderRecordingBox
+    let shouldFail: Bool
+
+    var displayName: String { id }
+    var kind: ProviderKind { .kimi }
+    var sourceKind: ProviderSourceKind { .configFile }
+
+    func fetch(timeout: TimeInterval) async throws -> ProviderSnapshot {
+        recorder.append(id)
+        if shouldFail { throw QuotaFetchError.sourceUnavailable(detail: "stub \(id) fails") }
+        return ProviderSnapshot(
+            kind: .kimi,
+            subscriptionTier: "Tier-\(id)",
+            availability: .available,
+            quotas: [
+                QuotaWindow(
+                    title: "Code",
+                    remainingFraction: 0.5,
+                    refreshDescription: "1h",
+                    periodSeconds: 3600,
+                    subscriptionGroup: ProviderKind.kimi.rawValue
+                )
+            ],
+            monthlyPrice: "¥49/月",
+            fetchedAt: Date()
+        )
     }
 }
 

@@ -1189,3 +1189,26 @@
 - [x] [0.15.0-QA-A-001] **Blob 链路端到端已验证**：用 Vercel CLI 建 public blob store（`quota-bar-releases`，自动注入 `BLOB_READ_WRITE_TOKEN` 到三个环境）+ 手动加 `BLOB_PUBLIC_BASE_URL`，token 经管道传入 GitHub Actions Secrets（值未落到任何输出）。`workflow_dispatch` 跑通一次真实发布：Blob 上传步骤执行、legacy fallback 被正确跳过、GitHub Release 不带 dmg；`curl` 确认 Blob 上 manifest 与 dmg 均可公开取到；重新部署后 `/api/latest-release` 已切到 Blob manifest（返回单条、资产 URL 指向 `/api/download-latest`），`/api/download-latest` 完整下载 2734775 字节且 `hdiutil verify` 校验 VALID
 - [ ] [0.15.0-QA-A-002] **Creem 激活端到端待验证**（阻塞于用户侧前置条件）：需要用户在 Creem 后台确认 `prod_4NN9fUOfr2BU4L5NbaqFmo` 已开启 License Keys，并在 Vercel 配置 `CREEM_API_KEY`（密钥，Agent 不经手）。建议先用 Creem test mode 走一遍——`_lib/creem.mjs` 支持用 `CREEM_API_BASE_URL` 指向 `https://test-api.creem.io/v1`
 - [x] [0.15.0-BE-B-002] `api/download-latest.mjs` 补 `HEAD` 导出：Vercel 不会把 HEAD 自动路由到 GET，实测 `curl -I` 撞 405，会被下载器/代理误读成"地址挂了"；复用 GET 逻辑取真实响应头后丢掉 body，避免手写一份跟 GET 不一致的头
+
+## Phase - v0.15.1 - Claude 探测顺序修复 + 日志 provider 配色 + 购买/下载双出口
+
+> **背景**：用户三条反馈。其中"经常刷不出 Claude，过一会又能刷出来"这条给了两份完整日志——
+> 两份里 Claude 其实都**成功**了（`claude-webview：获取到 2 条额度窗口`），所以日志本身没有直接
+> 抓到失败现场；但它暴露了一个每轮都在发生的结构性问题，Claude 因此成为最慢、最容易出事的
+> provider。
+
+### sub/main: Claude 每轮白跑三个已知失败来源
+
+- [x] [0.15.1-BUG-A-000] `FetchPipeline.effectiveOrder` 放宽"上次成功来源"的提前条件：原规则要求所有层的缓存指向**同一个** strategy，任一层不一致就整个放弃提前。Claude 的 quota 来自 `claude-webview`、plan 历史上来自 `claude-auth-status-cli`，两层天然不同源 → 规则对它**永久失效**，每轮都要先跑 statusline → oauth → auth-status-cli（其中 auth-status-cli 还要起子进程）三个已知失败的来源，才轮到唯一能成的 webview。改成取各层缓存来源的并集、按 quota 优先的顺序整体提前
+- [x] [0.15.1-BUG-A-001] 提前时加覆盖面守卫：`mergeLayers` 是 base 优先，若让只声明 `.quota` 的来源（如生产里的 `kimi-auth`，它确实会顺带返回档位）插到声明了全部层的来源前面，它的 tier 会锁死基底、后面真正负责档位的来源再也覆盖不掉。判据改为"缓存来源的 `supportedLayers` 不是任何一个被它越过的来源的真子集"。实现过程中先试过"抹掉 strategy 声明外的字段"这条更激进的路，被 `fallsBackWhenBaseFails` 挡下——查证后确认 `kimi-auth` 在生产中确实声明 `[.quota]` 却真的提供档位，抹掉会真实破坏 Kimi 的档位显示，遂回退改用覆盖面守卫
+- [x] [0.15.1-BUG-A-002] 修 `logAttempt` 里 plan 层无条件记 `.success` 的问题：日志里会出现「成功 | 档位=未获取，价格=未获取」这种自相矛盾的行（用户这次的日志里 Claude 那行就是），排查"为什么没有档位"时反而误导。改成跟 quota 层一致——两个字段都为 nil 即失败。`successfulLayers(from:)` 里写来源索引的判据一直就是这个条件，所以只是把日志摆正，不改变行为
+- [x] [0.15.1-QA-A-000] 新增回归测试 `differentCachedSourcesPerLayerAreStillPromoted`（各层缓存不同源时仍应提前，且声明在前的已知失败来源不该被白跑）；`swift test` 241/241 通过
+
+### sub/main: 诊断日志 provider 配色
+
+- [x] [0.15.1-FE-A-000] `DiagnosticsSettingsView` 单行日志改为三段配色（`Text` 拼接）：轮次分隔头维持 accentColor 蓝、provider 名用紫色、时间戳压成 secondary。紫色刻意避开 accentColor——系统强调色大多数人就是蓝色，同色会让"轮次"和"provider"两类锚点在扫读时糊成一片
+
+### site/main: 购买与下载分成两个出口
+
+- [x] [0.15.1-FE-B-000] 付费卡主按钮从"开始免费试用"改为"购买 Quota Bar"，下方新增一条 vibeisland 风格的次要文字链接"或先下载免费试用 →"（`data-download`，复用 `UPDATE_DOWNLOAD` 解析）。原来用"免费试用"包装一个其实是付款页的入口，点进去发现要填卡号会让人觉得被诓；现在语义各归各位。次要出口做成纯文字链接而不是第二个按钮，避免稀释主 CTA
+- [x] [0.15.1-FE-B-001] `Hero.astro` 的静态兜底下载链接从 hardcode 的 `nightly-c6317d0…` 直链改为 `/api/download-latest`：那个硬编码值虽然还能跳转，但发的是很老的构建（2.0MB vs 当前 2.7MB），发布链路换过两轮都没人记得更新它；改成服务端解析的端点后永不过期，也不再在源码里留会腐烂的常量

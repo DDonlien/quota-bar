@@ -78,9 +78,8 @@ struct DiagnosticsSettingsView: View {
                         // beginCycle` 顶部说明），视觉上的"换行 + 换行"间隔在这里实现。
                         // 同一轮内不同 provider 之间也补一段上间距，便于分组阅读
                         // （2026-07-11 用户反馈：provider 之间要有换行便于阅读）。
-                        Text(row.text)
+                        Self.styledText(for: row)
                             .font(.system(size: 10.5, weight: row.isHeader ? .semibold : .regular, design: .monospaced))
-                            .foregroundStyle(row.isHeader ? Color.accentColor : Color.primary)
                             .textSelection(.enabled)
                             .padding(.top, row.topGap)
                             .padding(.bottom, row.isHeader ? 4 : 0)
@@ -137,6 +136,30 @@ struct DiagnosticsSettingsView: View {
             result.append(LogRow(id: index, text: line, isHeader: isHeader, topGap: topGap))
         }
         return result
+    }
+
+    /// 给单行日志上色（2026-07-27 用户反馈：除了用蓝色区分刷新轮次，还要有一个颜色
+    /// 能把 provider 认出来）。
+    ///
+    /// 三段配色，靠 `Text` 拼接实现（同一个 `Text` 内不能分段上色）：
+    /// - 轮次分隔头整行走 accentColor（蓝），跟原来一致；
+    /// - provider 名用紫色——刻意避开 accentColor：系统强调色大多数人就是蓝色，
+    ///   两者同色的话"轮次"和"provider"这两类锚点在扫读时会糊成一片；
+    /// - 时间戳压成 secondary，让紫色的 provider 名成为每行最先被看到的东西。
+    @ViewBuilder
+    private static func styledText(for row: LogRow) -> some View {
+        if row.isHeader {
+            Text(row.text).foregroundStyle(Color.accentColor)
+        } else if let provider = providerName(from: row.text),
+                  let dashRange = row.text.range(of: " - ") {
+            let timestamp = String(row.text[row.text.startIndex..<dashRange.lowerBound])
+            let tail = String(row.text[dashRange.upperBound...].dropFirst(provider.count))
+            Text(timestamp + " - ").foregroundStyle(.secondary)
+                + Text(provider).foregroundStyle(Color.purple)
+                + Text(tail).foregroundStyle(Color.primary)
+        } else {
+            Text(row.text).foregroundStyle(Color.primary)
+        }
     }
 
     /// 从 `<时间戳> - <ProviderName> | <CheckStep> | …` 里取出 `<ProviderName>`。

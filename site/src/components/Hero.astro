@@ -1,9 +1,12 @@
 ---
-// 静态 fallback href：build 时 hardcode 当前最新 nightly release 的 .dmg URL。
-// 无 JS / 首屏加载前的点击也会直击 .dmg 而不是落到 /releases 列表页；
-// 客户端 <script>（`UPDATE_DOWNLOAD` in index.astro）会在 fetch 出更新的 release 时再覆盖一次。
-const LATEST_DMG_URL =
-  "https://github.com/DDonlien/quota-bar/releases/download/nightly-c6317d05cfe8217aef54324ce193070a5dc29d84/QuotaBar-c6317d0.dmg";
+// 静态 fallback href：无 JS / 首屏脚本跑完之前点击也要能拿到安装包。
+//
+// 2026-07-27 从"build 时 hardcode 一个 nightly release 的 .dmg 直链"改成自家端点。
+// 原来那个硬编码链接指向 `nightly-c6317d0…`，虽然还能跳转，但发的是一个很老的
+// 构建（2.0MB，当前版本 2.7MB）——发布链路早就换了两轮，硬编码值没人记得更新。
+// `/api/download-latest` 由服务端解析当前最新版（v0.15.0 起读 Vercel Blob 上的
+// manifest），永远不会过期，也不需要在源码里留一个会腐烂的常量。
+const LATEST_DMG_URL = "/api/download-latest";
 // Hero 标题里轮播的 agent 名字：用 | 分隔。
 //   - data-words-en / data-words-zh 是 i18n 的两条 fallback；当前两种语言都用同一组
 //     英文专有名词，但保留双属性以便未来扩展（比如本地化名称）。

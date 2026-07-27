@@ -117,8 +117,21 @@
           data-creem-checkout
           data-creem-theme="dark"
         >
-          <span data-i18n="pricing.cta">Start Free Trial</span>
+          <span data-i18n="pricing.cta">Buy Quota Bar</span>
         </a>
+
+        <!-- 次要出口（参考 vibeisland 的「或先下载免费试用 →」）：主按钮只说"购买"，
+             不用"开始免费试用"去包装一个其实是付款页的入口——点进去发现要填卡号会
+             让人觉得被诓了。想先试的人走下面这条独立链接，直达下载，语义各归各位。 -->
+        <!-- `data-download`：复用 index.astro 里 `UPDATE_DOWNLOAD` 那套解析——
+             它会把页面上所有带这个属性的链接统一改写成当前最新版的下载地址。
+             静态 href 直接写自家端点，无 JS 时也能下到正确的包。 -->
+        <p class="pricing__secondary">
+          <a class="pricing__secondary-link" href="/api/download-latest" data-download>
+            <span data-i18n="pricing.secondary.download">Or download the free trial</span>
+            <span class="pricing__secondary-arrow" aria-hidden="true">→</span>
+          </a>
+        </p>
 
         <p class="pricing__support">
           <span data-i18n="pricing.support.hint">Payment issues? taobe@ddonlien.com</span>
@@ -366,6 +379,41 @@
   }
   .pricing__cta--outline:hover {
     background: rgba(255, 255, 255, 0.06);
+  }
+
+  /* 次要出口：纯文字链接，刻意不做成第二个按钮——两个同等分量的按钮会稀释
+   * 主 CTA，这里要的是"想先试的人找得到"，不是"跟购买平起平坐"。 */
+  .pricing__secondary {
+    text-align: center;
+    margin-top: var(--space-3);
+  }
+
+  .pricing__secondary-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--text-sm);  /* 13px */
+    color: var(--text-secondary);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+  .pricing__secondary-link:hover {
+    color: var(--text-primary);
+  }
+
+  /* 箭头 hover 时右移 2px——一个很轻的"这里可以去"的暗示，参考 vibeisland。 */
+  .pricing__secondary-arrow {
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+  .pricing__secondary-link:hover .pricing__secondary-arrow {
+    transform: translateX(2px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pricing__secondary-arrow {
+      transition: none;
+    }
+    .pricing__secondary-link:hover .pricing__secondary-arrow {
+      transform: none;
+    }
   }
 
   .pricing__support {

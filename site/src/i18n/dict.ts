@@ -70,7 +70,8 @@ const en: Dict = {
   "pricing.bullet.autoupdate": "Automatic updates",
   "pricing.bullet.oneclick": "One-click install",
   "pricing.bullet.support": "Priority Support",
-  "pricing.cta": "Start Free Trial",
+  "pricing.cta": "Buy Quota Bar",
+  "pricing.secondary.download": "Or download the free trial",
   "pricing.support.hint": "Payment issues? taobe@ddonlien.com",
 
   // Pricing — Open Source card (build-it-yourself track, sits next to the Pro card)
@@ -246,7 +247,8 @@ const zh: Dict = {
   "pricing.bullet.autoupdate": "自动更新",
   "pricing.bullet.oneclick": "一键安装",
   "pricing.bullet.support": "优先技术支持",
-  "pricing.cta": "开始免费试用",
+  "pricing.cta": "购买 Quota Bar",
+  "pricing.secondary.download": "或先下载免费试用",
   "pricing.support.hint": "付款问题请联系 taobe@ddonlien.com",
 
   // Pricing — 开源自行编译卡片（跟 Pro 卡片并排）
