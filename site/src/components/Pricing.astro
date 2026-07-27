@@ -50,9 +50,19 @@
           <span data-i18n="pricing.opensource.cta">View on GitHub</span>
         </a>
 
-        <!-- 隐形占位——付费卡 CTA 下面还有一行支付提示文字，把按钮往上顶；这张卡没有对应内容，
-             用同高度的占位段落补上，保证两个 CTA 按钮贴同一条水平线，不是靠肉眼调 margin 凑。 -->
-        <p class="pricing__support pricing__support--placeholder" aria-hidden="true">&nbsp;</p>
+        <!-- CTA 下方脚注区的镜像占位。
+             两张卡都是 flex column + CTA `margin-top: auto`，所以 CTA 的垂直位置由
+             它**下方**内容的高度决定——付费卡有「或先下载」+「支付问题」两行，这张卡
+             没有对应内容，必须占出同样的高度，两个按钮才在同一条水平线上。
+
+             ⚠️ 不变式：这个 `.pricing__cta-footnotes` 里的行数与行样式必须跟付费卡
+             那个同名容器保持一致。之前是给每一行单独加一个隐形占位，结果加「或先下载
+             免费试用」那一行时漏掉了这里，按钮立刻错开一行——所以改成整块镜像，
+             增删脚注时只需要照着改这一个容器。 -->
+        <div class="pricing__cta-footnotes pricing__cta-footnotes--placeholder" aria-hidden="true">
+          <p class="pricing__secondary">&nbsp;</p>
+          <p class="pricing__support">&nbsp;</p>
+        </div>
       </div>
 
       <div class="pricing__card">
@@ -120,22 +130,27 @@
           <span data-i18n="pricing.cta">Buy Quota Bar</span>
         </a>
 
-        <!-- 次要出口（参考 vibeisland 的「或先下载免费试用 →」）：主按钮只说"购买"，
-             不用"开始免费试用"去包装一个其实是付款页的入口——点进去发现要填卡号会
-             让人觉得被诓了。想先试的人走下面这条独立链接，直达下载，语义各归各位。 -->
-        <!-- `data-download`：复用 index.astro 里 `UPDATE_DOWNLOAD` 那套解析——
-             它会把页面上所有带这个属性的链接统一改写成当前最新版的下载地址。
-             静态 href 直接写自家端点，无 JS 时也能下到正确的包。 -->
-        <p class="pricing__secondary">
-          <a class="pricing__secondary-link" href="/api/download-latest" data-download>
-            <span data-i18n="pricing.secondary.download">Or download the free trial</span>
-            <span class="pricing__secondary-arrow" aria-hidden="true">→</span>
-          </a>
-        </p>
+        <!-- CTA 下方脚注区。⚠️ 增删这里的行时，必须同步改开源卡里那个同名的
+             `.pricing__cta-footnotes` 镜像占位，否则两张卡的 CTA 会错开——
+             理由见那边的注释。 -->
+        <div class="pricing__cta-footnotes">
+          <!-- 次要出口（参考 vibeisland 的「或先下载免费试用 →」）：主按钮只说"购买"，
+               不用"开始免费试用"去包装一个其实是付款页的入口——点进去发现要填卡号会
+               让人觉得被诓了。想先试的人走下面这条独立链接，直达下载，语义各归各位。
+               `data-download`：复用 index.astro 里 `UPDATE_DOWNLOAD` 那套解析，
+               它会把页面上所有带这个属性的链接改写成当前最新版的下载地址；静态 href
+               直接写自家端点，无 JS 时也能下到正确的包。 -->
+          <p class="pricing__secondary">
+            <a class="pricing__secondary-link" href="/api/download-latest" data-download>
+              <span data-i18n="pricing.secondary.download">Or download the free trial</span>
+              <span class="pricing__secondary-arrow" aria-hidden="true">→</span>
+            </a>
+          </p>
 
-        <p class="pricing__support">
-          <span data-i18n="pricing.support.hint">Payment issues? taobe@ddonlien.com</span>
-        </p>
+          <p class="pricing__support">
+            <span data-i18n="pricing.support.hint">Payment issues? taobe@ddonlien.com</span>
+          </p>
+        </div>
       </div>
     </div>
   </div>
@@ -365,6 +380,10 @@
     margin-bottom: var(--space-3);
     /* .pricing__cta 现在也用在 <a> 上（开源卡跳 GitHub），撑住 flex 卡片底部对齐。 */
     margin-top: auto;
+    /* 透明边框占位：outline 变体要画 1px 实边框，若基础样式不预留这 1px，两个按钮
+     * 的盒高就会差 2px（上下各一），CTA 也就对不齐——两张卡的脚注高度已经一致时，
+     * 剩下的偏差全部来自这里。让 outline 变体只改颜色、不改盒模型。 */
+    border: 1px solid transparent;
   }
   .pricing__cta:hover {
     background: #f0f0f0;
@@ -423,9 +442,10 @@
     margin-top: var(--space-3);
   }
 
-  /* 只占位、不可见：撑出跟付费卡支付提示行一样的高度，让两张卡的 CTA 按钮对齐到
-   * 同一条水平线，见上面 HTML 里的说明。 */
-  .pricing__support--placeholder {
+  /* 只占位、不可见：撑出跟付费卡脚注区一样的高度，让两张卡的 CTA 按钮对齐到
+   * 同一条水平线，见 HTML 里的不变式说明。整块镜像而不是逐行加占位——后者在
+   * 新增脚注行时会被漏掉（2026-07-27 就这样错开过一次）。 */
+  .pricing__cta-footnotes--placeholder {
     visibility: hidden;
   }
 </style>
