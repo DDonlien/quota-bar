@@ -23,6 +23,9 @@ struct AboutSettingsView: View {
         .onAppear {
             // v0.11.0-FE-A-005：打开关于页时后台触发一次（5min 内不重复请求）。
             updateChecker.check(userInitiated: false)
+            // 授权状态同理要按当下重算——本页展示的剩余天数以及下面那组更新按钮
+            // 是否降级，都依赖它（见 `LicenseManager.startStateRefreshTimer`）。
+            license.refreshState()
         }
         .confirmationDialog(
             "确定要重置所有偏好设置吗？",

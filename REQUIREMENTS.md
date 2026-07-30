@@ -1217,3 +1217,24 @@
 
 - [x] [0.15.1-FE-B-002] 修复 0.15.1-FE-B-000 引入的按钮错位回归。加「或先下载免费试用」那一行时，只改了付费卡、漏了开源卡的隐形占位，两张卡 CTA 下方内容差一行 → 按钮错开约 50px。根因是当初的占位做法本身脆弱（逐行加一个隐形孪生元素，增删时必然漏）。改成把 CTA 下方内容整体包进 `.pricing__cta-footnotes` 容器、两张卡结构镜像，并在两边都写明"增删脚注必须同步改另一边"的不变式
 - [x] [0.15.1-FE-B-003] 消掉剩余的 2px 偏差：`.pricing__cta--outline` 有 1px 实边框而基础 `.pricing__cta` 没有，上下各多 1px 让 outline 按钮盒高多 2px；`margin-top: auto` 从下往上顶时表现为它的 top 高 2px。给基础样式加 `border: 1px solid transparent`，outline 变体只改颜色不改盒模型。实测两个按钮 `top` 与 `height` 完全一致（2569 / 48 / 边框均 1px）
+
+## Phase - v0.15.2 - 时间派生值只算一次的两处 bug
+
+> **背景**：用户两条反馈，排查后发现是同一个根因——**时间派生的值在某一刻算出来之后
+> 就再也不更新**，而 Quota Bar 是常驻菜单栏、可以连续运行数天的应用。
+>
+> 证据：用户机器上 `firstLaunchAt` = 2026-07-26T15:00:22Z 已正确持久化，进程从
+> 7/26 23:00 起**连续运行 4 天 1 小时未重启**；按日期算应显示「剩余 3 天」，界面却
+> 一直是启动那一刻算出的「剩余 7 天」。
+
+### sub/main: 试用剩余天数不随时间更新
+
+- [x] [0.15.2-BUG-A-000] `LicenseManager.state` 原本只在 `init` 里算一次。加 10 分钟一次的 `Timer`（`RunLoop.main` + `.common` 模式，保证菜单打开/窗口拖动期间也走）重算；纯本地日期算术、不发请求，开销可忽略，而剩余天数按天取整，10 分钟粒度足够让跨零点及时反映
+- [x] [0.15.2-BUG-A-001] `ActivationSettingsView` / `AboutSettingsView` 的 `onAppear` 主动调一次 `refreshState()`——用户点开设置那一刻看到的必须是当下的真实天数，不能等定时器
+- [x] [0.15.2-BUG-A-002] 连带修复的隐患：`UpdateChecker` 的授权门禁读的是同一个 `state`，此前试用其实已到期的机器仍会继续享受自动更新
+- [x] [0.15.2-QA-A-000] 新增回归测试 `trialDaysRecomputeOverTime`（播种 4 天前的 `firstLaunchAt`，断言必须得到 3 天而不是固定的 7）。为此给测试 helper 加 `firstLaunchAt` 播种参数——必须在构造 manager 之前写入，否则 `init` 里的 `markFirstLaunchIfNeeded()` 会把它写成"此刻"。`LicenseManager` 新增 `stateRefreshInterval` 注入点，测试传 0 不启动定时器（@MainActor 类无法在 nonisolated deinit 里回收 Timer，见该处注释）
+
+### sub/main: 额度条节奏指示点跳变
+
+- [x] [0.15.2-BUG-B-000] `QuotaRow` 里的 `quota.idealRemainingFraction()` 取的是渲染那一刻的 `Date()`，而该视图只在快照变化（默认 5 分钟一轮）时重建 → 指示点静止 5 分钟再一次性跳过对应距离，就是用户说的"每到一个大的节点重新大幅度位移"。改用 `TimelineView(.periodic(by: 1))` 按当下时间每秒重算；1 秒对 5 小时窗口只有约 0.0056% 的位移（200pt 宽条上约 0.01pt），肉眼即平滑。TimelineView 只在视图真正显示时驱动，菜单关闭即停，无后台开销
+- [x] [0.15.2-QA-B-000] 新增 `PaceMarkerContinuityTests`：断言每秒采样的位移是亚像素级、且整段区间单调下降至 0。锁定的是"函数本身连续"这条性质——bug 一直在渲染侧的采样频率，不在算法

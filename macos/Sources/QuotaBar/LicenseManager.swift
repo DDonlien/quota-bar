@@ -23,13 +23,16 @@ final class LicenseManager: ObservableObject {
     private let preferences: PreferencesStore
     /// 两次复验之间的最小间隔。一次性买断产品的状态几乎不变，没必要频繁打扰服务端。
     private let revalidateInterval: TimeInterval
+    /// 重算试用剩余天数的定时器，见 `startStateRefreshTimer()`。
+    private var stateRefreshTimer: Timer?
 
     init(
         activateURL: URL = URL(string: "https://quotabar.ddonlien.com/api/activate")!,
         validateURL: URL = URL(string: "https://quotabar.ddonlien.com/api/validate")!,
         session: URLSession? = nil,
         preferences: PreferencesStore = .shared,
-        revalidateInterval: TimeInterval = 24 * 60 * 60
+        revalidateInterval: TimeInterval = 24 * 60 * 60,
+        stateRefreshInterval: TimeInterval = 10 * 60
     ) {
         self.activateURL = activateURL
         self.validateURL = validateURL
@@ -43,9 +46,40 @@ final class LicenseManager: ObservableObject {
         self.preferences = preferences
         self.revalidateInterval = revalidateInterval
         refreshState()
+        startStateRefreshTimer(interval: stateRefreshInterval)
+    }
+
+    // 刻意没有写 `deinit { stateRefreshTimer?.invalidate() }`：本类是 @MainActor，
+    // 而 deinit 是 nonisolated，Swift 6 不允许从那里访问非 Sendable 的 `Timer`。
+    // 生产上 `LicenseManager.shared` 是单例、进程存活期间不会析构，所以没有实际
+    // 泄漏；测试里通过 `stateRefreshInterval: 0` 直接不启动定时器（见下方 guard）。
+
+    /// 定期重算试用状态。
+    ///
+    /// **这是一个真实 bug 的修复，不是防御性代码。** `state` 原本只在 `init` 里算一次，
+    /// 而 Quota Bar 是常驻菜单栏的应用——用户实测连续运行了 4 天没重启，界面上的
+    /// 「试用中 · 剩余 7 天」就一直停在启动那一刻算出的值，永远不会变成 3 天。
+    /// `UpdateChecker` 的授权门禁读的也是同一个 `state`，所以试用其实已经到期的
+    /// 机器还会继续享受自动更新。
+    ///
+    /// 10 分钟一次：这只是纯本地的日期算术（不发任何请求），开销可忽略；而剩余天数
+    /// 是按天取整的，10 分钟的粒度足够让跨越零点的那一刻及时反映出来。
+    private func startStateRefreshTimer(interval: TimeInterval) {
+        guard interval > 0 else { return }
+        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.refreshState() }
+        }
+        // `.common` 模式：菜单打开、窗口拖动这类 tracking run loop 期间也要继续走，
+        // 否则用户正盯着 Preferences 看的时候恰好不刷新。
+        RunLoop.main.add(timer, forMode: .common)
+        stateRefreshTimer = timer
     }
 
     /// 重新根据本地数据计算状态。首次调用时顺带把试用起点写进偏好设置。
+    ///
+    /// 除了定时器之外，展示授权状态的界面（`ActivationSettingsView` /
+    /// `AboutSettingsView`）在 `onAppear` 里也会主动调一次——用户点开设置的那一刻
+    /// 看到的必须是当下的真实剩余天数，不能等定时器下一次触发。
     func refreshState() {
         let firstLaunch = preferences.markFirstLaunchIfNeeded()
         state = LicenseEvaluator.state(

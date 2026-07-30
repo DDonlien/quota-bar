@@ -1095,11 +1095,23 @@ private struct QuotaRow: View {
                     .frame(width: MenuDashboardStyle.percentWidth, alignment: .trailing)
             }
 
-            ProgressPill(
-                value: quota.remainingFraction,
-                tint: Self.healthColor(for: quota.remainingFraction),
-                paceMarkerFraction: quota.idealRemainingFraction()
-            )
+            // 节奏指示点跟着真实时间连续左移。
+            //
+            // 之前直接写 `quota.idealRemainingFraction()`：它取的是**渲染那一刻**的
+            // `Date()`，而这个视图只在快照变化（默认 5 分钟一轮刷新）时才重建，所以
+            // 指示点会静止 5 分钟、然后一次性跳过这 5 分钟对应的距离——用户看到的是
+            // "每到一个节点大幅位移"而不是自然流逝。
+            //
+            // `TimelineView(.periodic(by: 1))` 让它每秒按当下时间重算：1 秒对 5 小时
+            // 窗口只有 0.006% 的位移（约 0.01pt），肉眼就是平滑移动。它只在视图真正
+            // 显示时才驱动，菜单关掉就停，不会有后台开销。
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                ProgressPill(
+                    value: quota.remainingFraction,
+                    tint: Self.healthColor(for: quota.remainingFraction),
+                    paceMarkerFraction: quota.idealRemainingFraction(relativeTo: context.date)
+                )
+            }
         }
         .padding(.top, MenuDashboardStyle.quotaRowTop)
     }

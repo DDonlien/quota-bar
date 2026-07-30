@@ -22,6 +22,9 @@ struct ActivationSettingsView: View {
                 }
             }
         }
+        // 打开这一页的瞬间就要显示当下真实的剩余天数，不能等定时器下一次触发
+        // （见 `LicenseManager.startStateRefreshTimer`）。
+        .onAppear { license.refreshState() }
     }
 
     // MARK: 当前状态

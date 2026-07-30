@@ -234,6 +234,24 @@ struct LicenseManagerTests {
         #expect(!called)
     }
 
+    /// 2026-07-30 回归：`state` 原本只在 `init` 里算一次，而 Quota Bar 常驻菜单栏，
+    /// 用户实测连续跑了 4 天没重启，界面上一直显示启动那一刻算出的「剩余 7 天」。
+    /// 这里直接验证同一个已持久化的 `firstLaunchAt` 在时间推移后必须给出不同的剩余
+    /// 天数——`refreshState()` 是纯本地重算，只要它被调用就该反映当下。
+    @Test("试用剩余天数随时间推移重新计算，不会停在启动那一刻的值")
+    func trialDaysRecomputeOverTime() async {
+        // 模拟"4 天前第一次启动"，等价于用户那台连续运行 4 天没重启的机器。
+        let (manager, _) = Self.makeManager(firstLaunchAt: Date().addingTimeInterval(-4 * 86_400))
+
+        manager.refreshState()
+
+        guard case .trial(let days) = manager.state else {
+            Issue.record("expected trial, got \(manager.state)")
+            return
+        }
+        #expect(days == 3, "首次启动 4 天后应剩 3 天，而不是固定的 7 天")
+    }
+
     @Test("移除激活后回到试用期判定")
     func removeActivation() async {
         LicenseMockURLProtocol.handler = { _ in
@@ -263,10 +281,16 @@ struct LicenseManagerTests {
     }
 
     /// 每个用例一套独立的临时 `preferences.json`，绝不碰真实用户状态。
-    private static func makeManager(license: StoredLicense? = nil) -> (LicenseManager, PreferencesStore) {
+    private static func makeManager(
+        license: StoredLicense? = nil,
+        firstLaunchAt: Date? = nil
+    ) -> (LicenseManager, PreferencesStore) {
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("quota-bar-license-tests-\(UUID().uuidString)", isDirectory: true)
         let prefs = PreferencesStore(fileURL: dir.appendingPathComponent("preferences.json"))
+        // 必须在构造 manager 之前播种：manager 的 init 会调 refreshState()，
+        // 那里的 markFirstLaunchIfNeeded() 会把还是 nil 的起点写成"此刻"。
+        if let firstLaunchAt { prefs.markFirstLaunchIfNeeded(now: firstLaunchAt) }
         if let license { prefs.setLicense(license) }
 
         let config = URLSessionConfiguration.ephemeral
@@ -275,7 +299,10 @@ struct LicenseManagerTests {
             activateURL: activateURL,
             validateURL: validateURL,
             session: URLSession(configuration: config),
-            preferences: prefs
+            preferences: prefs,
+            // 0 = 不启动定时器：测试不需要它，而且 @MainActor 类没法在 deinit 里
+            // 收掉 Timer（见 LicenseManager 里的说明），留着会跨用例持续触发。
+            stateRefreshInterval: 0
         )
         return (manager, prefs)
     }
