@@ -114,3 +114,52 @@ struct PaceMarkerContinuityTests {
         #expect(previous == 0, "窗口走完时理想剩余应为 0")
     }
 }
+
+/// 2026-07-30：重置倒计时改为按当下时间现算（`QuotaRow.refreshText(at:)`），
+/// 不再沿用抓取那一刻算好的字符串。
+///
+/// 这里锁的是 `QuotaResetText` 这一侧的两条性质：现算结果确实随时间递减，以及
+/// `resetsAt` 缺失时必须保留原文——有些来源的 `refreshDescription` 根本不是倒计时
+/// 而是描述性文案（MiniMax 的「Coding Plan 主套餐」），那些窗口不带 `resetsAt`，
+/// 一旦被误当成倒计时重算就会把文案冲掉。
+@Suite("重置倒计时随时间递减")
+struct ResetCountdownTests {
+    @Test("同一个 resetsAt，越晚看剩余越少")
+    func countsDown() {
+        let reset = Date().addingTimeInterval(2 * 3600 + 10 * 60)
+        let now = Date()
+        #expect(QuotaResetText.description(for: reset, relativeTo: now) == "2h10m")
+        #expect(QuotaResetText.description(for: reset, relativeTo: now.addingTimeInterval(60)) == "2h9m")
+        #expect(QuotaResetText.description(for: reset, relativeTo: now.addingTimeInterval(3600)) == "1h10m")
+    }
+
+    /// 一小时以内精确到秒——这正是"按秒重算"这个粒度有意义的原因。
+    @Test("一小时以内逐秒变化")
+    func ticksBySecondUnderAnHour() {
+        let reset = Date().addingTimeInterval(90)
+        let now = Date()
+        #expect(QuotaResetText.description(for: reset, relativeTo: now) == "1m30s")
+        #expect(QuotaResetText.description(for: reset, relativeTo: now.addingTimeInterval(1)) == "1m29s")
+    }
+
+    @Test("已过重置时刻显示已重置")
+    func showsResetWhenPast() {
+        let now = Date()
+        #expect(QuotaResetText.description(for: now.addingTimeInterval(-1), relativeTo: now) == "已重置")
+    }
+
+    /// 回归保护：没有 `resetsAt` 的窗口必须原样保留 `refreshDescription`。
+    @Test("缺少 resetsAt 的窗口保留原始描述文案")
+    func keepsOriginalTextWithoutResetsAt() {
+        let w = QuotaWindow(
+            title: "Coding Plan",
+            remainingFraction: 0.8,
+            refreshDescription: "Coding Plan 主套餐",
+            periodSeconds: 30 * 86400
+        )
+        #expect(w.resetsAt == nil)
+        #expect(w.refreshDescription == "Coding Plan 主套餐")
+        // resetsAt 为 nil 时也算不出理想剩余比例，节奏指示点同样不该出现
+        #expect(w.idealRemainingFraction() == nil)
+    }
+}

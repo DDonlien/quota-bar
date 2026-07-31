@@ -1069,43 +1069,56 @@ private struct QuotaRow: View {
         quota.displayTitle
     }
 
+    /// 重置倒计时文案：按当下时间从 `resetsAt` 现算，而不是用抓取那一刻算好的字符串。
+    ///
+    /// 校准是自然发生的——每轮刷新会带回新的 `resetsAt`，之后的递减就从新基准继续，
+    /// 所以不会因为长时间不刷新而跟服务端越飘越远。
+    ///
+    /// `resetsAt` 为 nil 时（部分来源确实拿不到重置时间，例如 Claude 的 5 小时窗口）
+    /// 退回抓取时存下的原文——那种情况本来就是「重置时间未知」这类静态文案，
+    /// 现算也算不出东西。
+    private func refreshText(at now: Date) -> String {
+        guard let resetsAt = quota.resetsAt else { return quota.refreshDescription }
+        return QuotaResetText.description(for: resetsAt, relativeTo: now)
+    }
+
     var body: some View {
-        VStack(spacing: MenuDashboardStyle.quotaTitleToProgress) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(displayTitle)
-                    .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: MenuDashboardStyle.quotaTitleWeight))
-                    .foregroundStyle(Palette.text)
-                    .lineLimit(1)
-                    .frame(width: MenuDashboardStyle.quotaTitleWidth, alignment: .leading)
+        // 整行共用一个每秒时钟：倒计时文字和节奏指示点表达的是同一件事（离重置还有
+        // 多久），必须同源，否则会出现"文字已经跳到下一分钟、指示点还停在上一秒"
+        // 这种自相矛盾的画面。
+        //
+        // 之前这两处都只在快照变化（默认 5 分钟一轮）时才重算，于是静止 5 分钟、
+        // 再一次性跳过这 5 分钟——用户说的"每到一个大的节点重新大幅度位移"。
+        // `QuotaResetText` 在一小时以内会精确到秒，所以按秒重算是有意义的粒度；
+        // TimelineView 只在视图真正显示时驱动，菜单关掉即停，没有后台开销。
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            VStack(spacing: MenuDashboardStyle.quotaTitleToProgress) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(displayTitle)
+                        .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: MenuDashboardStyle.quotaTitleWeight))
+                        .foregroundStyle(Palette.text)
+                        .lineLimit(1)
+                        .frame(width: MenuDashboardStyle.quotaTitleWidth, alignment: .leading)
 
-                Spacer(minLength: 6)
+                    Spacer(minLength: 6)
 
-                Text(quota.refreshDescription)
-                    .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
-                    .foregroundStyle(Palette.secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.86)
-                    .frame(width: MenuDashboardStyle.quotaRefreshWidth, alignment: .trailing)
+                    Text(refreshText(at: context.date))
+                        .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
+                        .foregroundStyle(Palette.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.86)
+                        // 等宽数字：秒级跳动时数字宽度不变，文案不会左右抖。
+                        .monospacedDigit()
+                        .frame(width: MenuDashboardStyle.quotaRefreshWidth, alignment: .trailing)
 
-                Text(percentText)
-                    .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
-                    .foregroundStyle(Palette.secondary)
-                    .lineLimit(1)
-                    .monospacedDigit()
-                    .frame(width: MenuDashboardStyle.percentWidth, alignment: .trailing)
-            }
+                    Text(percentText)
+                        .font(.system(size: MenuDashboardStyle.quotaFontSize, weight: .regular))
+                        .foregroundStyle(Palette.secondary)
+                        .lineLimit(1)
+                        .monospacedDigit()
+                        .frame(width: MenuDashboardStyle.percentWidth, alignment: .trailing)
+                }
 
-            // 节奏指示点跟着真实时间连续左移。
-            //
-            // 之前直接写 `quota.idealRemainingFraction()`：它取的是**渲染那一刻**的
-            // `Date()`，而这个视图只在快照变化（默认 5 分钟一轮刷新）时才重建，所以
-            // 指示点会静止 5 分钟、然后一次性跳过这 5 分钟对应的距离——用户看到的是
-            // "每到一个节点大幅位移"而不是自然流逝。
-            //
-            // `TimelineView(.periodic(by: 1))` 让它每秒按当下时间重算：1 秒对 5 小时
-            // 窗口只有 0.006% 的位移（约 0.01pt），肉眼就是平滑移动。它只在视图真正
-            // 显示时才驱动，菜单关掉就停，不会有后台开销。
-            TimelineView(.periodic(from: .now, by: 1)) { context in
                 ProgressPill(
                     value: quota.remainingFraction,
                     tint: Self.healthColor(for: quota.remainingFraction),

@@ -1238,3 +1238,9 @@
 
 - [x] [0.15.2-BUG-B-000] `QuotaRow` 里的 `quota.idealRemainingFraction()` 取的是渲染那一刻的 `Date()`，而该视图只在快照变化（默认 5 分钟一轮）时重建 → 指示点静止 5 分钟再一次性跳过对应距离，就是用户说的"每到一个大的节点重新大幅度位移"。改用 `TimelineView(.periodic(by: 1))` 按当下时间每秒重算；1 秒对 5 小时窗口只有约 0.0056% 的位移（200pt 宽条上约 0.01pt），肉眼即平滑。TimelineView 只在视图真正显示时驱动，菜单关闭即停，无后台开销
 - [x] [0.15.2-QA-B-000] 新增 `PaceMarkerContinuityTests`：断言每秒采样的位移是亚像素级、且整段区间单调下降至 0。锁定的是"函数本身连续"这条性质——bug 一直在渲染侧的采样频率，不在算法
+
+### sub/main: 重置倒计时同样按秒现算
+
+- [x] [0.15.2-BUG-C-000] `QuotaRow` 显示的重置时间原本直接用 `quota.refreshDescription`——那是**抓取那一刻**由 parser 算好的静态字符串，跟节奏指示点是同一个毛病（5 分钟不动、然后跳一大步）。改为在同一个 `TimelineView` 里用 `QuotaResetText.description(for:relativeTo:)` 按当下时间现算。校准自然发生：每轮刷新带回新的 `resetsAt`，之后的递减从新基准继续，不会跟服务端越飘越远
+- [x] [0.15.2-BUG-C-001] 倒计时文字与节奏指示点共用同一个每秒时钟（TimelineView 提到整行）——两者表达的是同一件事（离重置还有多久），分开驱动会出现"文字已跳到下一分钟、指示点还停在上一秒"的自相矛盾画面。文字加 `.monospacedDigit()`，秒级跳动时不左右抖
+- [x] [0.15.2-QA-C-000] `ResetCountdownTests`：现算随时间递减、一小时以内逐秒变化、过期显示「已重置」；以及一条回归保护——`resetsAt` 为 nil 的窗口必须保留原始文案。后者是真实边界：MiniMax 的「Coding Plan 主套餐」这类 `refreshDescription` 根本不是倒计时，那些窗口不带 `resetsAt`，误当倒计时重算会把文案冲掉（已核对 `DashboardEndpoints` 中这两处确实未传 `resetsAt`，走 fallback 保留原文）
