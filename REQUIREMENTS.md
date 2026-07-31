@@ -1206,7 +1206,9 @@
 
 ### sub/main: 诊断日志 provider 配色
 
-- [x] [0.15.1-FE-A-000] `DiagnosticsSettingsView` 单行日志改为三段配色（`Text` 拼接）：轮次分隔头维持 accentColor 蓝、provider 名用紫色、时间戳压成 secondary。紫色刻意避开 accentColor——系统强调色大多数人就是蓝色，同色会让"轮次"和"provider"两类锚点在扫读时糊成一片
+- [x] [0.15.1-FE-A-000] ~~单行三段配色（provider 名染紫）~~ → **按用户澄清改版**，见 0.15.2-FE-A-000
+- [x] [0.15.2-FE-A-000] `DiagnosticsSettingsView` 改为在 provider 切换处**插入一条紫色分隔行**（`▸ Kimi`），其下才是该 provider 的检查明细；轮次头维持 accentColor 蓝。第一版把每行里的 provider 名单独染成紫色，用户指出那不是想要的效果——需要的是像轮次头那样的一条独立锚点行，而不是满屏彩色词。紫色仍刻意避开 accentColor（系统强调色对大多数人就是蓝色，同色会让"新一轮"和"新 provider"两类锚点糊成一片）
+- [x] [0.15.2-FE-A-001] 分隔行**只在展示层合成，不写进日志文件**：「复制全部」导出的仍是干净的原始数据（不掺渲染装饰行），历史日志也直接享受分组、无需迁移。合成行会让下标与原始行号错开，改用独立自增计数器保证 `ForEach` 的 id 唯一稳定；跨轮次时重置 provider 追踪，否则同名 provider 在新一轮的首个分隔行会丢失
 
 ### site/main: 购买与下载分成两个出口
 
