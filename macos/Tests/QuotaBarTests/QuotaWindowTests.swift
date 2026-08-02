@@ -134,10 +134,15 @@ struct ResetCountdownTests {
     }
 
     /// 一小时以内精确到秒——这正是"按秒重算"这个粒度有意义的原因。
+    ///
+    /// 2026-07-31 修过一次 flaky：`reset`/`now` 原来各自独立调用 `Date()`，两次调用
+    /// 之间哪怕只隔零点几毫秒，`Int(seconds)` 截断就可能把 90.0 算成 89.999…→ 89，
+    /// 断言在慢机器/负载高时偶发失败。改成从同一个 `now` 派生 `reset`，两者的时间差
+    /// 严格等于 90 秒，不再依赖两次系统调用之间的真实间隔。
     @Test("一小时以内逐秒变化")
     func ticksBySecondUnderAnHour() {
-        let reset = Date().addingTimeInterval(90)
         let now = Date()
+        let reset = now.addingTimeInterval(90)
         #expect(QuotaResetText.description(for: reset, relativeTo: now) == "1m30s")
         #expect(QuotaResetText.description(for: reset, relativeTo: now.addingTimeInterval(1)) == "1m29s")
     }

@@ -250,6 +250,12 @@ final class UpdateChecker: NSObject, ObservableObject {
     private var downloadCandidate: UpdateCandidate?
     /// 本轮下载是否已经尝试过 Vercel 兜底——避免死循环重复 fallback。
     private var downloadTriedFallback = false
+    /// 当前授权状态是否允许自动更新。构造参数注入点——生产路径用默认值读
+    /// `LicenseManager.shared`；测试必须显式传入一个确定值，不能依赖这台机器
+    /// 当下真实的试用/激活状态（否则测试结果会随开发机的试用期是否已过而漂移，
+    /// 2026-07-31 就是这样发现的：`check()` 收紧门禁前，所有 `userInitiated: true`
+    /// 的测试恰好全部绕过了门禁，才没暴露这个耦合）。
+    private let licenseStateProvider: () -> LicenseState
 
     var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
@@ -265,7 +271,8 @@ final class UpdateChecker: NSObject, ObservableObject {
         fallbackDownloadURL: URL = URL(string: "https://quotabar.ddonlien.com/api/download-latest")!,
         session: URLSession? = nil,
         preferences: PreferencesStore = .shared,
-        checkLogStore: ProviderCheckLogStore = .shared
+        checkLogStore: ProviderCheckLogStore = .shared,
+        licenseStateProvider: @escaping () -> LicenseState = { LicenseManager.shared.state }
     ) {
         self.primaryReleasesURL = primaryReleasesURL
         self.legacyReleasesURL = legacyReleasesURL
@@ -279,6 +286,7 @@ final class UpdateChecker: NSObject, ObservableObject {
         }
         self.preferences = preferences
         self.checkLogStore = checkLogStore
+        self.licenseStateProvider = licenseStateProvider
         super.init()
     }
 
@@ -286,22 +294,32 @@ final class UpdateChecker: NSObject, ObservableObject {
 
     /// 触发一次检查。`userInitiated == false`（关于页自动触发）时 5 分钟内不重复请求。
     ///
-    /// v0.15.0 授权门禁：试用结束/授权失效时**不再自动检查**（省掉一次没有后续动作的
-    /// 网络请求），但用户主动点「检查更新」仍然照常执行——只锁"自动"和"App 内一键
-    /// 安装"这两件便利，不锁"知道有没有新版本"这个知情权。安装入口的降级在
-    /// `downloadAndInstall()` 里做。
+    /// v0.15.0 授权门禁：试用结束/授权失效时**检查更新本身就不可用**——这是当前
+    /// 唯一的限制，覆盖自动触发和用户手动点「检查更新」两条路径，不区分对待。
+    ///
+    /// 2026-07-31 修正：上一版只挡了自动触发（`!userInitiated` 那个条件），手动点
+    /// 按钮会绕过门禁照常查询、显示真实的新版本信息——用户反馈这不是想要的行为：
+    /// "唯一的限制就是不能检查更新"应该是一条不分手动/自动都成立的硬限制，不是
+    /// "自动查不到、手动还能查、只是装不了"这种分层。安装入口的降级仍在
+    /// `downloadAndInstall()` 里做，作为这条限制之外的第二道防线（覆盖"检查时还在
+    /// 试用期、点安装时试用刚好过期"这个时间差场景）。
     func check(userInitiated: Bool = false) {
         if case .checking = state { return }
         if case .downloading = state { return }
         if case .installing = state { return }
-        if !userInitiated, !licenseAllowsAutomaticUpdates {
+        if !licenseAllowsAutomaticUpdates {
             UpdateCheckLog.record(
-                step: "自动检查",
+                step: userInitiated ? "手动检查" : "自动检查",
                 method: "授权门禁",
                 outcome: "跳过",
-                detail: "试用已结束且未激活，自动更新停用（手动检查不受影响）",
+                detail: "试用已结束且未激活，检查更新已停用",
                 store: checkLogStore
             )
+            // 手动点击要给反馈——用户主动做了一件事，不能悄无声息什么都不发生；
+            // 自动触发（打开关于页、后台轮询）保持静默，不必每次都跳出一条错误。
+            if userInitiated {
+                state = .error(message: "检查更新需要激活。可在「偏好设置 → 激活」输入许可证，或前往官网手动下载新版本。")
+            }
             return
         }
         if !userInitiated,
@@ -433,10 +451,6 @@ final class UpdateChecker: NSObject, ObservableObject {
     }
 
     // MARK: 授权门禁（v0.15.0）
-
-    /// 当前授权状态是否允许自动更新。注入点存在的唯一目的是让测试能构造门禁场景，
-    /// 生产路径始终读 `LicenseManager.shared`。
-    var licenseStateProvider: () -> LicenseState = { LicenseManager.shared.state }
 
     private var licenseAllowsAutomaticUpdates: Bool {
         licenseStateProvider().allowsAutomaticUpdates

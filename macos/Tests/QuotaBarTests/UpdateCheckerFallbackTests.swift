@@ -33,7 +33,11 @@ struct UpdateCheckerFallbackTests {
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
             preferences: Self.ephemeralPreferences(),
-            checkLogStore: Self.ephemeralCheckLogStore()
+            checkLogStore: Self.ephemeralCheckLogStore(),
+            // 门禁 2026-07-31 收紧后覆盖了 userInitiated: true 的路径——不注入的话
+            // 这些测试会读 LicenseManager.shared.state，也就是跑测试这台机器当下
+            // 真实的试用/激活状态，结果随开发机的试用期是否已过而漂移。
+            licenseStateProvider: { .trial(daysRemaining: 7) }
         )
         checker.check(userInitiated: true)
         let state = await Self.waitUntilSettled(checker)
@@ -63,7 +67,11 @@ struct UpdateCheckerFallbackTests {
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
             preferences: Self.ephemeralPreferences(),
-            checkLogStore: Self.ephemeralCheckLogStore()
+            checkLogStore: Self.ephemeralCheckLogStore(),
+            // 门禁 2026-07-31 收紧后覆盖了 userInitiated: true 的路径——不注入的话
+            // 这些测试会读 LicenseManager.shared.state，也就是跑测试这台机器当下
+            // 真实的试用/激活状态，结果随开发机的试用期是否已过而漂移。
+            licenseStateProvider: { .trial(daysRemaining: 7) }
         )
         checker.check(userInitiated: true)
         let state = await Self.waitUntilSettled(checker)
@@ -87,7 +95,11 @@ struct UpdateCheckerFallbackTests {
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
             preferences: Self.ephemeralPreferences(),
-            checkLogStore: Self.ephemeralCheckLogStore()
+            checkLogStore: Self.ephemeralCheckLogStore(),
+            // 门禁 2026-07-31 收紧后覆盖了 userInitiated: true 的路径——不注入的话
+            // 这些测试会读 LicenseManager.shared.state，也就是跑测试这台机器当下
+            // 真实的试用/激活状态，结果随开发机的试用期是否已过而漂移。
+            licenseStateProvider: { .trial(daysRemaining: 7) }
         )
         checker.check(userInitiated: true)
         let state = await Self.waitUntilSettled(checker)
@@ -124,7 +136,11 @@ struct UpdateCheckerFallbackTests {
             fallbackDownloadURL: Self.fallbackDownloadURL,
             session: Self.mockSession(),
             preferences: Self.ephemeralPreferences(),
-            checkLogStore: Self.ephemeralCheckLogStore()
+            checkLogStore: Self.ephemeralCheckLogStore(),
+            // 门禁 2026-07-31 收紧后覆盖了 userInitiated: true 的路径——不注入的话
+            // 这些测试会读 LicenseManager.shared.state，也就是跑测试这台机器当下
+            // 真实的试用/激活状态，结果随开发机的试用期是否已过而漂移。
+            licenseStateProvider: { .trial(daysRemaining: 7) }
         )
         checker.check(userInitiated: true)
         let state = await Self.waitUntilSettled(checker)
@@ -134,6 +150,68 @@ struct UpdateCheckerFallbackTests {
             return
         }
         #expect(message.contains("频繁"))
+    }
+
+    // MARK: - 授权门禁（2026-07-31）
+    //
+    // 用户反馈：试用过期后唯一该有的限制是"不能检查更新"，但当时手动点「检查更新」
+    // 仍会绕过门禁、照常查到并展示真实的新版本——门禁只挡了 `userInitiated == false`
+    // 那一条路径。下面两个测试锁住修正后的行为：手动/自动都被挡，且都不发起真实请求
+    // （`requestMade` 断言的是网络层——如果门禁形同虚设，mock handler 会被调用到）。
+
+    @Test("manual check while unlicensed: blocked with a visible, actionable message, no request made")
+    func manualCheckBlockedWhenUnlicensed() async throws {
+        var requestMade = false
+        UpdateFallbackMockURLProtocol.responseHandler = { _ in
+            requestMade = true
+            return (Self.http(URLRequest(url: Self.primaryURL), status: 200), Data("[]".utf8))
+        }
+
+        let checker = UpdateChecker(
+            primaryReleasesURL: Self.primaryURL,
+            legacyReleasesURL: Self.fallbackURL,
+            fallbackDownloadURL: Self.fallbackDownloadURL,
+            session: Self.mockSession(),
+            preferences: Self.ephemeralPreferences(),
+            checkLogStore: Self.ephemeralCheckLogStore(),
+            licenseStateProvider: { .trialExpired }
+        )
+        checker.check(userInitiated: true)
+        // 门禁在 check() 内同步返回，不经过网络往返，不需要等待。
+        try await Task.sleep(nanoseconds: 20_000_000)
+
+        #expect(!requestMade, "试用过期时手动检查不该真的发请求")
+        guard case .error(let message) = checker.state else {
+            Issue.record("expected error, got \(checker.state)")
+            return
+        }
+        #expect(message.contains("激活"), "必须明确告诉用户为什么、怎么恢复，不能是空泛的失败提示")
+    }
+
+    @Test("automatic check while unlicensed: silently skipped, existing state untouched")
+    func automaticCheckSkippedWhenUnlicensedStaysQuiet() async throws {
+        var requestMade = false
+        UpdateFallbackMockURLProtocol.responseHandler = { _ in
+            requestMade = true
+            return (Self.http(URLRequest(url: Self.primaryURL), status: 200), Data("[]".utf8))
+        }
+
+        let checker = UpdateChecker(
+            primaryReleasesURL: Self.primaryURL,
+            legacyReleasesURL: Self.fallbackURL,
+            fallbackDownloadURL: Self.fallbackDownloadURL,
+            session: Self.mockSession(),
+            preferences: Self.ephemeralPreferences(),
+            checkLogStore: Self.ephemeralCheckLogStore(),
+            licenseStateProvider: { .trialExpired }
+        )
+        checker.check(userInitiated: false)
+        try await Task.sleep(nanoseconds: 20_000_000)
+
+        #expect(!requestMade)
+        // 后台/自动触发（打开关于页、定时轮询）不该每次都弹一条错误——保持 .idle，
+        // 跟"什么都没发生"一致，不打扰用户。
+        #expect(checker.state == .idle, "自动触发被门禁挡住时不该改变可见状态")
     }
 
     // MARK: - helpers

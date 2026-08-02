@@ -1246,3 +1246,16 @@
 - [x] [0.15.2-BUG-C-000] `QuotaRow` 显示的重置时间原本直接用 `quota.refreshDescription`——那是**抓取那一刻**由 parser 算好的静态字符串，跟节奏指示点是同一个毛病（5 分钟不动、然后跳一大步）。改为在同一个 `TimelineView` 里用 `QuotaResetText.description(for:relativeTo:)` 按当下时间现算。校准自然发生：每轮刷新带回新的 `resetsAt`，之后的递减从新基准继续，不会跟服务端越飘越远
 - [x] [0.15.2-BUG-C-001] 倒计时文字与节奏指示点共用同一个每秒时钟（TimelineView 提到整行）——两者表达的是同一件事（离重置还有多久），分开驱动会出现"文字已跳到下一分钟、指示点还停在上一秒"的自相矛盾画面。文字加 `.monospacedDigit()`，秒级跳动时不左右抖
 - [x] [0.15.2-QA-C-000] `ResetCountdownTests`：现算随时间递减、一小时以内逐秒变化、过期显示「已重置」；以及一条回归保护——`resetsAt` 为 nil 的窗口必须保留原始文案。后者是真实边界：MiniMax 的「Coding Plan 主套餐」这类 `refreshDescription` 根本不是倒计时，那些窗口不带 `resetsAt`，误当倒计时重算会把文案冲掉（已核对 `DashboardEndpoints` 中这两处确实未传 `resetsAt`，走 fallback 保留原文）
+
+## Phase - v0.15.3 - 检查更新门禁补全（手动点击此前会绕过）+ 测试隔离 + flaky 修复
+
+> **背景**：用户看着实机截图指出——试用过期后应该"唯一的限制就是不能检查更新"，但手动
+> 点「检查更新」按钮仍然绕过门禁、正常查到并展示了新版本（截图里的 v0.11.0-a7d27d6）。
+
+### sub/main: check() 门禁覆盖手动路径
+
+- [x] [0.15.3-BUG-A-000] `UpdateChecker.check()` 原本门禁条件是 `!userInitiated && !licenseAllowsAutomaticUpdates`——只挡自动/后台触发，手动点击（`userInitiated: true`）完全绕过。改成门禁对两条路径统一生效：`!licenseAllowsAutomaticUpdates` 就挡，不再看是谁触发的
+- [x] [0.15.3-BUG-A-001] 挡住后的反馈按触发方式分层：手动点击要给可见反馈（`state = .error("检查更新需要激活…")`），不能让用户点了按钮却像什么都没发生；自动/后台触发保持静默（不改 `state`），不必每次打开关于页或每轮后台轮询都跳一条错误
+- [x] [0.15.3-DATA-A-000] `licenseStateProvider` 从"构造后可改的公开 var（默认闭包读 `LicenseManager.shared`）"改成正规的 init 参数注入点，对齐 `preferences`/`checkLogStore` 已有的 DI 模式
+- [x] [0.15.3-QA-A-000] 新增 `manualCheckBlockedWhenUnlicensed` / `automaticCheckSkippedWhenUnlicensedStaysQuiet` 两个测试，断言门禁生效时**不发起真实请求**且两种触发方式的可见状态符合各自预期。修复过程中顺带发现：收紧门禁前，`UpdateCheckerFallbackTests.swift` 里全部 4 个用 `userInitiated: true` 构造 `UpdateChecker` 的既有测试都没有注入 `licenseStateProvider`，靠默认值悄悄读了 `LicenseManager.shared.state`——也就是跑测试这台机器当下真实的试用状态；这次改动让门禁真正对 `userInitiated: true` 生效后，这 4 个测试因为开发机试用已过期而集体变红，暴露了这个此前一直存在但被"手动检查不受门禁约束"这个旧设计意外掩盖的测试隔离漏洞。已给全部 4 处补上确定的 `.trial(daysRemaining: 7)` 注入
+- [x] [0.15.3-QA-A-001] 顺带修一个跑全套件时撞见的无关 flaky：`ResetCountdownTests.ticksBySecondUnderAnHour` 里 `reset`/`now` 各自独立调用 `Date()`，两次调用间的真实间隔（哪怕零点几毫秒）会让 `Int(seconds)` 截断出 89 而不是预期的 90，慢机器/高负载下偶发。改成从同一个 `now` 派生 `reset`，时间差恒为 90 秒
