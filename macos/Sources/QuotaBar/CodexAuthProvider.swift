@@ -51,10 +51,16 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
         // 真实 usage 请求失败后的状态辅助，以及请求成功时的 future expiry 展示值。
         let subscriptionStatus = inspector.inspect()
         let authoritativeExpiresAt: Date? = {
-            if case .active(let expiresAt) = subscriptionStatus {
+            switch subscriptionStatus {
+            case .active(let expiresAt):
                 return expiresAt
+            case .expired(_, let expiredAt):
+                // wham/usage 成功证明额度仍可读取；仍保留本地 auth metadata
+                // 里的最后有效日，供 UI 展示，而不是把可用状态改成已过期。
+                return expiredAt
+            case .free, .unknown:
+                return nil
             }
-            return nil
         }()
 
         guard let creds = loadCredentials() else {
@@ -114,6 +120,8 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
             quotas: windows,
             monthlyPrice: await ProviderPricing.localizedMonthlyPrice(kind: .codex, tier: tier),
             subscriptionExpiresAt: authoritativeExpiresAt,
+            subscriptionExpiresAtSource: authoritativeExpiresAt == nil ? nil : .appCache,
+            subscriptionExpiresAtConfidence: authoritativeExpiresAt == nil ? nil : .medium,
             fetchedAt: fetchedAt
         )
     }

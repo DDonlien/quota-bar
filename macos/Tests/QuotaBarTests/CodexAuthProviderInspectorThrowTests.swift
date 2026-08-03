@@ -119,7 +119,8 @@ struct CodexAuthProviderInspectorThrowTests {
     @Test("inspector 过期但 wham/usage 成功时返回真实额度")
     func inspectorExpiredStillUsesWhamUsage() async throws {
         let now = Date()
-        let token = Self.makeExpiredJWT(planType: "plus", until: now.addingTimeInterval(-86400))
+        let expiredAt = now.addingTimeInterval(-86400)
+        let token = Self.makeExpiredJWT(planType: "plus", until: expiredAt)
         let path = "/tmp/quota-bar-test-auth-\(UUID().uuidString).json"
         try Self.writeAuthFile(at: path, content: Self.makeAuthJSON(idToken: token))
         defer { try? FileManager.default.removeItem(atPath: path) }
@@ -139,7 +140,9 @@ struct CodexAuthProviderInspectorThrowTests {
         #expect(snapshot.quotas.count == 2)
         #expect(snapshot.quotas[0].remainingFraction == 0.6)
         #expect(snapshot.quotas[1].remainingFraction == 0.4)
-        #expect(snapshot.subscriptionExpiresAt == nil)
+        #expect(snapshot.subscriptionExpiresAt.map { abs($0.timeIntervalSince(expiredAt)) < 1 } == true)
+        #expect(snapshot.subscriptionExpiresAtSource == .appCache)
+        #expect(snapshot.subscriptionExpiresAtConfidence == .medium)
     }
 
     @Test("inspector free 但 wham/usage 成功时仍以真实 usage 为准")

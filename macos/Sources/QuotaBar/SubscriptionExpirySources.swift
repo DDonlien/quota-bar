@@ -137,6 +137,14 @@ struct SubscriptionExpiryResolution: Sendable {
     let source: SubscriptionExpirySource
 }
 
+/// 订阅页可能只提供档位而不提供日期（例如通过 iOS 订阅的 Claude）。
+/// 这类结果仍然足以补全费用，因此不能再用「必须有日期」作为成功条件。
+struct SubscriptionMetadataResolution: Sendable {
+    let expiresAt: Date?
+    let subscriptionTier: String?
+    let source: SubscriptionExpirySource
+}
+
 // MARK: - Codex accounts/check 解析
 
 /// 解析 `https://chatgpt.com/backend-api/accounts/check/v4-2023-04-27` 响应：
@@ -278,31 +286,29 @@ final class SubscriptionExpiryResolver {
         self.timeout = timeout
     }
 
-    /// 尝试为 snapshot 补充订阅过期日。
-    ///
-    /// 返回 nil 表示找不到过期日；调用方应保留原 snapshot 和额度状态，不把日期失败
-    /// 映射成 quota 失败。
+    /// 兼容旧调用方：只返回成功解析出的日期。
     func resolve(for snapshot: ProviderSnapshot) async -> SubscriptionExpiryResolution? {
+        guard let result = await resolveMetadata(for: snapshot),
+              let expiresAt = result.expiresAt else {
+            return nil
+        }
+        return SubscriptionExpiryResolution(expiresAt: expiresAt, source: result.source)
+    }
+
+    /// 尝试为 snapshot 补充订阅元数据。
+    ///
+    /// 返回结果可以只有档位、没有日期；调用方应保留原 snapshot 和额度状态，
+    /// 不把日期解析失败映射成 quota 失败。
+    func resolveMetadata(for snapshot: ProviderSnapshot) async -> SubscriptionMetadataResolution? {
         // snapshot 已带日期就直接采用（无论来源标记是否齐全），
-        // 不再为一个已知日期跑 headless / 浏览器 Cookie（那是弹窗与超时的来源）。
+        // 不为一个已知日期跑 headless / 浏览器 Cookie。
         if let expiresAt = snapshot.subscriptionExpiresAt {
-            let sourceKind = snapshot.subscriptionExpiresAtSource ?? .api
-            let confidence = snapshot.subscriptionExpiresAtConfidence ?? .medium
-            let source = SubscriptionExpirySource(
-                id: "snapshot-\(sourceKind.rawValue)",
-                kind: sourceKind,
-                confidence: confidence,
-                dateMeaning: .lastValidDate,
-                pageURL: nil,
-                cookieDomains: [],
-                harvester: nil,
-                apiRequest: nil
-            )
+            let source = existingSnapshotSource(for: snapshot)
             await ProviderCheckLog.shared.record(
                 kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel,
                 outcome: .success, detail: "来源 \(source.id)：沿用额度层已带的日期，跳过独立过期日 resolver：\(expiresAt)"
             )
-            return SubscriptionExpiryResolution(expiresAt: expiresAt, source: source)
+            return SubscriptionMetadataResolution(expiresAt: expiresAt, subscriptionTier: nil, source: source)
         }
 
         let sources = SubscriptionExpirySources.sources(for: snapshot.kind)
@@ -319,7 +325,7 @@ final class SubscriptionExpiryResolver {
             case .api, .appCache, .cli:
                 if let expiresAt = snapshot.subscriptionExpiresAt {
                     await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .success, detail: "来源 \(source.id)：\(expiresAt)")
-                    return SubscriptionExpiryResolution(expiresAt: expiresAt, source: source)
+                    return SubscriptionMetadataResolution(expiresAt: expiresAt, subscriptionTier: nil, source: source)
                 }
             case .browserAPI:
                 // 可执行的 browserAPI source：用 App 自有 WebView 会话 Cookie 打 JSON API
@@ -340,7 +346,7 @@ final class SubscriptionExpiryResolver {
                     let lastValidDate = source.lastValidDate(from: rawDate)
                     QuotaBarDiagnostics.write("[\(source.id)] parsed rawDate=\(rawDate) meaning=\(source.dateMeaning.rawValue) lastValidDate=\(lastValidDate)")
                     await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .success, detail: "来源 \(source.id)：\(lastValidDate)")
-                    return SubscriptionExpiryResolution(expiresAt: lastValidDate, source: source)
+                    return SubscriptionMetadataResolution(expiresAt: lastValidDate, subscriptionTier: nil, source: source)
                 } catch {
                     QuotaBarDiagnostics.write("[\(source.id)] failed: \(error)")
                     await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .failure, detail: "来源 \(source.id)：\(error.localizedDescription)")
@@ -356,15 +362,24 @@ final class SubscriptionExpiryResolver {
                         url: url,
                         source: source
                     )
-                    guard let expiresAt = harvester.extract(from: html) else {
-                        QuotaBarDiagnostics.write("[\(source.id)] extract returned nil")
-                        await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .failure, detail: "来源 \(source.id)：页面里未提取出日期")
+                    let expiresAt = harvester.extract(from: html)
+                    let tier = harvester.extractSubscriptionTier(from: html)
+                    guard expiresAt != nil || tier != nil else {
+                        QuotaBarDiagnostics.write("[\(source.id)] extract returned no subscription metadata")
+                        await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .failure, detail: "来源 \(source.id)：页面里未提取出日期或档位")
                         continue
                     }
-                    let lastValidDate = source.lastValidDate(from: expiresAt)
-                    QuotaBarDiagnostics.write("[\(source.id)] parsed rawDate=\(expiresAt) meaning=\(source.dateMeaning.rawValue) lastValidDate=\(lastValidDate)")
-                    await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .success, detail: "来源 \(source.id)：\(lastValidDate)")
-                    return SubscriptionExpiryResolution(expiresAt: lastValidDate, source: source)
+                    let lastValidDate = expiresAt.map { source.lastValidDate(from: $0) }
+                    if let lastValidDate {
+                        QuotaBarDiagnostics.write("[\(source.id)] parsed rawDate=\(expiresAt!) meaning=\(source.dateMeaning.rawValue) lastValidDate=\(lastValidDate)")
+                        await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .success, detail: "来源 \(source.id)：\(lastValidDate)")
+                    } else {
+                        await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .skipped, detail: "来源 \(source.id)：页面没有日期，但已读取档位")
+                    }
+                    if let tier {
+                        await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .plan, method: source.kind.checkLogLabel, outcome: .success, detail: "来源 \(source.id)：档位=\(tier)，费用由档位映射")
+                    }
+                    return SubscriptionMetadataResolution(expiresAt: lastValidDate, subscriptionTier: tier, source: source)
                 } catch {
                     QuotaBarDiagnostics.write("[\(source.id)] failed: \(error)")
                     await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .failure, detail: "来源 \(source.id)：\(error.localizedDescription)")
@@ -373,6 +388,21 @@ final class SubscriptionExpiryResolver {
             }
         }
         return nil
+    }
+
+    private func existingSnapshotSource(for snapshot: ProviderSnapshot) -> SubscriptionExpirySource {
+        let sourceKind = snapshot.subscriptionExpiresAtSource ?? .api
+        let confidence = snapshot.subscriptionExpiresAtConfidence ?? .medium
+        return SubscriptionExpirySource(
+            id: "snapshot-\(sourceKind.rawValue)",
+            kind: sourceKind,
+            confidence: confidence,
+            dateMeaning: .lastValidDate,
+            pageURL: nil,
+            cookieDomains: [],
+            harvester: nil,
+            apiRequest: nil
+        )
     }
 
     /// browserAPI source 的会话 Cookie：只用 App 自有 WebView 会话（2026-07-08

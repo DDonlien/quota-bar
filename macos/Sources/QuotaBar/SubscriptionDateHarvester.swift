@@ -32,11 +32,17 @@ protocol SubscriptionDateHarvester: Sendable {
     /// 从 loader 抓到的页面 source（headless 渲染后的 outerHTML）提取续费日期。
     /// 找不到或无法解析时返回 nil（**不 throw**）。
     func extract(from pageSource: String) -> Date?
+
+    /// 从订阅管理页提取档位。页面只提供档位、不提供日期时，仍可补全费用。
+    /// 默认返回 nil，避免要求所有 harvester 同时实现计划解析。
+    func extractSubscriptionTier(from pageSource: String) -> String?
 }
 
 // MARK: - 默认实现辅助
 
 extension SubscriptionDateHarvester {
+    func extractSubscriptionTier(from pageSource: String) -> String? { nil }
+
     /// 在 pageSource 中查找第一个匹配 regex 的日期字符串，按 `candidates` 顺序尝试。
     ///
     /// `candidates` 形如：

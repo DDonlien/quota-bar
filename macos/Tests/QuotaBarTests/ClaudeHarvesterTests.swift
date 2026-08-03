@@ -43,6 +43,12 @@ struct ClaudeHarvesterTests {
         #expect(ClaudeHarvester().extract(from: html) == nil)
     }
 
+    @Test("账单页只有档位时仍能识别 Pro plan")
+    func subscriptionTierWithoutDate() {
+        let html = #"<div>Pro plan</div><div>Subscribed via iOS app</div>"#
+        #expect(ClaudeHarvester().extractSubscriptionTier(from: html) == "Pro")
+    }
+
     @Test("pageURL 指向 claude.ai settings billing")
     func pageURLValue() {
         #expect(ClaudeHarvester().pageURL.absoluteString == "https://claude.ai/new#settings/billing")

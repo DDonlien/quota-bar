@@ -456,8 +456,13 @@ final class UpdateChecker: NSObject, ObservableObject {
         licenseStateProvider().allowsAutomaticUpdates
     }
 
-    /// UI 用来决定「立即更新」按钮是否要降级成「前往官网下载」。
-    var requiresLicenseForInstall: Bool {
+    /// UI 用来判断跟自动更新相关的操作要不要禁用/降级。
+    ///
+    /// 2026-07-31：原名 `requiresLicenseForInstall`——当时只有「立即更新」按钮
+    /// 会读它（决定是否降级成「前往官网下载」）。现在「检查更新」按钮本身也要用
+    /// 同一个条件置灰（试用过期后连查都不让查，而不是查得到、装不了），继续叫
+    /// "ForInstall" 会让读到检查按钮那行代码的人摸不着头脑，所以改成中性命名。
+    var updatesRequireLicense: Bool {
         !licenseAllowsAutomaticUpdates
     }
 

@@ -36,4 +36,17 @@ struct ClaudeHarvester: SubscriptionDateHarvester {
     func extract(from pageSource: String) -> Date? {
         extractNear(keywords: keywords, candidates: dateCandidates, in: pageSource)
     }
+
+    func extractSubscriptionTier(from pageSource: String) -> String? {
+        let pattern = #"\b(Pro|Max(?:\s+(?:5x|20x))?|Team|Enterprise)\s+plan\b"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+            return nil
+        }
+        let range = NSRange(pageSource.startIndex..., in: pageSource)
+        guard let match = regex.firstMatch(in: pageSource, range: range),
+              let tierRange = Range(match.range(at: 1), in: pageSource) else {
+            return nil
+        }
+        return String(pageSource[tierRange])
+    }
 }

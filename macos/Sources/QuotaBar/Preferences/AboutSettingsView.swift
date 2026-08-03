@@ -144,7 +144,14 @@ struct AboutSettingsView: View {
                             SettingsIconLabel("检查更新", symbol: "arrow.triangle.2.circlepath", tint: .blue)
                         }
                         .buttonStyle(.plain)
-                        .disabled(updateBusy)
+                        // 2026-07-31 用户反馈：试用过期后应该是"按钮直接置灰"，不是
+                        // "能点、点了才告诉你不行"——之前 check() 内部的门禁（拒绝并
+                        // 弹 .error）是点击后才生效的兜底，现在按钮本身先一步disable，
+                        // 那条内部门禁在正常 UI 路径下就走不到了，纯粹当第二道防线
+                        // （防的是万一以后哪里绕过这个按钮直接调 check(userInitiated:
+                        // true)）。
+                        .disabled(updateBusy || updateChecker.updatesRequireLicense)
+                        .help(updateChecker.updatesRequireLicense ? "试用已结束，检查更新已停用。在「激活」页输入许可证即可恢复。" : "")
                         if case .checking = updateChecker.state {
                             ProgressView().controlSize(.small)
                         }
@@ -215,7 +222,7 @@ struct AboutSettingsView: View {
                 // 未激活时不给"立即下载并安装"——那是付费换来的便利。但仍然如实
                 // 告知有新版本、并给出官网手动下载这条任何人都走得通的路径，
                 // 不把用户堵在死胡同里（v0.15.0）。
-                if updateChecker.requiresLicenseForInstall {
+                if updateChecker.updatesRequireLicense {
                     HStack(spacing: 12) {
                         Button("前往官网下载") {
                             NSWorkspace.shared.open(URL(string: "https://quotabar.ddonlien.com/")!)

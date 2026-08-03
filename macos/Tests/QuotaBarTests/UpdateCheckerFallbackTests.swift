@@ -214,6 +214,30 @@ struct UpdateCheckerFallbackTests {
         #expect(checker.state == .idle, "自动触发被门禁挡住时不该改变可见状态")
     }
 
+    /// 2026-07-31：`updatesRequireLicense` 是「检查更新」按钮 `.disabled` 绑定的那个
+    /// 属性——按用户要求，试用过期后按钮要直接置灰（能看见、点不了），而不是能点、
+    /// 点了才用 `.error` 状态告诉你不行。这里直接锁定该属性本身的极性，防止以后
+    /// 重命名/重构时不小心把 `!` 丢了或者接反，那样会让按钮的可用性和真实授权状态
+    /// 完全颠倒却编译通过、不被任何一个"点击行为"测试发现。
+    @Test("updatesRequireLicense reflects license state, driving the button's disabled binding")
+    func updatesRequireLicenseTracksLicenseState() {
+        func checker(_ state: LicenseState) -> UpdateChecker {
+            UpdateChecker(
+                primaryReleasesURL: Self.primaryURL,
+                legacyReleasesURL: Self.fallbackURL,
+                fallbackDownloadURL: Self.fallbackDownloadURL,
+                session: Self.mockSession(),
+                preferences: Self.ephemeralPreferences(),
+                checkLogStore: Self.ephemeralCheckLogStore(),
+                licenseStateProvider: { state }
+            )
+        }
+        #expect(checker(.trialExpired).updatesRequireLicense)
+        #expect(checker(.licenseInvalid(reason: "x")).updatesRequireLicense)
+        #expect(!checker(.trial(daysRemaining: 3)).updatesRequireLicense)
+        #expect(!checker(.licensed(expiresAt: nil)).updatesRequireLicense)
+    }
+
     // MARK: - helpers
 
     private static func waitUntilSettled(_ checker: UpdateChecker, timeout: TimeInterval = 2) async -> UpdateChecker.State {

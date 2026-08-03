@@ -561,24 +561,51 @@ final class RefreshCoordinator: ObservableObject {
 
         let resolver = SubscriptionExpiryResolver(timeout: harvesterTimeout)
         QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] start subscription expiry enrichment")
-        guard let resolution = await resolver.resolve(for: snapshot) else {
+        let resolution = await resolver.resolveMetadata(for: snapshot)
+        let resolvedTier = snapshot.subscriptionTier ?? resolution?.subscriptionTier
+        let resolvedPrice: String?
+        if let existingPrice = snapshot.monthlyPrice {
+            resolvedPrice = existingPrice
+        } else {
+            resolvedPrice = await ProviderPricing.localizedMonthlyPrice(
+                kind: snapshot.kind,
+                tier: resolvedTier
+            )
+        }
+        let resolvedExpiresAt = resolution?.expiresAt ?? snapshot.subscriptionExpiresAt
+        let metadataChanged = resolvedTier != snapshot.subscriptionTier
+            || resolvedPrice != snapshot.monthlyPrice
+            || resolvedExpiresAt != snapshot.subscriptionExpiresAt
+        guard metadataChanged else {
             QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry unresolved")
             return snapshot
         }
-        QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription expiry resolved expiresAt=\(resolution.expiresAt), source=\(resolution.source.id), kind=\(resolution.source.kind.rawValue), confidence=\(resolution.source.confidence.rawValue)")
-        NSLog(
-            "QuotaBar: 📅 \(snapshot.kind.rawValue) subscriptionExpiresAt=\(resolution.expiresAt) source=\(resolution.source.kind.rawValue) confidence=\(resolution.source.confidence.rawValue)"
-        )
+        if let resolution {
+            QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription metadata resolved expiresAt=\(resolution.expiresAt?.description ?? "nil"), tier=\(resolution.subscriptionTier ?? "nil"), source=\(resolution.source.id), kind=\(resolution.source.kind.rawValue), confidence=\(resolution.source.confidence.rawValue)")
+            if let expiresAt = resolution.expiresAt {
+                NSLog(
+                    "QuotaBar: 📅 \(snapshot.kind.rawValue) subscriptionExpiresAt=\(expiresAt) source=\(resolution.source.kind.rawValue) confidence=\(resolution.source.confidence.rawValue)"
+                )
+            }
+        } else {
+            QuotaBarDiagnostics.write("[\(snapshot.kind.rawValue)] subscription metadata completed from existing snapshot fields")
+        }
+        let resolvedSource = resolution?.expiresAt != nil
+            ? resolution?.source.kind
+            : snapshot.subscriptionExpiresAtSource
+        let resolvedConfidence = resolution?.expiresAt != nil
+            ? resolution?.source.confidence
+            : snapshot.subscriptionExpiresAtConfidence
         return ProviderSnapshot(
             id: snapshot.id,
             kind: snapshot.kind,
-            subscriptionTier: snapshot.subscriptionTier,
+            subscriptionTier: resolvedTier,
             availability: snapshot.availability,
             quotas: snapshot.quotas,
-            monthlyPrice: snapshot.monthlyPrice,
-            subscriptionExpiresAt: resolution.expiresAt,
-            subscriptionExpiresAtSource: resolution.source.kind,
-            subscriptionExpiresAtConfidence: resolution.source.confidence,
+            monthlyPrice: resolvedPrice,
+            subscriptionExpiresAt: resolvedExpiresAt,
+            subscriptionExpiresAtSource: resolvedSource,
+            subscriptionExpiresAtConfidence: resolvedConfidence,
             fetchedAt: snapshot.fetchedAt,
             isStale: snapshot.isStale
         )

@@ -1259,3 +1259,13 @@
 - [x] [0.15.3-DATA-A-000] `licenseStateProvider` 从"构造后可改的公开 var（默认闭包读 `LicenseManager.shared`）"改成正规的 init 参数注入点，对齐 `preferences`/`checkLogStore` 已有的 DI 模式
 - [x] [0.15.3-QA-A-000] 新增 `manualCheckBlockedWhenUnlicensed` / `automaticCheckSkippedWhenUnlicensedStaysQuiet` 两个测试，断言门禁生效时**不发起真实请求**且两种触发方式的可见状态符合各自预期。修复过程中顺带发现：收紧门禁前，`UpdateCheckerFallbackTests.swift` 里全部 4 个用 `userInitiated: true` 构造 `UpdateChecker` 的既有测试都没有注入 `licenseStateProvider`，靠默认值悄悄读了 `LicenseManager.shared.state`——也就是跑测试这台机器当下真实的试用状态；这次改动让门禁真正对 `userInitiated: true` 生效后，这 4 个测试因为开发机试用已过期而集体变红，暴露了这个此前一直存在但被"手动检查不受门禁约束"这个旧设计意外掩盖的测试隔离漏洞。已给全部 4 处补上确定的 `.trial(daysRemaining: 7)` 注入
 - [x] [0.15.3-QA-A-001] 顺带修一个跑全套件时撞见的无关 flaky：`ResetCountdownTests.ticksBySecondUnderAnHour` 里 `reset`/`now` 各自独立调用 `Date()`，两次调用间的真实间隔（哪怕零点几毫秒）会让 `Int(seconds)` 截断出 89 而不是预期的 90，慢机器/高负载下偶发。改成从同一个 `now` 派生 `reset`，时间差恒为 90 秒
+
+### sub/main: 检查更新按钮改为直接置灰
+
+> **背景**：0.15.3 的门禁是"点击后拒绝并弹提示"（`state = .error(...)`）。用户看完
+> 反馈：应该是"按钮直接置灰，能看见、点不了"，不是"能点、点了才告诉你不行"。
+
+- [x] [0.15.3-FE-A-000] `AboutSettingsView` 的「检查更新」按钮 `.disabled` 条件从只看 `updateBusy` 改成 `updateBusy || updateChecker.updatesRequireLicense`；置灰时加 `.help(...)` 悬浮提示复述原因（授权状态摘要卡片已经在上方用文字说明过，这里只是给鼠标悬停这个交互补一个入口，不是唯一的解释渠道）
+- [x] [0.15.3-FE-A-001] `UpdateChecker.requiresLicenseForInstall` 改名为 `updatesRequireLicense`：这个属性现在同时驱动「检查更新」和「立即更新」两个按钮的置灰/降级，继续叫 `ForInstall` 会让读到检查按钮那行代码的人摸不着头脑
+- [x] [0.15.3-BUG-A-002] `check()` 内部原本"点击后拒绝并弹 `.error`"那层门禁**保留**，降级为纯防御层——正常 UI 路径下按钮先一步 disable，走不到那里，但仍然防着以后有别的入口绕过这个按钮直接调 `check(userInitiated: true)`
+- [x] [0.15.3-QA-A-002] 新增 `updatesRequireLicenseTracksLicenseState`：直接锁定该属性在四种 `LicenseState` 下的极性（试用中/已激活→ `false`，试用过期/授权失效→ `true`），防止以后重构不小心把 `!` 丢了或接反——这类错误会让按钮可用性和真实授权状态完全颠倒却编译通过，且不会被任何"点击行为"测试发现
