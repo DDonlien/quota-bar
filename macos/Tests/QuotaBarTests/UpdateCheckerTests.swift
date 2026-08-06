@@ -115,6 +115,15 @@ struct UpdateCheckerTests {
         #expect(trimmed.count <= 502)
     }
 
+    @Test("updates replace the currently running app path")
+    func updateDestinationUsesCurrentAppBundle() {
+        let localBuild = URL(fileURLWithPath: "/tmp/_builds/20260805-main/Quota Bar.app")
+        #expect(UpdateChecker.updateDestinationURL(bundleURL: localBuild) == localBuild)
+
+        let testBundle = URL(fileURLWithPath: "/tmp/QuotaBarTests.xctest")
+        #expect(UpdateChecker.updateDestinationURL(bundleURL: testBundle).path == "/Applications/Quota Bar.app")
+    }
+
     // MARK: - fixtures
 
     private static func release(

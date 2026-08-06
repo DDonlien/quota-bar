@@ -603,8 +603,8 @@ final class UpdateChecker: NSObject, ObservableObject {
 
     // MARK: 安装（helper 替换，v0.11.0-TOOL-A）
 
-    /// 弹确认后调 helper：helper 等主进程退出 → 挂载 dmg → 替换
-    /// /Applications/Quota Bar.app → 重新拉起。主 app 在启动 helper 后立即退出。
+    /// 弹确认后调 helper：helper 等主进程退出 → 挂载 dmg → 替换当前运行的 app
+    /// → 重新拉起。主 app 在启动 helper 后立即退出。
     func installDownloadedUpdate() {
         guard case .downloaded(_, let dmgPath) = state else { return }
         guard let helperURL = Self.helperScriptURL() else {
@@ -615,7 +615,15 @@ final class UpdateChecker: NSObject, ObservableObject {
         state = .installing
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
-        process.arguments = [helperURL.path, dmgPath.path]
+        let destinationURL = Self.updateDestinationURL()
+        UpdateCheckLog.record(
+            step: "安装更新",
+            method: "当前 App 路径",
+            outcome: "开始",
+            detail: destinationURL.path,
+            store: checkLogStore
+        )
+        process.arguments = [helperURL.path, dmgPath.path, destinationURL.path]
         // helper 独立于主进程运行；输出丢给日志文件由 helper 自己管理。
         do {
             try process.run()
@@ -652,6 +660,16 @@ final class UpdateChecker: NSObject, ObservableObject {
     static func updatesDirectory() -> URL {
         URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/Application Support/QuotaBar/updates", isDirectory: true)
+    }
+
+    /// 更新当前实际运行的 app，而不是假设它一定安装在 `/Applications`。
+    /// 本地验证常从 `_builds/.../Quota Bar.app` 启动；如果更新仍写死到
+    /// `/Applications`，更新后虽然能短暂打开新版，下一次从原启动入口重启就会回到旧包。
+    nonisolated static func updateDestinationURL(bundleURL: URL = Bundle.main.bundleURL) -> URL {
+        guard bundleURL.pathExtension.caseInsensitiveCompare("app") == .orderedSame else {
+            return URL(fileURLWithPath: "/Applications/Quota Bar.app")
+        }
+        return bundleURL
     }
 
     /// helper 脚本随 .app 打包在 Contents/Resources/install-update.sh。

@@ -356,7 +356,7 @@ Codex / Claude 的 TUI 在无 TTY 时会拒绝交互。`TTYCommandRunner` 通过
 
 1. 「偏好设置 → 关于」打开时后台调 GitHub Releases API 检查一次（5 分钟内不重复请求，也可手动点「检查更新」）；
 2. 解析所有 tag 能匹配 `vX.Y.Z(-sha)?` 的 release，取 `X.Y.Z` 最高且严格大于当前版本的那个；
-3. 「立即下载并安装」→ 后台下载 dmg 到 `~/Library/Application Support/QuotaBar/updates/` → `hdiutil verify` 校验 → 确认后调 `install-update.sh` helper 替换 `/Applications/Quota Bar.app` 并自动重启；
+3. 「立即下载并安装」→ 后台下载 dmg 到 `~/Library/Application Support/QuotaBar/updates/` → `hdiutil verify` 校验 → 确认后调 `install-update.sh` helper 替换**当前正在运行的 app 路径**并自动重启（未识别 app bundle 时才回退 `/Applications/Quota Bar.app`）；
 4. 替换失败时保留旧版并写 `update-error.log`，下次启动提示「上次更新失败」；
 5. macOS 权限设置（Full Disk Access 等）更新后**通常会保留**（bundle id `com.taobe.quotabar` 与签名 identifier 稳定），但 ad-hoc 签名下这是 best-effort；Developer ID + notarize 的形式化保障在 v0.12.0 落地；
 6. 「稍后提醒」会忽略该版本（自动检查跳过），可在「关于」页「重置已忽略的版本」恢复。

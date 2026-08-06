@@ -125,6 +125,7 @@ struct GeneralSettingsView: View {
                             .labelsHidden()
                             .toggleStyle(.switch)
                             .controlSize(.mini)
+                            .disabled(!canEditLaunchItem)
                     }
                 )
             }
@@ -135,17 +136,31 @@ struct GeneralSettingsView: View {
 
     private var launchAtLoginFooter: String {
         guard canRegisterLaunchItem else {
-            return "应用尚未以 .app 形式安装（SwiftPM 直跑），登录启动暂不可用。请用 ./scripts/build-app.sh 打包 .app 后再启用。"
+            if canUseLaunchItemService, store.preferences.launchAtLogin {
+                return "当前是开发构建，不能新增登录项。请先关闭此开关，再打开已安装的 /Applications/Quota Bar.app 重新启用。"
+            }
+            return "当前不是安装在 /Applications 的正式应用，登录启动暂不可用。请打开已安装的 Quota Bar.app 后再启用。"
         }
         return store.preferences.launchAtLogin
             ? "已注册为登录项。可在「系统设置 → 通用 → 登录项」中管理。"
             : "启用后，登录 macOS 时会自动启动 Quota Bar。"
     }
 
-    /// 当前进程是否是有效 .app（SwiftPM 直跑时 bundleIdentifier 为 swift-package-manager 占位）。
+    /// 当前进程是否可以调用 SMAppService。开发构建仍可关闭曾经注册的旧登录项。
+    private var canUseLaunchItemService: Bool {
+        Bundle.main.bundleIdentifier == "com.taobe.quotabar"
+            && Bundle.main.bundleURL.pathExtension.caseInsensitiveCompare("app") == .orderedSame
+    }
+
+    /// 只有正式安装位置才能新增登录项，避免 `_builds` 或 worktree 构建被 macOS 记住。
     private var canRegisterLaunchItem: Bool {
-        guard let id = Bundle.main.bundleIdentifier, !id.isEmpty else { return false }
-        return !id.hasPrefix("org.swift-package-manager")
+        canUseLaunchItemService
+            && QuotaBarAppInstallation.isInstalledAppBundle(Bundle.main.bundleURL)
+    }
+
+    /// 已经从开发包注册过的旧登录项仍需要可以被关闭，避免修复后无法清理旧状态。
+    private var canEditLaunchItem: Bool {
+        canRegisterLaunchItem || (canUseLaunchItemService && store.preferences.launchAtLogin)
     }
 
     // MARK: - Bindings
@@ -190,10 +205,14 @@ struct GeneralSettingsView: View {
 
     // MARK: - Launch at login (SMAppService)
 
-    /// 注册 / 取消登录启动。SwiftPM 直跑时仅持久化偏好，不真正调用 SMAppService。
+    /// 注册 / 取消登录启动。只有正式安装位置可以新增，开发包仅允许取消旧注册。
     private func applyLaunchAtLoginRegistration(_ enabled: Bool) {
-        guard canRegisterLaunchItem else {
-            NSLog("[Preferences] launchAtLogin 仅持久化偏好：当前进程不是有效 .app")
+        guard canUseLaunchItemService else {
+            NSLog("[Preferences] launchAtLogin 仅持久化偏好：当前进程不是可识别的 Quota Bar.app")
+            return
+        }
+        guard !enabled || canRegisterLaunchItem else {
+            NSLog("[Preferences] 拒绝从开发构建注册 launchAtLogin：\(Bundle.main.bundleURL.path)")
             return
         }
         do {

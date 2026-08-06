@@ -1,14 +1,14 @@
 #!/bin/bash
 # Quota Bar 更新助手（v0.11.0-TOOL-A，ad-hoc 预开发版）。
 #
-# 用法：install-update.sh [--dry-run] <path-to-dmg>
+# 用法：install-update.sh [--dry-run] <path-to-dmg> [destination-app]
 #
 # 流程：
 #   1. 等主进程 QuotaBar 退出（超时 5s 后 pkill 强杀）；
 #   2. 挂载 dmg；
 #   3. codesign --verify 校验 dmg 内 .app（ad-hoc 阶段跳过 spctl —— ad-hoc 永远被
 #      spctl 拒绝，跳过不视为不通过；v0.12.0 升级 Developer ID 后强制加 spctl）；
-#   4. 替换 /Applications/Quota Bar.app（先备份，失败回滚）；
+#   4. 替换当前运行的 app（先备份，失败回滚）；
 #   5. 卸载 dmg，重新拉起新版 app。
 #
 # 失败时保留旧 .app，把原因写入
@@ -18,7 +18,7 @@ set -u
 
 APP_NAME="Quota Bar"
 PROCESS_NAME="QuotaBar"
-DEST="/Applications/${APP_NAME}.app"
+DEFAULT_DEST="/Applications/${APP_NAME}.app"
 SUPPORT_DIR="$HOME/Library/Application Support/QuotaBar"
 ERROR_LOG="$SUPPORT_DIR/update-error.log"
 DRY_RUN=0
@@ -45,7 +45,8 @@ if [ "${1:-}" = "--dry-run" ]; then
 fi
 
 DMG_PATH="${1:-}"
-[ -n "$DMG_PATH" ] || { echo "usage: install-update.sh [--dry-run] <path-to-dmg>"; exit 64; }
+[ -n "$DMG_PATH" ] || { echo "usage: install-update.sh [--dry-run] <path-to-dmg> [destination-app]"; exit 64; }
+DEST="${2:-$DEFAULT_DEST}"
 [ -f "$DMG_PATH" ] || fail "dmg 不存在: $DMG_PATH"
 
 if [ "$DRY_RUN" -eq 1 ]; then
@@ -53,7 +54,7 @@ if [ "$DRY_RUN" -eq 1 ]; then
     log "(dry-run) 1. 等待/结束进程 $PROCESS_NAME"
     log "(dry-run) 2. hdiutil attach '$DMG_PATH'"
     log "(dry-run) 3. codesign --verify dmg 内 ${APP_NAME}.app"
-    log "(dry-run) 4. 替换 $DEST（旧版备份为 ${DEST}.previous）"
+    log "(dry-run) 4. 替换 ${DEST}（旧版备份为 ${DEST}.previous）"
     log "(dry-run) 5. hdiutil detach + open '$DEST'"
     exit 0
 fi
