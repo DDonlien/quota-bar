@@ -46,6 +46,50 @@ struct KimiDesktopTokenProviderTests {
         #expect(comps.day == 31)
     }
 
+    @Test("expired subscription (subscribed=false) yields notSubscribed marker")
+    func expiredSubscriptionYieldsNotSubscribedMarker() async throws {
+        let dir = Self.makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let tokenPath = dir.appendingPathComponent("token-store.json").path
+        try Data("""
+        {
+          "tokens": {
+            "access_token": "desktop-access-token"
+          }
+        }
+        """.utf8).write(to: URL(fileURLWithPath: tokenPath))
+
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let expiredSubscription: [String: Any] = [
+            "subscribed": false,
+            "subscription": [
+                "nextBillingTime": "2026-07-09T14:33:09Z",
+                "goods": ["title": "Andante", "amounts": [["priceInCents": "4900"]]],
+            ],
+        ]
+        let session = Self.makeSession(
+            statusCode: 200,
+            quotaData: Self.fixtureData(),
+            subscriptionData: try! JSONSerialization.data(withJSONObject: expiredSubscription)
+        )
+        let provider = KimiDesktopTokenProvider(
+            tokenStorePath: tokenPath,
+            endpoint: URL(string: "https://kimi.test/GetSubscriptionStat")!,
+            subscriptionEndpoint: URL(string: "https://kimi.test/GetSubscription")!,
+            session: session,
+            dateProvider: { now }
+        )
+
+        // marker snapshot（非抛错）：串行管线见到非 .available 直接短路返回。
+        let snapshot = try await provider.fetchSnapshot(timeout: 1)
+        guard case .notSubscribed = snapshot.availability else {
+            Issue.record("期望 notSubscribed marker，实际 \(snapshot.availability)")
+            return
+        }
+        #expect(snapshot.quotas.isEmpty)
+    }
+
     private static func fixtureData() -> Data {
         let json: [String: Any] = [
             "ratelimitCode5h": [

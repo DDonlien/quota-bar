@@ -323,6 +323,30 @@ final class FetchPipeline {
     /// - plan：tier / price 为 nil 时填补；
     /// - expiration：过期日为 nil 时填补（连带来源与可信度标记）。
     static func mergeLayers(base: ProviderSnapshot, addition: ProviderSnapshot) -> ProviderSnapshot {
+        // v0.11.x：addition 携带服务端权威的「未订阅/已过期」marker 时，它比 base 的
+        // 「已配置/档位」信号更有信息量（例：Claude 本地 CLI 说 Pro、但 usage 响应已
+        // 无有效订阅；opencode auth 确认已配置、但 workspace 已无 Go 订阅）。合并结果
+        // 采用 marker 的 availability，丢弃 base 里可能误导的额度窗口（免费/降级额度），
+        // 但保留 base 已知的档位/价格/到期日供 header 展示。此前 marker 在这里被静默
+        // 丢弃，UI 会退回 tier-only「待授权获取额度」而不是「未订阅或订阅已过期」。
+        switch addition.availability {
+        case .subscriptionExpired, .notSubscribed:
+            return ProviderSnapshot(
+                id: base.id,
+                kind: base.kind,
+                subscriptionTier: base.subscriptionTier,
+                availability: addition.availability,
+                quotas: [],
+                monthlyPrice: base.monthlyPrice,
+                subscriptionExpiresAt: base.subscriptionExpiresAt,
+                subscriptionExpiresAtSource: base.subscriptionExpiresAtSource,
+                subscriptionExpiresAtConfidence: base.subscriptionExpiresAtConfidence,
+                fetchedAt: max(base.fetchedAt, addition.fetchedAt),
+                isStale: base.isStale
+            )
+        default:
+            break
+        }
         guard addition.availability == .available else { return base }
 
         var quotas = base.quotas

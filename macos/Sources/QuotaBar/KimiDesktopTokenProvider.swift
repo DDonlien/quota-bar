@@ -64,6 +64,19 @@ final class KimiDesktopTokenProvider: QuotaProvider, @unchecked Sendable {
             )
         }
 
+        // v0.11.x：服务端明确返回「下一次续费日已过」→ 订阅周期已结束且未续费，
+        // 返回 notSubscribed marker（不展示可能残留的额度窗口，跟 MiniMax/Claude
+        // 的「无有效订阅」映射同模式）。
+        if let subscriptionData, KimiSubscriptionParser.indicatesNoActivePlan(data: subscriptionData) {
+            return ProviderSnapshot(
+                kind: .kimi,
+                availability: .notSubscribed(reason: "Kimi 订阅已到期或未订阅"),
+                quotas: [],
+                monthlyPrice: nil,
+                fetchedAt: fetchedAt
+            )
+        }
+
         var windows: [QuotaWindow] = []
         if let subscriptionData, let workWindows = subscriptionParser.parse(data: subscriptionData) {
             windows = workWindows

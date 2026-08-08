@@ -36,6 +36,50 @@ struct KimiSubscriptionParserBalancesTests {
         #expect(parser.parse(data: data) == nil)
     }
 
+    @Test("indicatesNoActivePlan trusts explicit subscribed=false")
+    func noActivePlanWhenSubscribedFalse() throws {
+        let json: [String: Any] = [
+            "subscribed": false,
+            "subscription": ["nextBillingTime": "2099-01-01T00:00:00Z"],
+        ]
+        let data = try JSONSerialization.data(withJSONObject: json)
+        #expect(KimiSubscriptionParser.indicatesNoActivePlan(data: data, now: Date(timeIntervalSince1970: 1_800_000_000)))
+    }
+
+    @Test("indicatesNoActivePlan trusts explicit subscribed=true over past billing date")
+    func activePlanWhenSubscribedTrue() throws {
+        let json: [String: Any] = [
+            "subscribed": true,
+            "subscription": ["nextBillingTime": "2026-01-01T00:00:00Z"],
+        ]
+        let data = try JSONSerialization.data(withJSONObject: json)
+        #expect(!KimiSubscriptionParser.indicatesNoActivePlan(data: data, now: Date(timeIntervalSince1970: 1_800_000_000)))
+    }
+
+    @Test("indicatesNoActivePlan falls back to past nextBillingTime when subscribed absent")
+    func noActivePlanWhenBillingDatePassed() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)  // 2027-01-15
+        let past: [String: Any] = [
+            "subscription": ["nextBillingTime": "2026-07-09T14:33:09.134631Z"],
+        ]
+        let pastData = try JSONSerialization.data(withJSONObject: past)
+        #expect(KimiSubscriptionParser.indicatesNoActivePlan(data: pastData, now: now))
+
+        let future: [String: Any] = [
+            "subscription": ["nextBillingTime": "2027-02-01T14:33:09Z"],
+        ]
+        let futureData = try JSONSerialization.data(withJSONObject: future)
+        #expect(!KimiSubscriptionParser.indicatesNoActivePlan(data: futureData, now: now))
+    }
+
+    @Test("indicatesNoActivePlan is false when no signal present")
+    func noActivePlanUnknownWithoutSignal() throws {
+        let empty = try JSONSerialization.data(withJSONObject: ["balances": [] as [Any]])
+        #expect(!KimiSubscriptionParser.indicatesNoActivePlan(data: empty))
+        let garbage = Data("not json".utf8)
+        #expect(!KimiSubscriptionParser.indicatesNoActivePlan(data: garbage))
+    }
+
     @Test("desktop token provider survives GetSubscriptionStat 404")
     func desktopProviderUsesGetSubscriptionWhenStatGone() async throws {
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())

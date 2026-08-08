@@ -152,6 +152,40 @@ struct ClaudeOAuthUsageProviderTests {
         }
     }
 
+    @Test("expired subscription (windows without resets_at) yields notSubscribed marker")
+    func expiredSubscriptionYieldsNotSubscribedMarker() async throws {
+        // 本机真实样本（2026-08-08，订阅过期后）：窗口在、resets_at 全缺失。
+        let dir = Self.makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let credsPath = dir.appendingPathComponent(".credentials.json").path
+        try Data(#"{"claudeAiOauth": {"accessToken": "tok", "subscriptionType": "pro"}}"#.utf8).write(to: URL(fileURLWithPath: credsPath))
+
+        ClaudeOAuthMockURLProtocol.responseHandler = { request in
+            let json: [String: Any] = [
+                "five_hour": ["utilization": 0],
+                "seven_day": ["utilization": 0],
+            ]
+            let data = try! JSONSerialization.data(withJSONObject: json)
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, data)
+        }
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [ClaudeOAuthMockURLProtocol.self]
+        let provider = ClaudeOAuthUsageProvider(
+            credentialsPath: credsPath,
+            endpoint: URL(string: "https://api.anthropic.test/api/oauth/usage")!,
+            session: URLSession(configuration: config)
+        )
+        // marker snapshot（非抛错）：串行管线见到非 .available 直接短路返回。
+        let snapshot = try await provider.fetchSnapshot(timeout: 1)
+        guard case .notSubscribed = snapshot.availability else {
+            Issue.record("期望 notSubscribed marker，实际 \(snapshot.availability)")
+            return
+        }
+        #expect(snapshot.quotas.isEmpty)
+        #expect(snapshot.subscriptionTier == nil)
+    }
     private static func makeTempDirectory() -> URL {
         URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("quota-bar-claude-oauth-tests-\(UUID().uuidString)", isDirectory: true)

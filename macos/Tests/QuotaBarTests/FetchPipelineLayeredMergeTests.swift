@@ -111,6 +111,97 @@ struct FetchPipelineLayeredMergeTests {
         #expect(merged.subscriptionTier == "Andante")
     }
 
+    @Test("notSubscribed marker from later source overrides tier-only base, dropping windows")
+    @MainActor
+    func mergePropagatesNotSubscribedMarker() {
+        let base = ProviderSnapshot(
+            kind: .claude,
+            subscriptionTier: "Pro",
+            availability: .available,
+            quotas: [Self.window(title: "", scope: "go", period: 5 * 3600)],
+            monthlyPrice: "¥136/月",
+            fetchedAt: Date()
+        )
+        let marker = ProviderSnapshot(
+            kind: .claude,
+            availability: .notSubscribed(reason: "Claude 无有效订阅（额度窗口无重置时间）"),
+            quotas: [],
+            monthlyPrice: nil,
+            fetchedAt: Date()
+        )
+        let merged = FetchPipeline.mergeLayers(base: base, addition: marker)
+        guard case .notSubscribed = merged.availability else {
+            Issue.record("期望 notSubscribed，实际 \(merged.availability)")
+            return
+        }
+        // 误导性额度窗口被丢弃；base 已知档位/价格保留供 header 展示。
+        #expect(merged.quotas.isEmpty)
+        #expect(merged.subscriptionTier == "Pro")
+        #expect(merged.monthlyPrice == "¥136/月")
+    }
+
+    @Test("subscriptionExpired marker from later source overrides available base")
+    @MainActor
+    func mergePropagatesSubscriptionExpiredMarker() {
+        let base = ProviderSnapshot(
+            kind: .codex,
+            subscriptionTier: "Plus",
+            availability: .available,
+            quotas: [Self.window(title: "", scope: "go", period: 7 * 86400)],
+            monthlyPrice: "$20/月",
+            subscriptionExpiresAt: Date(timeIntervalSince1970: 1_700_000_000),
+            fetchedAt: Date()
+        )
+        let marker = ProviderSnapshot(
+            kind: .codex,
+            subscriptionTier: "Plus",
+            availability: .subscriptionExpired(plan: "Plus", expiredAt: Date(timeIntervalSince1970: 1_700_000_000)),
+            quotas: [],
+            monthlyPrice: nil,
+            fetchedAt: Date()
+        )
+        let merged = FetchPipeline.mergeLayers(base: base, addition: marker)
+        guard case .subscriptionExpired = merged.availability else {
+            Issue.record("期望 subscriptionExpired，实际 \(merged.availability)")
+            return
+        }
+        #expect(merged.quotas.isEmpty)
+        #expect(merged.subscriptionExpiresAt != nil)
+    }
+
+    @Test("pipeline returns notSubscribed marker when later strategy reports it")
+    @MainActor
+    func pipelineSurfacesNotSubscribedFromLaterStrategy() async throws {
+        let dir = Self.makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let store = ProviderSourceIndexStore(directoryURL: dir)
+
+        let pipeline = FetchPipeline(
+            kind: .opencode,
+            strategies: [
+                LayerStubStrategy(
+                    id: "opencode-auth",
+                    layers: [.plan],
+                    tier: "Go",
+                    price: nil,
+                    expiresAt: nil,
+                    windows: []
+                ),
+                NotSubscribedStubStrategy(id: "opencode-webview"),
+            ],
+            runMode: .sequential,
+            expectedQuotaScopes: ["go"],
+            sourceIndexStore: store
+        )
+
+        let snapshot = try await pipeline.run(timeout: 1)
+        guard case .notSubscribed = snapshot.availability else {
+            Issue.record("期望 notSubscribed，实际 \(snapshot.availability)")
+            return
+        }
+        #expect(snapshot.quotas.isEmpty)
+    }
+
     private static func window(title: String, scope: String, period: TimeInterval) -> QuotaWindow {
         QuotaWindow(
             title: title,
@@ -132,7 +223,7 @@ private struct LayerStubStrategy: ProviderFetchStrategy {
     let id: String
     let layers: Set<ProviderFetchLayer>
     let tier: String
-    let price: String
+    let price: String?
     let expiresAt: Date?
     let windows: [QuotaWindow]
 
@@ -167,5 +258,24 @@ private struct FailingStubStrategy: ProviderFetchStrategy {
 
     func fetch(timeout: TimeInterval) async throws -> ProviderSnapshot {
         throw QuotaFetchError.transient(detail: "stub failure")
+    }
+}
+
+private struct NotSubscribedStubStrategy: ProviderFetchStrategy {
+    let id: String
+
+    var displayName: String { id }
+    var kind: ProviderKind { .opencode }
+    var sourceKind: ProviderSourceKind { .webViewSession }
+    var supportedLayers: Set<ProviderFetchLayer> { [.quota, .plan] }
+
+    func fetch(timeout: TimeInterval) async throws -> ProviderSnapshot {
+        ProviderSnapshot(
+            kind: .opencode,
+            availability: .notSubscribed(reason: "workspace 未订阅 opencode Go"),
+            quotas: [],
+            monthlyPrice: nil,
+            fetchedAt: Date()
+        )
     }
 }

@@ -134,6 +134,19 @@ final class ClaudeOAuthUsageProvider: QuotaProvider, @unchecked Sendable {
         guard let windows = ClaudeUsageWindowParser.parse(data: data), !windows.isEmpty else {
             throw QuotaFetchError.transient(detail: "无法解析 Claude usage 响应")
         }
+        // v0.11.x：订阅过期/降级后 usage 响应仍有窗口但 resets_at 全为 null
+        // （与 webview 路径同一个服务端信号，见
+        // `ClaudeUsageWindowParser.indicatesNoActivePlan`）。返回 notSubscribed
+        // marker snapshot 让串行管线直接短路，不把无重置时间的窗口当有效额度。
+        if ClaudeUsageWindowParser.indicatesNoActivePlan(data: data) {
+            return ProviderSnapshot(
+                kind: .claude,
+                availability: .notSubscribed(reason: "Claude 无有效订阅（额度窗口无重置时间）"),
+                quotas: [],
+                monthlyPrice: nil,
+                fetchedAt: fetchedAt
+            )
+        }
 
         let tier = ProviderPricing.normalizedTier(credentials.subscriptionType)
         let monthlyPrice = await ProviderPricing.localizedMonthlyPrice(kind: .claude, tier: credentials.subscriptionType)

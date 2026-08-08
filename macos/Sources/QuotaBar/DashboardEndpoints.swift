@@ -92,12 +92,20 @@ protocol DashboardParser: Sendable {
     /// max(resetsAt)）。Kimi 的 `KimiSubscriptionStatParser` 实现从
     /// `subscriptionBalance.expireTime` 提取。
     func parseSubscriptionExpiresAt(data: Data) -> Date?
+    /// 服务端权威的「无有效订阅」信号（订阅已过期 / 免费降级）。
+    ///
+    /// 默认 false；返回 true 时上层应把结果映射成 `.notSubscribed`（UI 显示
+    /// 「未订阅或订阅已过期」），而不是把免费/降级额度窗口当有效订阅展示。
+    /// Claude 由 `ClaudeUsageWindowParser.indicatesNoActivePlan` 实现：usage
+    /// 响应能解析出窗口、但所有窗口的 `resets_at` 都是 null。
+    func indicatesNoActivePlan(data: Data) -> Bool
 }
 
 extension DashboardParser {
     func parseTier(data: Data) -> String? { nil }
     func parseMonthlyPrice(data: Data) -> String? { nil }
     func parseSubscriptionExpiresAt(data: Data) -> Date? { nil }
+    func indicatesNoActivePlan(data: Data) -> Bool { false }
 }
 
 // MARK: - Codex / OpenAI Wham Usage 解析
@@ -256,6 +264,12 @@ struct CodexDashboardParser: DashboardParser {
 /// }
 /// ```
 struct ClaudeDashboardParser: DashboardParser {
+    /// 订阅过期/降级后 usage 响应仍有窗口但 `resets_at` 全为 null（本机真实样本
+    /// 2026-08-08 验证），映射为「无有效订阅」。
+    func indicatesNoActivePlan(data: Data) -> Bool {
+        ClaudeUsageWindowParser.indicatesNoActivePlan(data: data)
+    }
+
     static func usageURL(from data: Data) -> URL? {
         guard let orgId = selectOrganizationId(from: data) else { return nil }
         return URL(string: "https://claude.ai/api/organizations/\(orgId)/usage")
@@ -346,6 +360,27 @@ enum ClaudeUsageWindowParser {
         return fallbackWindows.isEmpty ? nil : fallbackWindows.sorted {
             ($0.periodSeconds ?? .greatestFiniteMagnitude) < ($1.periodSeconds ?? .greatestFiniteMagnitude)
         }
+    }
+
+    /// 判定「Claude 账号无有效订阅」（订阅已过期 / 免费降级）。
+    ///
+    /// 依据：Anthropic 对没有有效订阅的账号返回 usage 窗口时 `resets_at` 全为
+    /// null/缺失——本机真实样本（2026-08-08 订阅过期后）five_hour/seven_day 只有
+    /// utilization、没有 resets_at，dropdown 因而一直显示「重置时间未知」；有效
+    /// 订阅的窗口一定带 resets_at（项目全部测试夹具与订阅有效时期的真实 rl.json
+    /// 样本一致）。
+    ///
+    /// 只检查已知窗口键（five_hour / seven_day / seven_day_sonnet /
+    /// seven_day_opus，值为 null 的键不算「存在」）；一个窗口都没有时返回 false
+    /// （无法判定，交给上层正常降级），避免把 schema 变化误判成「无订阅」。
+    static func indicatesNoActivePlan(data: Data) -> Bool {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return false
+        }
+        let knownWindowKeys = ["five_hour", "seven_day", "seven_day_sonnet", "seven_day_opus"]
+        let presentWindows = knownWindowKeys.compactMap { json[$0] as? [String: Any] }
+        guard !presentWindows.isEmpty else { return false }
+        return presentWindows.allSatisfy { date($0["resets_at"]) == nil }
     }
 
     /// 已知字段（five_hour / seven_day / seven_day_sonnet / seven_day_opus）都是
@@ -793,8 +828,8 @@ struct KimiSubscriptionParser: DashboardParser {
             // 到期日就直接不展示，不再瞎推断），这个顾虑不再成立；expireTime 本来就已经
             // 在下面驱动 refreshText（用户看到的"30d6h"就是它），写进 resetsAt 只是让
             // 额度条节奏指示点（v0.14.0）也能用上同一个日期，不引入新的不确定性。
-            let expireTime = parseDate(balance["expireTime"])
-                ?? parseDate((balance["upcomingExpiration"] as? [String: Any])?["timestamp"])
+            let expireTime = Self.parseDate(balance["expireTime"])
+                ?? Self.parseDate((balance["upcomingExpiration"] as? [String: Any])?["timestamp"])
             let refreshText = expireTime.map { QuotaResetText.description(for: $0, relativeTo: fetchedAt) } ?? "重置时间未知"
             windows.append(QuotaWindow(
                 title: "Work",
@@ -846,9 +881,32 @@ struct KimiSubscriptionParser: DashboardParser {
     func parseSubscriptionExpiresAt(data: Data) -> Date? {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let subscription = json["subscription"] as? [String: Any],
-              let renewalDate = parseDate(subscription["nextBillingTime"])
+              let renewalDate = Self.parseDate(subscription["nextBillingTime"])
         else { return nil }
         return lastValidDate(beforeRenewalDate: renewalDate)
+    }
+
+    /// 判定「Kimi 账号无有效订阅」（订阅已到期 / 未订阅），按服务端权威度排序：
+    /// 1. 响应顶层显式布尔 `subscribed`（真实响应样本确认存在，active 订阅为 true）：
+    ///    false → 无有效订阅，直接判定；true → 直接判定为有效，不再看日期。
+    /// 2. `subscribed` 缺失时退而求其次：`nextBillingTime`（下一次续费日）已经过去
+    ///    → 订阅周期已结束且未续费。有效订阅账号的 nextBillingTime 一定在未来，
+    ///    不会误伤。
+    ///
+    /// 字段缺失 / null / 解析失败一律返回 false（无法判定，交给上层正常降级，不反推）。
+    static func indicatesNoActivePlan(data: Data, now: Date = Date()) -> Bool {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return false
+        }
+        if let subscribed = json["subscribed"] as? Bool {
+            return !subscribed
+        }
+        if let subscription = json["subscription"] as? [String: Any],
+           let renewalDate = parseDate(subscription["nextBillingTime"]),
+           renewalDate < now {
+            return true
+        }
+        return false
     }
 
     private func lastValidDate(beforeRenewalDate renewalDate: Date, calendar: Calendar = .current) -> Date {
@@ -857,7 +915,7 @@ struct KimiSubscriptionParser: DashboardParser {
             ?? renewalDate.addingTimeInterval(-86_400)
     }
 
-    private func parseDate(_ raw: Any?) -> Date? {
+    private static func parseDate(_ raw: Any?) -> Date? {
         guard let s = raw as? String else { return nil }
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

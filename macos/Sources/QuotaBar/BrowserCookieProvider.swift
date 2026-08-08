@@ -125,6 +125,21 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
             NSLog("QuotaBar: [\(kind.rawValue)-cookie] parser returned nil")
             throw QuotaFetchError.transient(detail: "无法解析 dashboard 响应")
         }
+        // v0.11.x：Claude 订阅过期/降级后 usage 响应仍有窗口但 resets_at 全为
+        // null（本机真实样本验证）。这是服务端权威的「无有效订阅」信号——返回
+        // marker snapshot（跟 MiniMax 的 notSubscribed 同模式），让串行管线
+        // 直接短路，UI 显示「未订阅或订阅已过期」，不再把无重置时间的窗口当
+        // 有效额度展示（之前会显示成「重置时间未知」的满额度条）。
+        if endpoint.parser.indicatesNoActivePlan(data: data) {
+            NSLog("QuotaBar: [\(kind.rawValue)-cookie] no active plan (all windows without resets_at)")
+            return ProviderSnapshot(
+                kind: kind,
+                availability: .notSubscribed(reason: "\(kind.displayName) 无有效订阅（额度窗口无重置时间）"),
+                quotas: [],
+                monthlyPrice: nil,
+                fetchedAt: fetchedAt
+            )
+        }
         NSLog("QuotaBar: [\(kind.rawValue)-cookie] parsed windows: \(windows.map { "\($0.title): \(Int($0.remainingFraction*100))%" }.joined(separator: ", "))")
         let tier = endpoint.parser.parseTier(data: data) ?? parsePlanType(from: data)
         let monthlyPrice: String?
@@ -173,6 +188,18 @@ final class BrowserCookieProvider: QuotaProvider, @unchecked Sendable {
 
         // 主请求：GetSubscription（Work 额度 + 档位 + 价格 + 续费日）。
         let subscriptionData = try? await performRequest(with: cookies, endpoint: subscriptionEndpoint)
+        // v0.11.x：服务端明确返回「下一次续费日已过」→ 订阅已到期/未订阅，返回
+        // notSubscribed marker（与 KimiDesktopTokenProvider 同一条规则，见
+        // `KimiSubscriptionParser.indicatesNoActivePlan`）。
+        if let subscriptionData, KimiSubscriptionParser.indicatesNoActivePlan(data: subscriptionData) {
+            return ProviderSnapshot(
+                kind: .kimi,
+                availability: .notSubscribed(reason: "Kimi 订阅已到期或未订阅"),
+                quotas: [],
+                monthlyPrice: nil,
+                fetchedAt: fetchedAt
+            )
+        }
         var windows = subscriptionData.flatMap { subscriptionParser.parse(data: $0) } ?? []
 
         // 兼容路径：主请求拿不到额度时再试旧 stat 端点（含 Work + Code）。

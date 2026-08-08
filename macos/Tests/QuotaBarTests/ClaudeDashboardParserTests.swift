@@ -60,6 +60,53 @@ struct ClaudeDashboardParserTests {
         #expect(ClaudeDashboardParser().parse(data: data) == nil)
     }
 
+    @Test("indicatesNoActivePlan when all windows lack resets_at (expired subscription)")
+    func noActivePlanWhenAllResetsAtMissing() throws {
+        // 本机真实样本（2026-08-08，订阅过期后）：窗口在、resets_at 全缺失。
+        let json: [String: Any] = [
+            "five_hour": ["utilization": 0],
+            "seven_day": ["utilization": 0],
+            "seven_day_sonnet": NSNull(),
+            "seven_day_opus": NSNull(),
+        ]
+        let data = try JSONSerialization.data(withJSONObject: json)
+        #expect(ClaudeDashboardParser().indicatesNoActivePlan(data: data))
+        // 窗口本身仍能解析（保证检测信号跟展示数据来自同一次响应）。
+        let windows = try #require(ClaudeDashboardParser().parse(data: data))
+        #expect(windows.count == 2)
+    }
+
+    @Test("indicatesNoActivePlan is false when any window has resets_at")
+    func activePlanWhenResetsAtPresent() throws {
+        let json: [String: Any] = [
+            "five_hour": ["utilization": 10, "resets_at": "2026-07-06T20:00:00Z"],
+            "seven_day": ["utilization": 30],
+        ]
+        let data = try JSONSerialization.data(withJSONObject: json)
+        #expect(!ClaudeDashboardParser().indicatesNoActivePlan(data: data))
+    }
+
+    @Test("indicatesNoActivePlan is false when no known windows present")
+    func noActivePlanUnknownWithoutWindows() throws {
+        let json: [String: Any] = ["unrelated": "field"]
+        let data = try JSONSerialization.data(withJSONObject: json)
+        #expect(!ClaudeDashboardParser().indicatesNoActivePlan(data: data))
+        #expect(ClaudeDashboardParser().parse(data: data) == nil)
+    }
+
+    @Test("indicatesNoActivePlan is false for null-only window keys")
+    func noActivePlanFalseForNullWindows() throws {
+        // seven_day_sonnet/opus 对非 Max 用户本来就是 null，不应触发「无订阅」。
+        let json: [String: Any] = [
+            "five_hour": NSNull(),
+            "seven_day": NSNull(),
+            "seven_day_sonnet": NSNull(),
+            "seven_day_opus": NSNull(),
+        ]
+        let data = try JSONSerialization.data(withJSONObject: json)
+        #expect(!ClaudeDashboardParser().indicatesNoActivePlan(data: data))
+    }
+
     @Test("organizations response selects org with chat capability over api-only org")
     func selectsChatCapableOrg() throws {
         let json: [[String: Any]] = [

@@ -68,7 +68,16 @@ final class OpenCodeWorkspaceProvider: QuotaProvider, @unchecked Sendable {
         guard !items.isEmpty else {
             if goHTML.contains("data-slot=\"promo-description\"") {
                 // Go 页渲染的是订阅推广文案 → 这个 workspace 没有 Go 订阅。
-                throw QuotaFetchError.notSubscribed(detail: "workspace 未订阅 opencode Go")
+                // v0.11.x：返回 marker snapshot 而不是抛错——opencode-auth 的
+                // tier-only 成功会先占住基底，抛错会被管线吞掉；marker 能经
+                // mergeLayers 覆盖成「未订阅或订阅已过期」。
+                return ProviderSnapshot(
+                    kind: .opencode,
+                    availability: .notSubscribed(reason: "workspace 未订阅 opencode Go"),
+                    quotas: [],
+                    monthlyPrice: nil,
+                    fetchedAt: dateProvider()
+                )
             }
             throw QuotaFetchError.transient(detail: "Go 页面已加载但未解析出额度条")
         }

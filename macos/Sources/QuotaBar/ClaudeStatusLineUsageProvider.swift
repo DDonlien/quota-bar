@@ -45,6 +45,19 @@ final class ClaudeStatusLineUsageProvider: QuotaProvider, @unchecked Sendable {
         guard let windows = Self.parseRateLimits(data), !windows.isEmpty else {
             throw QuotaFetchError.sourceUnavailable(detail: "Claude statusLine 缓存里没有 rate_limits 数据")
         }
+        // v0.11.x：订阅过期/降级后 statusLine payload 的 rate_limits 窗口
+        // `resets_at` 全为显式 null（与 webview/oauth 路径同一个服务端信号）。
+        // 返回 notSubscribed marker 让串行管线直接短路，不把无重置时间的
+        // 窗口当有效额度展示。
+        if Self.indicatesNoActivePlan(data) {
+            return ProviderSnapshot(
+                kind: .claude,
+                availability: .notSubscribed(reason: "Claude 无有效订阅（额度窗口无重置时间）"),
+                quotas: [],
+                monthlyPrice: nil,
+                fetchedAt: fetchedAt
+            )
+        }
 
         return ProviderSnapshot(
             kind: .claude,
@@ -53,6 +66,20 @@ final class ClaudeStatusLineUsageProvider: QuotaProvider, @unchecked Sendable {
             monthlyPrice: nil,
             fetchedAt: fetchedAt
         )
+    }
+
+    /// 判定 statusLine 缓存里的「无有效订阅」信号：rate_limits 窗口存在、但所有
+    /// 窗口的 `resets_at` 都是**显式 null**。只认显式 null、不认键缺失——
+    /// statusLine payload 历史上存在不写 resets_at 键的形态，键缺失不能当
+    /// 「无订阅」推断（会误伤有效订阅但缓存不完整的用户）。
+    static func indicatesNoActivePlan(_ data: Data) -> Bool {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let rateLimits = json["rate_limits"] as? [String: Any] else {
+            return false
+        }
+        let presentWindows = ["five_hour", "seven_day"].compactMap { rateLimits[$0] as? [String: Any] }
+        guard !presentWindows.isEmpty else { return false }
+        return presentWindows.allSatisfy { $0["resets_at"] is NSNull }
     }
 
     /// statusLine payload 形状（经 ping-island `ClaudeUsageLoader` 交叉验证）：

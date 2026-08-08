@@ -109,6 +109,79 @@ struct ClaudeStatusLineUsageProviderTests {
         #expect(snapshot.availability == .available)
         #expect(snapshot.quotas.count == 2)
     }
+
+    @Test("fresh cache with explicit null resets_at yields notSubscribed marker")
+    func explicitNullResetsAtYieldsNotSubscribed() async throws {
+        // 订阅过期后 statusLine payload 的窗口 `resets_at` 全为显式 null——
+        // 与 webview/oauth 的 usage 响应同一个服务端信号。
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("quota-bar-statusline-expired-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let cacheURL = dir.appendingPathComponent("cache.json")
+        let json: [String: Any] = [
+            "rate_limits": [
+                "five_hour": ["used_percentage": 0, "resets_at": NSNull()],
+                "seven_day": ["used_percentage": 0, "resets_at": NSNull()],
+            ],
+        ]
+        try JSONSerialization.data(withJSONObject: json).write(to: cacheURL)
+
+        let provider = ClaudeStatusLineUsageProvider(cachePath: cacheURL.path)
+        let snapshot = try await provider.fetchSnapshot(timeout: 1)
+        guard case .notSubscribed = snapshot.availability else {
+            Issue.record("期望 notSubscribed marker，实际 \(snapshot.availability)")
+            return
+        }
+        #expect(snapshot.quotas.isEmpty)
+    }
+
+    @Test("missing resets_at key alone does not yield notSubscribed marker")
+    func missingResetsAtKeyKeepsAvailable() async throws {
+        // statusLine payload 历史上存在不写 resets_at 键的形态：键缺失不能当
+        // 「无订阅」推断，否则会误伤有效订阅但缓存不完整的用户。
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("quota-bar-statusline-missing-key-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let cacheURL = dir.appendingPathComponent("cache.json")
+        let json: [String: Any] = [
+            "rate_limits": [
+                "five_hour": ["used_percentage": 10],
+                "seven_day": ["used_percentage": 5],
+            ],
+        ]
+        try JSONSerialization.data(withJSONObject: json).write(to: cacheURL)
+
+        let provider = ClaudeStatusLineUsageProvider(cachePath: cacheURL.path)
+        let snapshot = try await provider.fetchSnapshot(timeout: 1)
+        #expect(snapshot.availability == .available)
+        #expect(snapshot.quotas.count == 2)
+    }
+
+    @Test("indicatesNoActivePlan requires explicit null on all windows")
+    func indicatesNoActivePlanExplicitNullOnly() throws {
+        let allNull: [String: Any] = [
+            "rate_limits": [
+                "five_hour": ["used_percentage": 0, "resets_at": NSNull()],
+                "seven_day": ["used_percentage": 0, "resets_at": NSNull()],
+            ],
+        ]
+        let nullData = try JSONSerialization.data(withJSONObject: allNull)
+        #expect(ClaudeStatusLineUsageProvider.indicatesNoActivePlan(nullData))
+
+        let mixed: [String: Any] = [
+            "rate_limits": [
+                "five_hour": ["used_percentage": 0, "resets_at": NSNull()],
+                "seven_day": ["used_percentage": 0],
+            ],
+        ]
+        let mixedData = try JSONSerialization.data(withJSONObject: mixed)
+        #expect(!ClaudeStatusLineUsageProvider.indicatesNoActivePlan(mixedData))
+
+        let noRateLimits = try JSONSerialization.data(withJSONObject: ["model": ["display_name": "Claude"]] as [String: Any])
+        #expect(!ClaudeStatusLineUsageProvider.indicatesNoActivePlan(noRateLimits))
+    }
 }
 
 /// hook 安装器：全部指向临时目录，不触碰真实 `~/.claude/settings.json`。
