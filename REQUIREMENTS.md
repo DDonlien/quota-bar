@@ -885,6 +885,24 @@
 - [ ] [0.11.0-QA-A-004] 60 次/小时限流边界：mock API 返回 `403 X-RateLimit-Remaining: 0` 时 app 提示「检查过于频繁，请稍后重试」而非永久拒服务 #P1
 - [ ] [0.11.0-QA-A-005] helper 失败路径：mock 替换失败 → 主 app 检测到 `update-error.log` → 启动时弹「上次更新失败」通知，旧版继续运行不崩 #P1
 
+## Phase - v0.11.2 - 菜单栏次级额度可辨识度 + Codex 当前续费日
+
+### sub/main: 让低比例次级额度如实可见
+
+> 用户实测 opencode Go 的最短周期额度为 100%、次短周期周额度为 7%，dropdown 数据正确，但菜单栏 14pt 高的 bar 中，现有 45° 镂空纹理被裁到约 0.98pt 后几乎完全不可见。要求保留真实 7% 高度，不人为抬高到 10%，同时让次级额度的虚线身份可以辨认。
+
+- [x] [0.11.2-UI-A-000] 菜单栏 bar 的 primary/secondary 身份仍固定对应最短/次短周期；高度映射改为按当前 Retina backing scale 对齐到最近物理像素，次级额度增加位于真实比例高度的横向虚线边界，低比例时不再依赖会被裁没的斜线纹理 #P0
+- [x] [0.11.2-QA-A-000] 增加 `100% primary + 7% secondary` 的确定性 2x 渲染回归，验证 7% 映射到 28px 内容区中的 2px、虚线有可见像素且不越过次级额度边界；保留现有选层、圆角和单层回归 #P0
+
+### sub/main: Codex 日期改为当前订阅周期续费日
+
+> 用户当前 Codex Pro 额度实时可用，但 header 仍显示 `2026/7/29`。运行日志确认 `CodexAuthProvider` 把已经过去的 JWT `chatgpt_subscription_active_until` 填入 snapshot，`SubscriptionExpiryResolver` 因 snapshot 已有日期而直接短路，导致 `accounts/check` 永远不执行。这是旧订阅周期日期被复用，不是时区或格式问题。
+
+- [x] [0.11.2-BUG-A-000] Codex usage 成功时只允许尚未过去的 JWT 订阅日期进入 snapshot；过期 JWT 视为陈旧元数据并继续执行 `accounts/check`，成功则展示当前付费周期的下一次续费边界，失败则隐藏日期/保留授权补救入口，不按月推算、不复用历史日期 #P0
+- [x] [0.11.2-UI-A-001] Codex 当前付费周期日期的 hover 语义改为「下次续费时间」；其他仍只提供最后有效日的 provider 保持原有语义，避免把不同来源一概误标为扣费日 #P1
+- [x] [0.11.2-QA-A-001] 覆盖「live Pro + past JWT + accounts/check 成功」「live Pro + past JWT + resolver 失败」「future JWT 仍可直接采用」三类回归；失败路径必须留空，不得制造未来日期 #P0
+
+
 ## Phase - v0.12.0 - 升级到 Developer ID 签名 + notarize
 
 > **承接 v0.11.0**：v0.11.0 已完成 update 机制全部建设（UpdateChecker / helper / UI / 状态机 / semver / ad-hoc 签名），bundle identifier 在 v0.11.0 阶段锁死为 `com.taobe.quotabar`。

@@ -2,9 +2,38 @@ import Foundation
 import Testing
 @testable import QuotaBar
 
-@Suite("SubscriptionExpirySources — 独立过期日 source pipeline")
+@Suite("SubscriptionExpirySources — 独立过期日 source pipeline", .serialized)
 @MainActor
 struct SubscriptionExpirySourcesTests {
+
+    private static func session(statusCode: Int = 200, data: Data) -> URLSession {
+        SubscriptionExpiryMockURLProtocol.responseHandler = { request in
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: statusCode,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, data)
+        }
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [SubscriptionExpiryMockURLProtocol.self]
+        return URLSession(configuration: config)
+    }
+
+    private static func chatGPTCookie() -> HTTPCookie {
+        HTTPCookie(properties: [
+            .domain: ".chatgpt.com",
+            .path: "/",
+            .name: "session",
+            .value: "test-only",
+            .secure: "TRUE",
+        ])!
+    }
+
+    private static func codexAPISourceOnly(_ kind: ProviderKind) -> [SubscriptionExpirySource] {
+        Array(SubscriptionExpirySources.sources(for: kind).prefix(1))
+    }
 
     @Test("Kimi source：membership 页 headless 兜底")
     func kimiSourceOrder() {
@@ -66,6 +95,77 @@ struct SubscriptionExpirySourcesTests {
         #expect(result?.source.confidence == .high)
     }
 
+    @Test("Codex 已过去的 snapshot 日期不短路，accounts/check 返回当前续费边界")
+    func staleCodexSnapshotFallsThroughToAccountsCheck() async {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let staleDate = now.addingTimeInterval(-30 * 86400)
+        let renewsAt = now.addingTimeInterval(14 * 86400)
+        let renewalISO = ISO8601DateFormatter().string(from: renewsAt)
+        let data = try! JSONSerialization.data(withJSONObject: [
+            "accounts": [
+                "default": [
+                    "entitlement": [
+                        "has_active_subscription": true,
+                        "subscription_plan": "chatgptproplan",
+                        "expires_at": renewalISO,
+                    ],
+                ],
+            ],
+        ])
+        let snapshot = ProviderSnapshot(
+            kind: .codex,
+            subscriptionTier: "Pro",
+            availability: .available,
+            quotas: [QuotaWindow(title: "周额度", remainingFraction: 0.94, refreshDescription: "6d")],
+            monthlyPrice: "¥1347/月",
+            subscriptionExpiresAt: staleDate,
+            subscriptionExpiresAtSource: .appCache,
+            subscriptionExpiresAtConfidence: .medium,
+            fetchedAt: now
+        )
+        let resolver = SubscriptionExpiryResolver(
+            timeout: 1,
+            session: Self.session(data: data),
+            cookiesProvider: { _ in [Self.chatGPTCookie()] },
+            sourcesProvider: Self.codexAPISourceOnly
+        )
+
+        let result = await resolver.resolve(for: snapshot)
+        #expect(result?.expiresAt.timeIntervalSince1970 == renewsAt.timeIntervalSince1970)
+        #expect(result?.source.id == "codex-accounts-check")
+        #expect(result?.source.confidence == .high)
+    }
+
+    @Test("Codex 当前周期查询无日期时返回 nil，不制造或复用历史日期")
+    func unresolvedCodexRenewalDateStaysHidden() async {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let data = try! JSONSerialization.data(withJSONObject: [
+            "accounts": [
+                "default": [
+                    "entitlement": ["has_active_subscription": true],
+                ],
+            ],
+        ])
+        let snapshot = ProviderSnapshot(
+            kind: .codex,
+            subscriptionTier: "Pro",
+            availability: .available,
+            quotas: [QuotaWindow(title: "周额度", remainingFraction: 0.94, refreshDescription: "6d")],
+            monthlyPrice: "¥1347/月",
+            fetchedAt: now
+        )
+        let resolver = SubscriptionExpiryResolver(
+            timeout: 1,
+            session: Self.session(data: data),
+            cookiesProvider: { _ in [Self.chatGPTCookie()] },
+            sourcesProvider: Self.codexAPISourceOnly
+        )
+
+        let result = await resolver.resolve(for: snapshot)
+        #expect(result == nil)
+        #expect(snapshot.subscriptionExpiresAt == nil)
+    }
+
     @Test("免费额度 snapshot 无过期日时仍保持 available，resolver 只返回 nil")
     func freeQuotaWithoutSubscriptionExpiryStaysAvailable() async {
         let snapshot = ProviderSnapshot(
@@ -77,7 +177,11 @@ struct SubscriptionExpirySourcesTests {
             monthlyPrice: nil,
             fetchedAt: Date()
         )
-        let resolver = SubscriptionExpiryResolver(timeout: 0.1)
+        let resolver = SubscriptionExpiryResolver(
+            timeout: 0.1,
+            cookiesProvider: { _ in [] },
+            sourcesProvider: Self.codexAPISourceOnly
+        )
         let result = await resolver.resolve(for: snapshot)
         #expect(result == nil)
         if case .available = snapshot.availability {
@@ -88,4 +192,28 @@ struct SubscriptionExpirySourcesTests {
         #expect(snapshot.subscriptionExpiresAt == nil)
         #expect(snapshot.quotas.count == 1)
     }
+}
+
+private final class SubscriptionExpiryMockURLProtocol: URLProtocol, @unchecked Sendable {
+    nonisolated(unsafe) static var responseHandler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        guard let handler = Self.responseHandler else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
+            return
+        }
+        do {
+            let (response, data) = try handler(request)
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch {
+            client?.urlProtocol(self, didFailWithError: error)
+        }
+    }
+
+    override func stopLoading() {}
 }

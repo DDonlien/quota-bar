@@ -76,6 +76,40 @@ struct CodexAccountsCheckParserTests {
         #expect(date == ISO8601DateFormatter().date(from: "2026-07-25T15:23:58+00:00"))
     }
 
+    @Test("prefers current renews_at over an older expires_at")
+    func prefersRenewalBoundary() throws {
+        let json: [String: Any] = [
+            "accounts": [
+                "default": [
+                    "entitlement": [
+                        "has_active_subscription": true,
+                        "renews_at": "2026-09-29T15:23:58+00:00",
+                        "expires_at": "2026-07-29T15:23:58+00:00",
+                    ],
+                ],
+            ],
+        ]
+        let date = try #require(CodexAccountsCheckParser.extractExpiresAt(from: Self.data(json)))
+        #expect(date == ISO8601DateFormatter().date(from: "2026-09-29T15:23:58+00:00"))
+    }
+
+    @Test("accepts Unix milliseconds used by current accounts/check responses")
+    func extractsUnixMilliseconds() throws {
+        let expected = Date(timeIntervalSince1970: 1_800_000_000)
+        let json: [String: Any] = [
+            "accounts": [
+                "default": [
+                    "entitlement": [
+                        "has_active_subscription": true,
+                        "renews_at": 1_800_000_000_000,
+                    ],
+                ],
+            ],
+        ]
+        let date = try #require(CodexAccountsCheckParser.extractExpiresAt(from: Self.data(json)))
+        #expect(date == expected)
+    }
+
     @Test("prefers active subscription over inactive accounts")
     func prefersActive() throws {
         let json: [String: Any] = [

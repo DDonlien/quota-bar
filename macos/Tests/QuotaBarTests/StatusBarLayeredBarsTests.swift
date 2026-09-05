@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 @testable import QuotaBar
@@ -123,5 +124,54 @@ struct StatusBarLayeredBarsTests {
         let rect = layout.barRect(at: 1, remainingFraction: 1.0)
         let path = layout.barPath(at: 1, rect: rect)
         #expect(path.elementCount == 5, "纯矩形路径应该是 moveTo + 3 条 lineTo + closePath = 5 个 element")
+    }
+
+    @Test("100% 主额度 + 7% 次级额度在 2x 下按 2px 高度渲染且虚线可见")
+    func sevenPercentSecondaryIsPixelAlignedAndDashed() throws {
+        let codex = ProviderSnapshot(
+            kind: .codex,
+            availability: .available,
+            quotas: [window(period: 7 * 86400, remaining: 0.94)],
+            monthlyPrice: nil,
+            fetchedAt: Date()
+        )
+        let opencode = ProviderSnapshot(
+            kind: .opencode,
+            availability: .available,
+            quotas: [
+                window(period: 5 * 3600, remaining: 1),
+                window(period: 7 * 86400, remaining: 0.07),
+            ],
+            monthlyPrice: nil,
+            fetchedAt: Date()
+        )
+        let image = StatusBarController.makeBarsImage(
+            from: [codex, opencode],
+            backingScale: 2
+        )
+        let bitmap = try #require(image.representations.compactMap { $0 as? NSBitmapImageRep }.first)
+        let layout = StatusBarController.BarsImageLayout(count: 2)
+        let secondaryRect = layout.barRect(at: 1, remainingFraction: 0.07, backingScale: 2)
+
+        #expect(bitmap.pixelsHigh == 36)
+        #expect(abs(secondaryRect.height - 1) < 0.001, "14pt × 7% × 2x 应四舍五入为 2px（1pt）")
+
+        let boundaryAppKitRow = Int((secondaryRect.maxY * 2).rounded(.down)) - 1
+        let boundaryRow = bitmap.pixelsHigh - 1 - boundaryAppKitRow
+        let minX = Int((secondaryRect.minX * 2).rounded(.up))
+        let maxX = Int((secondaryRect.maxX * 2).rounded(.down)) - 1
+        let boundaryAlphas = (minX...maxX).compactMap {
+            bitmap.colorAt(x: $0, y: boundaryRow)?.alphaComponent
+        }
+        #expect(boundaryAlphas.contains { $0 < 0.4 }, "虚线 dash 应在实心主额度上镂出清晰像素")
+        #expect(boundaryAlphas.contains { $0 > 0.8 }, "虚线 gap 应保留实心像素")
+
+        // 虚线必须完全留在 7% 区域内；紧邻其上的主额度仍应保持完整。
+        let rowAboveAppKit = Int((secondaryRect.maxY * 2).rounded(.up))
+        let rowAbove = bitmap.pixelsHigh - 1 - rowAboveAppKit
+        let centerAlphas = ((minX + 4)...(maxX - 4)).compactMap {
+            bitmap.colorAt(x: $0, y: rowAbove)?.alphaComponent
+        }
+        #expect(centerAlphas.allSatisfy { $0 > 0.9 })
     }
 }

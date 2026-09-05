@@ -773,7 +773,21 @@ private struct PlanHeader: View {
     private var subscriptionExpiresDate: Date? {
         guard snapshot.availability == .available,
               let date = snapshot.subscriptionExpiresAt else { return nil }
+        // Codex 的本地 JWT 可能长期保留上一个订阅周期日期；即使旧快照在新版本
+        // 启动后的第一次刷新前短暂被恢复，也不要把过去日期显示成「下次续费」。
+        if (snapshot.kind == .codex || snapshot.kind == .openai), date <= Date() {
+            return nil
+        }
         return date
+    }
+
+    private var subscriptionDateHelpLabel: String {
+        switch snapshot.kind {
+        case .codex, .openai:
+            return "下次续费时间"
+        default:
+            return "最后有效日期"
+        }
     }
 
     /// 订阅/数据最后有效日期展示文案：`YYYY/M/D`（无前导零，例如 "2026/6/25"）。
@@ -875,7 +889,7 @@ private struct PlanHeader: View {
             } else {
                 HStack(spacing: MenuDashboardStyle.planPriceTrailingGap) {
                     if let expiresAtText {
-                        // 订阅/数据最后有效日期；灰色 11pt 视觉上比 13pt 价格次要，
+                        // 订阅周期日期；灰色 11pt 视觉上比 13pt 价格次要，
                         // 与右侧价格共享 secondary 灰系，让「日期 + 价格」形成一组信息。
                         // UI-A-001：hover 显示精确到秒的本地时区时间。
                         Text(expiresAtText)
@@ -883,7 +897,7 @@ private struct PlanHeader: View {
                             .foregroundStyle(Palette.secondary)
                             .lineLimit(1)
                             .monospacedDigit()
-                            .help("最后有效日期：\(preciseExpiresAtText ?? expiresAtText)")
+                            .help("\(subscriptionDateHelpLabel)：\(preciseExpiresAtText ?? expiresAtText)")
                     } else if canOfferWebAuthorizationForDate {
                         // 有 TierName、有额度，但拿不到订阅到期日，且该 provider 支持
                         // WebView 授权：提供与日期同样式的可点击引导（一次授权后

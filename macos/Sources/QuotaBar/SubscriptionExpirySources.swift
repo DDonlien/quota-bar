@@ -152,10 +152,12 @@ struct SubscriptionMetadataResolution: Sendable {
 /// {"accounts": {"default": {"entitlement": {
 ///     "has_active_subscription": true,
 ///     "subscription_plan": "chatgptplusplan",
-///     "expires_at": "2026-07-25T15:23:58+00:00"
+///     "renews_at": "2026-07-25T15:23:58+00:00",
+///     "expires_at": null
 /// }}}}
 /// ```
-/// 活跃订阅的 `expires_at` 优先；多账号时取最晚日期。
+/// 活跃订阅优先取下一次真实扣费边界 `renews_at`，仅当它不存在时才退到
+/// `expires_at`；两者都兼容 ISO-8601、Unix 秒和 Unix 毫秒。多账号时取最晚日期。
 enum CodexAccountsCheckParser {
     static func extractExpiresAt(from data: Data) -> Date? {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -167,8 +169,8 @@ enum CodexAccountsCheckParser {
         for value in accounts.values {
             guard let account = value as? [String: Any],
                   let entitlement = account["entitlement"] as? [String: Any],
-                  let raw = entitlement["expires_at"] as? String,
-                  let date = parseISODate(raw)
+                  let date = parseDate(entitlement["renews_at"])
+                    ?? parseDate(entitlement["expires_at"])
             else { continue }
             if (entitlement["has_active_subscription"] as? Bool) == true {
                 activeDates.append(date)
@@ -179,12 +181,82 @@ enum CodexAccountsCheckParser {
         return activeDates.max() ?? otherDates.max()
     }
 
-    private static func parseISODate(_ raw: String) -> Date? {
+    /// 只输出 JSON 的字段结构，不输出账号 key、字段值或任何 Cookie/token。
+    /// accounts/check schema 漂移时，这份摘要可区分「字段改名」和「当前会话没有
+    /// entitlement」，同时保持诊断日志不含个人账号信息。
+    static func safeShapeSummary(from data: Data) -> String {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return "non-object-json"
+        }
+        let topLevelKeys = json.keys.sorted().joined(separator: ",")
+        guard let accountsValue = json["accounts"] else {
+            return "top=[\(topLevelKeys)]; accounts=missing"
+        }
+
+        let accountObjects: [[String: Any]]
+        let accountsShape: String
+        if let accounts = accountsValue as? [String: Any] {
+            accountObjects = accounts.values.compactMap { $0 as? [String: Any] }
+            accountsShape = "object(\(accounts.count))"
+        } else if let accounts = accountsValue as? [[String: Any]] {
+            accountObjects = accounts
+            accountsShape = "array(\(accounts.count))"
+        } else {
+            accountObjects = []
+            accountsShape = String(describing: type(of: accountsValue))
+        }
+
+        let accountKeys = Set(accountObjects.flatMap(\.keys)).sorted().joined(separator: ",")
+        let entitlements = accountObjects.compactMap { $0["entitlement"] as? [String: Any] }
+        let entitlementKeys = Set(entitlements.flatMap(\.keys)).sorted().joined(separator: ",")
+        let dateFieldShapes = Set(entitlements.flatMap { entitlement in
+            ["renews_at", "expires_at"].map { key in
+                "\(key)=\(safeValueShape(entitlement[key]))"
+            }
+        }).sorted().joined(separator: ",")
+        let lastActiveSubscriptions = accountObjects.compactMap {
+            $0["last_active_subscription"] as? [String: Any]
+        }
+        let lastActiveKeys = Set(lastActiveSubscriptions.flatMap(\.keys)).sorted().joined(separator: ",")
+        return "top=[\(topLevelKeys)]; accounts=\(accountsShape); accountKeys=[\(accountKeys)]; entitlementKeys=[\(entitlementKeys)]; dateFields=[\(dateFieldShapes)]; lastActiveKeys=[\(lastActiveKeys)]"
+    }
+
+    private static func parseDate(_ raw: Any?) -> Date? {
+        if let number = raw as? NSNumber {
+            let value = number.doubleValue
+            guard value.isFinite, value > 0 else { return nil }
+            let seconds = value > 10_000_000_000 ? value / 1_000 : value
+            return Date(timeIntervalSince1970: seconds)
+        }
+        guard let raw = raw as? String else { return nil }
+        if let value = Double(raw), value.isFinite, value > 0 {
+            let seconds = value > 10_000_000_000 ? value / 1_000 : value
+            return Date(timeIntervalSince1970: seconds)
+        }
         let withFraction = ISO8601DateFormatter()
         withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         if let date = withFraction.date(from: raw) { return date }
         let plain = ISO8601DateFormatter()
         return plain.date(from: raw)
+    }
+
+    private static func safeValueShape(_ value: Any?) -> String {
+        switch value {
+        case nil:
+            return "missing"
+        case is NSNull:
+            return "null"
+        case let string as String:
+            return "string(\(string.count))"
+        case is NSNumber:
+            return "number"
+        case let object as [String: Any]:
+            return "object[\(object.keys.sorted().joined(separator: ","))]"
+        case let array as [Any]:
+            return "array(\(array.count))"
+        default:
+            return String(describing: type(of: value))
+        }
     }
 }
 
@@ -281,9 +353,22 @@ enum SubscriptionExpirySources {
 @MainActor
 final class SubscriptionExpiryResolver {
     private let timeout: TimeInterval
+    private let session: URLSession
+    private let cookiesProvider: ([String]) async -> [HTTPCookie]
+    private let sourcesProvider: (ProviderKind) -> [SubscriptionExpirySource]
 
-    init(timeout: TimeInterval) {
+    init(
+        timeout: TimeInterval,
+        session: URLSession = .shared,
+        cookiesProvider: (([String]) async -> [HTTPCookie])? = nil,
+        sourcesProvider: ((ProviderKind) -> [SubscriptionExpirySource])? = nil
+    ) {
         self.timeout = timeout
+        self.session = session
+        self.cookiesProvider = cookiesProvider ?? { domains in
+            (try? await AppWebViewSessionCookieReader().readCookies(matching: domains)) ?? []
+        }
+        self.sourcesProvider = sourcesProvider ?? { SubscriptionExpirySources.sources(for: $0) }
     }
 
     /// 兼容旧调用方：只返回成功解析出的日期。
@@ -300,18 +385,25 @@ final class SubscriptionExpiryResolver {
     /// 返回结果可以只有档位、没有日期；调用方应保留原 snapshot 和额度状态，
     /// 不把日期解析失败映射成 quota 失败。
     func resolveMetadata(for snapshot: ProviderSnapshot) async -> SubscriptionMetadataResolution? {
-        // snapshot 已带日期就直接采用（无论来源标记是否齐全），
-        // 不为一个已知日期跑 headless / 浏览器 Cookie。
+        // snapshot 已带、并且仍在当前 snapshot 时间之后的日期才可直接采用。
+        // 已过去的日期是历史周期元数据，必须继续查询后续来源，不能让它短路
+        // accounts/check（Codex 旧 JWT 日期长期停在首个订阅周期就是这个问题）。
         if let expiresAt = snapshot.subscriptionExpiresAt {
             let source = existingSnapshotSource(for: snapshot)
+            if expiresAt > snapshot.fetchedAt {
+                await ProviderCheckLog.shared.record(
+                    kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel,
+                    outcome: .success, detail: "来源 \(source.id)：沿用额度层已带的当前周期日期，跳过独立过期日 resolver：\(expiresAt)"
+                )
+                return SubscriptionMetadataResolution(expiresAt: expiresAt, subscriptionTier: nil, source: source)
+            }
             await ProviderCheckLog.shared.record(
                 kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel,
-                outcome: .success, detail: "来源 \(source.id)：沿用额度层已带的日期，跳过独立过期日 resolver：\(expiresAt)"
+                outcome: .skipped, detail: "来源 \(source.id)：忽略已过去的历史周期日期，继续查询当前订阅周期：\(expiresAt)"
             )
-            return SubscriptionMetadataResolution(expiresAt: expiresAt, subscriptionTier: nil, source: source)
         }
 
-        let sources = SubscriptionExpirySources.sources(for: snapshot.kind)
+        let sources = sourcesProvider(snapshot.kind)
         guard !sources.isEmpty else {
             await ProviderCheckLog.shared.record(
                 kind: snapshot.kind, step: .expiration, method: "-",
@@ -323,10 +415,9 @@ final class SubscriptionExpiryResolver {
         for source in sources {
             switch source.kind {
             case .api, .appCache, .cli:
-                if let expiresAt = snapshot.subscriptionExpiresAt {
-                    await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .success, detail: "来源 \(source.id)：\(expiresAt)")
-                    return SubscriptionMetadataResolution(expiresAt: expiresAt, subscriptionTier: nil, source: source)
-                }
+                // 这些 source 目前只表示 snapshot 已有字段；当前日期已在函数入口返回，
+                // 历史日期也已明确淘汰，因此这里没有可执行动作。
+                continue
             case .browserAPI:
                 // 可执行的 browserAPI source：用 App 自有 WebView 会话 Cookie 打 JSON API
                 // （2026-07-08 移除浏览器 Cookie 文件读取兜底）。
@@ -338,9 +429,17 @@ final class SubscriptionExpiryResolver {
                         await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .failure, detail: "来源 \(source.id)：无会话 Cookie（\(source.cookieDomains.joined(separator: ","))）")
                         continue
                     }
-                    guard let rawDate = try await executeAPIRequest(request, cookies: cookies, identifier: source.id) else {
+                    let apiResponse = try await executeAPIRequest(
+                        request,
+                        cookies: cookies,
+                        identifier: source.id
+                    )
+                    guard let rawDate = apiResponse.date else {
                         QuotaBarDiagnostics.write("[\(source.id)] extractDate returned nil")
-                        await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .failure, detail: "来源 \(source.id)：响应里未解析出日期字段")
+                        let shape = source.id == "codex-accounts-check"
+                            ? "；响应结构 \(CodexAccountsCheckParser.safeShapeSummary(from: apiResponse.data))"
+                            : ""
+                        await ProviderCheckLog.shared.record(kind: snapshot.kind, step: .expiration, method: source.kind.checkLogLabel, outcome: .failure, detail: "来源 \(source.id)：响应里未解析出日期字段\(shape)")
                         continue
                     }
                     let lastValidDate = source.lastValidDate(from: rawDate)
@@ -408,7 +507,7 @@ final class SubscriptionExpiryResolver {
     /// browserAPI source 的会话 Cookie：只用 App 自有 WebView 会话（2026-07-08
     /// 移除浏览器文件读取兜底，见 `BrowserCookieReader.swift` 顶部说明）。
     private func sessionCookies(for domains: [String]) async -> [HTTPCookie] {
-        (try? await AppWebViewSessionCookieReader().readCookies(matching: domains)) ?? []
+        await cookiesProvider(domains)
     }
 
     /// 执行 browserAPI 请求并提取日期。
@@ -416,7 +515,7 @@ final class SubscriptionExpiryResolver {
         _ request: SubscriptionExpiryAPIRequest,
         cookies: [HTTPCookie],
         identifier: String
-    ) async throws -> Date? {
+    ) async throws -> (date: Date?, data: Data) {
         var urlRequest = URLRequest(url: request.url, timeoutInterval: timeout)
         urlRequest.httpMethod = request.method
         urlRequest.setValue(
@@ -429,7 +528,7 @@ final class SubscriptionExpiryResolver {
             urlRequest.setValue(value, forHTTPHeaderField: key)
         }
 
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        let (data, response) = try await session.data(for: urlRequest)
         guard let http = response as? HTTPURLResponse else {
             throw QuotaFetchError.transient(detail: "browserAPI 返回非 HTTP 响应")
         }
@@ -437,7 +536,7 @@ final class SubscriptionExpiryResolver {
             throw QuotaFetchError.transient(detail: "browserAPI HTTP \(http.statusCode)")
         }
         QuotaBarDiagnostics.write("[\(identifier)] browserAPI HTTP \(http.statusCode), \(data.count) bytes")
-        return request.extractDate(data)
+        return (request.extractDate(data), data)
     }
 
     /// headless 页面加载：只用 App 自有 WebView 会话（用户在 App 内 WebView

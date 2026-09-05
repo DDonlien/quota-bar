@@ -26,13 +26,13 @@ struct CodexAuthProviderInspectorThrowTests {
         return String(data: data, encoding: .utf8)!
     }
 
-    /// 构造一个 `chatgpt_subscription_active_until = pastISO` 的过期 JWT。
-    private static func makeExpiredJWT(planType: String, until: Date) -> String {
-        let pastISO = ISO8601DateFormatter().string(from: until)
+    /// 构造带指定 `chatgpt_subscription_active_until` 的 JWT。
+    private static func makeJWT(planType: String, until: Date) -> String {
+        let untilISO = ISO8601DateFormatter().string(from: until)
         let auth: [String: Any] = [
             "chatgpt_plan_type": planType,
             "chatgpt_subscription_active_start": "2026-05-25T15:23:47+00:00",
-            "chatgpt_subscription_active_until": pastISO,
+            "chatgpt_subscription_active_until": untilISO,
             "chatgpt_account_id": "acct-123",
             "chatgpt_user_id": "user-abc",
         ]
@@ -116,11 +116,11 @@ struct CodexAuthProviderInspectorThrowTests {
         return URLSession(configuration: config)
     }
 
-    @Test("inspector 过期但 wham/usage 成功时返回真实额度")
+    @Test("inspector 过期但 wham/usage 成功时返回真实额度且丢弃历史日期")
     func inspectorExpiredStillUsesWhamUsage() async throws {
         let now = Date()
         let expiredAt = now.addingTimeInterval(-86400)
-        let token = Self.makeExpiredJWT(planType: "plus", until: expiredAt)
+        let token = Self.makeJWT(planType: "plus", until: expiredAt)
         let path = "/tmp/quota-bar-test-auth-\(UUID().uuidString).json"
         try Self.writeAuthFile(at: path, content: Self.makeAuthJSON(idToken: token))
         defer { try? FileManager.default.removeItem(atPath: path) }
@@ -140,7 +140,31 @@ struct CodexAuthProviderInspectorThrowTests {
         #expect(snapshot.quotas.count == 2)
         #expect(snapshot.quotas[0].remainingFraction == 0.6)
         #expect(snapshot.quotas[1].remainingFraction == 0.4)
-        #expect(snapshot.subscriptionExpiresAt.map { abs($0.timeIntervalSince(expiredAt)) < 1 } == true)
+        #expect(snapshot.subscriptionExpiresAt == nil)
+        #expect(snapshot.subscriptionExpiresAtSource == nil)
+        #expect(snapshot.subscriptionExpiresAtConfidence == nil)
+    }
+
+    @Test("inspector 的未来周期日期仍可随真实 usage snapshot 展示")
+    func inspectorFutureDateStillUsedWithWhamUsage() async throws {
+        let now = Date()
+        let renewsAt = now.addingTimeInterval(12 * 86400)
+        let token = Self.makeJWT(planType: "plus", until: renewsAt)
+        let path = "/tmp/quota-bar-test-auth-\(UUID().uuidString).json"
+        try Self.writeAuthFile(at: path, content: Self.makeAuthJSON(idToken: token))
+        defer { try? FileManager.default.removeItem(atPath: path) }
+
+        let inspector = CodexSubscriptionInspector(authPath: path, dateProvider: { now })
+        let provider = CodexAuthProvider(
+            authPath: path,
+            endpoint: URL(string: "https://chatgpt.test/backend-api/wham/usage")!,
+            session: Self.makeSession(statusCode: 200, data: Self.makeUsageJSON(now: now)),
+            dateProvider: { now },
+            inspector: inspector
+        )
+
+        let snapshot = try await provider.fetchSnapshot(timeout: 1)
+        #expect(snapshot.subscriptionExpiresAt.map { abs($0.timeIntervalSince(renewsAt)) < 1 } == true)
         #expect(snapshot.subscriptionExpiresAtSource == .appCache)
         #expect(snapshot.subscriptionExpiresAtConfidence == .medium)
     }
@@ -171,7 +195,7 @@ struct CodexAuthProviderInspectorThrowTests {
     @Test("wham/usage 401 且 inspector 最近过期时显示已过期")
     func usageUnauthorizedFallsBackToRecentExpiredStatus() async throws {
         let now = Date()
-        let token = Self.makeExpiredJWT(planType: "plus", until: now.addingTimeInterval(-86400))
+        let token = Self.makeJWT(planType: "plus", until: now.addingTimeInterval(-86400))
         let path = "/tmp/quota-bar-test-auth-\(UUID().uuidString).json"
         try Self.writeAuthFile(at: path, content: Self.makeAuthJSON(idToken: token))
         defer { try? FileManager.default.removeItem(atPath: path) }
@@ -199,7 +223,7 @@ struct CodexAuthProviderInspectorThrowTests {
     @Test("wham/usage 401 且 inspector 超过一周过期时显示未订阅")
     func usageUnauthorizedFallsBackToOldExpiredNotSubscribed() async throws {
         let now = Date()
-        let token = Self.makeExpiredJWT(planType: "plus", until: now.addingTimeInterval(-9 * 86400))
+        let token = Self.makeJWT(planType: "plus", until: now.addingTimeInterval(-9 * 86400))
         let path = "/tmp/quota-bar-test-auth-\(UUID().uuidString).json"
         try Self.writeAuthFile(at: path, content: Self.makeAuthJSON(idToken: token))
         defer { try? FileManager.default.removeItem(atPath: path) }

@@ -115,7 +115,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     // `BarsImageLayout`）：分层显示这套自定义绘图逻辑第一次写，靠单元测试直接验证
     // 选层/几何计算，比只靠人工截图靠谱——真实截图这个 accessory 模式 + 未签名
     // 开发态包又拿不到（这个会话里反复踩过这个坑），能测的部分就应该测。
-    static func makeBarsImage(from snapshots: [ProviderSnapshot]) -> NSImage {
+    static func makeBarsImage(
+        from snapshots: [ProviderSnapshot],
+        backingScale requestedBackingScale: CGFloat? = nil
+    ) -> NSImage {
         let snapshots = drawableSnapshots(from: snapshots)
 
         // 兜底：零订阅 → ? 图标
@@ -131,10 +134,41 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
 
         let layout = BarsImageLayout(count: snapshots.count)
+        // 直接建立带明确 Retina backing scale 的 bitmap representation，而不是依赖
+        // `lockFocus()` 隐式选择像素密度。这样 7% × 14pt × 2x = 1.96px 会稳定落到
+        // 最近的 2 个物理像素，不会成为一条几乎全靠抗锯齿表现的亚像素薄片。
+        let backingScale = max(1, requestedBackingScale ?? NSScreen.main?.backingScaleFactor ?? 2)
+        let pixelsWide = Int((layout.imageSize.width * backingScale).rounded(.up))
+        let pixelsHigh = Int((layout.imageSize.height * backingScale).rounded(.up))
+        guard let bitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: pixelsWide,
+            pixelsHigh: pixelsHigh,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bitmapFormat: [],
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else {
+            return NSImage(size: layout.imageSize)
+        }
+        // 必须先设置 logical point size 再创建 drawing context；否则 context 会把
+        // pixelsWide/pixelsHigh 当成 point size，最终只画进 2x bitmap 的左下四分之一。
+        bitmap.size = layout.imageSize
+        guard let drawingContext = NSGraphicsContext(bitmapImageRep: bitmap) else {
+            return NSImage(size: layout.imageSize)
+        }
         let image = NSImage(size: layout.imageSize)
+        image.addRepresentation(bitmap)
         image.isTemplate = false
-        image.lockFocus()
-        NSGraphicsContext.current?.shouldAntialias = true
+
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = drawingContext
+        drawingContext.shouldAntialias = true
+        defer { NSGraphicsContext.restoreGraphicsState() }
 
         let borderPath = NSBezierPath(
             roundedRect: layout.borderRect,
@@ -159,7 +193,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             let hatchAlpha: CGFloat = isLoading ? 0.25 : 0.45
 
             let (primaryFraction, secondaryFraction) = layeredFractions(for: snap)
-            let primaryRect = layout.barRect(at: i, remainingFraction: CGFloat(primaryFraction))
+            let primaryRect = layout.barRect(
+                at: i,
+                remainingFraction: CGFloat(primaryFraction),
+                backingScale: backingScale
+            )
 
             guard let secondaryFraction else {
                 guard primaryRect.height > 0 else { continue }
@@ -169,15 +207,24 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 continue
             }
 
-            let secondaryRect = layout.barRect(at: i, remainingFraction: CGFloat(secondaryFraction))
+            let secondaryRect = layout.barRect(
+                at: i,
+                remainingFraction: CGFloat(secondaryFraction),
+                backingScale: backingScale
+            )
             let solidPath = primaryRect.height > 0 ? layout.barPath(at: i, rect: primaryRect) : nil
             let hatchedPath = secondaryRect.height > 0 ? layout.barPath(at: i, rect: secondaryRect) : nil
+            // 低于 4 个物理像素时，斜线本身已没有足够纵向空间形成可辨纹理；这时只画
+            // 下方的像素对齐虚线边界，避免斜线和虚线互相削弱。
+            let canResolveHatch = secondaryRect.height * backingScale >= 4
 
             if secondaryRect.height >= primaryRect.height {
                 // 次短周期剩余更多（更常见情况）：它更高，先画成底层背景——这时纹理层
                 // 底下还是透明画布，用普通半透明白色斜线就能跟深色菜单栏背景形成对比；
                 // 最短周期（实心）更矮，叠在它前面。
-                if let hatchedPath { fillHatched(hatchedPath, alpha: hatchAlpha, erasing: false) }
+                if canResolveHatch, let hatchedPath {
+                    fillHatched(hatchedPath, alpha: hatchAlpha, erasing: false)
+                }
                 if let solidPath {
                     NSColor(white: 1.0, alpha: solidAlpha).setFill()
                     solidPath.fill()
@@ -192,11 +239,23 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                     NSColor(white: 1.0, alpha: solidAlpha).setFill()
                     solidPath.fill()
                 }
-                if let hatchedPath { fillHatched(hatchedPath, alpha: hatchAlpha, erasing: true) }
+                if canResolveHatch, let hatchedPath {
+                    fillHatched(hatchedPath, alpha: hatchAlpha, erasing: true)
+                }
+            }
+
+            // 45° 纹理在低比例（例如 7% 只有 2 个物理像素高）时可能被裁得只剩
+            // 一个无法辨认的斜点。额外在次级额度的真实顶边画 1px 横向虚线：位置仍然
+            // 是真实比例，线宽只负责可辨识度，不会把 7% 的区域伪装成 10%。
+            if secondaryRect.height > 0 {
+                strokeSecondaryBoundary(
+                    in: secondaryRect,
+                    backingScale: backingScale,
+                    erasing: secondaryRect.height <= primaryRect.height
+                )
             }
         }
 
-        image.unlockFocus()
         return image
     }
 
@@ -230,6 +289,39 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             segment.stroke()
             x += spacing
         }
+        NSGraphicsContext.restoreGraphicsState()
+    }
+
+    /// 在次短周期额度的真实高度画一条 1 物理像素横向虚线。
+    ///
+    /// 次级层位于实心层内部时用 destinationOut 镂空；高于实心层时用白色绘制。
+    /// 两种叠放都保持同一条清晰边界，同时不会改变次级层的高度。
+    private static func strokeSecondaryBoundary(
+        in rect: NSRect,
+        backingScale: CGFloat,
+        erasing: Bool
+    ) {
+        let scale = max(1, backingScale)
+        let onePixel = 1 / scale
+        guard rect.width >= onePixel, rect.height >= onePixel else { return }
+
+        let boundary = NSBezierPath()
+        boundary.lineWidth = onePixel
+        boundary.lineCapStyle = .butt
+        boundary.setLineDash([2 * onePixel, onePixel], count: 2, phase: 0)
+        // 线条中心向区域内退半个像素，确保整个 stroke 都落在真实次级额度范围内。
+        let y = max(rect.minY + onePixel / 2, rect.maxY - onePixel / 2)
+        boundary.move(to: NSPoint(x: rect.minX, y: y))
+        boundary.line(to: NSPoint(x: rect.maxX, y: y))
+
+        NSGraphicsContext.saveGraphicsState()
+        if erasing {
+            NSGraphicsContext.current?.compositingOperation = .destinationOut
+            NSColor(white: 0, alpha: 0.9).setStroke()
+        } else {
+            NSColor(white: 1, alpha: 0.9).setStroke()
+        }
+        boundary.stroke()
         NSGraphicsContext.restoreGraphicsState()
     }
 
@@ -350,9 +442,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             imageHeight - 2 * borderWidth - 2 * verticalPadding
         }
 
-        func barRect(at index: Int, remainingFraction: CGFloat) -> NSRect {
+        func barRect(
+            at index: Int,
+            remainingFraction: CGFloat,
+            backingScale: CGFloat = 1
+        ) -> NSRect {
             let clampedFraction = max(0, min(1, remainingFraction))
-            let barHeight = clampedFraction * maxBarHeight
+            let scale = max(1, backingScale)
+            let exactPixelHeight = clampedFraction * maxBarHeight * scale
+            let barHeight = exactPixelHeight.rounded() / scale
             return NSRect(
                 x: borderWidth + barToLinePadding + CGFloat(index) * (barWidth + gap),
                 y: borderWidth + verticalPadding,

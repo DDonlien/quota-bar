@@ -48,16 +48,18 @@ final class CodexAuthProvider: QuotaProvider, @unchecked Sendable {
         // `id_token` 里的 subscription metadata 可能比 access_token 更陈旧：
         // 用户在 Web 续费后，auth.json 里的 active_until 可能仍停在旧日期。
         // 因此这里**不能**在请求 wham/usage 前用 inspector 短路；只把它作为
-        // 真实 usage 请求失败后的状态辅助，以及请求成功时的 future expiry 展示值。
+        // 真实 usage 请求失败后的状态辅助，以及请求成功时仍在未来的周期边界展示值。
+        // 已经过期的 active_until 属于历史周期元数据，绝不能继续塞进可用 snapshot，
+        // 否则独立 resolver 会误以为日期已知并跳过 accounts/check。
         let subscriptionStatus = inspector.inspect()
         let authoritativeExpiresAt: Date? = {
             switch subscriptionStatus {
             case .active(let expiresAt):
-                return expiresAt
-            case .expired(_, let expiredAt):
-                // wham/usage 成功证明额度仍可读取；仍保留本地 auth metadata
-                // 里的最后有效日，供 UI 展示，而不是把可用状态改成已过期。
-                return expiredAt
+                return expiresAt.flatMap { $0 > fetchedAt ? $0 : nil }
+            case .expired:
+                // wham/usage 成功证明当前额度仍有效；本地 JWT 的过去日期只说明它陈旧，
+                // 返回 nil 让 SubscriptionExpiryResolver 继续查询当前付费周期。
+                return nil
             case .free, .unknown:
                 return nil
             }
