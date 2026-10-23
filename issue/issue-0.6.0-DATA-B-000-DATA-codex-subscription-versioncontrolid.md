@@ -1,0 +1,50 @@
+# feat/subscription-expiry: 接入 Codex 真实订阅到期日
+
+- ID：`0.6.0-DATA-B-000`。
+- 类型：`DATA`。
+- 状态：待处理（原文未完成项保持未勾选）。
+- 版本管理标识：`versioncontrolid`（含义待定义，不推断为 commit、branch 或 change）。
+- 来源：`REQUIREMENTS.md` @ `38afced2fbd2a58209bf2abb51ca57fb81aa7946`；标题路径：任务清单 / Phase - v0.6.0 - 真实订阅到期日（headless 抓取订阅页） / feat/subscription-expiry: 接入 Codex 真实订阅到期日。
+- 原稳定 ID：`0.6.0-DATA-B-000`, `0.6.0-DATA-B-001`, `0.6.0-DATA-B-001-test`；不改写或重编号这些既有 ID。
+
+## 当前需求与范围
+
+> Codex (chatgpt.com) 的 `/backend-api/wham/usage` 只返回 quota 窗口，**不返回订阅到期日**。需要 headless 抓 `chatgpt.com/account/manage` 或 `chatgpt.com/settings/billing` 页面，提取「Next billing date」「Renewal date」之类 DOM 文本。
+
+- [ ] [0.6.0-DATA-B-000] `CodexHarvester` 实现：用 `WKWebViewHeadlessLoader` 加载 `https://chatgpt.com/account/manage`，DOM 提取续费日期；找不到返回 nil；超时/Cloudflare challenge 失败抛 `QuotaFetchError.transient` 让 pipeline 降级 #P1
+- [ ] [0.6.0-DATA-B-001] `CodexAuthProvider` / `BrowserCookieProvider` Codex 路径新增 strategy：headless 抓订阅页 → 拿 `subscriptionExpiresAt`；和现有 quota 抓取并行，结果合并到 `ProviderSnapshot` #P1
+- [ ] [0.6.0-DATA-B-001-test] 单元测试：mock HTML（含"Next billing on July 25, 2026"等常见模式）验证 `CodexHarvester` 解析出正确 `Date` #P1
+
+## 检查与验收边界
+
+以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
+
+## Comments
+
+### 2026-10-23 17:44:33 UTC — Agent（文档迁移）
+
+按原有功能 / 工作目标标题拆分需求，保留原 ID、勾选、依赖、最新补充及来源。没有稳定根 ID或旧 ID 在不同上下文重用时，采用由来源路径和标题确定的迁移 Issue ID，原 ID 仍在正文保留。完整旧内容可从来源版本读取；独有未提交内容的版本化副本见迁移映射。
+
+### 20260619011202-utcp8-gpt5.md — 历史证据迁移
+
+来源：`agent-log/20260619011202-utcp8-gpt5.md` @ `38afced2fbd2a58209bf2abb51ca57fb81aa7946`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
+
+#### 用户原始 prompt
+
+其他的ai都不行，你可以访问cli和terminal直接帮我build，帮我解决现在quota bar的问题：没办法正确货渠道电脑上的ai的情况，参考codex bar是怎么做的，而且现在一直要full disk access，明显不合理
+
+#### 验证方式
+
+- `cd drop-down-test/CodingPlanMenu && swift build`：通过。
+- `cd drop-down-test/CodingPlanMenu && ./build-app.sh`：通过，生成 `QuotaBar.app`。
+- 已关闭旧进程并通过 `open .../QuotaBar.app` 启动新构建，进程 PID 为 `91907`。
+
+#### 需求更新
+
+- `DA-A-005` 标记完成：菜单不再展示 `.notInstalled` snapshot。
+- `UI-C-005` 文案更新为“浏览器 Cookie 数据源缺 Full Disk Access 时按需显示引导”。
+
+#### 备注
+
+- 工作区已有 `.build/`、`.DS_Store` 等构建产物变更；本轮运行 build 后这些文件继续保持 dirty。未回滚这些已有/构建生成的文件。
+- 当前未实现 Codex OAuth token refresh；若 token 过期，会提示重新 `codex login`。
