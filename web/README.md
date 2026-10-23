@@ -76,7 +76,6 @@ web/
 ├── README.md                      # 本文件
 ├── REQUIREMENTS.md                # 需求追踪
 ├── DESIGN.md                      # 视觉规范
-└── agent-log/                     # 执行日志
 ```
 
 ## 视觉素材说明
@@ -103,5 +102,5 @@ Provider logo 当前用品牌色方块占位，后续可换成真实 SVG logo。
 
 - 视觉规范：[`DESIGN.md`](DESIGN.md)
 - 需求追踪：[`../issue/issue-0.1.0-PM-A-000-PM-scope-versioncontrolid.md`](../issue/issue-0.1.0-PM-A-000-PM-scope-versioncontrolid.md)
-- 执行日志：[`../issue/README.md`](agent-log)
+- 任务记录：[`../issue/README.md`](../issue/README.md)
 - 全局父级文档：[`../README.md`](../README.md)
