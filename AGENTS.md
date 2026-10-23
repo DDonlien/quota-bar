@@ -164,7 +164,7 @@ template-version: "v2.0.1-261023-173015"
 - 构建命令：`make build`（等价于 `cd macos && swift build`）；站点构建为 `make site`。
 - 应用打包：`make app`（等价于 `cd macos && ./scripts/build-app.sh`）。
 - 发布命令：`make deploy`（部署 `site/` 到 Vercel，首次需先 `make link`）。
-- 发版流程（ad-hoc 预开发版）：本地 `make app` 或推 main 都会读取根目录 `VERSION` 文件 + 当前 commit short sha，产出 `v<VERSION>-<sha>` 的 ad-hoc 签名包并在 push main / 手动触发 `Release` workflow 时发布同名 GitHub Release（首次打开需「右键 → 打开」）。签名升级（Developer ID + notarize）见 REQUIREMENTS v0.12.0。
+- 发版流程（ad-hoc 预开发版）：本地 `make app` 或推 main 都会读取根目录 `VERSION` 文件 + 当前 commit short sha，产出 `v<VERSION>-<sha>` 的 ad-hoc 签名包并在 push main / 手动触发 `Release` workflow 时发布同名 GitHub Release（首次打开需「右键 → 打开」）。签名升级（Developer ID + notarize）见 issue/ 中原 v0.12.0 需求及其来源映射。
 
 ### 版本号维护规则
 
@@ -172,10 +172,10 @@ template-version: "v2.0.1-261023-173015"
 - 唯一权威来源：仓库根目录的 [`VERSION`](../VERSION) 文件，内容就是 `X.Y.Z`（无前导 `v`，无 sha）。`macos/scripts/build-app.sh` 和 `.github/workflows/release.yml` 都从这个文件读取，不再有 nightly/stable 两条通道或 workflow_dispatch 手动输入版本号的机制。
 - **`X.Y.Z` 由 Agent 维护，每次执行修改任务时自行判断是否需要 bump、bump 哪一位**：
   - 只是 bug 修复、文案/样式调整、不影响用户可感知功能范围 → 一般不 bump，或 bump PATCH（Z）；
-  - 新增功能、新 Provider、新一层获取策略、UI 交互规则调整等用户可感知的新能力 → bump MINOR（Y），通常对应 REQUIREMENTS.md 新开一个 `## Phase - vX.Y.0`；
+  - 新增功能、新 Provider、新一层获取策略、UI 交互规则调整等用户可感知的新能力 → bump MINOR（Y），通常对应 issue/ 中明确对应的新功能范围与目标版本；
   - 破坏性变更（数据格式不兼容、架构性重写、需要用户手动干预迁移）→ bump MAJOR（X）；
-  - 拿不准时，优先看这次改动是否已经在 REQUIREMENTS.md 里对应一个新 Phase：对应新 Phase 就跟着 bump MINOR，只是 Phase 内的常规任务/修复就不 bump 或 bump PATCH。
-- 每次修改 `VERSION` 文件都必须在当次 agent-log 里明确写出：改了哪一位、为什么这么判断（对应哪个改动/Phase），不能只改文件不留痕迹。
+  - 拿不准时，优先看这次改动是否已在对应 Issue 明确新功能范围与版本：对应新功能版本就跟着 bump MINOR，只是 Phase 内的常规任务/修复就不 bump 或 bump PATCH。
+- 每次修改 `VERSION` 文件都必须在对应 Issue 的 Comments 里明确写出：改了哪一位、为什么这么判断（对应哪个改动/Phase），不能只改文件不留痕迹。
 - 不需要每次任务都 bump——大多数常规修复任务改完代码后 `VERSION` 保持不变即可，只有确实达到上面判断标准时才动它。
 
 ### 文档入口
