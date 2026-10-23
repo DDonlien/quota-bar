@@ -113,7 +113,7 @@ Quota Bar 的刷新链路拆为四层：Provider 获取、额度获取、过期�
 
 从 [Releases](https://github.com/DDonlien/quota-bar/releases) 页面下载最新的 `QuotaBar-<sha>.dmg`，打开后把 **Quota Bar** 拖进 **Applications**，或在 DMG 窗口里直接双击运行。也可以访问主页 [quotabar.ddonlien.com](https://quotabar.ddonlien.com) 一键下载。
 
-> 每个 push 到 `main` 都会自动构建一个新的 pre-release；CI 配置见 [`.github/workflows/release.yml`](./.github/workflows/release.yml)。
+> 每个 push 到 `main` 都会自动构建一个新的 pre-release；CI 配置见 [`.github/workflows/release.yml`](.github/workflows/release.yml)。
 >
 > 首次启动需要右键 → 打开（未签名 + 未公证）。
 
@@ -277,7 +277,7 @@ Codex / Claude 的 TUI 在无 TTY 时会拒绝交互。`TTYCommandRunner` 通过
 - [ ] 通知：额度低于阈值时提醒
 - [ ] 多账号切换
 
-完整需求追踪见 [`REQUIREMENTS.md`](./REQUIREMENTS.md)。
+完整需求追踪见 [`issue/issue-0.0.0-DOC-A-000-DOC-agent-collaboration-foundation-versioncontrolid.md`](issue/issue-0.0.0-DOC-A-000-DOC-agent-collaboration-foundation-versioncontrolid.md)。
 
 ---
 
@@ -301,7 +301,7 @@ Codex / Claude 的 TUI 在无 TTY 时会拒绝交互。`TTYCommandRunner` 通过
 
 ## License
 
-[MIT](./LICENSE) — Tao Be, 2026.
+[MIT](LICENSE) — Tao Be, 2026.
 
 ### 致谢
 
