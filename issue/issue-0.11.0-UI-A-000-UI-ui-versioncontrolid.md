@@ -1,0 +1,27 @@
+# update/main: 更新检查 UI 改造
+
+- ID：`0.11.0-UI-A-000`。
+- 类型：`UI`。
+- 状态：进行中（原文同时包含已完成与未完成项）。
+- 版本管理标识：`versioncontrolid`（含义待定义，不推断为 commit、branch 或 change）。
+- 来源：`REQUIREMENTS.md` @ `955f9982d294cd8ad413127f111afc0de132eb39`；标题路径：任务清单 / Phase - v0.11.0 - 真实自动更新（ad-hoc 预开发版）+ semver 发版 / update/main: 更新检查 UI 改造。
+- 原稳定 ID：`0.11.0-UI-A-000`, `0.11.0-UI-A-001`, `0.11.0-UI-A-002`, `String`, `0.11.0-UI-A-003`, `0.11.0-UI-A-004`, `0.11.0-UI-A-000-test`；不改写或重编号这些既有 ID。
+
+## 当前需求与范围
+
+- [x] [0.11.0-UI-A-000] `AboutSettingsView` 的「检查更新」按钮接 `UpdateChecker` state machine：点击 → `checking` 转圈；新版本 → banner 展示 release notes + 下载按钮；最新 → 「已是最新版本 v0.11.0」提示 #P1
+- [x] [0.11.0-UI-A-001] 下载中显示百分比进度条（`ProgressView(value:)`）+ 取消按钮；下载完成显示「立即重启并安装」+「稍后」#P1
+- [x] [0.11.0-UI-A-002] 「稍后提醒」把版本号写到 `PreferencesStore.QuotaPreferences.ignoredVersions: [String]`（Codable 向后兼容，旧配置自动获得 `[]`）；下次检查该版本不再提示 #P1
+- [x] [0.11.0-UI-A-003] 「关于」页加一行小字（ad-hoc 版文案）：「macOS 权限设置（Accessibility 等）更新后通常会保留；正式形式化保障将在 v0.12.0 升级签名后落地」让用户知情当前 TCC 保留是 best-effort，不做过度承诺 #P1
+- [x] [0.11.0-UI-A-004] 移除当前「检查更新」按钮的占位行为（旧实现是直接打开 GitHub Releases 页面 URL），改为触发 `UpdateChecker` #P1
+- [ ] [0.11.0-UI-A-000-test] UI 状态切换测试：检查 → 找到新版本 → 下载中 → 下载完成 → 安装中 → 完成全流程；error 状态展示中文友好提示 #P1
+
+## 检查与验收边界
+
+以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
+
+## Comments
+
+### 2026-10-23 17:44:33 UTC — Agent（文档迁移）
+
+按原有功能 / 工作目标标题拆分需求，保留原 ID、勾选、依赖、最新补充及来源。没有稳定根 ID或旧 ID 在不同上下文重用时，采用由来源路径和标题确定的迁移 Issue ID，原 ID 仍在正文保留。完整旧内容可从来源版本读取；独有未提交内容的版本化副本见迁移映射。

@@ -149,7 +149,7 @@ opencode（`https://opencode.ai`）是一个 BYOK 聚合 CLI，本身没有稳�
 
 从 [Releases](https://github.com/DDonlien/quota-bar/releases) 页面下载最新的 `QuotaBar-<sha>.dmg`，打开后把 **Quota Bar** 拖进 **Applications**，或在 DMG 窗口里直接双击运行。也可以访问主页 [quotabar.ddonlien.com](https://quotabar.ddonlien.com) 一键下载。
 
-> 每个 push 到 `main` 都会自动构建一个新的 pre-release；CI 配置见 [`.github/workflows/release.yml`](./.github/workflows/release.yml)。
+> 每个 push 到 `main` 都会自动构建一个新的 pre-release；CI 配置见 [`.github/workflows/release.yml`](.github/workflows/release.yml)。
 >
 > 首次启动需要右键 → 打开（未签名 + 未公证）。
 
@@ -361,8 +361,8 @@ Codex / Claude 的 TUI 在无 TTY 时会拒绝交互。`TTYCommandRunner` 通过
 
 版本号规则（2026-07-07 改版）：每个构建的 tag 和 `CFBundleShortVersionString` 都是
 `vX.Y.Z-<git-short-sha>`（如 `v0.10.0-dcfff71`）。`X.Y.Z` 来自仓库根目录的
-[`VERSION`](./VERSION) 文件，由 Agent 按改动量级判断是否/如何 bump（规则见
-[AGENTS.md](./AGENTS.md#版本号维护规则)）；`-<sha>` 只是构建标识，**不参与新旧判断**。
+[`VERSION`](VERSION) 文件，由 Agent 按改动量级判断是否/如何 bump（规则见
+[AGENTS.md](AGENTS.md#版本号维护规则)）；`-<sha>` 只是构建标识，**不参与新旧判断**。
 不再区分"stable/nightly 两条通道"——`UpdateChecker` 纯按 `X.Y.Z` 语义化版本号比大小，
 完全不看发布时间/构建时间/sha，同一个 `X.Y.Z` 无论打包多少次、时间戳差多少，都不会被
 误判成"有更新"（修复了此前一版靠时间戳比较、时区解析错误导致的虚假更新提示）。
@@ -389,7 +389,7 @@ short sha，打一个 `v<VERSION>-<sha>` tag 并发布同名 GitHub Release（�
 - [ ] 通知：额度低于阈值时提醒
 - [ ] 多账号切换
 
-完整需求追踪见 [`REQUIREMENTS.md`](./REQUIREMENTS.md)。
+完整需求追踪见 [`issue/issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md`](issue/issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md)。
 
 ---
 
@@ -413,7 +413,7 @@ short sha，打一个 `v<VERSION>-<sha>` tag 并发布同名 GitHub Release（�
 
 ## License
 
-[MIT](./LICENSE) — Tao Be, 2026.
+[MIT](LICENSE) — Tao Be, 2026.
 
 ### 致谢
 
