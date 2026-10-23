@@ -391,13 +391,13 @@ UI 层已改造：`MenuView` 接收 `QuotaAggregator.State`，按 `ProviderAvail
 
 ### 相关 worktree 与日志
 
-- `quota-bar-sub-a/agent-log/20260618113346-utcp8-mavis.md` — SUB-A 实现日志
-- `quota-bar/agent-log/20260618111226-utcp8-gpt5.md` — P1 需求规划
-- `.worktrees/ui-c/agent-log/20260618113254-utcp8-mavis.md` — UI-C 实现日志
+- `../issue/README.md` — SUB-A 实现日志
+- `../issue/README.md` — P1 需求规划
+- `../issue/README.md` — UI-C 实现日志
 
 ### quota-bar 内部文档
 
-- `REQUIREMENTS.md` 第 56-63 行 SUB-A 模块
+- `../issue/README.md` 第 56-63 行 SUB-A 模块
 - `AGENTS.md` 项目阶段描述
 - `README.md` 当前能力与限制
 

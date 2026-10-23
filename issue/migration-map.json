@@ -1,0 +1,2471 @@
+{
+  "history_base": "b550269a253e390d19ec221949fb30c44adf9e9e",
+  "versioncontrolid": "versioncontrolid",
+  "versioncontrolid_definition": "pending",
+  "sources": [
+    {
+      "path": "REQUIREMENTS.md",
+      "sha256": "d7d6e6e5f958fe063e9b42a35f0b4600797bd5eb080e5057dba1585c14e3a3ed",
+      "bytes": 45674,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "b03b38bb12a7fe6906102632fdfe448d9883bc90"
+    },
+    {
+      "path": "agent-log/20260618000923-utcp8-gpt5.md",
+      "sha256": "30f29cdfbec3fb7db988ff8c120edc0af2530ba24a489c0d8c2f5d4b0e970566",
+      "bytes": 3811,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "14be574c1b7d9a3256c59a1244bcfb32ddbbed10"
+    },
+    {
+      "path": "agent-log/20260618004923-utcp8-gpt5.md",
+      "sha256": "3ba70e4a9ffc4ca89b1b0d7876992752c35106e5477d29821175b1b93662da13",
+      "bytes": 3583,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "82cf405d28c9b91bd3a7c1d238d1d1ce5ed8d1e0"
+    },
+    {
+      "path": "agent-log/20260618092446-utcp8-gpt5.md",
+      "sha256": "283a7614f5ba58f7ed57c40490e1db230cce0a429477f80fe44024d781507a52",
+      "bytes": 2354,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "ee84ea885813ee6f403398cd498504f1b752faef"
+    },
+    {
+      "path": "agent-log/20260618094811-utcp8-gpt5.md",
+      "sha256": "92143447f2733394150362520d1615b57de9975f0dfbc26039205ffa803c1691",
+      "bytes": 3666,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "83c755afd8c21d208f01cfbed7629586db488670"
+    },
+    {
+      "path": "agent-log/20260618101312-utcp8-gpt5.md",
+      "sha256": "c9e6fa98605e2a9dc526e9c320fc61f896895fcbb41f12c863ddf53d3556d669",
+      "bytes": 4671,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "ce1aea197ce24e2a48c369890508487eadea2bfd"
+    },
+    {
+      "path": "agent-log/20260618104613-utcp8-gpt5.md",
+      "sha256": "44bffb84ec5ef609195973f875f040fa540d39bc33cc95e1bfb00132fce2a570",
+      "bytes": 2547,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "3d508615fa25bd2bd0db89ef05264e046215a2de"
+    },
+    {
+      "path": "agent-log/20260618105916-utcp8-gpt5.md",
+      "sha256": "44294b6300370372e072d17b195ea64e7b15078626a3addbff12bcce9d2fa48b",
+      "bytes": 2630,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "70fd9534b5dc4abb62de42ecfe3071f8783da25a"
+    },
+    {
+      "path": "agent-log/20260618110245-utcp8-gpt5.md",
+      "sha256": "485340213a41de656faf09bb7ca8ff348bdb1d7c9f64621567e0fc21df501683",
+      "bytes": 2743,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "1701d4c4770526a748d7f76870eb60222e62f0ea"
+    },
+    {
+      "path": "agent-log/20260618111226-utcp8-gpt5.md",
+      "sha256": "0371c6243e9b6b37aa6b5fda990a915d8005f0faa2b7363bf53d2a2dbd50ea87",
+      "bytes": 3928,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "3402928757da54bf36f308d595dc7aff80122c3c"
+    },
+    {
+      "path": "agent-log/20260618112258-utcp8-mavis.md",
+      "sha256": "078651c6360add67813e7e23706441ac9057716abd6427fbe97dd50cfae04772",
+      "bytes": 2616,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "0bce6b8072bd83e16d7779c72715420994904130"
+    },
+    {
+      "path": "agent-log/20260618113600-utcp8-minimax-m3.md",
+      "sha256": "1c5340e3d64a3510d8cfd00eb7010b5da937506a7975474be82d5d765a3a7f7b",
+      "bytes": 4922,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "b0c71fe272fd3224fd260b14aa8bf7342f8805bd"
+    },
+    {
+      "path": "agent-log/20260618165946-utcp8-mavis.md",
+      "sha256": "5ff20a43597eb90cd0282260f86da52a9491b91416a3438c89b14b13f0dc1133",
+      "bytes": 3125,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "97ecafe3cc745454b73c63728cab328037737fa0"
+    },
+    {
+      "path": "agent-log/20260618171000-utcp8-minimax-m3.md",
+      "sha256": "312747d2d8cefde116964ba95572b1dd704252e05cf6b19bf8b0584ce3b8158e",
+      "bytes": 8867,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "027cfa096b814f91e2d223e22004ffa6d0d0c342"
+    },
+    {
+      "path": "agent-log/20260618171600-utcp8-minimax-m3.md",
+      "sha256": "aafd32440954b3e86aa22e5205d92c72d4b056a1dea695fe5b239a1f1afc1193",
+      "bytes": 1706,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "c2f9694ce757da2152841a3f29c789c087c2989a"
+    },
+    {
+      "path": "agent-log/20260618173144-utcp8-mavis.md",
+      "sha256": "76e3c8e3cebe192f449559c7da048b4b82eebca2155bbfcfb62e2ba84f67ffbe",
+      "bytes": 3780,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "e3469c08341ebe92e65e0552055b7d11c19761a0"
+    },
+    {
+      "path": "agent-log/20260618174200-utcp8-minimax-m3.md",
+      "sha256": "acfbd4b720a7a688fe4e9ebb79ed0cdc14b8aef309a431f415a4d03eea8f094e",
+      "bytes": 10931,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "9b3aa973adcfe1582636ceb00453a5112f15b33a"
+    },
+    {
+      "path": "agent-log/20260618205739-utcp8-minimax-m3.md",
+      "sha256": "809262b1fe5a80670ff20da9d5d350e58bc3cd16b0554c0280945a5423f282ad",
+      "bytes": 4289,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "d95754dd2990c3f774acdaef8fe06f2618495ff1"
+    },
+    {
+      "path": "agent-log/20260618210258-utcp8-minimax-m3.md",
+      "sha256": "762ba8de69836b5bbb4b12f693cd2e5607e41626e82b2d2492743a405493a0bd",
+      "bytes": 6334,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "f4358e880e4925a1bff35300810e83055e0d3018"
+    },
+    {
+      "path": "agent-log/20260619011202-utcp8-gpt5.md",
+      "sha256": "5f232edf086b89abe46a3636c8450e4c68699533c84d8816ad055727816f935f",
+      "bytes": 3326,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "5d5d6e98140da35b9fd4d70be0ddb5d9a9c48ef1"
+    },
+    {
+      "path": "agent-log/20260619022530-utcp8-gpt5.md",
+      "sha256": "9495b745a44d54808c17c35e772270565c4382dca22946fc99bee9164e4fd4f8",
+      "bytes": 3685,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "f31c5b5dc050d8e88c1d8d65815777755a724edf"
+    },
+    {
+      "path": "agent-log/20260619131237-utcp8-gpt5.md",
+      "sha256": "7ca59873b3dda8cf8c285482140bfb8e48c0eca0bf9ade6d0865df4ab200dbae",
+      "bytes": 3052,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "754c3f8bf0c124e99716248a8b128fa56a1652b8"
+    },
+    {
+      "path": "agent-log/20260619141258-utcp8-gpt5.md",
+      "sha256": "29c0fd9474f045cd69e381abb74249a4a263fbdf37d053507eb0ff0d9c7e4427",
+      "bytes": 1874,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "e7ff214ef3dee99b47e4afa9772f3d3bc5c69647"
+    },
+    {
+      "path": "agent-log/20260619143156-utcp8-gpt5.md",
+      "sha256": "47ae2f80f9f80b7df6fd7cb646e328488be42f86df5710c27f0257d36cd50f08",
+      "bytes": 2210,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "39a8084c92d9c6911eef8cae8e2e7e5af3ed02ed"
+    },
+    {
+      "path": "agent-log/20260619160000-utcp8-mavis.md",
+      "sha256": "be80ca57c159701e4b5c9a905ab85c25b119700a93eda24ea95fb9d915f6f461",
+      "bytes": 5753,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "9690fe86d922d2e2f34656c4347c6f62d70c00c8"
+    },
+    {
+      "path": "agent-log/20260620144300-utcp8-gpt5.md",
+      "sha256": "38f76e4c30adbd9c24521757bdb936667baa340d6608abb9af083ea5dfba00ba",
+      "bytes": 4128,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "a3f1b133adfc80d267fa9ec8b03aa3cd5cb8ed44"
+    },
+    {
+      "path": "agent-log/20260620145028-utcp8-gpt5.md",
+      "sha256": "d8f1eb47c32b085ffa947bb9d84613336a01a00bede967824bc5ace221f89aa3",
+      "bytes": 4140,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "464c4249bbbfc19fde5bd616d2f5a366dfdfd369"
+    },
+    {
+      "path": "agent-log/20260620150136-utcp8-gpt5.md",
+      "sha256": "077840b0828a49c5705ec6e9d2bfa70de213e3e1e38fa6893412f9cebd5d56e1",
+      "bytes": 4504,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "ec7abe60696a92dc2296e79379f26dc827c811a7"
+    },
+    {
+      "path": "agent-log/20260620151200-utcp8-gpt5.md",
+      "sha256": "7182a5680c22ae376d60bb9832d4853093a7bfb3be4960629b9deafc7b9cccb3",
+      "bytes": 2622,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "39c7c0aee7af911844e2c65cbea90af7bc838aff"
+    },
+    {
+      "path": "agent-log/20260620151337-utcp8-gpt5.md",
+      "sha256": "267182b2ba0037a0e3a1b388f3baec64b588d4dc5409657f59c716413bc8a0e2",
+      "bytes": 1950,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "f46a4616c41921124d6176b3d27e8750ac2f01e1"
+    },
+    {
+      "path": "agent-log/20260620193629-utcp8-mavis.md",
+      "sha256": "3f07ce0fc32a331e8f95920b66b19c1b608ce83c8416a77c08eea39e9ceb08c4",
+      "bytes": 2607,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "f2249b96ca92629aeb59fdd0111260a61bbf0403"
+    },
+    {
+      "path": "agent-log/20260620202608-utcp8-gpt5.md",
+      "sha256": "1bd2cc7ab49f0e36c27a30ac9f2dfe7d565a41e21432c7b5e1ffb35918f34a82",
+      "bytes": 2509,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "4e0616bcaa1f0ed675e8fa8cfec6d3479f892458"
+    },
+    {
+      "path": "agent-log/20260620203553-utcp8-gpt5.md",
+      "sha256": "0b1ce7064d597454c8d3e32da3aa17e1d8148b13ab1f8e0dc6eecd76813ba0dd",
+      "bytes": 3012,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "0d816760920c2ea651bf2cd86ba29f98fcb81604"
+    },
+    {
+      "path": "agent-log/20260620204220-utcp8-gpt5.md",
+      "sha256": "24554c521ca59f39e2a004779f0a7e4dade37f924bde5f6a271eecc664bf79d3",
+      "bytes": 1875,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "93885c72c4a7921fde274fee5b572012fe91ac1b"
+    },
+    {
+      "path": "agent-log/20260620205908-utcp8-gpt5.md",
+      "sha256": "a8ef3051c572c3c0889ae81796f3208410b1baf162156358e9e7bf78c262e816",
+      "bytes": 4271,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "ebdf70f31c90f04ab2a4aff53c6e1e0b1b2b9fa4"
+    },
+    {
+      "path": "agent-log/20260620212356-utcp8-gpt5.md",
+      "sha256": "c18825c132ec5cd78d46bf1098cf3fdf6e7a98a584305a90bd5bbf0a88644ebf",
+      "bytes": 2628,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "f78811f81ae0862a9c3dadc8d5369fafbea89035"
+    },
+    {
+      "path": "agent-log/20260620213150-utcp8-gpt5.md",
+      "sha256": "a1bfbd478811edb1bb30e392be92f415539cc110c23ac04c353dad4d4388cf4c",
+      "bytes": 3148,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "f3e0b23c6ec9983e680e94f55288445871d98120"
+    },
+    {
+      "path": "agent-log/20260620213518-utcp8-gpt5.md",
+      "sha256": "326fe3f4cdfd848ee4d4b93f2111a443af21b45fbdd569132e0c7e5269919a00",
+      "bytes": 2455,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "b7d57492a16f82fe8b3c4bbc4eb815a73d13e5bd"
+    },
+    {
+      "path": "agent-log/20260620214313-utcp8-gpt5.md",
+      "sha256": "646476a36b56283dd0254b71ecbfdde279afe1cd3d3335ef24b0d063fc09f0b3",
+      "bytes": 3472,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "190d4aaa50e4c0e4cb558b89cfe2c018b36c759f"
+    },
+    {
+      "path": "agent-log/20260621014158-utcp8-gpt5.md",
+      "sha256": "aa34bfa1714a6205ff99bd844c51045d9ec6216f2a3d0278485156475836463b",
+      "bytes": 10065,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "c5bbbe1f36eeb47cf4f1619313ac5b76de77d503"
+    },
+    {
+      "path": "agent-log/20260622233205-utcp8-gpt5.md",
+      "sha256": "f89938262318b41c15808155c86aed31c9ec10ef42fcfda9cb7079c34d056543",
+      "bytes": 13626,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "1be3487b1a1dc57683685bbde52ede0de0b1cc80"
+    },
+    {
+      "path": "agent-log/20260623014203-utcp8-gpt5.md",
+      "sha256": "5e7a11852d95d3f60ea5b4ed1d80553e828e873fdf800a77c783147e28d8a590",
+      "bytes": 4308,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "986af1a9a8bf30bebe2f5651fad9e6c4b863815f"
+    },
+    {
+      "path": "agent-log/20260624155839-utcp8-gpt5.md",
+      "sha256": "482402bad9137e2b4ca73eba9f32676706963111860ad043771b4bc201e1ca78",
+      "bytes": 4198,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "de1c8b240a6c3c2875b1a1bf368907507e83a8b1"
+    },
+    {
+      "path": "agent-log/20260624163000-utcp8-gpt5.md",
+      "sha256": "91b210a5554fb37f6cbe2ddf9b0fe5f6444285066cf6b7a196a497f65dc450f8",
+      "bytes": 7021,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "e34af07cbaf83ef77b18e7cea3d718c894ed8eec"
+    },
+    {
+      "path": "agent-log/20260624230928-utcp8-mavis.md",
+      "sha256": "2c5c731f29ff43a5956365faf65541f2bef1b51d667b607432b38f188caf9101",
+      "bytes": 18428,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "2889b0d822e4be80b61966596096e1abc3c3f3c0"
+    },
+    {
+      "path": "agent-log/20260625104200-utcp8-mavis.md",
+      "sha256": "3164153864b5f05a0b80b7a4ee807ab9c71322692b1413769352ca8e73998053",
+      "bytes": 14321,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "8fc15a771015205f17de5c6ba851e28e2189c981"
+    },
+    {
+      "path": "agent-log/20260625104258-utcp8-gpt5.md",
+      "sha256": "3d8be7edcaed65cfe1019ad918a09382de21137bd3af6880348abb80cba60efe",
+      "bytes": 4129,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "5df10531d6260d4769f1554d248dddf14d5815de"
+    },
+    {
+      "path": "agent-log/20260625105744-utcp8-gpt5.md",
+      "sha256": "b55e724ddabb8d8c95814c5eb345ca16635a079d5977fc506aaea600d1b022e6",
+      "bytes": 2570,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "1ab864e83e1be0145c75c4a93fdc31a049831ab4"
+    },
+    {
+      "path": "agent-log/20260625113500-utcp8-glm5.md",
+      "sha256": "7cd1821285e5adcf165dcfa74a1b8170f2443b41d803da170c5edd5c5adc4125",
+      "bytes": 8286,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "32116adeb2bcca0d037bfbb265138939ed45cc5d"
+    },
+    {
+      "path": "agent-log/20260625115908-utcp8-gpt5.md",
+      "sha256": "d45625d20c5dfc6c809cd96fa3b4dbcf3074669144df7f7f67764916edaed8a3",
+      "bytes": 3949,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "84648e1e1aedc365fbafc5e3ee86bf02fc5dbda0"
+    },
+    {
+      "path": "agent-log/20260625121542-utcp8-gpt5.md",
+      "sha256": "524c145dded3c42ddd6129dcf52c0e92742030942849fdaee4ec54012d8a0ebb",
+      "bytes": 5021,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "6e71f036e6f7fb5dc4813ac0c33534349e609334"
+    },
+    {
+      "path": "agent-log/20260625134800-utcp8-mavis.md",
+      "sha256": "97447f440f858d1907cc8a8a8aee52146ba6c4cf4cf932720ca2464125281490",
+      "bytes": 8344,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "a355a038bf73e145bc9b018ab3b6b8c1e36c7434"
+    },
+    {
+      "path": "agent-log/20260625135810-utcp8-mavis.md",
+      "sha256": "ff9aba609efa193caff1e13ff5387778f88c8e7474e3ea4a25be127a969ba4ac",
+      "bytes": 6354,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "3a1c503a33f0a1037bfc3dfa4ed035b2d10f795c"
+    },
+    {
+      "path": "agent-log/20260625220500-utcp8-mavis.md",
+      "sha256": "65cb8901ac810d64fab77d539c13cdec61bcb44065e964194789f718f20ba6bc",
+      "bytes": 5346,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "95bb35ddfe3f7f37b963f50c05b63a8ec810f30c"
+    },
+    {
+      "path": "agent-log/20260625221000-utcp8-mavis.md",
+      "sha256": "ca246e41239fb05005e5c7492265c9eeb86b0a88b32da13b49b53b8eadc4af27",
+      "bytes": 7960,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "7e8f0e1ccad6ff07ff6e2785fce822cdd01e0ca2"
+    },
+    {
+      "path": "agent-log/20260625221500-utcp8-mavis.md",
+      "sha256": "c9d66e771ac9967695cccea3cb403ec6743e7da75264fe01e2eedb7ae271f1b3",
+      "bytes": 6742,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "0fe5eee505c390507469d83aa5bc1852735b434c"
+    },
+    {
+      "path": "agent-log/20260626160800-utcp8-mavis.md",
+      "sha256": "8d66489b6a2d9d4fa1b8ef6f890b6f893562fb8240ac5344bcc43edf1ddab508",
+      "bytes": 6543,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "1bd632d92394d26428a7782b13fc77225eb1ac05"
+    },
+    {
+      "path": "agent-log/20260627162000-utcp8-mavis.md",
+      "sha256": "34d7f113a6a20fac5e1b4da9ba3ac540afc278b6133f9aa1c3b7d677f19cbb41",
+      "bytes": 3045,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "49a338debfb53e0c574470682d1b524ef48e470a"
+    },
+    {
+      "path": "agent-log/20260628002800-utcp8-mavis.md",
+      "sha256": "867b099ec1fb650817d167d1c3413f89bfd63100016e2590b528447a6d83c6ad",
+      "bytes": 4442,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "49f6ffb5ce57385b7f8699834e159aa5c2b9785b"
+    },
+    {
+      "path": "agent-log/20260628005000-utcp8-mavis.md",
+      "sha256": "63818f8ded0f98535f24395b3e22951767a4b99d55df2342a95cb1198bc56e68",
+      "bytes": 7981,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "7e92d7f399ed7be95090246ca08a45d041aaf567"
+    },
+    {
+      "path": "agent-log/20260628023000-utcp8-mavis.md",
+      "sha256": "db372af7a8a9437a57185f17702d48f65e659b80253526a879905fed941911b8",
+      "bytes": 5296,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "0b194a6b84e534c1208c4d3e18af6ddad81181fd"
+    },
+    {
+      "path": "agent-log/20260629101500-utcp8-mavis.md",
+      "sha256": "6fe259c5b7a6a3b80d06a3864bccf681d6e23f555f62df64e1d0ad6b20e14381",
+      "bytes": 4788,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "fa227f640270949cd0ca9b772137d044b79d3ba2"
+    },
+    {
+      "path": "agent-log/20260629104500-utcp8-mavis.md",
+      "sha256": "0c34707768aaac5f5e269598a40944508f4ee6670c968e41a1c51e23ea9db5b1",
+      "bytes": 5560,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "1a2ae099ecbfeda58e9c305877eaa5284dcf3fb8"
+    },
+    {
+      "path": "agent-log/20260630004130-utcp8-gpt5.md",
+      "sha256": "670f3fc0ab9dc83d413c6319c8064fe4e87a17e0067ccbca07c0dd2459def34d",
+      "bytes": 3291,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "bc941759cf8680a79f64b6a571d50f08d03caa51"
+    },
+    {
+      "path": "agent-log/20260630004524-utcp8-gpt5.md",
+      "sha256": "74e19c82d3005b28f8e116c7968a86d5a266d8729dd6a8c0cd364004f9b37c92",
+      "bytes": 2754,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "cc7c2ff90ad74afccdaf14f8e8a6e4d735317fc8"
+    },
+    {
+      "path": "agent-log/20260630010159-utcp8-gpt5.md",
+      "sha256": "3b8dfedcbf7013b825f4bf3da5c8a67adb66f2e0339331db309315bda205ff8f",
+      "bytes": 3399,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "b7b1ab4622c4531cf198bfa8ae32eba660f1921c"
+    },
+    {
+      "path": "agent-log/20260630092645-utcp8-gpt5.md",
+      "sha256": "65dea00243bd86de2df6b9773879690ef4e6bef5e53c325bbc73f933134496ab",
+      "bytes": 3403,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "cd81e5da98174a4f7802fc9c17f2da55a3590745"
+    },
+    {
+      "path": "agent-log/20260630093952-utcp8-gpt5.md",
+      "sha256": "30b1dc76d01eb9ef5af7a5588c9ca42bef7b33d7798d808c319da289eb4d848a",
+      "bytes": 3302,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "4942939e1f26f39fc43e6e7605e50d0cd15408e2"
+    },
+    {
+      "path": "agent-log/20260630095256-utcp8-gpt5.md",
+      "sha256": "bdbe82f9902b68fe2be7587767c19359cac46839e05a4bd787221ba994aee094",
+      "bytes": 3334,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "cba31243c0f0ced01eb1e8252828862fd94b4e9b"
+    },
+    {
+      "path": "agent-log/20260630100319-utcp8-gpt5.md",
+      "sha256": "2b94b3f5d69e5827f48ab0d4ed5419f76512e15a3a1a6a588920f10ee451bd5a",
+      "bytes": 2204,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "ca6a588f2704a0d6e731f2436947d34c99449262"
+    },
+    {
+      "path": "agent-log/20260630104434-utcp8-gpt5.md",
+      "sha256": "3cdd77fd424e6ea25f990c58605a8256b2e46f31f05a805cb659a04887d6caef",
+      "bytes": 2926,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "0b94f2e0b32a22f8e10537579d6f0f2c0d11718d"
+    },
+    {
+      "path": "agent-log/20260630234135-utcp8-gpt5.md",
+      "sha256": "f847c54bf4cdcaac3e1d3c847a2bd712581fbb4159509c0c7a3ee7a36b327594",
+      "bytes": 3271,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "86f16a33be427e7c107979e280c30a50c2dbdc61"
+    },
+    {
+      "path": "agent-log/20260630234710-utcp8-gpt5.md",
+      "sha256": "ee62850ac6a4101ea4831c2202723a2dfc5a6f1b94e3f840eb1b7b83b8adb447",
+      "bytes": 2466,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "78a47382d2c059da698f46941d13f6c187d5d8ec"
+    },
+    {
+      "path": "agent-log/20260701002155-utcp8-gpt5.md",
+      "sha256": "7639621e8e30e8b34d5e344576902f047e4583ca454d47ffb2496433e5ecde7b",
+      "bytes": 2450,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "1c52e9d57593d3d7b65712b27733a135f66d035c"
+    },
+    {
+      "path": "agent-log/20260701003450-utcp8-gpt5.md",
+      "sha256": "a7489de34d77309763f7b53d0706a81c43d8539f694d6fdbf0c5a2141bef0a09",
+      "bytes": 4058,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "075ee5fb2b3ca3b9f7da1ae48b59f8b316b0161f"
+    },
+    {
+      "path": "agent-log/20260701143409-utcp8-gpt5.md",
+      "sha256": "7e394417a8309b53a84194c47856452a3420ed80e2fb8b25ceffa33f2a7c83ac",
+      "bytes": 3388,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "188d88698e04375264f5c04de90d6e1c1caa8e07"
+    },
+    {
+      "path": "agent-log/20260701144539-utcp8-gpt5.md",
+      "sha256": "5140ff82cc9fd7d476fe293ba4be61fab038609bffaa0c5100718d253f2af075",
+      "bytes": 2051,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "3629239a202000995229fd3e4cbd00325bf5d148"
+    },
+    {
+      "path": "agent-log/branches/feat-preferences.md",
+      "sha256": "6f32090e6d354d83369f43d98914470a5e5ef001a27f15211c78da4198efff40",
+      "bytes": 1375,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "7b6943cea3f647cd1dbdc4006c9122dc805da722"
+    },
+    {
+      "path": "web/REQUIREMENTS.md",
+      "sha256": "2ea0dff44db020ad76dd9efcc614e2ab8107392e35631fd548f2b1a22ea36281",
+      "bytes": 5776,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "e9edc4ffe6fd7dd92aec79c3ea6c1040c7bc1829"
+    },
+    {
+      "path": "web/agent-log/20260625113500-utcp8-glm5.md",
+      "sha256": "d58d93c9a8d46dc8373ce4dca33e3a1ae75d7582ea7127acfb931e9189e84bc7",
+      "bytes": 8286,
+      "head": "b550269a253e390d19ec221949fb30c44adf9e9e",
+      "tracked": true,
+      "status_before": "",
+      "blob": "8cd390fa543f7a25c35adb0a9b3742bbc45f723f"
+    }
+  ],
+  "requirements": [
+    {
+      "path": "REQUIREMENTS.md",
+      "issues": [
+        "issue/issue-0.0.0-DOC-A-000-DOC-agent-collaboration-foundation-versioncontrolid.md",
+        "issue/issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md",
+        "issue/issue-migration-06feb6e0049e-UI-macos-native-menu-versioncontrolid.md",
+        "issue/issue-migration-ca5105120139-QA-project-goal-versioncontrolid.md",
+        "issue/issue-migration-380a479e8fcc-PM-quota-bar-versioncontrolid.md",
+        "issue/issue-0.2.0-DATA-A-000-DATA-agent-versioncontrolid.md",
+        "issue/issue-0.2.0-DATA-B-000-DATA-subscription-data-versioncontrolid.md",
+        "issue/issue-0.2.0-FE-A-003-FE-refresh-versioncontrolid.md",
+        "issue/issue-0.2.0-UI-A-003-UI-data-versioncontrolid.md",
+        "issue/issue-0.2.0-QA-A-001-QA-project-goal-versioncontrolid.md",
+        "issue/issue-migration-b7fdab420084-FE-ui-subscription-dropdown-refresh-versioncontrolid.md",
+        "issue/issue-0.3.0-DATA-A-000-DATA-subscription-group-versioncontrolid.md",
+        "issue/issue-0.3.0-UI-A-000-UI-sorting-state-versioncontrolid.md",
+        "issue/issue-0.3.0-FE-A-000-FE-streaming-refresh-per-provider-release-versioncontrolid.md",
+        "issue/issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+        "issue/issue-migration-1813617627ae-SEC-provider-zcode-versioncontrolid.md",
+        "issue/issue-0.4.0-DATA-A-000-DATA-bigmodel-code-zcode-versioncontrolid.md",
+        "issue/issue-0.4.0-DATA-B-001-DATA-desktop-app-versioncontrolid.md",
+        "issue/issue-0.4.0-DATA-C-000-DATA-provider-versioncontrolid.md",
+        "issue/issue-0.4.0-QA-A-001-QA-project-goal-versioncontrolid.md",
+        "issue/issue-0.4.0-UI-B-000-UI-subscription-versioncontrolid.md",
+        "issue/issue-0.4.0-DATA-A-001-test-DATA-release-versioncontrolid.md",
+        "issue/issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md",
+        "issue/issue-0.5.0-ENG-A-000-PM-foundation-quality-dev-versioncontrolid.md",
+        "issue/issue-0.5.0-DOC-A-000-DOC-documentation-versioncontrolid.md",
+        "issue/issue-migration-8065bbb47a9d-QA-subscription-headless-versioncontrolid.md",
+        "issue/issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md",
+        "issue/issue-0.6.0-DATA-A-000-DATA-kimi-subscription-data-versioncontrolid.md",
+        "issue/issue-0.6.0-DATA-B-000-DATA-codex-subscription-headless-versioncontrolid.md",
+        "issue/issue-0.6.0-DATA-C-000-DATA-claude-subscription-headless-versioncontrolid.md",
+        "issue/issue-0.6.0-DATA-D-000-DATA-cursor-subscription-headless-versioncontrolid.md",
+        "issue/issue-0.6.0-DATA-E-000-DATA-minimax-subscription-headless-versioncontrolid.md",
+        "issue/issue-0.6.0-DATA-F-000-DATA-antigravity-subscription-headless-versioncontrolid.md",
+        "issue/issue-0.6.0-UI-A-000-UI-ui-hide-refresh-versioncontrolid.md",
+        "issue/issue-migration-fe17d65c8460-PM-glm-provider-feat-versioncontrolid.md",
+        "issue/issue-0.7.0-DATA-A-000-DATA-bigmodel-code-zcode-provider-versioncontrolid.md",
+        "issue/issue-0.7.0-FE-A-000-FE-menu-bar-versioncontrolid.md",
+        "issue/issue-0.7.0-DOC-A-000-DOC-documentation-versioncontrolid.md"
+      ],
+      "legacy_ids": [
+        "0.0.0-DOC-A-000",
+        "0.0.0-DOC-A-001",
+        "0.0.0-DOC-A-002",
+        "0.0.0-DOC-A-003",
+        "0.0.0-DOC-A-004",
+        "0.0.0-DOC-A-005",
+        "0.1.0-UI-A-000",
+        "0.1.0-UI-A-001",
+        "0.1.0-UI-A-002",
+        "0.1.0-UI-A-003",
+        "0.1.0-UI-A-004",
+        "0.1.0-UI-A-005",
+        "0.1.0-UI-A-006",
+        "0.1.0-UI-A-007",
+        "0.1.0-UI-A-008",
+        "0.1.0-UI-A-009",
+        "0.1.0-UI-A-010",
+        "0.1.0-UI-B-000",
+        "0.1.0-UI-B-001",
+        "0.1.0-UI-B-002",
+        "0.1.0-UI-B-003",
+        "0.1.0-UI-B-004",
+        "0.1.0-UI-B-005",
+        "0.1.0-UI-B-006",
+        "0.1.0-UI-B-007",
+        "0.1.0-UI-B-008",
+        "0.1.0-UI-B-009",
+        "0.1.0-QA-A-001",
+        "0.1.0-QA-A-002",
+        "0.2.0-DATA-A-000",
+        "0.2.0-DATA-A-001",
+        "0.2.0-DATA-A-002",
+        "0.2.0-DATA-A-003",
+        "0.2.0-DATA-A-004",
+        "0.2.0-DATA-A-005",
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021",
+        "0.2.0-FE-A-000",
+        "0.2.0-FE-A-001",
+        "0.2.0-FE-A-002",
+        "0.2.0-FE-A-003",
+        "0.2.0-FE-A-004",
+        "0.2.0-FE-A-005",
+        "0.2.0-FE-A-006",
+        "0.2.0-FE-A-007",
+        "0.2.0-FE-A-008",
+        "0.2.0-FE-A-009",
+        "0.2.0-UI-A-000",
+        "0.2.0-UI-A-001",
+        "0.2.0-UI-A-002",
+        "0.2.0-UI-A-003",
+        "0.2.0-UI-A-004",
+        "0.2.0-UI-A-005",
+        "0.2.0-UI-A-006",
+        "0.2.0-UI-A-007",
+        "0.2.0-UI-A-008",
+        "0.2.0-UI-A-009",
+        "0.2.0-QA-A-001",
+        "0.2.0-QA-A-002",
+        "0.2.0-QA-A-003",
+        "0.2.0-QA-A-004",
+        "0.2.0-QA-A-005",
+        "0.2.0-QA-A-006",
+        "0.2.0-QA-A-007",
+        "0.3.0-DATA-A-000",
+        "0.3.0-DATA-A-001",
+        "0.3.0-DATA-A-002",
+        "String",
+        "0.3.0-DATA-A-003",
+        "0.3.0-DATA-A-004",
+        "0.3.0-DATA-A-005",
+        "0.3.0-UI-A-000",
+        "0.3.0-UI-A-001",
+        "0.3.0-UI-A-002",
+        "0.3.0-UI-A-003",
+        "0.3.0-UI-A-004",
+        "0.3.0-UI-A-005",
+        "0.3.0-UI-A-006",
+        "0.3.0-UI-A-007",
+        "0.3.0-UI-A-009",
+        "0.3.0-UI-A-010",
+        "0.3.0-FE-A-000",
+        "0.3.0-FE-A-001",
+        "0.3.0-FE-A-002",
+        "0.3.0-FE-A-003",
+        "0.3.0-FE-A-004",
+        "0.3.0-FE-A-005",
+        "0.3.0-FE-A-006",
+        "0.3.0-UI-A-008",
+        "0.3.0-PM-A-000",
+        "0.3.0-PM-A-001",
+        "0.3.0-PM-A-002",
+        "0.3.0-PM-A-003",
+        "0.3.0-PM-A-004",
+        "0.3.0-PM-A-005",
+        "0.3.0-PM-A-006",
+        "0.3.0-PM-A-007",
+        "0.3.0-PM-A-012",
+        "0.3.0-PM-A-008",
+        "0.3.0-PM-A-009",
+        "0.3.0-PM-A-010",
+        "0.3.0-PM-A-011",
+        "0.4.0-DATA-A-000",
+        "0.4.0-DATA-A-001",
+        "QuotaWindow",
+        "0.4.0-DATA-A-002",
+        "0.4.0-DATA-A-003",
+        "0.4.0-DATA-A-004",
+        "0.4.0-DATA-B-000",
+        "0.4.0-DATA-B-001",
+        "0.4.0-DATA-B-002",
+        "0.4.0-DATA-B-003",
+        "0.4.0-DATA-C-000",
+        "0.4.0-DATA-C-001",
+        "0.4.0-DATA-C-002",
+        "0.4.0-DATA-C-003",
+        "0.4.0-DATA-C-004",
+        "0.4.0-DATA-C-005",
+        "0.4.0-DATA-C-006",
+        "0.4.0-DATA-C-007",
+        "0.4.0-DATA-C-008",
+        "0.4.0-DATA-C-009",
+        "0.4.0-DATA-C-010",
+        "0.4.0-DATA-C-011",
+        "0.4.0-QA-A-001",
+        "0.4.0-QA-A-002",
+        "0.4.0-QA-A-003",
+        "0.4.0-QA-A-004",
+        "0.4.0-UI-B-000",
+        "0.4.0-UI-B-001",
+        "0.4.0-DATA-A-001-test",
+        "0.5.0-CI-A-000",
+        "0.5.0-CI-A-001",
+        "0.5.0-CI-A-002",
+        "0.5.0-ENG-A-000",
+        "0.5.0-ENG-A-001",
+        "0.5.0-ENG-A-002",
+        "0.5.0-ENG-A-003",
+        "0.5.0-DOC-A-000",
+        "0.6.0-ARCH-A-000",
+        "0.6.0-ARCH-A-001",
+        "0.6.0-ARCH-A-002",
+        "0.6.0-ARCH-A-003",
+        "0.6.0-ARCH-A-003-test",
+        "0.6.0-ARCH-A-001-test",
+        "0.6.0-DATA-A-000",
+        "0.6.0-DATA-A-001",
+        "0.6.0-DATA-A-002",
+        "0.6.0-DATA-A-002-test",
+        "0.6.0-DATA-B-000",
+        "0.6.0-DATA-B-001",
+        "0.6.0-DATA-B-001-test",
+        "0.6.0-DATA-C-000",
+        "0.6.0-DATA-C-001",
+        "0.6.0-DATA-C-001-test",
+        "0.6.0-DATA-D-000",
+        "0.6.0-DATA-D-001",
+        "0.6.0-DATA-D-001-test",
+        "0.6.0-DATA-E-000",
+        "0.6.0-DATA-E-001",
+        "0.6.0-DATA-E-001-test",
+        "0.6.0-DATA-F-000",
+        "0.6.0-DATA-F-001",
+        "0.6.0-DATA-F-001-test",
+        "0.6.0-UI-A-000",
+        "0.6.0-UI-A-001",
+        "0.7.0-DATA-A-000",
+        "0.7.0-DATA-A-001",
+        "0.7.0-DATA-A-002",
+        "0.7.0-DATA-A-003",
+        "0.7.0-DATA-A-004",
+        "0.7.0-DATA-A-005",
+        "0.7.0-FE-A-000",
+        "0.7.0-FE-A-001",
+        "0.7.0-DOC-A-000"
+      ]
+    },
+    {
+      "path": "web/REQUIREMENTS.md",
+      "issues": [
+        "issue/issue-0.1.0-PM-A-000-PM-scope-versioncontrolid.md",
+        "issue/issue-0.1.0-FE-A-000-FE-project-build-versioncontrolid.md",
+        "issue/issue-migration-4157a75f19fc-UI-design-tokens-layout-versioncontrolid.md",
+        "issue/issue-migration-936bad7e025e-UI-project-goal-versioncontrolid.md",
+        "issue/issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md",
+        "issue/issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md",
+        "issue/issue-0.1.0-DOC-A-000-DOC-documentation-sync-versioncontrolid.md",
+        "issue/issue-0.1.0-QA-A-000-QA-project-goal-versioncontrolid.md",
+        "issue/issue-migration-fbff6da6eb6c-UI-project-goal-versioncontrolid.md",
+        "issue/issue-migration-14643569cf7d-FE-project-goal-versioncontrolid.md"
+      ],
+      "legacy_ids": [
+        "0.1.0-PM-A-000",
+        "0.1.0-PM-A-001",
+        "0.1.0-PM-A-002",
+        "0.1.0-PM-A-003",
+        "0.1.0-PM-A-004",
+        "0.1.0-FE-A-000",
+        "0.1.0-FE-A-001",
+        "0.1.0-FE-A-002",
+        "0.1.0-FE-A-003",
+        "0.1.0-FE-A-004",
+        "0.1.0-FE-A-005",
+        "0.1.0-UI-A-000",
+        "0.1.0-UI-A-001",
+        "0.1.0-UI-A-002",
+        "0.1.0-UI-A-003",
+        "0.1.0-UI-B-000",
+        "0.1.0-UI-B-001",
+        "0.1.0-UI-B-002",
+        "0.1.0-UI-B-003",
+        "0.1.0-UI-B-004",
+        "0.1.0-UI-B-005",
+        "0.1.0-UI-B-006",
+        "0.1.0-UI-B-007",
+        "0.1.0-UI-B-008",
+        "0.1.0-UI-B-009",
+        "0.1.0-FE-B-000",
+        "0.1.0-FE-B-001",
+        "0.1.0-FE-B-002",
+        "0.1.0-UI-C-000",
+        "0.1.0-UI-C-001",
+        "0.1.0-UI-C-002",
+        "0.1.0-UI-C-003",
+        "0.1.0-UI-C-004",
+        "0.1.0-DOC-A-000",
+        "0.1.0-DOC-A-001",
+        "0.1.0-DOC-A-002",
+        "0.1.0-DOC-A-003",
+        "0.1.0-DOC-A-004",
+        "0.1.0-DOC-A-005",
+        "0.1.0-DOC-A-006",
+        "0.1.0-QA-A-000",
+        "0.1.0-QA-A-001",
+        "0.1.0-QA-A-002",
+        "0.1.0-QA-A-003",
+        "0.1.0-QA-A-004",
+        "0.2.0-UI-A-000",
+        "0.2.0-UI-A-001",
+        "0.2.0-UI-A-002",
+        "0.2.0-FE-A-000",
+        "0.2.0-FE-A-001",
+        "0.2.0-FE-A-002"
+      ]
+    }
+  ],
+  "logs": [
+    {
+      "path": "agent-log/20260619143156-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260629104500-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.1.0-UI-A-004"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620212356-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620145028-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260618205739-utcp8-minimax-m3.md",
+      "role": "historical-evidence",
+      "issues": [
+        "migration-380a479e8fcc"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260625115908-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620151200-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260628005000-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260625104200-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-FE-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-FE-A-000",
+        "0.3.0-FE-A-001",
+        "0.3.0-FE-A-002",
+        "0.3.0-FE-A-003",
+        "0.3.0-FE-A-004",
+        "0.3.0-FE-A-005"
+      ]
+    },
+    {
+      "path": "agent-log/20260629101500-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260624163000-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-UI-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-UI-A-001",
+        "0.3.0-UI-A-002",
+        "0.2.0-UI-A-007"
+      ]
+    },
+    {
+      "path": "agent-log/20260630100319-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-PM-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-PM-A-012"
+      ]
+    },
+    {
+      "path": "agent-log/20260625220500-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "migration-8065bbb47a9d"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620151337-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620214313-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620204220-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.2.0-FE-A-003"
+      ],
+      "matched_legacy_ids": [
+        "0.2.0-FE-A-006",
+        "0.2.0-FE-A-009"
+      ]
+    },
+    {
+      "path": "agent-log/20260630104434-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260625135810-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-UI-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-UI-A-010"
+      ]
+    },
+    {
+      "path": "agent-log/20260622233205-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260630004130-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620193629-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620205908-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.2.0-FE-A-003"
+      ],
+      "matched_legacy_ids": [
+        "0.2.0-FE-A-005",
+        "0.2.0-FE-A-006",
+        "0.2.0-FE-A-007",
+        "0.2.0-FE-A-008",
+        "0.2.0-FE-A-009"
+      ]
+    },
+    {
+      "path": "agent-log/20260618101312-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260625221500-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "migration-8065bbb47a9d"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620144300-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "migration-380a479e8fcc"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260627162000-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "migration-8065bbb47a9d"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260618111226-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620213518-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260701002155-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260619141258-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260630010159-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-PM-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-PM-A-012"
+      ]
+    },
+    {
+      "path": "agent-log/20260625221000-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.6.0-UI-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.6.0-UI-A-000",
+        "0.6.0-UI-A-001"
+      ]
+    },
+    {
+      "path": "agent-log/20260701144539-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-PM-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-PM-A-003"
+      ]
+    },
+    {
+      "path": "agent-log/20260618104613-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260618113600-utcp8-minimax-m3.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620213150-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260701003450-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-PM-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-PM-A-003",
+        "0.3.0-PM-A-004",
+        "0.3.0-PM-A-005",
+        "0.4.0-DATA-C-001",
+        "0.4.0-DATA-C-011"
+      ]
+    },
+    {
+      "path": "agent-log/20260618112258-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "migration-fe17d65c8460"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260630234135-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260625134800-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.4.0-UI-B-000"
+      ],
+      "matched_legacy_ids": [
+        "0.4.0-UI-B-000",
+        "0.4.0-UI-B-001"
+      ]
+    },
+    {
+      "path": "agent-log/20260618110245-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620150136-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260618171000-utcp8-minimax-m3.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260625104258-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260623014203-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260619160000-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.0.0-DOC-A-000"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260630004524-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260701143409-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-PM-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-PM-A-002",
+        "0.3.0-PM-A-003",
+        "0.3.0-PM-A-004"
+      ]
+    },
+    {
+      "path": "agent-log/20260628002800-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "migration-fe17d65c8460"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260624230928-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-UI-A-000"
+      ],
+      "matched_legacy_ids": [
+        "QuotaWindow",
+        "String",
+        "0.3.0-UI-A-000",
+        "0.3.0-UI-A-001",
+        "0.3.0-UI-A-002",
+        "0.3.0-UI-A-003",
+        "0.3.0-DATA-A-000",
+        "0.3.0-DATA-A-001",
+        "0.3.0-DATA-A-002",
+        "0.3.0-DATA-A-003",
+        "0.3.0-UI-A-004",
+        "0.3.0-UI-A-005",
+        "0.3.0-UI-A-006",
+        "0.4.0-DATA-A-000",
+        "0.4.0-DATA-B-000"
+      ]
+    },
+    {
+      "path": "agent-log/20260619131237-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260619011202-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.6.0-DATA-B-000"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260618092446-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260625105744-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260630092645-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-PM-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-PM-A-012"
+      ]
+    },
+    {
+      "path": "agent-log/20260628023000-utcp8-mavis.md",
+      "role": "retired-template",
+      "issues": []
+    },
+    {
+      "path": "agent-log/20260630234710-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260619022530-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260621014158-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260625121542-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-UI-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-DATA-A-005",
+        "0.3.0-UI-A-005",
+        "0.3.0-UI-A-009"
+      ]
+    },
+    {
+      "path": "agent-log/20260620202608-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.2.0-DATA-B-000"
+      ],
+      "matched_legacy_ids": [
+        "0.2.0-DATA-B-001"
+      ]
+    },
+    {
+      "path": "agent-log/20260618173144-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260618000923-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260618210258-utcp8-minimax-m3.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260620203553-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.2.0-UI-A-003"
+      ],
+      "matched_legacy_ids": [
+        "0.2.0-FE-A-007",
+        "0.2.0-FE-A-008",
+        "0.2.0-UI-A-007",
+        "0.2.0-UI-A-008",
+        "0.2.0-UI-A-009"
+      ]
+    },
+    {
+      "path": "agent-log/20260630095256-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-PM-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-PM-A-012"
+      ]
+    },
+    {
+      "path": "agent-log/20260618105916-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260626160800-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.6.0-UI-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.6.0-UI-A-000"
+      ]
+    },
+    {
+      "path": "agent-log/20260618094811-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260618004923-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260625113500-utcp8-glm5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.0.0-DOC-A-000"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260618174200-utcp8-minimax-m3.md",
+      "role": "historical-evidence",
+      "issues": [
+        "migration-fe17d65c8460"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260624155839-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-UI-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-UI-A-000",
+        "0.3.0-UI-A-001",
+        "0.3.0-UI-A-002",
+        "0.3.0-UI-A-003"
+      ]
+    },
+    {
+      "path": "agent-log/20260618165946-utcp8-mavis.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260618171600-utcp8-minimax-m3.md",
+      "role": "historical-evidence",
+      "issues": [
+        "DOC-migration-20261023"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "agent-log/20260630093952-utcp8-gpt5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.3.0-PM-A-000"
+      ],
+      "matched_legacy_ids": [
+        "0.3.0-PM-A-012"
+      ]
+    },
+    {
+      "path": "agent-log/branches/feat-preferences.md",
+      "role": "historical-evidence",
+      "issues": [
+        "migration-fe17d65c8460"
+      ],
+      "matched_legacy_ids": []
+    },
+    {
+      "path": "web/agent-log/20260625113500-utcp8-glm5.md",
+      "role": "historical-evidence",
+      "issues": [
+        "0.0.0-DOC-A-000"
+      ],
+      "matched_legacy_ids": []
+    }
+  ],
+  "issues": [
+    {
+      "id": "0.0.0-DOC-A-000",
+      "type": "DOC",
+      "file": "issue-0.0.0-DOC-A-000-DOC-agent-collaboration-foundation-versioncontrolid.md",
+      "title": "DOC-A：Agent 协作基础",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.0.0-DOC-A-000",
+        "0.0.0-DOC-A-001",
+        "0.0.0-DOC-A-002",
+        "0.0.0-DOC-A-003",
+        "0.0.0-DOC-A-004",
+        "0.0.0-DOC-A-005"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.1.0-UI-A-004",
+      "type": "UI",
+      "file": "issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md",
+      "title": "UI-A：macOS 26 风格下拉面板",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-UI-A-000",
+        "0.1.0-UI-A-001",
+        "0.1.0-UI-A-002",
+        "0.1.0-UI-A-003",
+        "0.1.0-UI-A-004",
+        "0.1.0-UI-A-005",
+        "0.1.0-UI-A-006",
+        "0.1.0-UI-A-007",
+        "0.1.0-UI-A-008",
+        "0.1.0-UI-A-009",
+        "0.1.0-UI-A-010"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "migration-06feb6e0049e",
+      "type": "UI",
+      "file": "issue-migration-06feb6e0049e-UI-macos-native-menu-versioncontrolid.md",
+      "title": "UI-B：传统 macOS 原生菜单实现",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-UI-B-000",
+        "0.1.0-UI-B-001",
+        "0.1.0-UI-B-002",
+        "0.1.0-UI-B-003",
+        "0.1.0-UI-B-004",
+        "0.1.0-UI-B-005",
+        "0.1.0-UI-B-006",
+        "0.1.0-UI-B-007",
+        "0.1.0-UI-B-008",
+        "0.1.0-UI-B-009"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "migration-ca5105120139",
+      "type": "QA",
+      "file": "issue-migration-ca5105120139-QA-project-goal-versioncontrolid.md",
+      "title": "QA-A：阶段 1 完成定义",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-QA-A-001",
+        "0.1.0-QA-A-002"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "migration-380a479e8fcc",
+      "type": "PM",
+      "file": "issue-migration-380a479e8fcc-PM-quota-bar-versioncontrolid.md",
+      "title": "Phase - v0.2.0 - Quota Bar 核心功能",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [],
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+    },
+    {
+      "id": "0.2.0-DATA-A-000",
+      "type": "DATA",
+      "file": "issue-0.2.0-DATA-A-000-DATA-agent-versioncontrolid.md",
+      "title": "DATA-A：Agent 自动探测",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-A-000",
+        "0.2.0-DATA-A-001",
+        "0.2.0-DATA-A-002",
+        "0.2.0-DATA-A-003",
+        "0.2.0-DATA-A-004",
+        "0.2.0-DATA-A-005"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.2.0-DATA-B-000",
+      "type": "DATA",
+      "file": "issue-0.2.0-DATA-B-000-DATA-subscription-data-versioncontrolid.md",
+      "title": "DATA-B：订阅数据获取",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）"
+    },
+    {
+      "id": "0.2.0-FE-A-003",
+      "type": "FE",
+      "file": "issue-0.2.0-FE-A-003-FE-refresh-versioncontrolid.md",
+      "title": "FE-A：刷新机制",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-FE-A-000",
+        "0.2.0-FE-A-001",
+        "0.2.0-FE-A-002",
+        "0.2.0-FE-A-003",
+        "0.2.0-FE-A-004",
+        "0.2.0-FE-A-005",
+        "0.2.0-FE-A-006",
+        "0.2.0-FE-A-007",
+        "0.2.0-FE-A-008",
+        "0.2.0-FE-A-009"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.2.0-UI-A-003",
+      "type": "UI",
+      "file": "issue-0.2.0-UI-A-003-UI-data-versioncontrolid.md",
+      "title": "UI-A：动态数据展示",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-UI-A-000",
+        "0.2.0-UI-A-001",
+        "0.2.0-UI-A-002",
+        "0.2.0-UI-A-003",
+        "0.2.0-UI-A-004",
+        "0.2.0-UI-A-005",
+        "0.2.0-UI-A-006",
+        "0.2.0-UI-A-007",
+        "0.2.0-UI-A-008",
+        "0.2.0-UI-A-009"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.2.0-QA-A-001",
+      "type": "QA",
+      "file": "issue-0.2.0-QA-A-001-QA-project-goal-versioncontrolid.md",
+      "title": "QA-A：P1 完成定义",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-QA-A-001",
+        "0.2.0-QA-A-002",
+        "0.2.0-QA-A-003",
+        "0.2.0-QA-A-004",
+        "0.2.0-QA-A-005",
+        "0.2.0-QA-A-006",
+        "0.2.0-QA-A-007"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "migration-b7fdab420084",
+      "type": "FE",
+      "file": "issue-migration-b7fdab420084-FE-ui-subscription-dropdown-refresh-versioncontrolid.md",
+      "title": "Phase - v0.3.0 - UI 拖拽、订阅组语义与 dropdown 实时刷新",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [],
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+    },
+    {
+      "id": "0.3.0-DATA-A-000",
+      "type": "DATA",
+      "file": "issue-0.3.0-DATA-A-000-DATA-subscription-group-versioncontrolid.md",
+      "title": "DATA-A：订阅组（subscription group）语义",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-DATA-A-000",
+        "0.3.0-DATA-A-001",
+        "0.3.0-DATA-A-002",
+        "String",
+        "0.3.0-DATA-A-003",
+        "0.3.0-DATA-A-004",
+        "0.3.0-DATA-A-005"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.3.0-UI-A-000",
+      "type": "UI",
+      "file": "issue-0.3.0-UI-A-000-UI-sorting-state-versioncontrolid.md",
+      "title": "UI-A：拖拽排序与状态联动（语义升级）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-UI-A-000",
+        "0.3.0-UI-A-001",
+        "0.3.0-UI-A-002",
+        "0.3.0-UI-A-003",
+        "0.3.0-UI-A-004",
+        "0.3.0-UI-A-005",
+        "0.3.0-UI-A-006",
+        "0.3.0-UI-A-007",
+        "0.3.0-UI-A-009",
+        "0.3.0-UI-A-010"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.3.0-FE-A-000",
+      "type": "FE",
+      "file": "issue-0.3.0-FE-A-000-FE-streaming-refresh-per-provider-release-versioncontrolid.md",
+      "title": "FE-A：Streaming 刷新（per-provider 增量发布）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-FE-A-000",
+        "0.3.0-FE-A-001",
+        "0.3.0-FE-A-002",
+        "0.3.0-FE-A-003",
+        "0.3.0-FE-A-004",
+        "0.3.0-FE-A-005",
+        "0.3.0-FE-A-006",
+        "0.3.0-UI-A-008"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）"
+    },
+    {
+      "id": "0.3.0-PM-A-000",
+      "type": "PM",
+      "file": "issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "title": "PM-A：偏好设置与后续能力（激活）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-PM-A-000",
+        "0.3.0-PM-A-001",
+        "0.3.0-PM-A-002",
+        "0.3.0-PM-A-003",
+        "0.3.0-PM-A-004",
+        "0.3.0-PM-A-005",
+        "0.3.0-PM-A-006",
+        "0.3.0-PM-A-007",
+        "0.3.0-PM-A-012",
+        "0.3.0-PM-A-008",
+        "0.3.0-PM-A-009",
+        "0.3.0-PM-A-010",
+        "0.3.0-PM-A-011"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）"
+    },
+    {
+      "id": "migration-1813617627ae",
+      "type": "SEC",
+      "file": "issue-migration-1813617627ae-SEC-provider-zcode-versioncontrolid.md",
+      "title": "Phase - v0.4.0 - 新 Provider 接入（zcode / 千问 / 其他）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [],
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+    },
+    {
+      "id": "0.4.0-DATA-A-000",
+      "type": "DATA",
+      "file": "issue-0.4.0-DATA-A-000-DATA-bigmodel-code-zcode-versioncontrolid.md",
+      "title": "DATA-A：智谱 BigModel Z Code (zcode)",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.4.0-DATA-A-000",
+        "0.4.0-DATA-A-001",
+        "QuotaWindow",
+        "0.4.0-DATA-A-002",
+        "0.4.0-DATA-A-003",
+        "0.4.0-DATA-A-004"
+      ],
+      "state": "待处理（原文未完成项保持未勾选）"
+    },
+    {
+      "id": "0.4.0-DATA-B-001",
+      "type": "DATA",
+      "file": "issue-0.4.0-DATA-B-001-DATA-desktop-app-versioncontrolid.md",
+      "title": "DATA-B：阿里通义千问桌面 App",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.4.0-DATA-B-000",
+        "0.4.0-DATA-B-001",
+        "0.4.0-DATA-B-002",
+        "0.4.0-DATA-B-003"
+      ],
+      "state": "阻塞（沿用原需求记录）"
+    },
+    {
+      "id": "0.4.0-DATA-C-000",
+      "type": "DATA",
+      "file": "issue-0.4.0-DATA-C-000-DATA-provider-versioncontrolid.md",
+      "title": "DATA-C：新 Provider 接入通用流程",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.4.0-DATA-C-000",
+        "0.4.0-DATA-C-001",
+        "0.4.0-DATA-C-002",
+        "0.4.0-DATA-C-003",
+        "0.4.0-DATA-C-004",
+        "0.4.0-DATA-C-005",
+        "0.4.0-DATA-C-006",
+        "0.4.0-DATA-C-007",
+        "0.4.0-DATA-C-008",
+        "0.4.0-DATA-C-009",
+        "0.4.0-DATA-C-010",
+        "0.4.0-DATA-C-011"
+      ],
+      "state": "待定 / 延后（沿用原需求记录）"
+    },
+    {
+      "id": "0.4.0-QA-A-001",
+      "type": "QA",
+      "file": "issue-0.4.0-QA-A-001-QA-project-goal-versioncontrolid.md",
+      "title": "QA-A：v0.4.0 完成定义",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.4.0-QA-A-001",
+        "0.4.0-QA-A-002",
+        "0.4.0-DATA-B-000",
+        "0.4.0-QA-A-003",
+        "0.4.0-QA-A-004"
+      ],
+      "state": "阻塞（沿用原需求记录）"
+    },
+    {
+      "id": "0.4.0-UI-B-000",
+      "type": "UI",
+      "file": "issue-0.4.0-UI-B-000-UI-subscription-versioncontrolid.md",
+      "title": "UI-B：可用订阅计数反映实际可用性",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.4.0-UI-B-000",
+        "0.4.0-UI-B-001"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.4.0-DATA-A-001-test",
+      "type": "DATA",
+      "file": "issue-0.4.0-DATA-A-001-test-DATA-release-versioncontrolid.md",
+      "title": "Phase - v0.5.0 - 发布自动化与工程卫生",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.4.0-DATA-A-001-test"
+      ],
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+    },
+    {
+      "id": "0.5.0-CI-A-000",
+      "type": "CI",
+      "file": "issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md",
+      "title": "CI-A：发布自动化 + PR 验证（围绕 3 件事）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.5.0-CI-A-000",
+        "0.5.0-CI-A-001",
+        "0.5.0-CI-A-002"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.5.0-ENG-A-000",
+      "type": "PM",
+      "file": "issue-0.5.0-ENG-A-000-PM-foundation-quality-dev-versioncontrolid.md",
+      "title": "ENG-A：工程卫生基础设施（用户间接感知：可信任的代码质量、dev 入口友好）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.5.0-ENG-A-000",
+        "0.5.0-ENG-A-001",
+        "0.5.0-ENG-A-002",
+        "0.5.0-ENG-A-003"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.5.0-DOC-A-000",
+      "type": "DOC",
+      "file": "issue-0.5.0-DOC-A-000-DOC-documentation-versioncontrolid.md",
+      "title": "DOC-A：可被用户感知的文档",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.5.0-DOC-A-000"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "migration-8065bbb47a9d",
+      "type": "QA",
+      "file": "issue-migration-8065bbb47a9d-QA-subscription-headless-versioncontrolid.md",
+      "title": "Phase - v0.6.0 - 真实订阅到期日（headless 抓取订阅页）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [],
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+    },
+    {
+      "id": "0.6.0-ARCH-A-000",
+      "type": "ARCH",
+      "file": "issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md",
+      "title": "ARCH-A：订阅日期抓取基础架构",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.6.0-ARCH-A-000",
+        "0.6.0-ARCH-A-001",
+        "0.6.0-ARCH-A-002",
+        "0.6.0-ARCH-A-003",
+        "0.6.0-ARCH-A-003-test",
+        "0.6.0-ARCH-A-001-test"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.6.0-DATA-A-000",
+      "type": "DATA",
+      "file": "issue-0.6.0-DATA-A-000-DATA-kimi-subscription-data-versioncontrolid.md",
+      "title": "DATA-A：Kimi 真实订阅到期日（已有数据，5 行代码）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.6.0-DATA-A-000",
+        "0.6.0-DATA-A-001",
+        "0.6.0-DATA-A-002",
+        "0.6.0-DATA-A-002-test"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.6.0-DATA-B-000",
+      "type": "DATA",
+      "file": "issue-0.6.0-DATA-B-000-DATA-codex-subscription-headless-versioncontrolid.md",
+      "title": "DATA-B：Codex 真实订阅到期日（headless 抓订阅页）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.6.0-DATA-B-000",
+        "0.6.0-DATA-B-001",
+        "0.6.0-DATA-B-001-test"
+      ],
+      "state": "待处理（原文未完成项保持未勾选）"
+    },
+    {
+      "id": "0.6.0-DATA-C-000",
+      "type": "DATA",
+      "file": "issue-0.6.0-DATA-C-000-DATA-claude-subscription-headless-versioncontrolid.md",
+      "title": "DATA-C：Claude 真实订阅到期日（headless 抓订阅页）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.6.0-DATA-C-000",
+        "0.6.0-DATA-C-001",
+        "0.6.0-DATA-C-001-test"
+      ],
+      "state": "待处理（原文未完成项保持未勾选）"
+    },
+    {
+      "id": "0.6.0-DATA-D-000",
+      "type": "DATA",
+      "file": "issue-0.6.0-DATA-D-000-DATA-cursor-subscription-headless-versioncontrolid.md",
+      "title": "DATA-D：Cursor 真实订阅到期日（headless 抓订阅页）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.6.0-DATA-D-000",
+        "0.6.0-DATA-D-001",
+        "0.6.0-DATA-D-001-test"
+      ],
+      "state": "待处理（原文未完成项保持未勾选）"
+    },
+    {
+      "id": "0.6.0-DATA-E-000",
+      "type": "DATA",
+      "file": "issue-0.6.0-DATA-E-000-DATA-minimax-subscription-headless-versioncontrolid.md",
+      "title": "DATA-E：MiniMax 真实订阅到期日（headless 抓订阅页）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.6.0-DATA-E-000",
+        "0.6.0-DATA-E-001",
+        "0.6.0-DATA-E-001-test"
+      ],
+      "state": "待处理（原文未完成项保持未勾选）"
+    },
+    {
+      "id": "0.6.0-DATA-F-000",
+      "type": "DATA",
+      "file": "issue-0.6.0-DATA-F-000-DATA-antigravity-subscription-headless-versioncontrolid.md",
+      "title": "DATA-F：Antigravity 真实订阅到期日（headless 抓订阅页）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.6.0-DATA-F-000",
+        "0.6.0-DATA-F-001",
+        "0.6.0-DATA-F-001-test"
+      ],
+      "state": "待处理（原文未完成项保持未勾选）"
+    },
+    {
+      "id": "0.6.0-UI-A-000",
+      "type": "UI",
+      "file": "issue-0.6.0-UI-A-000-UI-ui-hide-refresh-versioncontrolid.md",
+      "title": "UI-A：UI 调整（找不到时 hide，不显示\"刷新时间未知\"）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.6.0-UI-A-000",
+        "0.6.0-UI-A-001"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "migration-fe17d65c8460",
+      "type": "PM",
+      "file": "issue-migration-fe17d65c8460-PM-glm-provider-feat-versioncontrolid.md",
+      "title": "Phase - v0.7.0 - 智谱 GLM Provider 接入（feat/glm-provider）",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [],
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+    },
+    {
+      "id": "0.7.0-DATA-A-000",
+      "type": "DATA",
+      "file": "issue-0.7.0-DATA-A-000-DATA-bigmodel-code-zcode-provider-versioncontrolid.md",
+      "title": "DATA-A：智谱 BigModel Z Code (zcode) Provider 接入",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.7.0-DATA-A-000",
+        "0.7.0-DATA-A-001",
+        "QuotaWindow",
+        "0.7.0-DATA-A-002",
+        "0.7.0-DATA-A-003",
+        "0.7.0-DATA-A-004",
+        "0.7.0-DATA-A-005"
+      ],
+      "state": "待处理（原文未完成项保持未勾选）"
+    },
+    {
+      "id": "0.7.0-FE-A-000",
+      "type": "FE",
+      "file": "issue-0.7.0-FE-A-000-FE-menu-bar-versioncontrolid.md",
+      "title": "FE-A：菜单栏 bar 集成",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.7.0-FE-A-000",
+        "0.7.0-FE-A-001"
+      ],
+      "state": "待处理（原文未完成项保持未勾选）"
+    },
+    {
+      "id": "0.7.0-DOC-A-000",
+      "type": "DOC",
+      "file": "issue-0.7.0-DOC-A-000-DOC-documentation-versioncontrolid.md",
+      "title": "DOC-A：用户可见文档",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.7.0-DOC-A-000"
+      ],
+      "state": "待处理（原文未完成项保持未勾选）"
+    },
+    {
+      "id": "0.1.0-PM-A-000",
+      "type": "PM",
+      "file": "issue-0.1.0-PM-A-000-PM-scope-versioncontrolid.md",
+      "title": "PM-A：范围与信息架构",
+      "source": "web/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-PM-A-000",
+        "0.1.0-PM-A-001",
+        "0.1.0-PM-A-002",
+        "0.1.0-PM-A-003",
+        "0.1.0-PM-A-004"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.1.0-FE-A-000",
+      "type": "FE",
+      "file": "issue-0.1.0-FE-A-000-FE-project-build-versioncontrolid.md",
+      "title": "FE-A：项目骨架与构建",
+      "source": "web/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-FE-A-000",
+        "0.1.0-FE-A-001",
+        "0.1.0-FE-A-002",
+        "0.1.0-FE-A-003",
+        "0.1.0-FE-A-004",
+        "0.1.0-FE-A-005"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "migration-4157a75f19fc",
+      "type": "UI",
+      "file": "issue-migration-4157a75f19fc-UI-design-tokens-layout-versioncontrolid.md",
+      "title": "UI-A：Design Tokens 与布局",
+      "source": "web/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-UI-A-000",
+        "0.1.0-UI-A-001",
+        "0.1.0-UI-A-002",
+        "0.1.0-UI-A-003"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "migration-936bad7e025e",
+      "type": "UI",
+      "file": "issue-migration-936bad7e025e-UI-project-goal-versioncontrolid.md",
+      "title": "UI-B：核心组件实现",
+      "source": "web/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-UI-B-000",
+        "0.1.0-UI-B-001",
+        "0.1.0-UI-B-002",
+        "0.1.0-UI-B-003",
+        "0.1.0-UI-B-004",
+        "0.1.0-UI-B-005",
+        "0.1.0-UI-B-006",
+        "0.1.0-UI-B-007",
+        "0.1.0-UI-B-008",
+        "0.1.0-UI-B-009"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.1.0-FE-B-000",
+      "type": "FE",
+      "file": "issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md",
+      "title": "FE-B：主页组装与下载链接",
+      "source": "web/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-FE-B-000",
+        "0.1.0-FE-B-001",
+        "0.1.0-FE-B-002"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.1.0-UI-C-000",
+      "type": "UI",
+      "file": "issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md",
+      "title": "UI-C：响应式与可访问性",
+      "source": "web/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-UI-C-000",
+        "0.1.0-UI-C-001",
+        "0.1.0-UI-C-002",
+        "0.1.0-UI-C-003",
+        "0.1.0-UI-C-004"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.1.0-DOC-A-000",
+      "type": "DOC",
+      "file": "issue-0.1.0-DOC-A-000-DOC-documentation-sync-versioncontrolid.md",
+      "title": "DOC-A：文档同步",
+      "source": "web/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-DOC-A-000",
+        "0.1.0-DOC-A-001",
+        "0.1.0-DOC-A-002",
+        "0.1.0-DOC-A-003",
+        "0.1.0-DOC-A-004",
+        "0.1.0-DOC-A-005",
+        "0.1.0-DOC-A-006"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+    },
+    {
+      "id": "0.1.0-QA-A-000",
+      "type": "QA",
+      "file": "issue-0.1.0-QA-A-000-QA-project-goal-versioncontrolid.md",
+      "title": "QA-A：首版完成定义",
+      "source": "web/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-QA-A-000",
+        "0.1.0-QA-A-001",
+        "0.1.0-QA-A-002",
+        "0.1.0-QA-A-003",
+        "0.1.0-QA-A-004"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）"
+    },
+    {
+      "id": "migration-fbff6da6eb6c",
+      "type": "UI",
+      "file": "issue-migration-fbff6da6eb6c-UI-project-goal-versioncontrolid.md",
+      "title": "UI-A：真实截图替换",
+      "source": "web/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-UI-A-000",
+        "0.2.0-UI-A-001",
+        "0.2.0-UI-A-002"
+      ],
+      "state": "待定 / 延后（沿用原需求记录）"
+    },
+    {
+      "id": "migration-14643569cf7d",
+      "type": "FE",
+      "file": "issue-migration-14643569cf7d-FE-project-goal-versioncontrolid.md",
+      "title": "FE-A：站点增强",
+      "source": "web/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-FE-A-000",
+        "0.2.0-FE-A-001",
+        "0.2.0-FE-A-002"
+      ],
+      "state": "待定 / 延后（沿用原需求记录）"
+    }
+  ],
+  "note": "Original states retained; historical log evidence does not complete current tasks."
+}
