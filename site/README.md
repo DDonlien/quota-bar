@@ -85,7 +85,6 @@ site/
 ├── README.md                        # 本文件
 ├── REQUIREMENTS.md                  # 需求追踪
 ├── DESIGN.md                        # 视觉规范
-└── agent-log/                       # 执行日志
 ```
 
 ## i18n 工作机制
@@ -114,5 +113,5 @@ Provider 品牌色未在主页中展示（旧的 ProviderGrid 已被移除），
 
 - 视觉规范：[`DESIGN.md`](DESIGN.md)
 - 需求追踪：[`../issue/issue-0.1.0-PM-A-000-PM-landing-scope-versioncontrolid.md`](../issue/issue-0.1.0-PM-A-000-PM-landing-scope-versioncontrolid.md)
-- 执行日志：[`../issue/README.md`](agent-log)
+- 任务记录：[`../issue/README.md`](../issue/README.md)
 - 全局父级文档：[`../README.md`](../README.md)
