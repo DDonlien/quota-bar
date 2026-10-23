@@ -1,0 +1,25 @@
+# sub/main: 试用剩余天数不随时间更新
+
+- ID：`0.15.2-BUG-A-000`。
+- 类型：`QA`。
+- 状态：已完成（沿用原需求记录；本轮未重新执行产品验收）。
+- 版本管理标识：`versioncontrolid`（含义待定义，不推断为 commit、branch 或 change）。
+- 来源：`REQUIREMENTS.md` @ `211555173930360a07f45b8f9662463ed7519dba`；标题路径：任务清单 / Phase - v0.15.2 - 时间派生值只算一次的两处 bug / sub/main: 试用剩余天数不随时间更新。
+- 原稳定 ID：`0.15.2-BUG-A-000`, `0.15.2-BUG-A-001`, `0.15.2-BUG-A-002`, `0.15.2-QA-A-000`；不改写或重编号这些既有 ID。
+
+## 当前需求与范围
+
+- [x] [0.15.2-BUG-A-000] `LicenseManager.state` 原本只在 `init` 里算一次。加 10 分钟一次的 `Timer`（`RunLoop.main` + `.common` 模式，保证菜单打开/窗口拖动期间也走）重算；纯本地日期算术、不发请求，开销可忽略，而剩余天数按天取整，10 分钟粒度足够让跨零点及时反映
+- [x] [0.15.2-BUG-A-001] `ActivationSettingsView` / `AboutSettingsView` 的 `onAppear` 主动调一次 `refreshState()`——用户点开设置那一刻看到的必须是当下的真实天数，不能等定时器
+- [x] [0.15.2-BUG-A-002] 连带修复的隐患：`UpdateChecker` 的授权门禁读的是同一个 `state`，此前试用其实已到期的机器仍会继续享受自动更新
+- [x] [0.15.2-QA-A-000] 新增回归测试 `trialDaysRecomputeOverTime`（播种 4 天前的 `firstLaunchAt`，断言必须得到 3 天而不是固定的 7）。为此给测试 helper 加 `firstLaunchAt` 播种参数——必须在构造 manager 之前写入，否则 `init` 里的 `markFirstLaunchIfNeeded()` 会把它写成"此刻"。`LicenseManager` 新增 `stateRefreshInterval` 注入点，测试传 0 不启动定时器（@MainActor 类无法在 nonisolated deinit 里回收 Timer，见该处注释）
+
+## 检查与验收边界
+
+以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
+
+## Comments
+
+### 2026-10-23 17:44:33 UTC — Agent（文档迁移）
+
+按原有功能 / 工作目标标题拆分需求，保留原 ID、勾选、依赖、最新补充及来源。没有稳定根 ID或旧 ID 在不同上下文重用时，采用由来源路径和标题确定的迁移 Issue ID，原 ID 仍在正文保留。完整旧内容可从来源版本读取；独有未提交内容的版本化副本见迁移映射。

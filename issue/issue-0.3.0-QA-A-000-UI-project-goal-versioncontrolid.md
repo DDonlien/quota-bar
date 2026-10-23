@@ -1,0 +1,25 @@
+# site/main: 开源 / 付费双轨定价卡片
+
+- ID：`0.3.0-QA-A-000`。
+- 类型：`UI`。
+- 状态：已完成（沿用原需求记录；本轮未重新执行产品验收）。
+- 版本管理标识：`versioncontrolid`（含义待定义，不推断为 commit、branch 或 change）。
+- 来源：`site/REQUIREMENTS.md` @ `211555173930360a07f45b8f9662463ed7519dba`；标题路径：任务清单 / Phase - v0.3.0 - 开源/付费双轨定价卡 + Creem 合规必需页面 / site/main: 开源 / 付费双轨定价卡片。
+- 原稳定 ID：`0.3.0-UI-A-000`, `0.3.0-UI-A-001`, `0.3.0-UI-A-002`, `0.3.0-QA-A-000`；不改写或重编号这些既有 ID。
+
+## 当前需求与范围
+
+- [x] [0.3.0-UI-A-000] `Pricing.astro` 的 `.pricing__card-wrap` 从单卡改为两卡并排（`display:flex; flex-wrap:wrap; align-items:stretch; gap:24px`，超出可用宽度自动换行堆叠，不需要额外写断点），保留现有 Pro 卡片内容和逻辑不变，新增一张「开源自行编译」卡片，`.pricing__card { display:flex; flex-direction:column }` + CTA `margin-top:auto` 让两卡等高、按钮底部对齐
+- [x] [0.3.0-UI-A-001] 开源卡片内容："Build it yourself"（自行编译）、中性灰徽标（跟付费卡的暖橙"限时"徽标区分开，避免暗示这条路径也是限时的）、说明源码功能与官方版一致需自行编译签名、outline 风格 CTA 按钮跳转 `https://github.com/DDonlien/quota-bar`（新标签页）；同宽（380px）同圆角/边框语言，视觉平级而非主次关系
+- [x] [0.3.0-UI-A-002] i18n：`dict.ts` 新增 9 个 `pricing.opensource.*` key（badge/plan.name/amount/note/4 条 bullet/cta），中英文都补全
+- [x] [0.3.0-QA-A-000] `npm run build` 通过；Browser 面板实测（`getBoundingClientRect` 精确几何验证，规避了本次会话里 screenshot 工具的一个滚动后截图偶发失败的环境问题）：桌面宽度两卡 380×442px 严格等高、同一行（top 相同）、间距 24px、水平居中；收窄到移动宽度后自动换行堆叠（同 left、不同 top）；DOM 内容核对 badge/plan name/amount/CTA 文案与链接全部正确
+
+## 检查与验收边界
+
+以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
+
+## Comments
+
+### 2026-10-23 17:44:33 UTC — Agent（文档迁移）
+
+按原有功能 / 工作目标标题拆分需求，保留原 ID、勾选、依赖、最新补充及来源。没有稳定根 ID或旧 ID 在不同上下文重用时，采用由来源路径和标题确定的迁移 Issue ID，原 ID 仍在正文保留。完整旧内容可从来源版本读取；独有未提交内容的版本化副本见迁移映射。
