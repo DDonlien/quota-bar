@@ -164,7 +164,7 @@ template-version: "v2.0.1-261023-173015"
 - 构建命令：`make build`（等价于 `cd macos && swift build`）；站点构建为 `make site`。
 - 应用打包：`make app`（等价于 `cd macos && ./scripts/build-app.sh`）。
 - 发布命令：`make deploy`（部署 `site/` 到 Vercel，首次需先 `make link`）。
-- 发版流程（ad-hoc 预开发版）：本地 `make app` 或推 main 都会读取根目录 `VERSION` 文件 + 当前 commit short sha，产出 `v<VERSION>-<sha>` 的 ad-hoc 签名包（首次打开需「右键 → 打开」）。签名升级（Developer ID + notarize）见 REQUIREMENTS v0.12.0。
+- 发版流程（ad-hoc 预开发版）：本地 `make app` 或推 main 都会读取根目录 `VERSION` 文件 + 当前 commit short sha，产出 `v<VERSION>-<sha>` 的 ad-hoc 签名包（首次打开需「右键 → 打开」）。签名升级（Developer ID + notarize）见 issue/ 中原 v0.12.0 需求及其来源映射。
 - **安装包分发（v0.15.0 起）**：CI 把 dmg 上传到 **Vercel Blob**，同时写一份 `releases/latest.json` manifest（见 `scripts/upload-release.mjs`）；GitHub Release 只保留 tag 与源码归档，**不再附带 dmg**。客户端与官网都通过 `api/latest-release.mjs` / `api/download-latest.mjs` 拿版本信息和安装包，下载流量始终走自有域名。
   - 兼容闸门：`BLOB_READ_WRITE_TOKEN`（GitHub Actions Secret）没配时，`release.yml` 自动退回旧路径把 dmg 挂到 GitHub Release，发版不会中断。
   - 已知既成事实：迁移完成后，**≤v0.10.1 的旧客户端会永久失去自动更新**——它们先问 GitHub，那边返回"有 release 但无 dmg 资产"就不会再走兜底，于是永远判定"已是最新"。这不是 bug，需要手动装一次新包才能重新接上更新链路。
@@ -177,10 +177,10 @@ template-version: "v2.0.1-261023-173015"
 - 唯一权威来源：`main/` 工作区根目录的 [`VERSION`](VERSION) 文件，内容就是 `X.Y.Z`（无前导 `v`，无 sha）。`macos/scripts/build-app.sh` 和 `.github/workflows/release.yml` 都从这个文件读取，不再有 nightly/stable 两条通道或 workflow_dispatch 手动输入版本号的机制。
 - **`X.Y.Z` 由 Agent 维护，每次执行修改任务时自行判断 bump 哪一位**（2026-07-19 修正：这条规则原来写的是"常规修复一般不 bump，或 bump PATCH"，实践下来变成了"几乎从不 bump PATCH"——同一个 `X.Y.Z` 底下堆了几十次真实发布，版本号本身失去辨识度，`UpdateChecker` 也一度因此漏判"有更新"，见 `UpdateChecker.swift` 里 2026-07-19 那条注释。现在把默认行为改成"必须 bump PATCH"，不再留"一般不 bump"这个退路）：
   - **默认：任何会被推到 main、触发 Release workflow 打出新包的提交，都必须 bump PATCH（Z）**——bug 修复、文案/样式调整、依赖升级等不引入用户可感知新能力的改动都算在内；
-  - 新增功能、新 Provider、新一层获取策略、UI 交互规则调整等用户可感知的新能力 → bump MINOR（Y）（顺带把 PATCH 归零），通常对应 REQUIREMENTS.md 新开一个 `## Phase - vX.Y.0`；
+  - 新增功能、新 Provider、新一层获取策略、UI 交互规则调整等用户可感知的新能力 → bump MINOR（Y）（顺带把 PATCH 归零），通常对应 issue/ 中明确对应的新功能范围与目标版本；
   - 破坏性变更（数据格式不兼容、架构性重写、需要用户手动干预迁移）→ bump MAJOR（X）（顺带把 MINOR/PATCH 归零）；
   - 不 bump 的例外——仅限完全不会被打包发布的改动：纯文档/注释、`issue/README.md` 记录、`issue/issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md` 勾选状态更新、`DESIGN.md` 这类不影响任何代码或站点内容的文件。拿不准时按"要 bump"处理，而不是按"不 bump"处理——错判的代价是版本号多跳一位（无害），不是漏跳导致更新机制再次失效。
-- 每次修改 `VERSION` 文件都必须在当次 agent-log 里明确写出：改了哪一位、为什么这么判断（对应哪个改动/Phase）。
+- 每次修改 `VERSION` 文件都必须在对应 Issue 的 Comments 里明确写出：改了哪一位、为什么这么判断（对应哪个改动/Phase）。
 
 ### 打包/推送时的 site 同步规则
 
