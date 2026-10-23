@@ -2,7 +2,7 @@
 
 > Quota Bar macOS 应用的官方主页，部署在 [quotabar.ddonlien.com](https://quotabar.ddonlien.com)。
 
-本目录是 Quota Bar 仓库的 web 子项目，负责应用对外展示和下载入口。macOS 应用本体在 [`../quota-bar/`](../quota-bar/)。
+本目录是 Quota Bar 仓库的 web 子项目，负责应用对外展示和下载入口。macOS 应用本体在 [`../quota-bar/`](../quota-bar)。
 
 ## 当前能力
 
@@ -101,7 +101,7 @@ Provider logo 当前用品牌色方块占位，后续可换成真实 SVG logo。
 
 ## 文档入口
 
-- 视觉规范：[`DESIGN.md`](./DESIGN.md)
-- 需求追踪：[`REQUIREMENTS.md`](./REQUIREMENTS.md)
-- 执行日志：[`agent-log/`](./agent-log/)
+- 视觉规范：[`DESIGN.md`](DESIGN.md)
+- 需求追踪：[`../issue/issue-0.1.0-PM-A-000-PM-scope-versioncontrolid.md`](../issue/issue-0.1.0-PM-A-000-PM-scope-versioncontrolid.md)
+- 执行日志：[`../issue/README.md`](agent-log)
 - 全局父级文档：[`../README.md`](../README.md)
