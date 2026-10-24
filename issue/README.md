@@ -1,287 +1,287 @@
 # Issue 入口
 
-本目录是当前工作副本的任务、检查与交接入口。旧需求的状态、ID 与来源保留在对应 Issue；历史 Comments 不自动更新当前完成度。`versioncontrolid` 保持待定义占位。
+本目录是当前工作副本的任务、检查与交接入口。旧需求的状态、ID 与来源保留在对应 Issue；历史 Comments 不自动更新当前完成度。实际实施版本只在核实后填写；尚无提交或未核实则省略文件名后缀，并在 property 说明。
 
-- [Issue 模板](issue-issueid-issuetype-issuename-versioncontrolid.md)
-- [本轮迁移记录](issue-DOC-migration-20261023-DOC-migrate-project-workflow-versioncontrolid.md)
+- [Issue 模板](issue_template.md)
+- [本轮迁移记录](issue_%E8%BF%81%E7%A7%BB%E9%A1%B9%E7%9B%AE%E4%BB%BB%E5%8A%A1%E4%B8%8E%E5%8D%8F%E4%BD%9C%E8%AE%B0%E5%BD%95_83dc1756.md)
 - [旧路径与来源映射](migration-map.json)
 
-- [sub/main: 建立项目协作基础](issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md) — `0.0.0-DOC-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [建立项目协作基础](issue_%E5%BB%BA%E7%AB%8B%E9%A1%B9%E7%9B%AE%E5%8D%8F%E4%BD%9C%E5%9F%BA%E7%A1%80.md) — `0.0.0-DOC-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 打磨 macOS 26 风格下拉面板](issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md) — `0.1.0-UI-A-004`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [打磨macOS26风格下拉面板](issue_%E6%89%93%E7%A3%A8macOS26%E9%A3%8E%E6%A0%BC%E4%B8%8B%E6%8B%89%E9%9D%A2%E6%9D%BF.md)、[启动后仅显示菜单栏图标并按点击打开面板](issue_%E5%90%AF%E5%8A%A8%E5%90%8E%E4%BB%85%E6%98%BE%E7%A4%BA%E8%8F%9C%E5%8D%95%E6%A0%8F%E5%9B%BE%E6%A0%87%E5%B9%B6%E6%8C%89%E7%82%B9%E5%87%BB%E6%89%93%E5%BC%80%E9%9D%A2%E6%9D%BF.md) — `0.1.0-UI-A-004`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 切换为传统 macOS 原生菜单](issue-migration-dbe5fd0c2f62-UI-macos-native-menu-versioncontrolid.md) — `migration-dbe5fd0c2f62`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [将下拉面板切换为macOS原生菜单](issue_%E5%B0%86%E4%B8%8B%E6%8B%89%E9%9D%A2%E6%9D%BF%E5%88%87%E6%8D%A2%E4%B8%BAmacOS%E5%8E%9F%E7%94%9F%E8%8F%9C%E5%8D%95.md) — `migration-dbe5fd0c2f62`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 完成 Dropdown 视觉原型验收](issue-migration-e033f2eb8b83-QA-dropdown-visual-acceptance-versioncontrolid.md) — `migration-e033f2eb8b83`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [核对Dropdown视觉原型交付](issue_%E6%A0%B8%E5%AF%B9Dropdown%E8%A7%86%E8%A7%89%E5%8E%9F%E5%9E%8B%E4%BA%A4%E4%BB%98.md) — `migration-e033f2eb8b83`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.2.0 - Quota Bar 核心功能](issue-migration-380a479e8fcc-PM-quota-bar-versioncontrolid.md) — `migration-380a479e8fcc`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [将静态界面升级为真实AI订阅额度展示](issue_%E5%B0%86%E9%9D%99%E6%80%81%E7%95%8C%E9%9D%A2%E5%8D%87%E7%BA%A7%E4%B8%BA%E7%9C%9F%E5%AE%9EAI%E8%AE%A2%E9%98%85%E9%A2%9D%E5%BA%A6%E5%B1%95%E7%A4%BA.md) — `migration-380a479e8fcc`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 自动探测本地 AI 服务](issue-0.2.0-DATA-A-000-DATA-local-ai-service-versioncontrolid.md) — `0.2.0-DATA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [自动探测本地AI服务及认证状态](issue_%E8%87%AA%E5%8A%A8%E6%8E%A2%E6%B5%8B%E6%9C%AC%E5%9C%B0AI%E6%9C%8D%E5%8A%A1%E5%8F%8A%E8%AE%A4%E8%AF%81%E7%8A%B6%E6%80%81.md) — `0.2.0-DATA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 获取真实订阅与额度数据](issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md) — `0.2.0-DATA-B-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [建立真实订阅额度的多来源获取与失败降级](issue_%E5%BB%BA%E7%AB%8B%E7%9C%9F%E5%AE%9E%E8%AE%A2%E9%98%85%E9%A2%9D%E5%BA%A6%E7%9A%84%E5%A4%9A%E6%9D%A5%E6%BA%90%E8%8E%B7%E5%8F%96%E4%B8%8E%E5%A4%B1%E8%B4%A5%E9%99%8D%E7%BA%A7.md)、[仅按真实订阅档位映射价格](issue_%E4%BB%85%E6%8C%89%E7%9C%9F%E5%AE%9E%E8%AE%A2%E9%98%85%E6%A1%A3%E4%BD%8D%E6%98%A0%E5%B0%84%E4%BB%B7%E6%A0%BC.md)、[按系统地区换算订阅价格币种](issue_%E6%8C%89%E7%B3%BB%E7%BB%9F%E5%9C%B0%E5%8C%BA%E6%8D%A2%E7%AE%97%E8%AE%A2%E9%98%85%E4%BB%B7%E6%A0%BC%E5%B8%81%E7%A7%8D.md)、[通过OAuth与Web接口获取Kimi额度](issue_%E9%80%9A%E8%BF%87OAuth%E4%B8%8EWeb%E6%8E%A5%E5%8F%A3%E8%8E%B7%E5%8F%96Kimi%E9%A2%9D%E5%BA%A6.md)、[展示已安装但尚未接入Dashboard的应用](issue_%E5%B1%95%E7%A4%BA%E5%B7%B2%E5%AE%89%E8%A3%85%E4%BD%86%E5%B0%9A%E6%9C%AA%E6%8E%A5%E5%85%A5Dashboard%E7%9A%84%E5%BA%94%E7%94%A8.md)、[接入Claude组织与usage接口解析额度](issue_%E6%8E%A5%E5%85%A5Claude%E7%BB%84%E7%BB%87%E4%B8%8Eusage%E6%8E%A5%E5%8F%A3%E8%A7%A3%E6%9E%90%E9%A2%9D%E5%BA%A6.md)、[由Antigravity接替Gemini主动额度采集](issue_%E7%94%B1Antigravity%E6%8E%A5%E6%9B%BFGemini%E4%B8%BB%E5%8A%A8%E9%A2%9D%E5%BA%A6%E9%87%87%E9%9B%86.md)、[支持选择Cookie来源浏览器](issue_%E6%94%AF%E6%8C%81%E9%80%89%E6%8B%A9Cookie%E6%9D%A5%E6%BA%90%E6%B5%8F%E8%A7%88%E5%99%A8.md)、[通过Web接口获取MiniMax额度与套餐费用](issue_%E9%80%9A%E8%BF%87Web%E6%8E%A5%E5%8F%A3%E8%8E%B7%E5%8F%96MiniMax%E9%A2%9D%E5%BA%A6%E4%B8%8E%E5%A5%97%E9%A4%90%E8%B4%B9%E7%94%A8.md)、[通过本地服务获取Antigravity额度](issue_%E9%80%9A%E8%BF%87%E6%9C%AC%E5%9C%B0%E6%9C%8D%E5%8A%A1%E8%8E%B7%E5%8F%96Antigravity%E9%A2%9D%E5%BA%A6.md)、[支持同一服务的多身份订阅](issue_%E6%94%AF%E6%8C%81%E5%90%8C%E4%B8%80%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%A4%9A%E8%BA%AB%E4%BB%BD%E8%AE%A2%E9%98%85.md)、[凭证缺失时继续尝试后续额度来源](issue_%E5%87%AD%E8%AF%81%E7%BC%BA%E5%A4%B1%E6%97%B6%E7%BB%A7%E7%BB%AD%E5%B0%9D%E8%AF%95%E5%90%8E%E7%BB%AD%E9%A2%9D%E5%BA%A6%E6%9D%A5%E6%BA%90.md)、[调研TraeWork独立Provider接入](issue_%E8%B0%83%E7%A0%94TraeWork%E7%8B%AC%E7%AB%8BProvider%E6%8E%A5%E5%85%A5.md) — `0.2.0-DATA-B-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 提供额度刷新机制](issue-0.2.0-FE-A-003-FE-quota-refresh-versioncontrolid.md) — `0.2.0-FE-A-003`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [提供手动与自动额度刷新](issue_%E6%8F%90%E4%BE%9B%E6%89%8B%E5%8A%A8%E4%B8%8E%E8%87%AA%E5%8A%A8%E9%A2%9D%E5%BA%A6%E5%88%B7%E6%96%B0.md)、[按真实订阅额度绘制菜单栏多bar图标](issue_%E6%8C%89%E7%9C%9F%E5%AE%9E%E8%AE%A2%E9%98%85%E9%A2%9D%E5%BA%A6%E7%BB%98%E5%88%B6%E8%8F%9C%E5%8D%95%E6%A0%8F%E5%A4%9Abar%E5%9B%BE%E6%A0%87.md) — `0.2.0-FE-A-003`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 动态展示真实额度数据](issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md) — `0.2.0-UI-A-003`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [以真实额度驱动面板并展示加载与失败状态](issue_%E4%BB%A5%E7%9C%9F%E5%AE%9E%E9%A2%9D%E5%BA%A6%E9%A9%B1%E5%8A%A8%E9%9D%A2%E6%9D%BF%E5%B9%B6%E5%B1%95%E7%A4%BA%E5%8A%A0%E8%BD%BD%E4%B8%8E%E5%A4%B1%E8%B4%A5%E7%8A%B6%E6%80%81.md)、[统一额度日期与紧凑倒计时文案](issue_%E7%BB%9F%E4%B8%80%E9%A2%9D%E5%BA%A6%E6%97%A5%E6%9C%9F%E4%B8%8E%E7%B4%A7%E5%87%91%E5%80%92%E8%AE%A1%E6%97%B6%E6%96%87%E6%A1%88.md)、[区分Provider品牌色与额度健康色](issue_%E5%8C%BA%E5%88%86Provider%E5%93%81%E7%89%8C%E8%89%B2%E4%B8%8E%E9%A2%9D%E5%BA%A6%E5%81%A5%E5%BA%B7%E8%89%B2.md) — `0.2.0-UI-A-003`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 完成核心功能验收](issue-0.2.0-QA-A-001-QA-acceptance-versioncontrolid.md) — `0.2.0-QA-A-001`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [核对真实额度核心功能的交付与隐私边界](issue_%E6%A0%B8%E5%AF%B9%E7%9C%9F%E5%AE%9E%E9%A2%9D%E5%BA%A6%E6%A0%B8%E5%BF%83%E5%8A%9F%E8%83%BD%E7%9A%84%E4%BA%A4%E4%BB%98%E4%B8%8E%E9%9A%90%E7%A7%81%E8%BE%B9%E7%95%8C.md) — `0.2.0-QA-A-001`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.3.0 - UI 拖拽、订阅组语义与 dropdown 实时刷新](issue-migration-b7fdab420084-FE-ui-subscription-dropdown-refresh-versioncontrolid.md) — `migration-b7fdab420084`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [明确订阅组排序与面板流式刷新的范围](issue_%E6%98%8E%E7%A1%AE%E8%AE%A2%E9%98%85%E7%BB%84%E6%8E%92%E5%BA%8F%E4%B8%8E%E9%9D%A2%E6%9D%BF%E6%B5%81%E5%BC%8F%E5%88%B7%E6%96%B0%E7%9A%84%E8%8C%83%E5%9B%B4.md) — `migration-b7fdab420084`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 建立订阅组语义](issue-0.3.0-DATA-A-000-DATA-subscription-versioncontrolid.md) — `0.3.0-DATA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [建立独立计费订阅组及排序语义](issue_%E5%BB%BA%E7%AB%8B%E7%8B%AC%E7%AB%8B%E8%AE%A1%E8%B4%B9%E8%AE%A2%E9%98%85%E7%BB%84%E5%8F%8A%E6%8E%92%E5%BA%8F%E8%AF%AD%E4%B9%89.md)、[恢复KimiWork已验证的浏览器额度路径](issue_%E6%81%A2%E5%A4%8DKimiWork%E5%B7%B2%E9%AA%8C%E8%AF%81%E7%9A%84%E6%B5%8F%E8%A7%88%E5%99%A8%E9%A2%9D%E5%BA%A6%E8%B7%AF%E5%BE%84.md) — `0.3.0-DATA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 支持订阅组拖拽排序与状态联动](issue-0.3.0-UI-A-003-UI-subscription-sorting-state-versioncontrolid.md) — `0.3.0-UI-A-003`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [拖拽排序Provider与订阅组并联动状态](issue_%E6%8B%96%E6%8B%BD%E6%8E%92%E5%BA%8FProvider%E4%B8%8E%E8%AE%A2%E9%98%85%E7%BB%84%E5%B9%B6%E8%81%94%E5%8A%A8%E7%8A%B6%E6%80%81.md)、[在菜单打开期间实时更新Dropdown内容](issue_%E5%9C%A8%E8%8F%9C%E5%8D%95%E6%89%93%E5%BC%80%E6%9C%9F%E9%97%B4%E5%AE%9E%E6%97%B6%E6%9B%B4%E6%96%B0Dropdown%E5%86%85%E5%AE%B9.md)、[在计划头部显示订阅最后有效日期](issue_%E5%9C%A8%E8%AE%A1%E5%88%92%E5%A4%B4%E9%83%A8%E6%98%BE%E7%A4%BA%E8%AE%A2%E9%98%85%E6%9C%80%E5%90%8E%E6%9C%89%E6%95%88%E6%97%A5%E6%9C%9F.md) — `0.3.0-UI-A-003`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 支持 Provider 增量刷新](issue-0.3.0-FE-A-000-FE-provider-refresh-versioncontrolid.md) — `0.3.0-FE-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [按Provider流式刷新并原位替换加载占位](issue_%E6%8C%89Provider%E6%B5%81%E5%BC%8F%E5%88%B7%E6%96%B0%E5%B9%B6%E5%8E%9F%E4%BD%8D%E6%9B%BF%E6%8D%A2%E5%8A%A0%E8%BD%BD%E5%8D%A0%E4%BD%8D.md)、[订阅组重排后立即更新菜单栏与状态灯](issue_%E8%AE%A2%E9%98%85%E7%BB%84%E9%87%8D%E6%8E%92%E5%90%8E%E7%AB%8B%E5%8D%B3%E6%9B%B4%E6%96%B0%E8%8F%9C%E5%8D%95%E6%A0%8F%E4%B8%8E%E7%8A%B6%E6%80%81%E7%81%AF.md) — `0.3.0-FE-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 偏好设置与后续能力](issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md) — `0.3.0-PM-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [建立macOS偏好设置窗口与配置页面](issue_%E5%BB%BA%E7%AB%8BmacOS%E5%81%8F%E5%A5%BD%E8%AE%BE%E7%BD%AE%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%85%8D%E7%BD%AE%E9%A1%B5%E9%9D%A2.md)、[支持手动添加与移除Provider](issue_%E6%94%AF%E6%8C%81%E6%89%8B%E5%8A%A8%E6%B7%BB%E5%8A%A0%E4%B8%8E%E7%A7%BB%E9%99%A4Provider.md)、[监控Provider服务事故状态](issue_%E7%9B%91%E6%8E%A7Provider%E6%9C%8D%E5%8A%A1%E4%BA%8B%E6%95%85%E7%8A%B6%E6%80%81.md)、[提供WidgetKit桌面小组件](issue_%E6%8F%90%E4%BE%9BWidgetKit%E6%A1%8C%E9%9D%A2%E5%B0%8F%E7%BB%84%E4%BB%B6.md)、[提供quotabar状态命令行工具](issue_%E6%8F%90%E4%BE%9Bquotabar%E7%8A%B6%E6%80%81%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7.md) — `0.3.0-PM-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.4.0 - 新 Provider 接入（zcode / 千问 / 其他）](issue-migration-1813617627ae-SEC-provider-zcode-versioncontrolid.md) — `migration-1813617627ae`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [核对ZCode与千问的本地安装及接入前提](issue_%E6%A0%B8%E5%AF%B9ZCode%E4%B8%8E%E5%8D%83%E9%97%AE%E7%9A%84%E6%9C%AC%E5%9C%B0%E5%AE%89%E8%A3%85%E5%8F%8A%E6%8E%A5%E5%85%A5%E5%89%8D%E6%8F%90.md) — `migration-1813617627ae`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [feat/glm-provider: 调研智谱 BigModel Z Code Provider](issue-0.4.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md) — `0.4.0-DATA-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
+- [调研智谱ZCode套餐与额度接入](issue_%E8%B0%83%E7%A0%94%E6%99%BA%E8%B0%B1ZCode%E5%A5%97%E9%A4%90%E4%B8%8E%E9%A2%9D%E5%BA%A6%E6%8E%A5%E5%85%A5.md) — `0.4.0-DATA-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 调研阿里通义千问桌面 App](issue-0.4.0-DATA-B-001-DATA-desktop-app-versioncontrolid.md) — `0.4.0-DATA-B-001`；阻塞（沿用原需求记录）；原路径 `REQUIREMENTS.md`。
+- [确认千问安装位置并接入桌面Provider](issue_%E7%A1%AE%E8%AE%A4%E5%8D%83%E9%97%AE%E5%AE%89%E8%A3%85%E4%BD%8D%E7%BD%AE%E5%B9%B6%E6%8E%A5%E5%85%A5%E6%A1%8C%E9%9D%A2Provider.md) — `0.4.0-DATA-B-001`；阻塞（沿用原需求记录）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 沉淀新 Provider 接入流程](issue-0.4.0-DATA-C-000-DATA-provider-versioncontrolid.md) — `0.4.0-DATA-C-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
+- [文档化新Provider接入流程](issue_%E6%96%87%E6%A1%A3%E5%8C%96%E6%96%B0Provider%E6%8E%A5%E5%85%A5%E6%B5%81%E7%A8%8B.md) — `0.4.0-DATA-C-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 完成新 Provider 接入验收](issue-0.4.0-QA-A-001-QA-provider-acceptance-versioncontrolid.md) — `0.4.0-QA-A-001`；阻塞（沿用原需求记录）；原路径 `REQUIREMENTS.md`。
+- [核对ZCode接入的额度与状态展示](issue_%E6%A0%B8%E5%AF%B9ZCode%E6%8E%A5%E5%85%A5%E7%9A%84%E9%A2%9D%E5%BA%A6%E4%B8%8E%E7%8A%B6%E6%80%81%E5%B1%95%E7%A4%BA.md)、[核对千问Provider接入结果](issue_%E6%A0%B8%E5%AF%B9%E5%8D%83%E9%97%AEProvider%E6%8E%A5%E5%85%A5%E7%BB%93%E6%9E%9C.md) — `0.4.0-QA-A-001`；阻塞（沿用原需求记录）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 修正可用订阅计数语义](issue-0.4.0-UI-B-000-UI-subscription-versioncontrolid.md) — `0.4.0-UI-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [按可用订阅组的真实剩余额度统计订阅数](issue_%E6%8C%89%E5%8F%AF%E7%94%A8%E8%AE%A2%E9%98%85%E7%BB%84%E7%9A%84%E7%9C%9F%E5%AE%9E%E5%89%A9%E4%BD%99%E9%A2%9D%E5%BA%A6%E7%BB%9F%E8%AE%A1%E8%AE%A2%E9%98%85%E6%95%B0.md) — `0.4.0-UI-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.5.0 - 发布自动化与工程卫生](issue-0.4.0-DATA-A-001-test-DATA-release-versioncontrolid.md) — `0.4.0-DATA-A-001-test`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [明确发布自动化与质量门槛的任务边界](issue_%E6%98%8E%E7%A1%AE%E5%8F%91%E5%B8%83%E8%87%AA%E5%8A%A8%E5%8C%96%E4%B8%8E%E8%B4%A8%E9%87%8F%E9%97%A8%E6%A7%9B%E7%9A%84%E4%BB%BB%E5%8A%A1%E8%BE%B9%E7%95%8C.md) — `0.4.0-DATA-A-001-test`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 提供发布自动化与 PR 验证](issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md) — `0.5.0-CI-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [自动发布macOS应用并构建官网](issue_%E8%87%AA%E5%8A%A8%E5%8F%91%E5%B8%83macOS%E5%BA%94%E7%94%A8%E5%B9%B6%E6%9E%84%E5%BB%BA%E5%AE%98%E7%BD%91.md)、[在PR合并前自动编译验证](issue_%E5%9C%A8PR%E5%90%88%E5%B9%B6%E5%89%8D%E8%87%AA%E5%8A%A8%E7%BC%96%E8%AF%91%E9%AA%8C%E8%AF%81.md) — `0.5.0-CI-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 提供统一开发入口与测试基建](issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md) — `0.5.0-ENG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [清理既有Swift未使用变量警告](issue_%E6%B8%85%E7%90%86%E6%97%A2%E6%9C%89Swift%E6%9C%AA%E4%BD%BF%E7%94%A8%E5%8F%98%E9%87%8F%E8%AD%A6%E5%91%8A.md)、[统一应用与官网的开发命令入口](issue_%E7%BB%9F%E4%B8%80%E5%BA%94%E7%94%A8%E4%B8%8E%E5%AE%98%E7%BD%91%E7%9A%84%E5%BC%80%E5%8F%91%E5%91%BD%E4%BB%A4%E5%85%A5%E5%8F%A3.md)、[在根忽略规则中排除站点生成目录](issue_%E5%9C%A8%E6%A0%B9%E5%BF%BD%E7%95%A5%E8%A7%84%E5%88%99%E4%B8%AD%E6%8E%92%E9%99%A4%E7%AB%99%E7%82%B9%E7%94%9F%E6%88%90%E7%9B%AE%E5%BD%95.md)、[建立QuotaBar单元测试目标](issue_%E5%BB%BA%E7%AB%8BQuotaBar%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E7%9B%AE%E6%A0%87.md)、[使用相对软链定位最新应用构建](issue_%E4%BD%BF%E7%94%A8%E7%9B%B8%E5%AF%B9%E8%BD%AF%E9%93%BE%E5%AE%9A%E4%BD%8D%E6%9C%80%E6%96%B0%E5%BA%94%E7%94%A8%E6%9E%84%E5%BB%BA.md)、[统一应用包名称与圆角图标](issue_%E7%BB%9F%E4%B8%80%E5%BA%94%E7%94%A8%E5%8C%85%E5%90%8D%E7%A7%B0%E4%B8%8E%E5%9C%86%E8%A7%92%E5%9B%BE%E6%A0%87.md) — `0.5.0-ENG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 完善用户可见文档入口](issue-0.5.0-DOC-A-000-DOC-documentation-versioncontrolid.md) — `0.5.0-DOC-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [在README快速开始中补充官网开发入口](issue_%E5%9C%A8README%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B%E4%B8%AD%E8%A1%A5%E5%85%85%E5%AE%98%E7%BD%91%E5%BC%80%E5%8F%91%E5%85%A5%E5%8F%A3.md) — `0.5.0-DOC-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.6.0 - 真实订阅到期日（headless 抓取订阅页）](issue-migration-8065bbb47a9d-QA-subscription-headless-versioncontrolid.md) — `migration-8065bbb47a9d`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [以真实订阅来源替代额度重置时间推断到期日](issue_%E4%BB%A5%E7%9C%9F%E5%AE%9E%E8%AE%A2%E9%98%85%E6%9D%A5%E6%BA%90%E6%9B%BF%E4%BB%A3%E9%A2%9D%E5%BA%A6%E9%87%8D%E7%BD%AE%E6%97%B6%E9%97%B4%E6%8E%A8%E6%96%AD%E5%88%B0%E6%9C%9F%E6%97%A5.md) — `migration-8065bbb47a9d`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [feat/subscription-expiry: 建立订阅日期抓取基础架构](issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md) — `0.6.0-ARCH-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [建立订阅日期抓取协议与Headless加载器](issue_%E5%BB%BA%E7%AB%8B%E8%AE%A2%E9%98%85%E6%97%A5%E6%9C%9F%E6%8A%93%E5%8F%96%E5%8D%8F%E8%AE%AE%E4%B8%8EHeadless%E5%8A%A0%E8%BD%BD%E5%99%A8.md)、[禁止以额度重置时间推断订阅到期日](issue_%E7%A6%81%E6%AD%A2%E4%BB%A5%E9%A2%9D%E5%BA%A6%E9%87%8D%E7%BD%AE%E6%97%B6%E9%97%B4%E6%8E%A8%E6%96%AD%E8%AE%A2%E9%98%85%E5%88%B0%E6%9C%9F%E6%97%A5.md) — `0.6.0-ARCH-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [feat/subscription-expiry: 接入 Kimi 真实订阅到期日](issue-0.6.0-DATA-A-000-DATA-kimi-subscription-versioncontrolid.md) — `0.6.0-DATA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [区分Kimi订阅续费日与额度窗口重置时间](issue_%E5%8C%BA%E5%88%86Kimi%E8%AE%A2%E9%98%85%E7%BB%AD%E8%B4%B9%E6%97%A5%E4%B8%8E%E9%A2%9D%E5%BA%A6%E7%AA%97%E5%8F%A3%E9%87%8D%E7%BD%AE%E6%97%B6%E9%97%B4.md) — `0.6.0-DATA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [feat/subscription-expiry: 接入 Codex 真实订阅到期日](issue-0.6.0-DATA-B-000-DATA-codex-subscription-versioncontrolid.md) — `0.6.0-DATA-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [抓取Codex真实订阅到期日](issue_%E6%8A%93%E5%8F%96Codex%E7%9C%9F%E5%AE%9E%E8%AE%A2%E9%98%85%E5%88%B0%E6%9C%9F%E6%97%A5.md) — `0.6.0-DATA-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [feat/subscription-expiry: 接入 Claude 真实订阅到期日](issue-0.6.0-DATA-C-000-DATA-claude-subscription-versioncontrolid.md) — `0.6.0-DATA-C-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [抓取Claude真实订阅到期日](issue_%E6%8A%93%E5%8F%96Claude%E7%9C%9F%E5%AE%9E%E8%AE%A2%E9%98%85%E5%88%B0%E6%9C%9F%E6%97%A5.md) — `0.6.0-DATA-C-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [feat/subscription-expiry: 接入 Cursor 真实订阅到期日](issue-0.6.0-DATA-D-000-DATA-cursor-subscription-versioncontrolid.md) — `0.6.0-DATA-D-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [抓取Cursor真实订阅到期日](issue_%E6%8A%93%E5%8F%96Cursor%E7%9C%9F%E5%AE%9E%E8%AE%A2%E9%98%85%E5%88%B0%E6%9C%9F%E6%97%A5.md) — `0.6.0-DATA-D-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [feat/subscription-expiry: 接入 MiniMax 真实订阅到期日](issue-0.6.0-DATA-E-000-DATA-minimax-subscription-versioncontrolid.md) — `0.6.0-DATA-E-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [抓取MiniMax真实订阅到期日](issue_%E6%8A%93%E5%8F%96MiniMax%E7%9C%9F%E5%AE%9E%E8%AE%A2%E9%98%85%E5%88%B0%E6%9C%9F%E6%97%A5.md) — `0.6.0-DATA-E-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [feat/subscription-expiry: 接入 Antigravity 真实订阅到期日](issue-0.6.0-DATA-F-000-DATA-antigravity-subscription-versioncontrolid.md) — `0.6.0-DATA-F-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [抓取Antigravity真实订阅到期日](issue_%E6%8A%93%E5%8F%96Antigravity%E7%9C%9F%E5%AE%9E%E8%AE%A2%E9%98%85%E5%88%B0%E6%9C%9F%E6%97%A5.md) — `0.6.0-DATA-F-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [feat/subscription-expiry: 调整订阅到期日展示规则](issue-0.6.0-UI-A-000-UI-subscription-rules-versioncontrolid.md) — `0.6.0-UI-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [隐藏未知订阅日期并提供精确日期提示](issue_%E9%9A%90%E8%97%8F%E6%9C%AA%E7%9F%A5%E8%AE%A2%E9%98%85%E6%97%A5%E6%9C%9F%E5%B9%B6%E6%8F%90%E4%BE%9B%E7%B2%BE%E7%A1%AE%E6%97%A5%E6%9C%9F%E6%8F%90%E7%A4%BA.md) — `0.6.0-UI-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/expiry: 建立订阅过期日独立 source 管线](issue-0.6.0-ARCH-B-000-ARCH-subscription-source-versioncontrolid.md) — `0.6.0-ARCH-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [通过独立来源管线补齐订阅过期日](issue_%E9%80%9A%E8%BF%87%E7%8B%AC%E7%AB%8B%E6%9D%A5%E6%BA%90%E7%AE%A1%E7%BA%BF%E8%A1%A5%E9%BD%90%E8%AE%A2%E9%98%85%E8%BF%87%E6%9C%9F%E6%97%A5.md) — `0.6.0-ARCH-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.7.0 - 智谱 GLM Provider 接入（feat/glm-provider）](issue-migration-e7c9be5520c0-PM-glm-provider-feat-versioncontrolid.md) — `migration-e7c9be5520c0`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [明确将ZCode调研结果转为正式Provider接入的范围](issue_%E6%98%8E%E7%A1%AE%E5%B0%86ZCode%E8%B0%83%E7%A0%94%E7%BB%93%E6%9E%9C%E8%BD%AC%E4%B8%BA%E6%AD%A3%E5%BC%8FProvider%E6%8E%A5%E5%85%A5%E7%9A%84%E8%8C%83%E5%9B%B4.md) — `migration-e7c9be5520c0`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [feat/glm-provider: 调研智谱 BigModel Z Code Provider 接入](issue-0.7.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md) — `0.7.0-DATA-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [接入智谱ZCode套餐与额度获取](issue_%E6%8E%A5%E5%85%A5%E6%99%BA%E8%B0%B1ZCode%E5%A5%97%E9%A4%90%E4%B8%8E%E9%A2%9D%E5%BA%A6%E8%8E%B7%E5%8F%96.md) — `0.7.0-DATA-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [feat/glm-provider: 集成 Z Code 菜单栏状态](issue-0.7.0-FE-A-000-FE-code-menu-state-versioncontrolid.md) — `0.7.0-FE-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
+- [为ZCode展示菜单栏bar与品牌状态灯](issue_%E4%B8%BAZCode%E5%B1%95%E7%A4%BA%E8%8F%9C%E5%8D%95%E6%A0%8Fbar%E4%B8%8E%E5%93%81%E7%89%8C%E7%8A%B6%E6%80%81%E7%81%AF.md) — `0.7.0-FE-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
 
-- [feat/glm-provider: 更新 Z Code 用户可见文档](issue-0.7.0-DOC-A-000-DOC-code-documentation-versioncontrolid.md) — `0.7.0-DOC-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
+- [在README说明ZCode套餐与安装路径](issue_%E5%9C%A8README%E8%AF%B4%E6%98%8EZCode%E5%A5%97%E9%A4%90%E4%B8%8E%E5%AE%89%E8%A3%85%E8%B7%AF%E5%BE%84.md) — `0.7.0-DOC-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 按交付物职责重命名顶层目录](issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md) — `0.8.0-DOC-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [同步协作模板与需求标题规范](issue_%E5%90%8C%E6%AD%A5%E5%8D%8F%E4%BD%9C%E6%A8%A1%E6%9D%BF%E4%B8%8E%E9%9C%80%E6%B1%82%E6%A0%87%E9%A2%98%E8%A7%84%E8%8C%83.md)、[将macOS交付目录迁移为macos](issue_%E5%B0%86macOS%E4%BA%A4%E4%BB%98%E7%9B%AE%E5%BD%95%E8%BF%81%E7%A7%BB%E4%B8%BAmacos.md)、[将营销主页目录迁移为site](issue_%E5%B0%86%E8%90%A5%E9%94%80%E4%B8%BB%E9%A1%B5%E7%9B%AE%E5%BD%95%E8%BF%81%E7%A7%BB%E4%B8%BAsite.md)、[调整main与其他工作副本的容器布局](issue_%E8%B0%83%E6%95%B4main%E4%B8%8E%E5%85%B6%E4%BB%96%E5%B7%A5%E4%BD%9C%E5%89%AF%E6%9C%AC%E7%9A%84%E5%AE%B9%E5%99%A8%E5%B8%83%E5%B1%80.md) — `0.8.0-DOC-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.9.0 - 持久化、来源索引与启动兜底](issue-migration-87edb8bd8657-DOC-project-goal-versioncontrolid.md) — `migration-87edb8bd8657`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [明确非敏感来源索引与快照的持久化边界](issue_%E6%98%8E%E7%A1%AE%E9%9D%9E%E6%95%8F%E6%84%9F%E6%9D%A5%E6%BA%90%E7%B4%A2%E5%BC%95%E4%B8%8E%E5%BF%AB%E7%85%A7%E7%9A%84%E6%8C%81%E4%B9%85%E5%8C%96%E8%BE%B9%E7%95%8C.md) — `migration-87edb8bd8657`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 建立安全持久化模型](issue-0.9.0-ARCH-A-000-ARCH-security-model-versioncontrolid.md) — `0.9.0-ARCH-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [建立安全且向后兼容的本地持久化模型](issue_%E5%BB%BA%E7%AB%8B%E5%AE%89%E5%85%A8%E4%B8%94%E5%90%91%E5%90%8E%E5%85%BC%E5%AE%B9%E7%9A%84%E6%9C%AC%E5%9C%B0%E6%8C%81%E4%B9%85%E5%8C%96%E6%A8%A1%E5%9E%8B.md)、[禁止默认刷新主动触发浏览器凭证授权](issue_%E7%A6%81%E6%AD%A2%E9%BB%98%E8%AE%A4%E5%88%B7%E6%96%B0%E4%B8%BB%E5%8A%A8%E8%A7%A6%E5%8F%91%E6%B5%8F%E8%A7%88%E5%99%A8%E5%87%AD%E8%AF%81%E6%8E%88%E6%9D%83.md) — `0.9.0-ARCH-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 建立来源索引](issue-0.9.0-DATA-A-000-DATA-project-goal-versioncontrolid.md) — `0.9.0-DATA-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
+- [记录Provider最近成功的非敏感来源索引](issue_%E8%AE%B0%E5%BD%95Provider%E6%9C%80%E8%BF%91%E6%88%90%E5%8A%9F%E7%9A%84%E9%9D%9E%E6%95%8F%E6%84%9F%E6%9D%A5%E6%BA%90%E7%B4%A2%E5%BC%95.md) — `0.9.0-DATA-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 建立 last-known-good 快照](issue-0.9.0-DATA-B-000-DATA-last-known-good-versioncontrolid.md) — `0.9.0-DATA-B-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
+- [用脱敏成功快照提供启动与刷新失败兜底](issue_%E7%94%A8%E8%84%B1%E6%95%8F%E6%88%90%E5%8A%9F%E5%BF%AB%E7%85%A7%E6%8F%90%E4%BE%9B%E5%90%AF%E5%8A%A8%E4%B8%8E%E5%88%B7%E6%96%B0%E5%A4%B1%E8%B4%A5%E5%85%9C%E5%BA%95.md) — `0.9.0-DATA-B-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.10.0 - 订阅过期识别与免费额度误判修正](issue-migration-6e4d8e3349a6-PM-subscription-quota-versioncontrolid.md) — `migration-6e4d8e3349a6`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [纠正Codex免费额度被误判为付费订阅](issue_%E7%BA%A0%E6%AD%A3Codex%E5%85%8D%E8%B4%B9%E9%A2%9D%E5%BA%A6%E8%A2%AB%E8%AF%AF%E5%88%A4%E4%B8%BA%E4%BB%98%E8%B4%B9%E8%AE%A2%E9%98%85.md) — `migration-6e4d8e3349a6`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: Codex 订阅过期识别](issue-0.10.0-ARCH-A-000-ARCH-codex-subscription-versioncontrolid.md) — `0.10.0-ARCH-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [识别Codex订阅过期并阻止免费窗口误展示](issue_%E8%AF%86%E5%88%ABCodex%E8%AE%A2%E9%98%85%E8%BF%87%E6%9C%9F%E5%B9%B6%E9%98%BB%E6%AD%A2%E5%85%8D%E8%B4%B9%E7%AA%97%E5%8F%A3%E8%AF%AF%E5%B1%95%E7%A4%BA.md) — `0.10.0-ARCH-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 所有 AI Provider 统一订阅过期识别](issue-0.10.0-DATA-B-000-DATA-ai-provider-subscription-versioncontrolid.md) — `0.10.0-DATA-B-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [统一Provider订阅状态识别与免费额度边界](issue_%E7%BB%9F%E4%B8%80Provider%E8%AE%A2%E9%98%85%E7%8A%B6%E6%80%81%E8%AF%86%E5%88%AB%E4%B8%8E%E5%85%8D%E8%B4%B9%E9%A2%9D%E5%BA%A6%E8%BE%B9%E7%95%8C.md) — `0.10.0-DATA-B-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 分组分层获取方案落地（5 agent × 4 信息）](issue-0.10.0-ARCH-B-000-ARCH-agent-versioncontrolid.md) — `0.10.0-ARCH-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [分层合并额度与档位并保留权威订阅状态](issue_%E5%88%86%E5%B1%82%E5%90%88%E5%B9%B6%E9%A2%9D%E5%BA%A6%E4%B8%8E%E6%A1%A3%E4%BD%8D%E5%B9%B6%E4%BF%9D%E7%95%99%E6%9D%83%E5%A8%81%E8%AE%A2%E9%98%85%E7%8A%B6%E6%80%81.md)、[通过API与Headless来源补齐订阅到期日](issue_%E9%80%9A%E8%BF%87API%E4%B8%8EHeadless%E6%9D%A5%E6%BA%90%E8%A1%A5%E9%BD%90%E8%AE%A2%E9%98%85%E5%88%B0%E6%9C%9F%E6%97%A5.md)、[复用AppWebView会话并提供授权引导](issue_%E5%A4%8D%E7%94%A8AppWebView%E4%BC%9A%E8%AF%9D%E5%B9%B6%E6%8F%90%E4%BE%9B%E6%8E%88%E6%9D%83%E5%BC%95%E5%AF%BC.md)、[通过MiniMax真实CLI命令读取额度](issue_%E9%80%9A%E8%BF%87MiniMax%E7%9C%9F%E5%AE%9ECLI%E5%91%BD%E4%BB%A4%E8%AF%BB%E5%8F%96%E9%A2%9D%E5%BA%A6.md)、[恢复授权与偏好输入框的粘贴快捷键](issue_%E6%81%A2%E5%A4%8D%E6%8E%88%E6%9D%83%E4%B8%8E%E5%81%8F%E5%A5%BD%E8%BE%93%E5%85%A5%E6%A1%86%E7%9A%84%E7%B2%98%E8%B4%B4%E5%BF%AB%E6%8D%B7%E9%94%AE.md)、[恢复Dropdown偏好设置菜单入口](issue_%E6%81%A2%E5%A4%8DDropdown%E5%81%8F%E5%A5%BD%E8%AE%BE%E7%BD%AE%E8%8F%9C%E5%8D%95%E5%85%A5%E5%8F%A3.md) — `0.10.0-ARCH-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: AGY 真实 CLI 层 + Claude 额度修复 + 获取方案审计](issue-0.10.0-DATA-B-007-DATA-agy-cli-claude-quota-fixes-versioncontrolid.md) — `0.10.0-DATA-B-007`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [通过临时agy会话读取Antigravity额度](issue_%E9%80%9A%E8%BF%87%E4%B8%B4%E6%97%B6agy%E4%BC%9A%E8%AF%9D%E8%AF%BB%E5%8F%96Antigravity%E9%A2%9D%E5%BA%A6.md)、[按真实响应解析Claude五小时与周额度](issue_%E6%8C%89%E7%9C%9F%E5%AE%9E%E5%93%8D%E5%BA%94%E8%A7%A3%E6%9E%90Claude%E4%BA%94%E5%B0%8F%E6%97%B6%E4%B8%8E%E5%91%A8%E9%A2%9D%E5%BA%A6.md)、[按候选命令名定位MiniMax与AntigravityCLI](issue_%E6%8C%89%E5%80%99%E9%80%89%E5%91%BD%E4%BB%A4%E5%90%8D%E5%AE%9A%E4%BD%8DMiniMax%E4%B8%8EAntigravityCLI.md)、[核对README获取矩阵的来源优先级](issue_%E6%A0%B8%E5%AF%B9README%E8%8E%B7%E5%8F%96%E7%9F%A9%E9%98%B5%E7%9A%84%E6%9D%A5%E6%BA%90%E4%BC%98%E5%85%88%E7%BA%A7.md) — `0.10.0-DATA-B-007`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: Claude 配置 / CLI / RPC 三项验证与实现](issue-0.10.0-DATA-B-009-DATA-claude-configuration-cli-rpc-verification-versioncontrolid.md) — `0.10.0-DATA-B-009`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [通过OAuth与认证CLI接入Claude订阅信息](issue_%E9%80%9A%E8%BF%87OAuth%E4%B8%8E%E8%AE%A4%E8%AF%81CLI%E6%8E%A5%E5%85%A5Claude%E8%AE%A2%E9%98%85%E4%BF%A1%E6%81%AF.md)、[按已验证ClaudePro档位映射月费](issue_%E6%8C%89%E5%B7%B2%E9%AA%8C%E8%AF%81ClaudePro%E6%A1%A3%E4%BD%8D%E6%98%A0%E5%B0%84%E6%9C%88%E8%B4%B9.md) — `0.10.0-DATA-B-009`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 面向全网用户的 hardcoded 路径 / 假设审计](issue-0.10.0-ARCH-C-000-ARCH-hardcoded-versioncontrolid.md) — `0.10.0-ARCH-C-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [按用户环境定位并执行CLI命令](issue_%E6%8C%89%E7%94%A8%E6%88%B7%E7%8E%AF%E5%A2%83%E5%AE%9A%E4%BD%8D%E5%B9%B6%E6%89%A7%E8%A1%8CCLI%E5%91%BD%E4%BB%A4.md)、[在同service的Keychain条目中选取最新凭证](issue_%E5%9C%A8%E5%90%8Cservice%E7%9A%84Keychain%E6%9D%A1%E7%9B%AE%E4%B8%AD%E9%80%89%E5%8F%96%E6%9C%80%E6%96%B0%E5%87%AD%E8%AF%81.md)、[支持从Edge多个浏览器Profile读取Cookie](issue_%E6%94%AF%E6%8C%81%E4%BB%8EEdge%E5%A4%9A%E4%B8%AA%E6%B5%8F%E8%A7%88%E5%99%A8Profile%E8%AF%BB%E5%8F%96Cookie.md) — `0.10.0-ARCH-C-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 修复 Claude 额度真正的根因（子进程环境裁剪）+ Keychain 凭证兜底](issue-0.10.0-DATA-B-016-DATA-fixes-claude-quota-keychain-versioncontrolid.md) — `0.10.0-DATA-B-016`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [为Claude与MiniMax子进程保留必要环境](issue_%E4%B8%BAClaude%E4%B8%8EMiniMax%E5%AD%90%E8%BF%9B%E7%A8%8B%E4%BF%9D%E7%95%99%E5%BF%85%E8%A6%81%E7%8E%AF%E5%A2%83.md)、[为ClaudeOAuth读取提供Keychain凭证兜底](issue_%E4%B8%BAClaudeOAuth%E8%AF%BB%E5%8F%96%E6%8F%90%E4%BE%9BKeychain%E5%87%AD%E8%AF%81%E5%85%9C%E5%BA%95.md) — `0.10.0-DATA-B-016`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: Claude statusLine hook 额度捕获（不依赖 Keychain 的 app 化方案）](issue-0.10.0-ARCH-D-000-ARCH-claude-statusline-hook-quota-dependencies-versioncontrolid.md) — `0.10.0-ARCH-D-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [通过显式启用的ClaudeStatusLineHook捕获额度](issue_%E9%80%9A%E8%BF%87%E6%98%BE%E5%BC%8F%E5%90%AF%E7%94%A8%E7%9A%84ClaudeStatusLineHook%E6%8D%95%E8%8E%B7%E9%A2%9D%E5%BA%A6.md) — `0.10.0-ARCH-D-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: Preferences provider 列表遗漏 + dropdown Claude 消失架构 bug + 分层诊断日志 + dropdown 显示规则重写](issue-0.10.0-BUG-A-000-ARCH-preferences-provider-list-dropdown-claude-versioncontrolid.md) — `0.10.0-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [在模型偏好页补齐Antigravity开关](issue_%E5%9C%A8%E6%A8%A1%E5%9E%8B%E5%81%8F%E5%A5%BD%E9%A1%B5%E8%A1%A5%E9%BD%90Antigravity%E5%BC%80%E5%85%B3.md)、[按真实档位与额度完善Dropdown显示](issue_%E6%8C%89%E7%9C%9F%E5%AE%9E%E6%A1%A3%E4%BD%8D%E4%B8%8E%E9%A2%9D%E5%BA%A6%E5%AE%8C%E5%96%84Dropdown%E6%98%BE%E7%A4%BA.md)、[记录并展示Provider分层获取诊断日志](issue_%E8%AE%B0%E5%BD%95%E5%B9%B6%E5%B1%95%E7%A4%BAProvider%E5%88%86%E5%B1%82%E8%8E%B7%E5%8F%96%E8%AF%8A%E6%96%AD%E6%97%A5%E5%BF%97.md) — `0.10.0-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 日志上线首日实测反馈——排序 bug、Claude 价格 bug、dropdown 待配置态显示规则](issue-0.10.0-BUG-A-002-UI-sorting-bug-claude-dropdown-configuration-versioncontrolid.md) — `0.10.0-BUG-A-002`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [保持FetchPipeline声明的来源优先顺序](issue_%E4%BF%9D%E6%8C%81FetchPipeline%E5%A3%B0%E6%98%8E%E7%9A%84%E6%9D%A5%E6%BA%90%E4%BC%98%E5%85%88%E9%A1%BA%E5%BA%8F.md)、[为ClaudeCLI档位结果补齐本地价格](issue_%E4%B8%BAClaudeCLI%E6%A1%A3%E4%BD%8D%E7%BB%93%E6%9E%9C%E8%A1%A5%E9%BD%90%E6%9C%AC%E5%9C%B0%E4%BB%B7%E6%A0%BC.md)、[统一未配置与未订阅状态的面板提示](issue_%E7%BB%9F%E4%B8%80%E6%9C%AA%E9%85%8D%E7%BD%AE%E4%B8%8E%E6%9C%AA%E8%AE%A2%E9%98%85%E7%8A%B6%E6%80%81%E7%9A%84%E9%9D%A2%E6%9D%BF%E6%8F%90%E7%A4%BA.md)、[将获取日志偏好页标签简化为日志](issue_%E5%B0%86%E8%8E%B7%E5%8F%96%E6%97%A5%E5%BF%97%E5%81%8F%E5%A5%BD%E9%A1%B5%E6%A0%87%E7%AD%BE%E7%AE%80%E5%8C%96%E4%B8%BA%E6%97%A5%E5%BF%97.md) — `0.10.0-BUG-A-002`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 缓存优先级语义纠正 + dropdown 隐藏按钮与 Preferences 开关状态统一](issue-0.10.0-BUG-A-004-UI-dropdown-preferences-state-versioncontrolid.md) — `0.10.0-BUG-A-004`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [仅在全部所需层同源时提前尝试缓存来源](issue_%E4%BB%85%E5%9C%A8%E5%85%A8%E9%83%A8%E6%89%80%E9%9C%80%E5%B1%82%E5%90%8C%E6%BA%90%E6%97%B6%E6%8F%90%E5%89%8D%E5%B0%9D%E8%AF%95%E7%BC%93%E5%AD%98%E6%9D%A5%E6%BA%90.md)、[统一Dropdown隐藏操作与持久Provider开关](issue_%E7%BB%9F%E4%B8%80Dropdown%E9%9A%90%E8%97%8F%E6%93%8D%E4%BD%9C%E4%B8%8E%E6%8C%81%E4%B9%85Provider%E5%BC%80%E5%85%B3.md) — `0.10.0-BUG-A-004`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: dropdown 全局规则纠正 + 日志页体验 + 日志内容可读性统一](issue-0.10.0-ARCH-G-000-UI-dropdown-rules-experience-content-versioncontrolid.md) — `0.10.0-ARCH-G-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [保持日志页宽度并在日志变化后更新内容](issue_%E4%BF%9D%E6%8C%81%E6%97%A5%E5%BF%97%E9%A1%B5%E5%AE%BD%E5%BA%A6%E5%B9%B6%E5%9C%A8%E6%97%A5%E5%BF%97%E5%8F%98%E5%8C%96%E5%90%8E%E6%9B%B4%E6%96%B0%E5%86%85%E5%AE%B9.md)、[为仅有订阅档位的Provider显示灰色状态灯](issue_%E4%B8%BA%E4%BB%85%E6%9C%89%E8%AE%A2%E9%98%85%E6%A1%A3%E4%BD%8D%E7%9A%84Provider%E6%98%BE%E7%A4%BA%E7%81%B0%E8%89%B2%E7%8A%B6%E6%80%81%E7%81%AF.md)、[统一WebView授权提示的下划线规则](issue_%E7%BB%9F%E4%B8%80WebView%E6%8E%88%E6%9D%83%E6%8F%90%E7%A4%BA%E7%9A%84%E4%B8%8B%E5%88%92%E7%BA%BF%E8%A7%84%E5%88%99.md)、[统一诊断日志层级顺序与来源分类](issue_%E7%BB%9F%E4%B8%80%E8%AF%8A%E6%96%AD%E6%97%A5%E5%BF%97%E5%B1%82%E7%BA%A7%E9%A1%BA%E5%BA%8F%E4%B8%8E%E6%9D%A5%E6%BA%90%E5%88%86%E7%B1%BB.md)、[排查ClaudeOAuth与Keychain凭证读取失败](issue_%E6%8E%92%E6%9F%A5ClaudeOAuth%E4%B8%8EKeychain%E5%87%AD%E8%AF%81%E8%AF%BB%E5%8F%96%E5%A4%B1%E8%B4%A5.md) — `0.10.0-ARCH-G-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 对照参考项目源码，Claude Keychain 读取改走 `security` CLI](issue-0.10.0-BUG-A-007-ARCH-project-claude-keychain-security-cli-versioncontrolid.md) — `0.10.0-BUG-A-007`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [通过security命令读取ClaudeKeychain凭证](issue_%E9%80%9A%E8%BF%87security%E5%91%BD%E4%BB%A4%E8%AF%BB%E5%8F%96ClaudeKeychain%E5%87%AD%E8%AF%81.md) — `0.10.0-BUG-A-007`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 日志格式二次调整 + Claude 额度条标题统一 + 更新功能现状确认](issue-0.10.0-ARCH-I-000-ARCH-claude-quota-versioncontrolid.md) — `0.10.0-ARCH-I-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [以独立结果枚举与竖线格式记录诊断日志](issue_%E4%BB%A5%E7%8B%AC%E7%AB%8B%E7%BB%93%E6%9E%9C%E6%9E%9A%E4%B8%BE%E4%B8%8E%E7%AB%96%E7%BA%BF%E6%A0%BC%E5%BC%8F%E8%AE%B0%E5%BD%95%E8%AF%8A%E6%96%AD%E6%97%A5%E5%BF%97.md)、[移除Claude额度条的重复标题](issue_%E7%A7%BB%E9%99%A4Claude%E9%A2%9D%E5%BA%A6%E6%9D%A1%E7%9A%84%E9%87%8D%E5%A4%8D%E6%A0%87%E9%A2%98.md)、[核对真实GitHub仓库与DMG更新接入现状](issue_%E6%A0%B8%E5%AF%B9%E7%9C%9F%E5%AE%9EGitHub%E4%BB%93%E5%BA%93%E4%B8%8EDMG%E6%9B%B4%E6%96%B0%E6%8E%A5%E5%85%A5%E7%8E%B0%E7%8A%B6.md) — `0.10.0-ARCH-I-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 更新检查改为纯版本号比较 + dropdown 隐藏按钮实时刷新 + GLM/Z Code 开关关联修复](issue-0.10.0-ARCH-J-000-ARCH-dropdown-refresh-glm-code-fixes-versioncontrolid.md) — `0.10.0-ARCH-J-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [以语义版本号比较更新并统一VERSION来源](issue_%E4%BB%A5%E8%AF%AD%E4%B9%89%E7%89%88%E6%9C%AC%E5%8F%B7%E6%AF%94%E8%BE%83%E6%9B%B4%E6%96%B0%E5%B9%B6%E7%BB%9F%E4%B8%80VERSION%E6%9D%A5%E6%BA%90.md)、[在菜单Tracking期间立即刷新偏好变更](issue_%E5%9C%A8%E8%8F%9C%E5%8D%95Tracking%E6%9C%9F%E9%97%B4%E7%AB%8B%E5%8D%B3%E5%88%B7%E6%96%B0%E5%81%8F%E5%A5%BD%E5%8F%98%E6%9B%B4.md)、[将模型开关关联到实际ZCodeProvider](issue_%E5%B0%86%E6%A8%A1%E5%9E%8B%E5%BC%80%E5%85%B3%E5%85%B3%E8%81%94%E5%88%B0%E5%AE%9E%E9%99%85ZCodeProvider.md) — `0.10.0-ARCH-J-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 诊断日志误报"额度获取失败"修正](issue-0.10.0-BUG-A-011-TOOL-quota-versioncontrolid.md) — `0.10.0-BUG-A-011`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [仅为实际缺失的信息层记录获取失败](issue_%E4%BB%85%E4%B8%BA%E5%AE%9E%E9%99%85%E7%BC%BA%E5%A4%B1%E7%9A%84%E4%BF%A1%E6%81%AF%E5%B1%82%E8%AE%B0%E5%BD%95%E8%8E%B7%E5%8F%96%E5%A4%B1%E8%B4%A5.md) — `0.10.0-BUG-A-011`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 「刷新间隔」偏好从未真正生效](issue-0.10.0-BUG-A-012-QA-refresh-versioncontrolid.md) — `0.10.0-BUG-A-012`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [让已保存与新修改的自动刷新间隔立即生效](issue_%E8%AE%A9%E5%B7%B2%E4%BF%9D%E5%AD%98%E4%B8%8E%E6%96%B0%E4%BF%AE%E6%94%B9%E7%9A%84%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%B4%E9%9A%94%E7%AB%8B%E5%8D%B3%E7%94%9F%E6%95%88.md) — `0.10.0-BUG-A-012`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 偏好设置摆设字段全面审计 + WebView 授权修复 + 移除浏览器 Cookie 文件读取](issue-0.10.0-BUG-A-014-ARCH-webview-fixes-cookie-files-versioncontrolid.md) — `0.10.0-BUG-A-014`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [补齐WebView真实授权能力与SSO弹窗处理](issue_%E8%A1%A5%E9%BD%90WebView%E7%9C%9F%E5%AE%9E%E6%8E%88%E6%9D%83%E8%83%BD%E5%8A%9B%E4%B8%8ESSO%E5%BC%B9%E7%AA%97%E5%A4%84%E7%90%86.md)、[移除浏览器Cookie文件读取路径及相关偏好](issue_%E7%A7%BB%E9%99%A4%E6%B5%8F%E8%A7%88%E5%99%A8Cookie%E6%96%87%E4%BB%B6%E8%AF%BB%E5%8F%96%E8%B7%AF%E5%BE%84%E5%8F%8A%E7%9B%B8%E5%85%B3%E5%81%8F%E5%A5%BD.md)、[删除无消费方的偏好字段与访问器](issue_%E5%88%A0%E9%99%A4%E6%97%A0%E6%B6%88%E8%B4%B9%E6%96%B9%E7%9A%84%E5%81%8F%E5%A5%BD%E5%AD%97%E6%AE%B5%E4%B8%8E%E8%AE%BF%E9%97%AE%E5%99%A8.md)、[接通Provider刷新超时偏好](issue_%E6%8E%A5%E9%80%9AProvider%E5%88%B7%E6%96%B0%E8%B6%85%E6%97%B6%E5%81%8F%E5%A5%BD.md) — `0.10.0-BUG-A-014`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: dropdown 授权文案统一 + Preferences 新增 API Key 配置入口](issue-0.10.0-BUG-A-017-ARCH-dropdown-preferences-api-key-configuration-versioncontrolid.md) — `0.10.0-BUG-A-017`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [按真实授权能力展示待配置提示](issue_%E6%8C%89%E7%9C%9F%E5%AE%9E%E6%8E%88%E6%9D%83%E8%83%BD%E5%8A%9B%E5%B1%95%E7%A4%BA%E5%BE%85%E9%85%8D%E7%BD%AE%E6%8F%90%E7%A4%BA.md)、[在模型页配置MiniMax与ZCodeAPIKey并刷新额度](issue_%E5%9C%A8%E6%A8%A1%E5%9E%8B%E9%A1%B5%E9%85%8D%E7%BD%AEMiniMax%E4%B8%8EZCodeAPIKey%E5%B9%B6%E5%88%B7%E6%96%B0%E9%A2%9D%E5%BA%A6.md) — `0.10.0-BUG-A-017`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 日志页刷新按钮 + 灰字精简 + 并发架构核实](issue-0.10.0-BUG-A-018-TOOL-refresh-versioncontrolid.md) — `0.10.0-BUG-A-018`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [让日志页刷新按钮触发真实额度刷新](issue_%E8%AE%A9%E6%97%A5%E5%BF%97%E9%A1%B5%E5%88%B7%E6%96%B0%E6%8C%89%E9%92%AE%E8%A7%A6%E5%8F%91%E7%9C%9F%E5%AE%9E%E9%A2%9D%E5%BA%A6%E5%88%B7%E6%96%B0.md)、[精简刷新间隔与超时设置的说明灰字](issue_%E7%B2%BE%E7%AE%80%E5%88%B7%E6%96%B0%E9%97%B4%E9%9A%94%E4%B8%8E%E8%B6%85%E6%97%B6%E8%AE%BE%E7%BD%AE%E7%9A%84%E8%AF%B4%E6%98%8E%E7%81%B0%E5%AD%97.md)、[核对Provider并发刷新与诊断日志时序](issue_%E6%A0%B8%E5%AF%B9Provider%E5%B9%B6%E5%8F%91%E5%88%B7%E6%96%B0%E4%B8%8E%E8%AF%8A%E6%96%AD%E6%97%A5%E5%BF%97%E6%97%B6%E5%BA%8F.md)、[排查Claude限流与仅有档位时的额度失败](issue_%E6%8E%92%E6%9F%A5Claude%E9%99%90%E6%B5%81%E4%B8%8E%E4%BB%85%E6%9C%89%E6%A1%A3%E4%BD%8D%E6%97%B6%E7%9A%84%E9%A2%9D%E5%BA%A6%E5%A4%B1%E8%B4%A5.md) — `0.10.0-BUG-A-018`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: claude-webview「未登录」误报的真正根因——WKWebsiteDataStore 冷启动未预热](issue-0.10.0-BUG-A-019-API-claude-webview-login-wkwebsitedatastore-versioncontrolid.md) — `0.10.0-BUG-A-019`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [预热WebView持久会话以消除Claude未登录误报](issue_%E9%A2%84%E7%83%ADWebView%E6%8C%81%E4%B9%85%E4%BC%9A%E8%AF%9D%E4%BB%A5%E6%B6%88%E9%99%A4Claude%E6%9C%AA%E7%99%BB%E5%BD%95%E8%AF%AF%E6%8A%A5.md) — `0.10.0-BUG-A-019`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: dropdown「未获取到授权」误报 + 授权补救优先级规则重新定义](issue-0.10.0-BUG-A-020-ARCH-dropdown-rules-versioncontrolid.md) — `0.10.0-BUG-A-020`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [纠正AntigravityHTTP500被误报为待配置](issue_%E7%BA%A0%E6%AD%A3AntigravityHTTP500%E8%A2%AB%E8%AF%AF%E6%8A%A5%E4%B8%BA%E5%BE%85%E9%85%8D%E7%BD%AE.md)、[按已实现能力确定Provider授权补救层级](issue_%E6%8C%89%E5%B7%B2%E5%AE%9E%E7%8E%B0%E8%83%BD%E5%8A%9B%E7%A1%AE%E5%AE%9AProvider%E6%8E%88%E6%9D%83%E8%A1%A5%E6%95%91%E5%B1%82%E7%BA%A7.md)、[隔离Provider抓取测试的日志文件](issue_%E9%9A%94%E7%A6%BBProvider%E6%8A%93%E5%8F%96%E6%B5%8B%E8%AF%95%E7%9A%84%E6%97%A5%E5%BF%97%E6%96%87%E4%BB%B6.md) — `0.10.0-BUG-A-020`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: API Key 配置行视觉优化 + opencode 手动 Key 支持](issue-0.10.0-BUG-A-021-PM-api-key-configuration-visual-optimization-versioncontrolid.md) — `0.10.0-BUG-A-021`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [精简APIKey配置行文案并修复反引号显示](issue_%E7%B2%BE%E7%AE%80APIKey%E9%85%8D%E7%BD%AE%E8%A1%8C%E6%96%87%E6%A1%88%E5%B9%B6%E4%BF%AE%E5%A4%8D%E5%8F%8D%E5%BC%95%E5%8F%B7%E6%98%BE%E7%A4%BA.md)、[为opencode提供独立手动APIKey存储](issue_%E4%B8%BAopencode%E6%8F%90%E4%BE%9B%E7%8B%AC%E7%AB%8B%E6%89%8B%E5%8A%A8APIKey%E5%AD%98%E5%82%A8.md) — `0.10.0-BUG-A-021`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 「日志」偏好页明显卡顿](issue-0.10.0-BUG-A-022-PM-project-goal-versioncontrolid.md) — `0.10.0-BUG-A-022`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [修复诊断日志大量行一次布局导致的卡顿](issue_%E4%BF%AE%E5%A4%8D%E8%AF%8A%E6%96%AD%E6%97%A5%E5%BF%97%E5%A4%A7%E9%87%8F%E8%A1%8C%E4%B8%80%E6%AC%A1%E5%B8%83%E5%B1%80%E5%AF%BC%E8%87%B4%E7%9A%84%E5%8D%A1%E9%A1%BF.md) — `0.10.0-BUG-A-022`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 粘贴 API Key 后应用崩溃（真实 SIGSEGV）+ 输入框改用原生 TextField](issue-0.10.0-BUG-A-023-SEC-api-key-sigsegv-input-native-versioncontrolid.md) — `0.10.0-BUG-A-023`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [排查APIKey粘贴崩溃并简化原生输入框](issue_%E6%8E%92%E6%9F%A5APIKey%E7%B2%98%E8%B4%B4%E5%B4%A9%E6%BA%83%E5%B9%B6%E7%AE%80%E5%8C%96%E5%8E%9F%E7%94%9F%E8%BE%93%E5%85%A5%E6%A1%86.md) — `0.10.0-BUG-A-023`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 授权 tier 完成度判断落地 + 已授权时隐藏虚假 WebView 引导](issue-0.10.0-INVESTIGATE-A-005-API-tier-webview-versioncontrolid.md) — `0.10.0-INVESTIGATE-A-005`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [按真实授权完成度隐藏误导WebView引导](issue_%E6%8C%89%E7%9C%9F%E5%AE%9E%E6%8E%88%E6%9D%83%E5%AE%8C%E6%88%90%E5%BA%A6%E9%9A%90%E8%97%8F%E8%AF%AF%E5%AF%BCWebView%E5%BC%95%E5%AF%BC.md) — `0.10.0-INVESTIGATE-A-005`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: opencode WebView 额度层（workspace Go 页）](issue-0.10.0-DATA-B-019-DATA-opencode-webview-quota-workspace-go-versioncontrolid.md) — `0.10.0-DATA-B-019`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [通过opencode工作区WebView读取Go额度](issue_%E9%80%9A%E8%BF%87opencode%E5%B7%A5%E4%BD%9C%E5%8C%BAWebView%E8%AF%BB%E5%8F%96Go%E9%A2%9D%E5%BA%A6.md) — `0.10.0-DATA-B-019`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: opencode Go 页解析器真实首跑 0 结果的修复](issue-0.10.0-BUG-A-026-API-opencode-go-fixes-versioncontrolid.md) — `0.10.0-BUG-A-026`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [兼容opencodeGo真实渲染页面并修正额度文案](issue_%E5%85%BC%E5%AE%B9opencodeGo%E7%9C%9F%E5%AE%9E%E6%B8%B2%E6%9F%93%E9%A1%B5%E9%9D%A2%E5%B9%B6%E4%BF%AE%E6%AD%A3%E9%A2%9D%E5%BA%A6%E6%96%87%E6%A1%88.md) — `0.10.0-BUG-A-026`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: API Key 配置行展开态的对齐问题](issue-0.10.0-BUG-A-028-UI-api-key-configuration-versioncontrolid.md) — `0.10.0-BUG-A-028`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [修正APIKey配置行展开编辑态对齐](issue_%E4%BF%AE%E6%AD%A3APIKey%E9%85%8D%E7%BD%AE%E8%A1%8C%E5%B1%95%E5%BC%80%E7%BC%96%E8%BE%91%E6%80%81%E5%AF%B9%E9%BD%90.md) — `0.10.0-BUG-A-028`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: opencode Go 价格固定 $10/月](issue-0.10.0-DATA-B-021-DATA-opencode-go-versioncontrolid.md) — `0.10.0-DATA-B-021`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [为opencodeGo映射真实订阅月费](issue_%E4%B8%BAopencodeGo%E6%98%A0%E5%B0%84%E7%9C%9F%E5%AE%9E%E8%AE%A2%E9%98%85%E6%9C%88%E8%B4%B9.md) — `0.10.0-DATA-B-021`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 菜单栏图标分层显示（新功能）](issue-0.10.0-FEAT-A-001-QA-menu-versioncontrolid.md) — `0.10.0-FEAT-A-001`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [按额度周期分层绘制菜单栏bar](issue_%E6%8C%89%E9%A2%9D%E5%BA%A6%E5%91%A8%E6%9C%9F%E5%88%86%E5%B1%82%E7%BB%98%E5%88%B6%E8%8F%9C%E5%8D%95%E6%A0%8Fbar.md) — `0.10.0-FEAT-A-001`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: Claude 又刷新不到额度——排查是否是 bug](issue-0.10.0-INVESTIGATE-A-007-API-claude-refresh-quota-bug-versioncontrolid.md) — `0.10.0-INVESTIGATE-A-007`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [核对Claude会话失效与授权完成度判断缺口](issue_%E6%A0%B8%E5%AF%B9Claude%E4%BC%9A%E8%AF%9D%E5%A4%B1%E6%95%88%E4%B8%8E%E6%8E%88%E6%9D%83%E5%AE%8C%E6%88%90%E5%BA%A6%E5%88%A4%E6%96%AD%E7%BC%BA%E5%8F%A3.md) — `0.10.0-INVESTIGATE-A-007`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 诊断日志按刷新轮次分隔 + 可配置保留轮数 + 新的在最上面](issue-0.10.0-FEAT-A-004-QA-refresh-configuration-versioncontrolid.md) — `0.10.0-FEAT-A-004`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [按刷新轮次倒序展示并配置保留诊断日志](issue_%E6%8C%89%E5%88%B7%E6%96%B0%E8%BD%AE%E6%AC%A1%E5%80%92%E5%BA%8F%E5%B1%95%E7%A4%BA%E5%B9%B6%E9%85%8D%E7%BD%AE%E4%BF%9D%E7%95%99%E8%AF%8A%E6%96%AD%E6%97%A5%E5%BF%97.md) — `0.10.0-FEAT-A-004`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.11.0 - 真实自动更新（ad-hoc 预开发版）+ semver 发版](issue-migration-10ea5b589cf3-TOOL-ad-hoc-semver-versioncontrolid.md) — `migration-10ea5b589cf3`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [明确ad-hoc自动更新与semver发布的实施边界](issue_%E6%98%8E%E7%A1%AEad-hoc%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E4%B8%8Esemver%E5%8F%91%E5%B8%83%E7%9A%84%E5%AE%9E%E6%96%BD%E8%BE%B9%E7%95%8C.md) — `migration-10ea5b589cf3`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 引入 semver 发版路径](issue-0.11.0-CI-A-000-CI-semver-versioncontrolid.md) — `0.11.0-CI-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [提供semver发版并保留nightly自动发布](issue_%E6%8F%90%E4%BE%9Bsemver%E5%8F%91%E7%89%88%E5%B9%B6%E4%BF%9D%E7%95%99nightly%E8%87%AA%E5%8A%A8%E5%8F%91%E5%B8%83.md) — `0.11.0-CI-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 维持 ad-hoc 签名 + 无 notarize 立场（预开发版）](issue-0.11.0-ARCH-A-000-ARCH-ad-hoc-notarize-versioncontrolid.md) — `0.11.0-ARCH-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [保持应用与更新助手的ad-hoc签名标识一致](issue_%E4%BF%9D%E6%8C%81%E5%BA%94%E7%94%A8%E4%B8%8E%E6%9B%B4%E6%96%B0%E5%8A%A9%E6%89%8B%E7%9A%84ad-hoc%E7%AD%BE%E5%90%8D%E6%A0%87%E8%AF%86%E4%B8%80%E8%87%B4.md) — `0.11.0-ARCH-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 写轻量 helper 替换脚本](issue-0.11.0-TOOL-A-000-ARCH-helper-versioncontrolid.md) — `0.11.0-TOOL-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [实现可验证并可回滚的应用更新替换助手](issue_%E5%AE%9E%E7%8E%B0%E5%8F%AF%E9%AA%8C%E8%AF%81%E5%B9%B6%E5%8F%AF%E5%9B%9E%E6%BB%9A%E7%9A%84%E5%BA%94%E7%94%A8%E6%9B%B4%E6%96%B0%E6%9B%BF%E6%8D%A2%E5%8A%A9%E6%89%8B.md) — `0.11.0-TOOL-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 实现 UpdateChecker（GitHub Releases API）](issue-0.11.0-FE-A-000-FE-updatechecker-github-releases-api-versioncontrolid.md) — `0.11.0-FE-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [通过GitHubReleases检查应用更新](issue_%E9%80%9A%E8%BF%87GitHubReleases%E6%A3%80%E6%9F%A5%E5%BA%94%E7%94%A8%E6%9B%B4%E6%96%B0.md) — `0.11.0-FE-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 后台下载 + 提示重启安装](issue-0.11.0-FE-A-008-FE-project-goal-versioncontrolid.md) — `0.11.0-FE-A-008`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [后台下载更新并提示重启安装](issue_%E5%90%8E%E5%8F%B0%E4%B8%8B%E8%BD%BD%E6%9B%B4%E6%96%B0%E5%B9%B6%E6%8F%90%E7%A4%BA%E9%87%8D%E5%90%AF%E5%AE%89%E8%A3%85.md) — `0.11.0-FE-A-008`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 更新检查 UI 改造](issue-0.11.0-UI-A-000-UI-ui-versioncontrolid.md) — `0.11.0-UI-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [在关于页展示真实更新与安装状态](issue_%E5%9C%A8%E5%85%B3%E4%BA%8E%E9%A1%B5%E5%B1%95%E7%A4%BA%E7%9C%9F%E5%AE%9E%E6%9B%B4%E6%96%B0%E4%B8%8E%E5%AE%89%E8%A3%85%E7%8A%B6%E6%80%81.md) — `0.11.0-UI-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 更新流程文档与验收](issue-0.11.0-DOC-A-000-DOC-documentation-acceptance-versioncontrolid.md) — `0.11.0-DOC-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [说明ad-hoc发版与自动更新策略](issue_%E8%AF%B4%E6%98%8Ead-hoc%E5%8F%91%E7%89%88%E4%B8%8E%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E7%AD%96%E7%95%A5.md)、[核对ad-hoc更新全流程及失败恢复](issue_%E6%A0%B8%E5%AF%B9ad-hoc%E6%9B%B4%E6%96%B0%E5%85%A8%E6%B5%81%E7%A8%8B%E5%8F%8A%E5%A4%B1%E8%B4%A5%E6%81%A2%E5%A4%8D.md) — `0.11.0-DOC-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 让低比例次级额度如实可见](issue-0.11.2-UI-A-000-UI-quota-versioncontrolid.md) — `0.11.2-UI-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [如实显示菜单栏低比例次级额度](issue_%E5%A6%82%E5%AE%9E%E6%98%BE%E7%A4%BA%E8%8F%9C%E5%8D%95%E6%A0%8F%E4%BD%8E%E6%AF%94%E4%BE%8B%E6%AC%A1%E7%BA%A7%E9%A2%9D%E5%BA%A6.md) — `0.11.2-UI-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: Codex 日期改为当前订阅周期续费日](issue-0.11.2-BUG-A-000-UI-codex-subscription-versioncontrolid.md) — `0.11.2-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [将Codex日期展示为当前订阅周期续费日](issue_%E5%B0%86Codex%E6%97%A5%E6%9C%9F%E5%B1%95%E7%A4%BA%E4%B8%BA%E5%BD%93%E5%89%8D%E8%AE%A2%E9%98%85%E5%91%A8%E6%9C%9F%E7%BB%AD%E8%B4%B9%E6%97%A5.md) — `0.11.2-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.12.0 - 升级到 Developer ID 签名 + notarize](issue-migration-69acfcbd6118-DOC-developer-id-notarize-versioncontrolid.md) — `migration-69acfcbd6118`；待定 / 延后（沿用原需求记录）；原路径 `REQUIREMENTS.md`。
+- [明确以DeveloperID与公证升级现有更新签名链](issue_%E6%98%8E%E7%A1%AE%E4%BB%A5DeveloperID%E4%B8%8E%E5%85%AC%E8%AF%81%E5%8D%87%E7%BA%A7%E7%8E%B0%E6%9C%89%E6%9B%B4%E6%96%B0%E7%AD%BE%E5%90%8D%E9%93%BE.md) — `migration-69acfcbd6118`；待定 / 延后（沿用原需求记录）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 升级 build script 签名 + notarize](issue-0.12.0-SEC-A-000-SEC-build-script-notarize-versioncontrolid.md) — `0.12.0-SEC-A-000`；阻塞（沿用原需求记录）；原路径 `REQUIREMENTS.md`。
+- [为应用与更新助手接入DeveloperID签名和公证](issue_%E4%B8%BA%E5%BA%94%E7%94%A8%E4%B8%8E%E6%9B%B4%E6%96%B0%E5%8A%A9%E6%89%8B%E6%8E%A5%E5%85%A5DeveloperID%E7%AD%BE%E5%90%8D%E5%92%8C%E5%85%AC%E8%AF%81.md) — `0.12.0-SEC-A-000`；阻塞（沿用原需求记录）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 升级 UI 文案（best-effort → 形式化保障）](issue-0.12.0-UI-A-000-UI-ui-best-effort-versioncontrolid.md) — `0.12.0-UI-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
+- [在关于页说明DeveloperID权限保留条件](issue_%E5%9C%A8%E5%85%B3%E4%BA%8E%E9%A1%B5%E8%AF%B4%E6%98%8EDeveloperID%E6%9D%83%E9%99%90%E4%BF%9D%E7%95%99%E6%9D%A1%E4%BB%B6.md) — `0.12.0-UI-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 升级文档与验收](issue-0.12.0-QA-A-000-DOC-documentation-acceptance-versioncontrolid.md) — `0.12.0-QA-A-000`；待定 / 延后（沿用原需求记录）；原路径 `REQUIREMENTS.md`。
+- [编写正式签名与自动更新配置说明](issue_%E7%BC%96%E5%86%99%E6%AD%A3%E5%BC%8F%E7%AD%BE%E5%90%8D%E4%B8%8E%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E.md)、[核对正式签名更新与权限保留流程](issue_%E6%A0%B8%E5%AF%B9%E6%AD%A3%E5%BC%8F%E7%AD%BE%E5%90%8D%E6%9B%B4%E6%96%B0%E4%B8%8E%E6%9D%83%E9%99%90%E4%BF%9D%E7%95%99%E6%B5%81%E7%A8%8B.md) — `0.12.0-QA-A-000`；待定 / 延后（沿用原需求记录）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.13.0 - opencode Provider 支持（探测 + 诚实的"已配置"态）](issue-migration-5fbc62863920-DOC-opencode-provider-configuration-versioncontrolid.md) — `migration-5fbc62863920`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [明确opencode探测与已配置状态的接入范围](issue_%E6%98%8E%E7%A1%AEopencode%E6%8E%A2%E6%B5%8B%E4%B8%8E%E5%B7%B2%E9%85%8D%E7%BD%AE%E7%8A%B6%E6%80%81%E7%9A%84%E6%8E%A5%E5%85%A5%E8%8C%83%E5%9B%B4.md) — `migration-5fbc62863920`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: opencode 探测 + 已配置态接入](issue-0.13.0-DATA-A-000-DATA-opencode-configuration-versioncontrolid.md) — `0.13.0-DATA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [探测opencode凭证并诚实展示已配置状态](issue_%E6%8E%A2%E6%B5%8Bopencode%E5%87%AD%E8%AF%81%E5%B9%B6%E8%AF%9A%E5%AE%9E%E5%B1%95%E7%A4%BA%E5%B7%B2%E9%85%8D%E7%BD%AE%E7%8A%B6%E6%80%81.md) — `0.13.0-DATA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.14.0 - 大陆可达性兜底 + 额度节奏指示 + Kimi 额度修复](issue-migration-56031c1d7802-OPS-quota-kimi-fixes-versioncontrolid.md) — `migration-56031c1d7802`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [记录更新可达性与额度节奏等本轮问题背景](issue_%E8%AE%B0%E5%BD%95%E6%9B%B4%E6%96%B0%E5%8F%AF%E8%BE%BE%E6%80%A7%E4%B8%8E%E9%A2%9D%E5%BA%A6%E8%8A%82%E5%A5%8F%E7%AD%89%E6%9C%AC%E8%BD%AE%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF.md) — `migration-56031c1d7802`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [update/main: 更新检查与下载的 GitHub → Vercel 两步兜底](issue-0.14.0-BE-A-000-BE-github-vercel-versioncontrolid.md) — `0.14.0-BE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [提供GitHub到Vercel的更新检查与下载兜底](issue_%E6%8F%90%E4%BE%9BGitHub%E5%88%B0Vercel%E7%9A%84%E6%9B%B4%E6%96%B0%E6%A3%80%E6%9F%A5%E4%B8%8E%E4%B8%8B%E8%BD%BD%E5%85%9C%E5%BA%95.md)、[为官网下载解析接入两步可达性兜底](issue_%E4%B8%BA%E5%AE%98%E7%BD%91%E4%B8%8B%E8%BD%BD%E8%A7%A3%E6%9E%90%E6%8E%A5%E5%85%A5%E4%B8%A4%E6%AD%A5%E5%8F%AF%E8%BE%BE%E6%80%A7%E5%85%9C%E5%BA%95.md) — `0.14.0-BE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 额度条节奏指示（linear pacing marker）](issue-0.14.0-DATA-B-000-DATA-quota-linear-pacing-marker-versioncontrolid.md) — `0.14.0-DATA-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [按额度周期进度绘制节奏指示点](issue_%E6%8C%89%E9%A2%9D%E5%BA%A6%E5%91%A8%E6%9C%9F%E8%BF%9B%E5%BA%A6%E7%BB%98%E5%88%B6%E8%8A%82%E5%A5%8F%E6%8C%87%E7%A4%BA%E7%82%B9.md) — `0.14.0-DATA-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: Kimi CLI OAuth 5 小时/周额度丢失修复](issue-0.14.0-BUG-A-000-QA-kimi-cli-oauth-quota-fixes-versioncontrolid.md) — `0.14.0-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [只读KimiCLI凭证并在内存刷新OAuth](issue_%E5%8F%AA%E8%AF%BBKimiCLI%E5%87%AD%E8%AF%81%E5%B9%B6%E5%9C%A8%E5%86%85%E5%AD%98%E5%88%B7%E6%96%B0OAuth.md)、[恢复KimiWork月额度与WebView接口解析](issue_%E6%81%A2%E5%A4%8DKimiWork%E6%9C%88%E9%A2%9D%E5%BA%A6%E4%B8%8EWebView%E6%8E%A5%E5%8F%A3%E8%A7%A3%E6%9E%90.md) — `0.14.0-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: Preferences「每个渠道获取状态」— 模型页展开三态指示器](issue-0.14.0-DATA-C-000-DATA-preferences-state-model-versioncontrolid.md) — `0.14.0-DATA-C-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [在模型页展开各额度获取渠道的真实三态状态](issue_%E5%9C%A8%E6%A8%A1%E5%9E%8B%E9%A1%B5%E5%B1%95%E5%BC%80%E5%90%84%E9%A2%9D%E5%BA%A6%E8%8E%B7%E5%8F%96%E6%B8%A0%E9%81%93%E7%9A%84%E7%9C%9F%E5%AE%9E%E4%B8%89%E6%80%81%E7%8A%B6%E6%80%81.md) — `0.14.0-DATA-C-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.14.1 - 更新检查的版本比较 bug + 检查过程写日志](issue-0.14.1-BUG-A-000-DATA-bug-versioncontrolid.md) — `0.14.1-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [识别同语义版本不同SHA的更新并记录过程](issue_%E8%AF%86%E5%88%AB%E5%90%8C%E8%AF%AD%E4%B9%89%E7%89%88%E6%9C%AC%E4%B8%8D%E5%90%8CSHA%E7%9A%84%E6%9B%B4%E6%96%B0%E5%B9%B6%E8%AE%B0%E5%BD%95%E8%BF%87%E7%A8%8B.md)、[要求main发包递增PATCH并保留文档例外](issue_%E8%A6%81%E6%B1%82main%E5%8F%91%E5%8C%85%E9%80%92%E5%A2%9EPATCH%E5%B9%B6%E4%BF%9D%E7%95%99%E6%96%87%E6%A1%A3%E4%BE%8B%E5%A4%96.md) — `0.14.1-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.15.0 - 7 天试用 + Creem 授权激活 + 发布链路迁移到 Vercel Blob](issue-migration-a56852fe5c89-SEC-creem-release-vercel-blob-versioncontrolid.md) — `migration-a56852fe5c89`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [明确试用授权与Blob发布链路的产品决策](issue_%E6%98%8E%E7%A1%AE%E8%AF%95%E7%94%A8%E6%8E%88%E6%9D%83%E4%B8%8EBlob%E5%8F%91%E5%B8%83%E9%93%BE%E8%B7%AF%E7%9A%84%E4%BA%A7%E5%93%81%E5%86%B3%E7%AD%96.md) — `migration-a56852fe5c89`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: macOS 试用期与授权状态模型](issue-0.15.0-DATA-A-000-DATA-macos-state-model-versioncontrolid.md) — `0.15.0-DATA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [建立七天试用与授权状态模型](issue_%E5%BB%BA%E7%AB%8B%E4%B8%83%E5%A4%A9%E8%AF%95%E7%94%A8%E4%B8%8E%E6%8E%88%E6%9D%83%E7%8A%B6%E6%80%81%E6%A8%A1%E5%9E%8B.md) — `0.15.0-DATA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: Creem 激活的服务端代理（Vercel）](issue-0.15.0-BE-A-000-BE-creem-service-vercel-versioncontrolid.md) — `0.15.0-BE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [通过服务端代理Creem授权激活与校验](issue_%E9%80%9A%E8%BF%87%E6%9C%8D%E5%8A%A1%E7%AB%AF%E4%BB%A3%E7%90%86Creem%E6%8E%88%E6%9D%83%E6%BF%80%E6%B4%BB%E4%B8%8E%E6%A0%A1%E9%AA%8C.md) — `0.15.0-BE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: macOS 激活 UI 与自动更新门禁](issue-0.15.0-FE-A-000-FE-macos-ui-versioncontrolid.md) — `0.15.0-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [接入真实许可证激活与授权状态展示](issue_%E6%8E%A5%E5%85%A5%E7%9C%9F%E5%AE%9E%E8%AE%B8%E5%8F%AF%E8%AF%81%E6%BF%80%E6%B4%BB%E4%B8%8E%E6%8E%88%E6%9D%83%E7%8A%B6%E6%80%81%E5%B1%95%E7%A4%BA.md)、[试用到期后限制App内更新检查与安装](issue_%E8%AF%95%E7%94%A8%E5%88%B0%E6%9C%9F%E5%90%8E%E9%99%90%E5%88%B6App%E5%86%85%E6%9B%B4%E6%96%B0%E6%A3%80%E6%9F%A5%E4%B8%8E%E5%AE%89%E8%A3%85.md) — `0.15.0-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 官网购买入口](issue-0.15.0-FE-B-000-FE-project-goal-versioncontrolid.md) — `0.15.0-FE-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [为官网付费卡接入Creem购买入口](issue_%E4%B8%BA%E5%AE%98%E7%BD%91%E4%BB%98%E8%B4%B9%E5%8D%A1%E6%8E%A5%E5%85%A5Creem%E8%B4%AD%E4%B9%B0%E5%85%A5%E5%8F%A3.md) — `0.15.0-FE-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 发布链路迁移到 Vercel Blob](issue-0.15.0-CI-A-000-CI-release-vercel-blob-versioncontrolid.md) — `0.15.0-CI-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [将应用包发布与下载链路迁移到VercelBlob](issue_%E5%B0%86%E5%BA%94%E7%94%A8%E5%8C%85%E5%8F%91%E5%B8%83%E4%B8%8E%E4%B8%8B%E8%BD%BD%E9%93%BE%E8%B7%AF%E8%BF%81%E7%A7%BB%E5%88%B0VercelBlob.md) — `0.15.0-CI-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 仓库协作规则](issue-0.15.0-OPS-A-000-OPS-repository-collaboration-rules-versioncontrolid.md) — `0.15.0-OPS-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
+- [保持仓库公开并配置main分支保护](issue_%E4%BF%9D%E6%8C%81%E4%BB%93%E5%BA%93%E5%85%AC%E5%BC%80%E5%B9%B6%E9%85%8D%E7%BD%AEmain%E5%88%86%E6%94%AF%E4%BF%9D%E6%8A%A4.md) — `0.15.0-OPS-A-000`；待处理（原文未完成项保持未勾选）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 验证](issue-0.15.0-QA-A-000-QA-verification-versioncontrolid.md) — `0.15.0-QA-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
+- [核对试用授权边界与服务故障降级](issue_%E6%A0%B8%E5%AF%B9%E8%AF%95%E7%94%A8%E6%8E%88%E6%9D%83%E8%BE%B9%E7%95%8C%E4%B8%8E%E6%9C%8D%E5%8A%A1%E6%95%85%E9%9A%9C%E9%99%8D%E7%BA%A7.md)、[核对Blob发布配置并支持下载HEAD请求](issue_%E6%A0%B8%E5%AF%B9Blob%E5%8F%91%E5%B8%83%E9%85%8D%E7%BD%AE%E5%B9%B6%E6%94%AF%E6%8C%81%E4%B8%8B%E8%BD%BDHEAD%E8%AF%B7%E6%B1%82.md)、[核对Creem激活所需的外部配置与端到端结果](issue_%E6%A0%B8%E5%AF%B9Creem%E6%BF%80%E6%B4%BB%E6%89%80%E9%9C%80%E7%9A%84%E5%A4%96%E9%83%A8%E9%85%8D%E7%BD%AE%E4%B8%8E%E7%AB%AF%E5%88%B0%E7%AB%AF%E7%BB%93%E6%9E%9C.md) — `0.15.0-QA-A-000`；进行中（原文同时包含已完成与未完成项）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.15.1 - Claude 探测顺序修复 + 日志 provider 配色 + 购买/下载双出口](issue-migration-296364b9aedc-PM-claude-fixes-provider-versioncontrolid.md) — `migration-296364b9aedc`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [记录Claude来源顺序反馈与真实日志边界](issue_%E8%AE%B0%E5%BD%95Claude%E6%9D%A5%E6%BA%90%E9%A1%BA%E5%BA%8F%E5%8F%8D%E9%A6%88%E4%B8%8E%E7%9C%9F%E5%AE%9E%E6%97%A5%E5%BF%97%E8%BE%B9%E7%95%8C.md) — `migration-296364b9aedc`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: Claude 每轮白跑三个已知失败来源](issue-0.15.1-BUG-A-000-QA-claude-versioncontrolid.md) — `0.15.1-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [按信息层提前尝试已知成功的Claude来源](issue_%E6%8C%89%E4%BF%A1%E6%81%AF%E5%B1%82%E6%8F%90%E5%89%8D%E5%B0%9D%E8%AF%95%E5%B7%B2%E7%9F%A5%E6%88%90%E5%8A%9F%E7%9A%84Claude%E6%9D%A5%E6%BA%90.md) — `0.15.1-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 诊断日志 provider 配色](issue-0.15.1-FE-A-000-FE-provider-versioncontrolid.md) — `0.15.1-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [以Provider分隔行组织诊断日志配色](issue_%E4%BB%A5Provider%E5%88%86%E9%9A%94%E8%A1%8C%E7%BB%84%E7%BB%87%E8%AF%8A%E6%96%AD%E6%97%A5%E5%BF%97%E9%85%8D%E8%89%B2.md) — `0.15.1-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [site/main: 购买与下载分成两个出口](issue-0.15.1-FE-B-000-FE-project-goal-versioncontrolid.md) — `0.15.1-FE-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [为官网分别提供购买与免费试用下载入口](issue_%E4%B8%BA%E5%AE%98%E7%BD%91%E5%88%86%E5%88%AB%E6%8F%90%E4%BE%9B%E8%B4%AD%E4%B9%B0%E4%B8%8E%E5%85%8D%E8%B4%B9%E8%AF%95%E7%94%A8%E4%B8%8B%E8%BD%BD%E5%85%A5%E5%8F%A3.md) — `0.15.1-FE-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [site/main: 定价卡 CTA 对齐（回归修复）](issue-0.15.1-FE-B-002-FE-cta-fixes-versioncontrolid.md) — `0.15.1-FE-B-002`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [修复定价卡CTA脚注与边框造成的错位](issue_%E4%BF%AE%E5%A4%8D%E5%AE%9A%E4%BB%B7%E5%8D%A1CTA%E8%84%9A%E6%B3%A8%E4%B8%8E%E8%BE%B9%E6%A1%86%E9%80%A0%E6%88%90%E7%9A%84%E9%94%99%E4%BD%8D.md) — `0.15.1-FE-B-002`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.15.2 - 时间派生值只算一次的两处 bug](issue-migration-74c5e2109dca-DB-bug-versioncontrolid.md) — `migration-74c5e2109dca`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [记录常驻应用时间派生值停止更新的问题](issue_%E8%AE%B0%E5%BD%95%E5%B8%B8%E9%A9%BB%E5%BA%94%E7%94%A8%E6%97%B6%E9%97%B4%E6%B4%BE%E7%94%9F%E5%80%BC%E5%81%9C%E6%AD%A2%E6%9B%B4%E6%96%B0%E7%9A%84%E9%97%AE%E9%A2%98.md) — `migration-74c5e2109dca`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 试用剩余天数不随时间更新](issue-0.15.2-BUG-A-000-QA-project-goal-versioncontrolid.md) — `0.15.2-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [随时间更新试用剩余天数与更新门禁](issue_%E9%9A%8F%E6%97%B6%E9%97%B4%E6%9B%B4%E6%96%B0%E8%AF%95%E7%94%A8%E5%89%A9%E4%BD%99%E5%A4%A9%E6%95%B0%E4%B8%8E%E6%9B%B4%E6%96%B0%E9%97%A8%E7%A6%81.md) — `0.15.2-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 额度条节奏指示点跳变](issue-0.15.2-BUG-B-000-QA-quota-versioncontrolid.md) — `0.15.2-BUG-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [让额度节奏指示点按每秒时钟连续更新](issue_%E8%AE%A9%E9%A2%9D%E5%BA%A6%E8%8A%82%E5%A5%8F%E6%8C%87%E7%A4%BA%E7%82%B9%E6%8C%89%E6%AF%8F%E7%A7%92%E6%97%B6%E9%92%9F%E8%BF%9E%E7%BB%AD%E6%9B%B4%E6%96%B0.md) — `0.15.2-BUG-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 重置倒计时同样按秒现算](issue-0.15.2-BUG-C-000-QA-project-goal-versioncontrolid.md) — `0.15.2-BUG-C-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [让重置倒计时按秒重算并保留未知时间文案](issue_%E8%AE%A9%E9%87%8D%E7%BD%AE%E5%80%92%E8%AE%A1%E6%97%B6%E6%8C%89%E7%A7%92%E9%87%8D%E7%AE%97%E5%B9%B6%E4%BF%9D%E7%95%99%E6%9C%AA%E7%9F%A5%E6%97%B6%E9%97%B4%E6%96%87%E6%A1%88.md) — `0.15.2-BUG-C-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [Phase - v0.15.3 - 检查更新门禁补全（手动点击此前会绕过）+ 测试隔离 + flaky 修复](issue-migration-3acfb4767b85-PM-tests-flaky-fixes-versioncontrolid.md) — `migration-3acfb4767b85`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
+- [记录手动检查更新绕过授权门禁的问题](issue_%E8%AE%B0%E5%BD%95%E6%89%8B%E5%8A%A8%E6%A3%80%E6%9F%A5%E6%9B%B4%E6%96%B0%E7%BB%95%E8%BF%87%E6%8E%88%E6%9D%83%E9%97%A8%E7%A6%81%E7%9A%84%E9%97%AE%E9%A2%98.md) — `migration-3acfb4767b85`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: check() 门禁覆盖手动路径](issue-0.15.3-BUG-A-000-DATA-check-versioncontrolid.md) — `0.15.3-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [让授权门禁覆盖手动与自动检查更新](issue_%E8%AE%A9%E6%8E%88%E6%9D%83%E9%97%A8%E7%A6%81%E8%A6%86%E7%9B%96%E6%89%8B%E5%8A%A8%E4%B8%8E%E8%87%AA%E5%8A%A8%E6%A3%80%E6%9F%A5%E6%9B%B4%E6%96%B0.md)、[固定倒计时测试基准时间以消除截断抖动](issue_%E5%9B%BA%E5%AE%9A%E5%80%92%E8%AE%A1%E6%97%B6%E6%B5%8B%E8%AF%95%E5%9F%BA%E5%87%86%E6%97%B6%E9%97%B4%E4%BB%A5%E6%B6%88%E9%99%A4%E6%88%AA%E6%96%AD%E6%8A%96%E5%8A%A8.md) — `0.15.3-BUG-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [sub/main: 检查更新按钮改为直接置灰](issue-0.15.3-FE-A-000-FE-project-goal-versioncontrolid.md) — `0.15.3-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
+- [按实时授权状态禁用检查更新按钮](issue_%E6%8C%89%E5%AE%9E%E6%97%B6%E6%8E%88%E6%9D%83%E7%8A%B6%E6%80%81%E7%A6%81%E7%94%A8%E6%A3%80%E6%9F%A5%E6%9B%B4%E6%96%B0%E6%8C%89%E9%92%AE.md) — `0.15.3-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `REQUIREMENTS.md`。
 
-- [website/main: 定义主页范围与信息架构](issue-0.1.0-PM-A-000-PM-landing-scope-versioncontrolid.md) — `0.1.0-PM-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [确定官网技术方案与首屏卖点](issue_%E7%A1%AE%E5%AE%9A%E5%AE%98%E7%BD%91%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88%E4%B8%8E%E9%A6%96%E5%B1%8F%E5%8D%96%E7%82%B9.md) — `0.1.0-PM-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [website/main: 建立 Astro 站点骨架](issue-0.1.0-FE-A-000-FE-astro-versioncontrolid.md) — `0.1.0-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [建立Astro静态官网骨架](issue_%E5%BB%BA%E7%AB%8BAstro%E9%9D%99%E6%80%81%E5%AE%98%E7%BD%91%E9%AA%A8%E6%9E%B6.md) — `0.1.0-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [website/main: 建立主页 Design Tokens 与布局](issue-migration-331bbfea42d3-UI-landing-design-tokens-layout-versioncontrolid.md) — `migration-331bbfea42d3`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [建立官网DesignTokens与通用布局](issue_%E5%BB%BA%E7%AB%8B%E5%AE%98%E7%BD%91DesignTokens%E4%B8%8E%E9%80%9A%E7%94%A8%E5%B8%83%E5%B1%80.md) — `migration-331bbfea42d3`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [website/main: 实现主页核心组件](issue-migration-3e0fea30f1dd-UI-landing-versioncontrolid.md) — `migration-3e0fea30f1dd`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [用CSS与HTML展示菜单栏及额度面板](issue_%E7%94%A8CSS%E4%B8%8EHTML%E5%B1%95%E7%A4%BA%E8%8F%9C%E5%8D%95%E6%A0%8F%E5%8F%8A%E9%A2%9D%E5%BA%A6%E9%9D%A2%E6%9D%BF.md)、[实现官网导航与产品介绍区块](issue_%E5%AE%9E%E7%8E%B0%E5%AE%98%E7%BD%91%E5%AF%BC%E8%88%AA%E4%B8%8E%E4%BA%A7%E5%93%81%E4%BB%8B%E7%BB%8D%E5%8C%BA%E5%9D%97.md) — `migration-3e0fea30f1dd`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [website/main: 组装主页并接入下载链接](issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md) — `0.1.0-FE-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [按产品介绍顺序组装官网首页](issue_%E6%8C%89%E4%BA%A7%E5%93%81%E4%BB%8B%E7%BB%8D%E9%A1%BA%E5%BA%8F%E7%BB%84%E8%A3%85%E5%AE%98%E7%BD%91%E9%A6%96%E9%A1%B5.md)、[通过GitHubRelease解析统一下载入口](issue_%E9%80%9A%E8%BF%87GitHubRelease%E8%A7%A3%E6%9E%90%E7%BB%9F%E4%B8%80%E4%B8%8B%E8%BD%BD%E5%85%A5%E5%8F%A3.md) — `0.1.0-FE-B-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [website/main: 完成响应式与可访问性](issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md) — `0.1.0-UI-C-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [适配官网移动端与响应式布局](issue_%E9%80%82%E9%85%8D%E5%AE%98%E7%BD%91%E7%A7%BB%E5%8A%A8%E7%AB%AF%E4%B8%8E%E5%93%8D%E5%BA%94%E5%BC%8F%E5%B8%83%E5%B1%80.md)、[提供官网无障碍语义与减少动效支持](issue_%E6%8F%90%E4%BE%9B%E5%AE%98%E7%BD%91%E6%97%A0%E9%9A%9C%E7%A2%8D%E8%AF%AD%E4%B9%89%E4%B8%8E%E5%87%8F%E5%B0%91%E5%8A%A8%E6%95%88%E6%94%AF%E6%8C%81.md) — `0.1.0-UI-C-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [website/main: 同步主页子项目文档](issue-0.1.0-DOC-A-000-DOC-sync-landing-project-documentation-versioncontrolid.md) — `0.1.0-DOC-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [同步官网子项目文档与根目录索引](issue_%E5%90%8C%E6%AD%A5%E5%AE%98%E7%BD%91%E5%AD%90%E9%A1%B9%E7%9B%AE%E6%96%87%E6%A1%A3%E4%B8%8E%E6%A0%B9%E7%9B%AE%E5%BD%95%E7%B4%A2%E5%BC%95.md) — `0.1.0-DOC-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [website/main: 完成主页首版验收](issue-0.1.0-QA-A-000-QA-landing-acceptance-versioncontrolid.md) — `0.1.0-QA-A-000`；阻塞（沿用原需求记录）；原路径 `site/REQUIREMENTS.md`。
+- [核对官网首版构建与部署交付](issue_%E6%A0%B8%E5%AF%B9%E5%AE%98%E7%BD%91%E9%A6%96%E7%89%88%E6%9E%84%E5%BB%BA%E4%B8%8E%E9%83%A8%E7%BD%B2%E4%BA%A4%E4%BB%98.md) — `0.1.0-QA-A-000`；阻塞（沿用原需求记录）；原路径 `site/REQUIREMENTS.md`。
 
-- [website/main: 升级主页真实视觉素材](issue-migration-2ccfda47ccb4-UI-landing-visual-versioncontrolid.md) — `migration-2ccfda47ccb4`；待定 / 延后（沿用原需求记录）；原路径 `site/REQUIREMENTS.md`。
+- [以真实截图和品牌素材替换官网视觉占位](issue_%E4%BB%A5%E7%9C%9F%E5%AE%9E%E6%88%AA%E5%9B%BE%E5%92%8C%E5%93%81%E7%89%8C%E7%B4%A0%E6%9D%90%E6%9B%BF%E6%8D%A2%E5%AE%98%E7%BD%91%E8%A7%86%E8%A7%89%E5%8D%A0%E4%BD%8D.md) — `migration-2ccfda47ccb4`；待定 / 延后（沿用原需求记录）；原路径 `site/REQUIREMENTS.md`。
 
-- [website/main: 增强站点 SEO 与多语言能力](issue-migration-68a147730638-FE-seo-languages-versioncontrolid.md) — `migration-68a147730638`；待定 / 延后（沿用原需求记录）；原路径 `site/REQUIREMENTS.md`。
+- [为官网提供站点地图与结构化数据](issue_%E4%B8%BA%E5%AE%98%E7%BD%91%E6%8F%90%E4%BE%9B%E7%AB%99%E7%82%B9%E5%9C%B0%E5%9B%BE%E4%B8%8E%E7%BB%93%E6%9E%84%E5%8C%96%E6%95%B0%E6%8D%AE.md)、[为QuotaBar介绍站提供中英双语切换](issue_%E4%B8%BAQuotaBar%E4%BB%8B%E7%BB%8D%E7%AB%99%E6%8F%90%E4%BE%9B%E4%B8%AD%E8%8B%B1%E5%8F%8C%E8%AF%AD%E5%88%87%E6%8D%A2.md) — `migration-68a147730638`；待定 / 延后（沿用原需求记录）；原路径 `site/REQUIREMENTS.md`。
 
-- [Phase - v0.3.0 - 开源/付费双轨定价卡 + Creem 合规必需页面](issue-migration-f1ae546a6d52-PM-creem-versioncontrolid.md) — `migration-f1ae546a6d52`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `site/REQUIREMENTS.md`。
+- [明确官网双轨定价与真实法律页面的呈现范围](issue_%E6%98%8E%E7%A1%AE%E5%AE%98%E7%BD%91%E5%8F%8C%E8%BD%A8%E5%AE%9A%E4%BB%B7%E4%B8%8E%E7%9C%9F%E5%AE%9E%E6%B3%95%E5%BE%8B%E9%A1%B5%E9%9D%A2%E7%9A%84%E5%91%88%E7%8E%B0%E8%8C%83%E5%9B%B4.md) — `migration-f1ae546a6d52`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `site/REQUIREMENTS.md`。
 
-- [site/main: 官网 Design Tokens 文档纠偏](issue-0.3.0-DOC-A-000-DOC-design-tokens-documentation-versioncontrolid.md) — `0.3.0-DOC-A-000`；待处理（原文未完成项保持未勾选）；原路径 `site/REQUIREMENTS.md`。
+- [按官网真实样式校正DesignTokens文档](issue_%E6%8C%89%E5%AE%98%E7%BD%91%E7%9C%9F%E5%AE%9E%E6%A0%B7%E5%BC%8F%E6%A0%A1%E6%AD%A3DesignTokens%E6%96%87%E6%A1%A3.md) — `0.3.0-DOC-A-000`；待处理（原文未完成项保持未勾选）；原路径 `site/REQUIREMENTS.md`。
 
-- [site/main: 开源 / 付费双轨定价卡片](issue-0.3.0-QA-A-000-UI-project-goal-versioncontrolid.md) — `0.3.0-QA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [并排展示开源自行编译与付费官方版定价卡](issue_%E5%B9%B6%E6%8E%92%E5%B1%95%E7%A4%BA%E5%BC%80%E6%BA%90%E8%87%AA%E8%A1%8C%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BB%98%E8%B4%B9%E5%AE%98%E6%96%B9%E7%89%88%E5%AE%9A%E4%BB%B7%E5%8D%A1.md) — `0.3.0-QA-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [site/main: Privacy Policy + Terms of Service + 页脚死链接修复](issue-0.3.0-CONTENT-A-000-CONTENT-privacy-policy-terms-of-service-versioncontrolid.md) — `0.3.0-CONTENT-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [提供真实双语隐私政策与服务条款](issue_%E6%8F%90%E4%BE%9B%E7%9C%9F%E5%AE%9E%E5%8F%8C%E8%AF%AD%E9%9A%90%E7%A7%81%E6%94%BF%E7%AD%96%E4%B8%8E%E6%9C%8D%E5%8A%A1%E6%9D%A1%E6%AC%BE.md) — `0.3.0-CONTENT-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [Phase - v0.3.1 - Creem 复审前的法律页面 SSR 化 + Terms 内容更新 + 联系邮箱统一](issue-migration-d699eee367e6-SEC-creem-ssr-terms-content-versioncontrolid.md) — `migration-d699eee367e6`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `site/REQUIREMENTS.md`。
+- [记录法律页面抓取空白与商业条款矛盾](issue_%E8%AE%B0%E5%BD%95%E6%B3%95%E5%BE%8B%E9%A1%B5%E9%9D%A2%E6%8A%93%E5%8F%96%E7%A9%BA%E7%99%BD%E4%B8%8E%E5%95%86%E4%B8%9A%E6%9D%A1%E6%AC%BE%E7%9F%9B%E7%9B%BE.md) — `migration-d699eee367e6`；已确认约束 / 状态待核对（原文未单列完成状态）；原路径 `site/REQUIREMENTS.md`。
 
-- [site/main: 法律页面正文改为 SSR 直出](issue-0.3.1-FE-A-000-FE-ssr-versioncontrolid.md) — `0.3.1-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [在无JS环境直接渲染法律页面英文正文](issue_%E5%9C%A8%E6%97%A0JS%E7%8E%AF%E5%A2%83%E7%9B%B4%E6%8E%A5%E6%B8%B2%E6%9F%93%E6%B3%95%E5%BE%8B%E9%A1%B5%E9%9D%A2%E8%8B%B1%E6%96%87%E6%AD%A3%E6%96%87.md) — `0.3.1-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [site/main: Terms 商业条款更新 + 联系邮箱统一](issue-0.3.1-CONTENT-A-000-CONTENT-terms-business-versioncontrolid.md) — `0.3.1-CONTENT-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [按已确定定价更新商业条款及日期](issue_%E6%8C%89%E5%B7%B2%E7%A1%AE%E5%AE%9A%E5%AE%9A%E4%BB%B7%E6%9B%B4%E6%96%B0%E5%95%86%E4%B8%9A%E6%9D%A1%E6%AC%BE%E5%8F%8A%E6%97%A5%E6%9C%9F.md)、[统一官网联系邮箱](issue_%E7%BB%9F%E4%B8%80%E5%AE%98%E7%BD%91%E8%81%94%E7%B3%BB%E9%82%AE%E7%AE%B1.md) — `0.3.1-CONTENT-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [Phase - v0.3.2 - 定价叙事从"限时免费"改为"$4.99 一次性购买 + 7 天试用"](issue-0.3.2-CONTENT-A-000-CONTENT-project-goal-versioncontrolid.md) — `0.3.2-CONTENT-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [将官网定价统一为一次性购买与七天试用](issue_%E5%B0%86%E5%AE%98%E7%BD%91%E5%AE%9A%E4%BB%B7%E7%BB%9F%E4%B8%80%E4%B8%BA%E4%B8%80%E6%AC%A1%E6%80%A7%E8%B4%AD%E4%B9%B0%E4%B8%8E%E4%B8%83%E5%A4%A9%E8%AF%95%E7%94%A8.md) — `0.3.2-CONTENT-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [site/main: 开源卡精简为 2 条 bullet，付费卡改为"继承开源 2 条 + 3 条付费专属"](issue-0.3.3-CONTENT-A-000-CONTENT-bullet-versioncontrolid.md) — `0.3.3-CONTENT-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [精简开源卖点并明确付费专属功能](issue_%E7%B2%BE%E7%AE%80%E5%BC%80%E6%BA%90%E5%8D%96%E7%82%B9%E5%B9%B6%E6%98%8E%E7%A1%AE%E4%BB%98%E8%B4%B9%E4%B8%93%E5%B1%9E%E5%8A%9F%E8%83%BD.md) — `0.3.3-CONTENT-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
 
-- [site/main: 定价卡 CTA 按钮对齐](issue-0.3.4-FE-A-000-FE-cta-versioncontrolid.md) — `0.3.4-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。
+- [对齐官网开源与付费定价卡CTA按钮](issue_%E5%AF%B9%E9%BD%90%E5%AE%98%E7%BD%91%E5%BC%80%E6%BA%90%E4%B8%8E%E4%BB%98%E8%B4%B9%E5%AE%9A%E4%BB%B7%E5%8D%A1CTA%E6%8C%89%E9%92%AE.md) — `0.3.4-FE-A-000`；已完成（沿用原需求记录；本轮未重新执行产品验收）；原路径 `site/REQUIREMENTS.md`。

@@ -1,0 +1,33 @@
+# 按已验证ClaudePro档位映射月费
+
+- ID：`0.10.0-DATA-B-012`。
+- 类型：`DATA`。
+- 状态：已完成（沿用原需求记录；本轮未重新执行产品验收）。
+- 版本管理：Git。
+- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
+- 来源：`REQUIREMENTS.md` @ `211555173930360a07f45b8f9662463ed7519dba`；标题路径：任务清单 / Phase - v0.10.0 - 订阅过期识别与免费额度误判修正 / sub/main: Claude 配置 / CLI / RPC 三项验证与实现。
+- 原稳定 ID：`0.10.0-DATA-B-009`, `0.10.0-DATA-B-010`, `0.10.0-DATA-B-011`, `0.10.0-DATA-B-012`, `0.10.0-DOC-A-002`；不改写或重编号这些既有 ID。
+- 拆分前ID：`0.10.0-DATA-B-009`（沿用旧ID，不新增编号）。
+- 本任务原稳定ID：`0.10.0-DATA-B-012`。
+- 状态范围：上方状态保留迁移前汇总；本任务逐项勾选、撤销标记和阻塞说明以本文件原文为准，未重新验收。
+- 迁移前文件：`issue/issue-0.10.0-DATA-B-009-DATA-claude-configuration-cli-rpc-verification-versioncontrolid.md`（历史来源路径；原始来源版本见既有来源property）。
+- 迁移前标题：sub/main: Claude 配置 / CLI / RPC 三项验证与实现。
+- 同源任务：[通过OAuth与认证CLI接入Claude订阅信息](issue_%E9%80%9A%E8%BF%87OAuth%E4%B8%8E%E8%AE%A4%E8%AF%81CLI%E6%8E%A5%E5%85%A5Claude%E8%AE%A2%E9%98%85%E4%BF%A1%E6%81%AF.md)。
+
+## 当前需求与范围
+
+共同范围与完整历史见[通过OAuth与认证CLI接入Claude订阅信息](issue_%E9%80%9A%E8%BF%87OAuth%E4%B8%8E%E8%AE%A4%E8%AF%81CLI%E6%8E%A5%E5%85%A5Claude%E8%AE%A2%E9%98%85%E4%BF%A1%E6%81%AF.md)；本文件保留以下独立目标的原文。
+
+- [x] [0.10.0-DATA-B-012] `ProviderPricing` 新增 Claude Pro 价格映射（$20/月，官网公开价确认）；Max（5x/20x）等更高档位的 `subscriptionType` 字符串未经真实账号验证，不猜测映射 #P2
+
+## 检查与验收边界
+
+以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
+
+## Comments
+
+原迁移条目的历史Comments完整保留于[同源历史](issue_%E9%80%9A%E8%BF%87OAuth%E4%B8%8E%E8%AE%A4%E8%AF%81CLI%E6%8E%A5%E5%85%A5Claude%E8%AE%A2%E9%98%85%E4%BF%A1%E6%81%AF.md#comments)，不从历史日志新增完成标记。
+
+### 2026-10-24 07:04:08 UTC — Agent（任务命名与语义整理）
+
+按具体原语言任务命名；类型与原ID保留在properties。将独立目标分开，实施与验收子步骤保持同组；历史Comments保留一次并链接共享。实施版本未核实，省略文件名版本后缀；本次未执行产品或代码验收。

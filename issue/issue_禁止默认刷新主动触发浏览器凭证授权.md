@@ -1,0 +1,34 @@
+# 禁止默认刷新主动触发浏览器凭证授权
+
+- ID：`0.9.0-SEC-A-000`。
+- 类型：`ARCH`。
+- 状态：进行中（原文同时包含已完成与未完成项）。
+- 版本管理：Git。
+- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
+- 来源：`REQUIREMENTS.md` @ `211555173930360a07f45b8f9662463ed7519dba`；标题路径：任务清单 / Phase - v0.9.0 - 持久化、来源索引与启动兜底 / sub/main: 建立安全持久化模型。
+- 原稳定 ID：`0.9.0-ARCH-A-000`, `0.9.0-ARCH-A-001`, `0.9.0-ARCH-A-002`, `0.9.0-SEC-A-000`, `0.9.0-SEC-A-001`；不改写或重编号这些既有 ID。
+- 拆分前ID：`0.9.0-ARCH-A-000`（沿用旧ID，不新增编号）。
+- 本任务原稳定ID：`0.9.0-SEC-A-000`、`0.9.0-SEC-A-001`。
+- 状态范围：上方状态保留迁移前汇总；本任务逐项勾选、撤销标记和阻塞说明以本文件原文为准，未重新验收。
+- 迁移前文件：`issue/issue-0.9.0-ARCH-A-000-ARCH-security-model-versioncontrolid.md`（历史来源路径；原始来源版本见既有来源property）。
+- 迁移前标题：sub/main: 建立安全持久化模型。
+- 同源任务：[建立安全且向后兼容的本地持久化模型](issue_%E5%BB%BA%E7%AB%8B%E5%AE%89%E5%85%A8%E4%B8%94%E5%90%91%E5%90%8E%E5%85%BC%E5%AE%B9%E7%9A%84%E6%9C%AC%E5%9C%B0%E6%8C%81%E4%B9%85%E5%8C%96%E6%A8%A1%E5%9E%8B.md)。
+
+## 当前需求与范围
+
+共同范围与完整历史见[建立安全且向后兼容的本地持久化模型](issue_%E5%BB%BA%E7%AB%8B%E5%AE%89%E5%85%A8%E4%B8%94%E5%90%91%E5%90%8E%E5%85%BC%E5%AE%B9%E7%9A%84%E6%9C%AC%E5%9C%B0%E6%8C%81%E4%B9%85%E5%8C%96%E6%A8%A1%E5%9E%8B.md)；本文件保留以下独立目标的原文。
+
+- [x] [0.9.0-SEC-A-000] App 启动时不得注册浏览器 Cookie Keychain 预授权弹窗；默认刷新链路不得主动触发浏览器密码 / 权限提示 #P0
+- [x] [0.9.0-SEC-A-001] 默认禁用 SweetCookieKit 的 Chromium Keychain 解密（`BrowserCookieKeychainAccessGate.isDisabled = true`），杜绝 "Chrome Safe Storage" 密码弹窗；仅当用户在偏好设置显式选择 Chrome 浏览器来源时放开。订阅过期日 headless source 也随之默认无弹窗：优先 App 自有 WebView 会话，其次 Safari/Firefox 文件 Cookie（FDA 已授权时静默）#P0 — `AppDelegate.applyBrowserCookieKeychainPolicy`
+
+## 检查与验收边界
+
+以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
+
+## Comments
+
+原迁移条目的历史Comments完整保留于[同源历史](issue_%E5%BB%BA%E7%AB%8B%E5%AE%89%E5%85%A8%E4%B8%94%E5%90%91%E5%90%8E%E5%85%BC%E5%AE%B9%E7%9A%84%E6%9C%AC%E5%9C%B0%E6%8C%81%E4%B9%85%E5%8C%96%E6%A8%A1%E5%9E%8B.md#comments)，不从历史日志新增完成标记。
+
+### 2026-10-24 07:04:08 UTC — Agent（任务命名与语义整理）
+
+按具体原语言任务命名；类型与原ID保留在properties。将独立目标分开，实施与验收子步骤保持同组；历史Comments保留一次并链接共享。实施版本未核实，省略文件名版本后缀；本次未执行产品或代码验收。
