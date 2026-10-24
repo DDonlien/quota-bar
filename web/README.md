@@ -101,6 +101,6 @@ Provider logo 当前用品牌色方块占位，后续可换成真实 SVG logo。
 ## 文档入口
 
 - 视觉规范：[`DESIGN.md`](DESIGN.md)
-- 需求追踪：[`../issue/issue-0.1.0-PM-A-000-PM-scope-versioncontrolid.md`](../issue/issue-0.1.0-PM-A-000-PM-scope-versioncontrolid.md)
+- 需求追踪：[`../issue/issue_确定官网技术方案与首屏卖点.md`](../issue/issue_%E7%A1%AE%E5%AE%9A%E5%AE%98%E7%BD%91%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88%E4%B8%8E%E9%A6%96%E5%B1%8F%E5%8D%96%E7%82%B9.md)
 - 任务记录：[`../issue/README.md`](../issue/README.md)
 - 全局父级文档：[`../README.md`](../README.md)
