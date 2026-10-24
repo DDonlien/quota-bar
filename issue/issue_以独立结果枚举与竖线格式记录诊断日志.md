@@ -1,0 +1,35 @@
+# 以独立结果枚举与竖线格式记录诊断日志
+
+- ID：`0.10.0-ARCH-I-000`。
+- 类型：`ARCH`。
+- 状态：已完成（沿用原需求记录；本轮未重新执行产品验收）。
+- 版本管理：Git。
+- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
+- 来源：`REQUIREMENTS.md` @ `955f9982d294cd8ad413127f111afc0de132eb39`；标题路径：任务清单 / Phase - v0.10.0 - 订阅过期识别与免费额度误判修正 / sub/main: 日志格式二次调整 + Claude 额度条标题统一 + 更新功能现状确认。
+- 原稳定 ID：`0.10.0-ARCH-I-000`, `0.10.0-BUG-A-008`, `0.10.0-DOC-A-004`；不改写或重编号这些既有 ID。
+- 拆分前ID：`0.10.0-ARCH-I-000`（沿用旧ID，不新增编号）。
+- 本任务原稳定ID：`0.10.0-ARCH-I-000`。
+- 状态范围：上方状态保留迁移前汇总；本任务逐项勾选、撤销标记和阻塞说明以本文件原文为准，未重新验收。
+- 迁移前文件：`issue/issue-0.10.0-ARCH-I-000-ARCH-claude-quota-versioncontrolid.md`（历史来源路径；原始来源版本见既有来源property）。
+- 迁移前标题：sub/main: 日志格式二次调整 + Claude 额度条标题统一 + 更新功能现状确认。
+- 同源任务：[移除Claude额度条的重复标题](issue_%E7%A7%BB%E9%99%A4Claude%E9%A2%9D%E5%BA%A6%E6%9D%A1%E7%9A%84%E9%87%8D%E5%A4%8D%E6%A0%87%E9%A2%98.md)、[核对真实GitHub仓库与DMG更新接入现状](issue_%E6%A0%B8%E5%AF%B9%E7%9C%9F%E5%AE%9EGitHub%E4%BB%93%E5%BA%93%E4%B8%8EDMG%E6%9B%B4%E6%96%B0%E6%8E%A5%E5%85%A5%E7%8E%B0%E7%8A%B6.md)。
+
+## 当前需求与范围
+
+> 用户反馈日志格式"冒号逗号混排"不好读，要求改成管道分隔的层级/方案/结果/内容；截图指出 Claude 的额度条显示"Session"/"Weekly"前缀，跟 Codex 只显示周期标签不一致；询问 Preferences 更新功能现状（要求走 v0.11.0 记录的 ad-hoc 签名 workaround，不是 v0.12.0 的 Developer ID 方案）。
+
+- [x] [0.10.0-ARCH-I-000] `ProviderCheckLog` 行格式从 `<Provider>: <Step>, <Method>: <Result>`（冒号逗号混排，成败判断混在自由文本里）改成 `<Provider> | <Step> | <Method> | <成功/失败/跳过> | <详细内容>`：新增独立的 `Outcome` 枚举（`.success`/`.failure`/`.skipped`），跟自由文本的 `detail` 彻底分开，一眼就能扫到成败，不用从长句子里找"成功"/"失败"字样。改动覆盖 `InstallDetectorProvider`/`ProviderFetchStrategy`/`SubscriptionExpirySources` 三处全部约 22 个调用点；`ProviderCheckLogTests` 同步更新 + 新增 `.skipped` 状态的落盘测试 #P0
+
+## 检查与验收边界
+
+以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
+
+## Comments
+
+### 2026-10-23 17:44:33 UTC — Agent（文档迁移）
+
+按原有功能 / 工作目标标题拆分需求，保留原 ID、勾选、依赖、最新补充及来源。没有稳定根 ID或旧 ID 在不同上下文重用时，采用由来源路径和标题确定的迁移 Issue ID，原 ID 仍在正文保留。完整旧内容可从来源版本读取；独有未提交内容的版本化副本见迁移映射。
+
+### 2026-10-24 07:03:43 UTC — Agent（任务命名与语义整理）
+
+按具体原语言任务命名；类型与原ID保留在properties。将独立目标分开，实施与验收子步骤保持同组；历史Comments保留一次并链接共享。实施版本未核实，省略文件名版本后缀；本次未执行产品或代码验收。
