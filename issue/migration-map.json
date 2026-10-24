@@ -1,7 +1,7 @@
 {
   "history_base": "1532061d80cab44eba9d5469836105dedd72a7e8",
-  "versioncontrolid": "versioncontrolid",
-  "versioncontrolid_definition": "pending",
+  "versioncontrolid": null,
+  "versioncontrolid_definition": "task implementation Git commit hash or final submitted Perforce changelist",
   "sources": [
     {
       "path": "REQUIREMENTS.md",
@@ -584,45 +584,78 @@
     {
       "path": "REQUIREMENTS.md",
       "issues": [
-        "issue/issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md",
-        "issue/issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md",
-        "issue/issue-migration-dbe5fd0c2f62-UI-macos-native-menu-versioncontrolid.md",
-        "issue/issue-migration-e033f2eb8b83-QA-dropdown-visual-acceptance-versioncontrolid.md",
-        "issue/issue-migration-380a479e8fcc-PM-quota-bar-versioncontrolid.md",
-        "issue/issue-0.2.0-DATA-A-000-DATA-local-ai-service-versioncontrolid.md",
-        "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
-        "issue/issue-0.2.0-FE-A-003-FE-quota-refresh-versioncontrolid.md",
-        "issue/issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md",
-        "issue/issue-0.2.0-QA-A-001-QA-acceptance-versioncontrolid.md",
-        "issue/issue-migration-b7fdab420084-FE-ui-subscription-dropdown-refresh-versioncontrolid.md",
-        "issue/issue-0.3.0-DATA-A-000-DATA-subscription-versioncontrolid.md",
-        "issue/issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md",
-        "issue/issue-0.3.0-FE-A-000-FE-provider-refresh-versioncontrolid.md",
-        "issue/issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
-        "issue/issue-migration-1813617627ae-SEC-provider-zcode-versioncontrolid.md",
-        "issue/issue-0.4.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md",
-        "issue/issue-0.4.0-DATA-B-001-DATA-desktop-app-versioncontrolid.md",
-        "issue/issue-0.4.0-DATA-C-000-DATA-provider-versioncontrolid.md",
-        "issue/issue-0.4.0-QA-A-001-QA-provider-acceptance-versioncontrolid.md",
-        "issue/issue-0.4.0-UI-B-000-UI-subscription-versioncontrolid.md",
-        "issue/issue-0.4.0-DATA-A-001-test-DATA-release-versioncontrolid.md",
-        "issue/issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md",
-        "issue/issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
-        "issue/issue-0.5.0-DOC-A-000-DOC-documentation-versioncontrolid.md",
-        "issue/issue-migration-8065bbb47a9d-QA-subscription-headless-versioncontrolid.md",
-        "issue/issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md",
-        "issue/issue-0.6.0-DATA-A-000-DATA-kimi-subscription-versioncontrolid.md",
-        "issue/issue-0.6.0-DATA-B-000-DATA-codex-subscription-versioncontrolid.md",
-        "issue/issue-0.6.0-DATA-C-000-DATA-claude-subscription-versioncontrolid.md",
-        "issue/issue-0.6.0-DATA-D-000-DATA-cursor-subscription-versioncontrolid.md",
-        "issue/issue-0.6.0-DATA-E-000-DATA-minimax-subscription-versioncontrolid.md",
-        "issue/issue-0.6.0-DATA-F-000-DATA-antigravity-subscription-versioncontrolid.md",
-        "issue/issue-0.6.0-UI-A-000-UI-subscription-rules-versioncontrolid.md",
-        "issue/issue-migration-fe17d65c8460-PM-glm-provider-feat-versioncontrolid.md",
-        "issue/issue-0.7.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md",
-        "issue/issue-0.7.0-FE-A-000-FE-code-menu-state-versioncontrolid.md",
-        "issue/issue-0.7.0-DOC-A-000-DOC-code-documentation-versioncontrolid.md",
-        "issue/issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md"
+        "issue/issue_建立项目协作基础.md",
+        "issue/issue_打磨macOS26风格下拉面板.md",
+        "issue/issue_启动后仅显示菜单栏图标并按点击打开面板.md",
+        "issue/issue_将下拉面板切换为macOS原生菜单.md",
+        "issue/issue_核对Dropdown视觉原型交付.md",
+        "issue/issue_将静态界面升级为真实AI订阅额度展示.md",
+        "issue/issue_自动探测本地AI服务及认证状态.md",
+        "issue/issue_建立真实订阅额度的多来源获取与失败降级.md",
+        "issue/issue_仅按真实订阅档位映射价格.md",
+        "issue/issue_按系统地区换算订阅价格币种.md",
+        "issue/issue_通过OAuth与Web接口获取Kimi额度.md",
+        "issue/issue_展示已安装但尚未接入Dashboard的应用.md",
+        "issue/issue_接入Claude组织与usage接口解析额度.md",
+        "issue/issue_由Antigravity接替Gemini主动额度采集.md",
+        "issue/issue_支持选择Cookie来源浏览器.md",
+        "issue/issue_通过Web接口获取MiniMax额度与套餐费用.md",
+        "issue/issue_通过本地服务获取Antigravity额度.md",
+        "issue/issue_支持同一服务的多身份订阅.md",
+        "issue/issue_凭证缺失时继续尝试后续额度来源.md",
+        "issue/issue_调研TraeWork独立Provider接入.md",
+        "issue/issue_提供手动与自动额度刷新.md",
+        "issue/issue_按真实订阅额度绘制菜单栏多bar图标.md",
+        "issue/issue_以真实额度驱动面板并展示加载与失败状态.md",
+        "issue/issue_统一额度日期与紧凑倒计时文案.md",
+        "issue/issue_区分Provider品牌色与额度健康色.md",
+        "issue/issue_核对真实额度核心功能的交付与隐私边界.md",
+        "issue/issue_明确订阅组排序与面板流式刷新的范围.md",
+        "issue/issue_建立独立计费订阅组及排序语义.md",
+        "issue/issue_恢复KimiWork已验证的浏览器额度路径.md",
+        "issue/issue_拖拽排序Provider与订阅组并联动状态.md",
+        "issue/issue_在菜单打开期间实时更新Dropdown内容.md",
+        "issue/issue_在计划头部显示订阅最后有效日期.md",
+        "issue/issue_按Provider流式刷新并原位替换加载占位.md",
+        "issue/issue_订阅组重排后立即更新菜单栏与状态灯.md",
+        "issue/issue_提供Provider开关与刷新等偏好配置.md",
+        "issue/issue_支持手动添加与移除Provider.md",
+        "issue/issue_监控Provider服务事故状态.md",
+        "issue/issue_提供WidgetKit桌面小组件.md",
+        "issue/issue_提供quotabar状态命令行工具.md",
+        "issue/issue_核对ZCode与千问的本地安装及接入前提.md",
+        "issue/issue_调研智谱ZCode套餐与额度接入.md",
+        "issue/issue_确认千问安装位置并接入桌面Provider.md",
+        "issue/issue_文档化新Provider接入流程.md",
+        "issue/issue_核对ZCode接入的额度与状态展示.md",
+        "issue/issue_核对千问Provider接入结果.md",
+        "issue/issue_按可用订阅组的真实剩余额度统计订阅数.md",
+        "issue/issue_明确发布自动化与质量门槛的任务边界.md",
+        "issue/issue_自动发布macOS应用并构建官网.md",
+        "issue/issue_在PR合并前自动编译验证.md",
+        "issue/issue_清理既有Swift未使用变量警告.md",
+        "issue/issue_统一应用与官网的开发命令入口.md",
+        "issue/issue_在根忽略规则中排除站点生成目录.md",
+        "issue/issue_建立QuotaBar单元测试目标.md",
+        "issue/issue_在README快速开始中补充官网开发入口.md",
+        "issue/issue_以真实订阅来源替代额度重置时间推断到期日.md",
+        "issue/issue_建立订阅日期抓取协议与Headless加载器.md",
+        "issue/issue_禁止以额度重置时间推断订阅到期日.md",
+        "issue/issue_区分Kimi订阅续费日与额度窗口重置时间.md",
+        "issue/issue_抓取Codex真实订阅到期日.md",
+        "issue/issue_抓取Claude真实订阅到期日.md",
+        "issue/issue_抓取Cursor真实订阅到期日.md",
+        "issue/issue_抓取MiniMax真实订阅到期日.md",
+        "issue/issue_抓取Antigravity真实订阅到期日.md",
+        "issue/issue_隐藏未知订阅日期并提供精确日期提示.md",
+        "issue/issue_明确将ZCode调研结果转为正式Provider接入的范围.md",
+        "issue/issue_接入智谱ZCode套餐与额度获取.md",
+        "issue/issue_为ZCode展示菜单栏bar与品牌状态灯.md",
+        "issue/issue_在README说明ZCode套餐与安装路径.md",
+        "issue/issue_同步协作模板与需求标题规范.md",
+        "issue/issue_将macOS交付目录迁移为macos.md",
+        "issue/issue_将营销主页目录迁移为site.md",
+        "issue/issue_调整main与其他工作副本的容器布局.md"
       ],
       "legacy_ids": [
         "0.0.0-DOC-A-000",
@@ -820,16 +853,20 @@
     {
       "path": "site/REQUIREMENTS.md",
       "issues": [
-        "issue/issue-0.1.0-PM-A-000-PM-landing-scope-versioncontrolid.md",
-        "issue/issue-0.1.0-FE-A-000-FE-astro-versioncontrolid.md",
-        "issue/issue-migration-331bbfea42d3-UI-landing-design-tokens-layout-versioncontrolid.md",
-        "issue/issue-migration-3e0fea30f1dd-UI-landing-versioncontrolid.md",
-        "issue/issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md",
-        "issue/issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md",
-        "issue/issue-0.1.0-DOC-A-000-DOC-sync-landing-project-documentation-versioncontrolid.md",
-        "issue/issue-0.1.0-QA-A-000-QA-landing-acceptance-versioncontrolid.md",
-        "issue/issue-migration-2ccfda47ccb4-UI-landing-visual-versioncontrolid.md",
-        "issue/issue-migration-68a147730638-FE-seo-languages-versioncontrolid.md"
+        "issue/issue_确定官网技术方案与首屏卖点.md",
+        "issue/issue_建立Astro静态官网骨架.md",
+        "issue/issue_建立官网DesignTokens与通用布局.md",
+        "issue/issue_用CSS与HTML展示菜单栏及额度面板.md",
+        "issue/issue_实现官网导航与产品介绍区块.md",
+        "issue/issue_按产品介绍顺序组装官网首页.md",
+        "issue/issue_通过GitHubRelease解析统一下载入口.md",
+        "issue/issue_适配官网移动端与响应式布局.md",
+        "issue/issue_提供官网无障碍语义与减少动效支持.md",
+        "issue/issue_同步官网子项目文档与根目录索引.md",
+        "issue/issue_核对官网首版构建与部署交付.md",
+        "issue/issue_以真实截图和品牌素材替换官网视觉占位.md",
+        "issue/issue_为官网提供站点地图与结构化数据.md",
+        "issue/issue_为QuotaBar介绍站提供中英双语切换.md"
       ],
       "legacy_ids": [
         "0.1.0-PM-A-000",
@@ -1451,8 +1488,8 @@
     {
       "id": "0.0.0-DOC-A-000",
       "type": "DOC",
-      "file": "issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md",
-      "title": "sub/main: 建立项目协作基础",
+      "file": "issue_建立项目协作基础.md",
+      "title": "建立项目协作基础",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.0.0-DOC-A-000",
@@ -1462,15 +1499,45 @@
         "0.0.0-DOC-A-004",
         "0.0.0-DOC-A-005"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md",
+      "split_from": "issue/issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.0.0-DOC-A-000",
+      "source_legacy_ids": [
+        "0.0.0-DOC-A-000",
+        "0.0.0-DOC-A-001",
+        "0.0.0-DOC-A-002",
+        "0.0.0-DOC-A-003",
+        "0.0.0-DOC-A-004",
+        "0.0.0-DOC-A-005"
+      ]
     },
     {
-      "id": "0.1.0-UI-A-004",
+      "id": "0.1.0-UI-A-000",
       "type": "UI",
-      "file": "issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md",
-      "title": "sub/main: 打磨 macOS 26 风格下拉面板",
+      "file": "issue_打磨macOS26风格下拉面板.md",
+      "title": "打磨macOS26风格下拉面板",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.1.0-UI-A-000",
+        "0.1.0-UI-A-001",
+        "0.1.0-UI-A-002",
+        "0.1.0-UI-A-003",
+        "0.1.0-UI-A-004",
+        "0.1.0-UI-A-005",
+        "0.1.0-UI-A-006",
+        "0.1.0-UI-A-009",
+        "0.1.0-UI-A-010"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md",
+      "split_from": "issue/issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.1.0-UI-A-004",
+      "source_legacy_ids": [
         "0.1.0-UI-A-000",
         "0.1.0-UI-A-001",
         "0.1.0-UI-A-002",
@@ -1482,14 +1549,43 @@
         "0.1.0-UI-A-008",
         "0.1.0-UI-A-009",
         "0.1.0-UI-A-010"
+      ]
+    },
+    {
+      "id": "0.1.0-UI-A-007",
+      "type": "UI",
+      "file": "issue_启动后仅显示菜单栏图标并按点击打开面板.md",
+      "title": "启动后仅显示菜单栏图标并按点击打开面板",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-UI-A-007",
+        "0.1.0-UI-A-008"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md",
+      "split_from": "issue/issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.1.0-UI-A-004",
+      "source_legacy_ids": [
+        "0.1.0-UI-A-000",
+        "0.1.0-UI-A-001",
+        "0.1.0-UI-A-002",
+        "0.1.0-UI-A-003",
+        "0.1.0-UI-A-004",
+        "0.1.0-UI-A-005",
+        "0.1.0-UI-A-006",
+        "0.1.0-UI-A-007",
+        "0.1.0-UI-A-008",
+        "0.1.0-UI-A-009",
+        "0.1.0-UI-A-010"
+      ]
     },
     {
       "id": "migration-dbe5fd0c2f62",
       "type": "UI",
-      "file": "issue-migration-dbe5fd0c2f62-UI-macos-native-menu-versioncontrolid.md",
-      "title": "sub/main: 切换为传统 macOS 原生菜单",
+      "file": "issue_将下拉面板切换为macOS原生菜单.md",
+      "title": "将下拉面板切换为macOS原生菜单",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.1.0-UI-B-000",
@@ -1503,34 +1599,66 @@
         "0.1.0-UI-B-008",
         "0.1.0-UI-B-009"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-migration-dbe5fd0c2f62-UI-macos-native-menu-versioncontrolid.md",
+      "split_from": "issue/issue-migration-dbe5fd0c2f62-UI-macos-native-menu-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-dbe5fd0c2f62",
+      "source_legacy_ids": [
+        "0.1.0-UI-B-000",
+        "0.1.0-UI-B-001",
+        "0.1.0-UI-B-002",
+        "0.1.0-UI-B-003",
+        "0.1.0-UI-B-004",
+        "0.1.0-UI-B-005",
+        "0.1.0-UI-B-006",
+        "0.1.0-UI-B-007",
+        "0.1.0-UI-B-008",
+        "0.1.0-UI-B-009"
+      ]
     },
     {
       "id": "migration-e033f2eb8b83",
       "type": "QA",
-      "file": "issue-migration-e033f2eb8b83-QA-dropdown-visual-acceptance-versioncontrolid.md",
-      "title": "sub/main: 完成 Dropdown 视觉原型验收",
+      "file": "issue_核对Dropdown视觉原型交付.md",
+      "title": "核对Dropdown视觉原型交付",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.1.0-QA-A-001",
         "0.1.0-QA-A-002"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-migration-e033f2eb8b83-QA-dropdown-visual-acceptance-versioncontrolid.md",
+      "split_from": "issue/issue-migration-e033f2eb8b83-QA-dropdown-visual-acceptance-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-e033f2eb8b83",
+      "source_legacy_ids": [
+        "0.1.0-QA-A-001",
+        "0.1.0-QA-A-002"
+      ]
     },
     {
       "id": "migration-380a479e8fcc",
       "type": "PM",
-      "file": "issue-migration-380a479e8fcc-PM-quota-bar-versioncontrolid.md",
-      "title": "Phase - v0.2.0 - Quota Bar 核心功能",
+      "file": "issue_将静态界面升级为真实AI订阅额度展示.md",
+      "title": "将静态界面升级为真实AI订阅额度展示",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [],
-      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）",
+      "renamed_from": "issue-migration-380a479e8fcc-PM-quota-bar-versioncontrolid.md",
+      "split_from": "issue/issue-migration-380a479e8fcc-PM-quota-bar-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-380a479e8fcc",
+      "source_legacy_ids": []
     },
     {
       "id": "0.2.0-DATA-A-000",
       "type": "DATA",
-      "file": "issue-0.2.0-DATA-A-000-DATA-local-ai-service-versioncontrolid.md",
-      "title": "sub/main: 自动探测本地 AI 服务",
+      "file": "issue_自动探测本地AI服务及认证状态.md",
+      "title": "自动探测本地AI服务及认证状态",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.2.0-DATA-A-000",
@@ -1540,15 +1668,43 @@
         "0.2.0-DATA-A-004",
         "0.2.0-DATA-A-005"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.2.0-DATA-A-000-DATA-local-ai-service-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-A-000-DATA-local-ai-service-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-A-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-A-000",
+        "0.2.0-DATA-A-001",
+        "0.2.0-DATA-A-002",
+        "0.2.0-DATA-A-003",
+        "0.2.0-DATA-A-004",
+        "0.2.0-DATA-A-005"
+      ]
     },
     {
       "id": "0.2.0-DATA-B-000",
       "type": "DATA",
-      "file": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
-      "title": "sub/main: 获取真实订阅与额度数据",
+      "file": "issue_建立真实订阅额度的多来源获取与失败降级.md",
+      "title": "建立真实订阅额度的多来源获取与失败降级",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
         "0.2.0-DATA-B-000",
         "0.2.0-DATA-B-001",
         "0.2.0-DATA-B-002",
@@ -1571,16 +1727,510 @@
         "0.2.0-DATA-B-019",
         "0.2.0-DATA-B-020",
         "0.2.0-DATA-B-021"
-      ],
-      "state": "进行中（原文同时包含已完成与未完成项）"
+      ]
     },
     {
-      "id": "0.2.0-FE-A-003",
-      "type": "FE",
-      "file": "issue-0.2.0-FE-A-003-FE-quota-refresh-versioncontrolid.md",
-      "title": "sub/main: 提供额度刷新机制",
+      "id": "0.2.0-DATA-B-010",
+      "type": "DATA",
+      "file": "issue_仅按真实订阅档位映射价格.md",
+      "title": "仅按真实订阅档位映射价格",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.2.0-DATA-B-010"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-011",
+      "type": "DATA",
+      "file": "issue_按系统地区换算订阅价格币种.md",
+      "title": "按系统地区换算订阅价格币种",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-011"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-012",
+      "type": "DATA",
+      "file": "issue_通过OAuth与Web接口获取Kimi额度.md",
+      "title": "通过OAuth与Web接口获取Kimi额度",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-014"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-013",
+      "type": "DATA",
+      "file": "issue_展示已安装但尚未接入Dashboard的应用.md",
+      "title": "展示已安装但尚未接入Dashboard的应用",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-013"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-006",
+      "type": "DATA",
+      "file": "issue_接入Claude组织与usage接口解析额度.md",
+      "title": "接入Claude组织与usage接口解析额度",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-006"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-007",
+      "type": "DATA",
+      "file": "issue_由Antigravity接替Gemini主动额度采集.md",
+      "title": "由Antigravity接替Gemini主动额度采集",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-018"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-008",
+      "type": "DATA",
+      "file": "issue_支持选择Cookie来源浏览器.md",
+      "title": "支持选择Cookie来源浏览器",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-008"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-015",
+      "type": "DATA",
+      "file": "issue_通过Web接口获取MiniMax额度与套餐费用.md",
+      "title": "通过Web接口获取MiniMax额度与套餐费用",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-020"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-016",
+      "type": "DATA",
+      "file": "issue_通过本地服务获取Antigravity额度.md",
+      "title": "通过本地服务获取Antigravity额度",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-016"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-017",
+      "type": "DATA",
+      "file": "issue_支持同一服务的多身份订阅.md",
+      "title": "支持同一服务的多身份订阅",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-017"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-019",
+      "type": "DATA",
+      "file": "issue_凭证缺失时继续尝试后续额度来源.md",
+      "title": "凭证缺失时继续尝试后续额度来源",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-019"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-DATA-B-021",
+      "type": "DATA",
+      "file": "issue_调研TraeWork独立Provider接入.md",
+      "title": "调研TraeWork独立Provider接入",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-DATA-B-021"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.2.0-DATA-B-000",
+        "0.2.0-DATA-B-001",
+        "0.2.0-DATA-B-002",
+        "0.2.0-DATA-B-003",
+        "0.2.0-DATA-B-004",
+        "0.2.0-DATA-B-005",
+        "0.2.0-DATA-B-009",
+        "0.2.0-DATA-B-010",
+        "0.2.0-DATA-B-011",
+        "0.2.0-DATA-B-012",
+        "0.2.0-DATA-B-013",
+        "0.2.0-DATA-B-006",
+        "0.2.0-DATA-B-007",
+        "0.2.0-DATA-B-008",
+        "0.2.0-DATA-B-014",
+        "0.2.0-DATA-B-015",
+        "0.2.0-DATA-B-016",
+        "0.2.0-DATA-B-017",
+        "0.2.0-DATA-B-018",
+        "0.2.0-DATA-B-019",
+        "0.2.0-DATA-B-020",
+        "0.2.0-DATA-B-021"
+      ]
+    },
+    {
+      "id": "0.2.0-FE-A-000",
+      "type": "FE",
+      "file": "issue_提供手动与自动额度刷新.md",
+      "title": "提供手动与自动额度刷新",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-FE-A-000",
+        "0.2.0-FE-A-001",
+        "0.2.0-FE-A-002",
+        "0.2.0-FE-A-003"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.2.0-FE-A-003-FE-quota-refresh-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-FE-A-003-FE-quota-refresh-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-FE-A-003",
+      "source_legacy_ids": [
         "0.2.0-FE-A-000",
         "0.2.0-FE-A-001",
         "0.2.0-FE-A-002",
@@ -1591,16 +2241,62 @@
         "0.2.0-FE-A-007",
         "0.2.0-FE-A-008",
         "0.2.0-FE-A-009"
-      ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      ]
     },
     {
-      "id": "0.2.0-UI-A-003",
-      "type": "UI",
-      "file": "issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md",
-      "title": "sub/main: 动态展示真实额度数据",
+      "id": "0.2.0-FE-A-004",
+      "type": "FE",
+      "file": "issue_按真实订阅额度绘制菜单栏多bar图标.md",
+      "title": "按真实订阅额度绘制菜单栏多bar图标",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.2.0-FE-A-004",
+        "0.2.0-FE-A-005",
+        "0.2.0-FE-A-006",
+        "0.2.0-FE-A-007",
+        "0.2.0-FE-A-008",
+        "0.2.0-FE-A-009"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.2.0-FE-A-003-FE-quota-refresh-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-FE-A-003-FE-quota-refresh-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-FE-A-003",
+      "source_legacy_ids": [
+        "0.2.0-FE-A-000",
+        "0.2.0-FE-A-001",
+        "0.2.0-FE-A-002",
+        "0.2.0-FE-A-003",
+        "0.2.0-FE-A-004",
+        "0.2.0-FE-A-005",
+        "0.2.0-FE-A-006",
+        "0.2.0-FE-A-007",
+        "0.2.0-FE-A-008",
+        "0.2.0-FE-A-009"
+      ]
+    },
+    {
+      "id": "0.2.0-UI-A-000",
+      "type": "UI",
+      "file": "issue_以真实额度驱动面板并展示加载与失败状态.md",
+      "title": "以真实额度驱动面板并展示加载与失败状态",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-UI-A-000",
+        "0.2.0-UI-A-001",
+        "0.2.0-UI-A-002",
+        "0.2.0-UI-A-003",
+        "0.2.0-UI-A-004",
+        "0.2.0-UI-A-005"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-UI-A-003",
+      "source_legacy_ids": [
         "0.2.0-UI-A-000",
         "0.2.0-UI-A-001",
         "0.2.0-UI-A-002",
@@ -1611,14 +2307,71 @@
         "0.2.0-UI-A-007",
         "0.2.0-UI-A-008",
         "0.2.0-UI-A-009"
+      ]
+    },
+    {
+      "id": "0.2.0-UI-A-006",
+      "type": "UI",
+      "file": "issue_统一额度日期与紧凑倒计时文案.md",
+      "title": "统一额度日期与紧凑倒计时文案",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-UI-A-006",
+        "0.2.0-UI-A-009"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-UI-A-003",
+      "source_legacy_ids": [
+        "0.2.0-UI-A-000",
+        "0.2.0-UI-A-001",
+        "0.2.0-UI-A-002",
+        "0.2.0-UI-A-003",
+        "0.2.0-UI-A-004",
+        "0.2.0-UI-A-005",
+        "0.2.0-UI-A-006",
+        "0.2.0-UI-A-007",
+        "0.2.0-UI-A-008",
+        "0.2.0-UI-A-009"
+      ]
+    },
+    {
+      "id": "0.2.0-UI-A-007",
+      "type": "UI",
+      "file": "issue_区分Provider品牌色与额度健康色.md",
+      "title": "区分Provider品牌色与额度健康色",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-UI-A-007",
+        "0.2.0-UI-A-008"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-UI-A-003",
+      "source_legacy_ids": [
+        "0.2.0-UI-A-000",
+        "0.2.0-UI-A-001",
+        "0.2.0-UI-A-002",
+        "0.2.0-UI-A-003",
+        "0.2.0-UI-A-004",
+        "0.2.0-UI-A-005",
+        "0.2.0-UI-A-006",
+        "0.2.0-UI-A-007",
+        "0.2.0-UI-A-008",
+        "0.2.0-UI-A-009"
+      ]
     },
     {
       "id": "0.2.0-QA-A-001",
       "type": "QA",
-      "file": "issue-0.2.0-QA-A-001-QA-acceptance-versioncontrolid.md",
-      "title": "sub/main: 完成核心功能验收",
+      "file": "issue_核对真实额度核心功能的交付与隐私边界.md",
+      "title": "核对真实额度核心功能的交付与隐私边界",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.2.0-QA-A-001",
@@ -1629,24 +2382,57 @@
         "0.2.0-QA-A-006",
         "0.2.0-QA-A-007"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.2.0-QA-A-001-QA-acceptance-versioncontrolid.md",
+      "split_from": "issue/issue-0.2.0-QA-A-001-QA-acceptance-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.2.0-QA-A-001",
+      "source_legacy_ids": [
+        "0.2.0-QA-A-001",
+        "0.2.0-QA-A-002",
+        "0.2.0-QA-A-003",
+        "0.2.0-QA-A-004",
+        "0.2.0-QA-A-005",
+        "0.2.0-QA-A-006",
+        "0.2.0-QA-A-007"
+      ]
     },
     {
       "id": "migration-b7fdab420084",
       "type": "FE",
-      "file": "issue-migration-b7fdab420084-FE-ui-subscription-dropdown-refresh-versioncontrolid.md",
-      "title": "Phase - v0.3.0 - UI 拖拽、订阅组语义与 dropdown 实时刷新",
+      "file": "issue_明确订阅组排序与面板流式刷新的范围.md",
+      "title": "明确订阅组排序与面板流式刷新的范围",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [],
-      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）",
+      "renamed_from": "issue-migration-b7fdab420084-FE-ui-subscription-dropdown-refresh-versioncontrolid.md",
+      "split_from": "issue/issue-migration-b7fdab420084-FE-ui-subscription-dropdown-refresh-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-b7fdab420084",
+      "source_legacy_ids": []
     },
     {
       "id": "0.3.0-DATA-A-000",
       "type": "DATA",
-      "file": "issue-0.3.0-DATA-A-000-DATA-subscription-versioncontrolid.md",
-      "title": "sub/main: 建立订阅组语义",
+      "file": "issue_建立独立计费订阅组及排序语义.md",
+      "title": "建立独立计费订阅组及排序语义",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.3.0-DATA-A-000",
+        "0.3.0-DATA-A-001",
+        "0.3.0-DATA-A-002",
+        "0.3.0-DATA-A-003",
+        "0.3.0-DATA-A-004"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.3.0-DATA-A-000-DATA-subscription-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-DATA-A-000-DATA-subscription-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-DATA-A-000",
+      "source_legacy_ids": [
         "0.3.0-DATA-A-000",
         "0.3.0-DATA-A-001",
         "0.3.0-DATA-A-002",
@@ -1654,16 +2440,56 @@
         "0.3.0-DATA-A-003",
         "0.3.0-DATA-A-004",
         "0.3.0-DATA-A-005"
+      ]
+    },
+    {
+      "id": "0.3.0-DATA-A-005",
+      "type": "DATA",
+      "file": "issue_恢复KimiWork已验证的浏览器额度路径.md",
+      "title": "恢复KimiWork已验证的浏览器额度路径",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-DATA-A-005"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.3.0-DATA-A-000-DATA-subscription-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-DATA-A-000-DATA-subscription-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-DATA-A-000",
+      "source_legacy_ids": [
+        "0.3.0-DATA-A-000",
+        "0.3.0-DATA-A-001",
+        "0.3.0-DATA-A-002",
+        "String",
+        "0.3.0-DATA-A-003",
+        "0.3.0-DATA-A-004",
+        "0.3.0-DATA-A-005"
+      ]
     },
     {
       "id": "0.3.0-UI-A-000",
       "type": "UI",
-      "file": "issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md",
-      "title": "sub/main: 支持订阅组拖拽排序与状态联动",
+      "file": "issue_拖拽排序Provider与订阅组并联动状态.md",
+      "title": "拖拽排序Provider与订阅组并联动状态",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.3.0-UI-A-000",
+        "0.3.0-UI-A-001",
+        "0.3.0-UI-A-002",
+        "0.3.0-UI-A-003",
+        "0.3.0-UI-A-005",
+        "0.3.0-UI-A-006",
+        "0.3.0-UI-A-007",
+        "0.3.0-UI-A-009"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-UI-A-000",
+      "source_legacy_ids": [
         "0.3.0-UI-A-000",
         "0.3.0-UI-A-001",
         "0.3.0-UI-A-002",
@@ -1674,16 +2500,85 @@
         "0.3.0-UI-A-007",
         "0.3.0-UI-A-009",
         "0.3.0-UI-A-010"
+      ]
+    },
+    {
+      "id": "0.3.0-UI-A-004",
+      "type": "UI",
+      "file": "issue_在菜单打开期间实时更新Dropdown内容.md",
+      "title": "在菜单打开期间实时更新Dropdown内容",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-UI-A-004"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-UI-A-000",
+      "source_legacy_ids": [
+        "0.3.0-UI-A-000",
+        "0.3.0-UI-A-001",
+        "0.3.0-UI-A-002",
+        "0.3.0-UI-A-003",
+        "0.3.0-UI-A-004",
+        "0.3.0-UI-A-005",
+        "0.3.0-UI-A-006",
+        "0.3.0-UI-A-007",
+        "0.3.0-UI-A-009",
+        "0.3.0-UI-A-010"
+      ]
+    },
+    {
+      "id": "0.3.0-UI-A-010",
+      "type": "UI",
+      "file": "issue_在计划头部显示订阅最后有效日期.md",
+      "title": "在计划头部显示订阅最后有效日期",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-UI-A-010"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-UI-A-000",
+      "source_legacy_ids": [
+        "0.3.0-UI-A-000",
+        "0.3.0-UI-A-001",
+        "0.3.0-UI-A-002",
+        "0.3.0-UI-A-003",
+        "0.3.0-UI-A-004",
+        "0.3.0-UI-A-005",
+        "0.3.0-UI-A-006",
+        "0.3.0-UI-A-007",
+        "0.3.0-UI-A-009",
+        "0.3.0-UI-A-010"
+      ]
     },
     {
       "id": "0.3.0-FE-A-000",
       "type": "FE",
-      "file": "issue-0.3.0-FE-A-000-FE-provider-refresh-versioncontrolid.md",
-      "title": "sub/main: 支持 Provider 增量刷新",
+      "file": "issue_按Provider流式刷新并原位替换加载占位.md",
+      "title": "按Provider流式刷新并原位替换加载占位",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.3.0-FE-A-000",
+        "0.3.0-FE-A-001",
+        "0.3.0-FE-A-002",
+        "0.3.0-FE-A-003",
+        "0.3.0-FE-A-004",
+        "0.3.0-FE-A-005"
+      ],
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.3.0-FE-A-000-FE-provider-refresh-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-FE-A-000-FE-provider-refresh-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-FE-A-000",
+      "source_legacy_ids": [
         "0.3.0-FE-A-000",
         "0.3.0-FE-A-001",
         "0.3.0-FE-A-002",
@@ -1692,16 +2587,53 @@
         "0.3.0-FE-A-005",
         "0.3.0-FE-A-006",
         "0.3.0-UI-A-008"
+      ]
+    },
+    {
+      "id": "0.3.0-FE-A-006",
+      "type": "FE",
+      "file": "issue_订阅组重排后立即更新菜单栏与状态灯.md",
+      "title": "订阅组重排后立即更新菜单栏与状态灯",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-FE-A-006",
+        "0.3.0-UI-A-008"
       ],
-      "state": "进行中（原文同时包含已完成与未完成项）"
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.3.0-FE-A-000-FE-provider-refresh-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-FE-A-000-FE-provider-refresh-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-FE-A-000",
+      "source_legacy_ids": [
+        "0.3.0-FE-A-000",
+        "0.3.0-FE-A-001",
+        "0.3.0-FE-A-002",
+        "0.3.0-FE-A-003",
+        "0.3.0-FE-A-004",
+        "0.3.0-FE-A-005",
+        "0.3.0-FE-A-006",
+        "0.3.0-UI-A-008"
+      ]
     },
     {
       "id": "0.3.0-PM-A-000",
       "type": "PM",
-      "file": "issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
-      "title": "sub/main: 规划偏好设置与后续能力",
+      "file": "issue_提供Provider开关与刷新等偏好配置.md",
+      "title": "提供Provider开关与刷新等偏好配置",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.3.0-PM-A-000",
+        "0.3.0-PM-A-002",
+        "0.3.0-PM-A-003"
+      ],
+      "state": "待定 / 延后（沿用原需求记录）",
+      "renamed_from": "issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-PM-A-000",
+      "source_legacy_ids": [
         "0.3.0-PM-A-000",
         "0.3.0-PM-A-001",
         "0.3.0-PM-A-002",
@@ -1709,23 +2641,128 @@
         "0.3.0-PM-A-004",
         "0.3.0-PM-A-005",
         "0.3.0-PM-A-006"
+      ]
+    },
+    {
+      "id": "0.3.0-PM-A-001",
+      "type": "PM",
+      "file": "issue_支持手动添加与移除Provider.md",
+      "title": "支持手动添加与移除Provider",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-PM-A-001"
       ],
-      "state": "待定 / 延后（沿用原需求记录）"
+      "state": "待定 / 延后（沿用原需求记录）",
+      "renamed_from": "issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-PM-A-000",
+      "source_legacy_ids": [
+        "0.3.0-PM-A-000",
+        "0.3.0-PM-A-001",
+        "0.3.0-PM-A-002",
+        "0.3.0-PM-A-003",
+        "0.3.0-PM-A-004",
+        "0.3.0-PM-A-005",
+        "0.3.0-PM-A-006"
+      ]
+    },
+    {
+      "id": "0.3.0-PM-A-004",
+      "type": "PM",
+      "file": "issue_监控Provider服务事故状态.md",
+      "title": "监控Provider服务事故状态",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-PM-A-004"
+      ],
+      "state": "待定 / 延后（沿用原需求记录）",
+      "renamed_from": "issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-PM-A-000",
+      "source_legacy_ids": [
+        "0.3.0-PM-A-000",
+        "0.3.0-PM-A-001",
+        "0.3.0-PM-A-002",
+        "0.3.0-PM-A-003",
+        "0.3.0-PM-A-004",
+        "0.3.0-PM-A-005",
+        "0.3.0-PM-A-006"
+      ]
+    },
+    {
+      "id": "0.3.0-PM-A-005",
+      "type": "PM",
+      "file": "issue_提供WidgetKit桌面小组件.md",
+      "title": "提供WidgetKit桌面小组件",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-PM-A-005"
+      ],
+      "state": "待定 / 延后（沿用原需求记录）",
+      "renamed_from": "issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-PM-A-000",
+      "source_legacy_ids": [
+        "0.3.0-PM-A-000",
+        "0.3.0-PM-A-001",
+        "0.3.0-PM-A-002",
+        "0.3.0-PM-A-003",
+        "0.3.0-PM-A-004",
+        "0.3.0-PM-A-005",
+        "0.3.0-PM-A-006"
+      ]
+    },
+    {
+      "id": "0.3.0-PM-A-006",
+      "type": "PM",
+      "file": "issue_提供quotabar状态命令行工具.md",
+      "title": "提供quotabar状态命令行工具",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.3.0-PM-A-006"
+      ],
+      "state": "待定 / 延后（沿用原需求记录）",
+      "renamed_from": "issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "split_from": "issue/issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.3.0-PM-A-000",
+      "source_legacy_ids": [
+        "0.3.0-PM-A-000",
+        "0.3.0-PM-A-001",
+        "0.3.0-PM-A-002",
+        "0.3.0-PM-A-003",
+        "0.3.0-PM-A-004",
+        "0.3.0-PM-A-005",
+        "0.3.0-PM-A-006"
+      ]
     },
     {
       "id": "migration-1813617627ae",
       "type": "SEC",
-      "file": "issue-migration-1813617627ae-SEC-provider-zcode-versioncontrolid.md",
-      "title": "Phase - v0.4.0 - 新 Provider 接入（zcode / 千问 / 其他）",
+      "file": "issue_核对ZCode与千问的本地安装及接入前提.md",
+      "title": "核对ZCode与千问的本地安装及接入前提",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [],
-      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）",
+      "renamed_from": "issue-migration-1813617627ae-SEC-provider-zcode-versioncontrolid.md",
+      "split_from": "issue/issue-migration-1813617627ae-SEC-provider-zcode-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-1813617627ae",
+      "source_legacy_ids": []
     },
     {
       "id": "0.4.0-DATA-A-000",
       "type": "DATA",
-      "file": "issue-0.4.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md",
-      "title": "feat/glm-provider: 调研智谱 BigModel Z Code Provider",
+      "file": "issue_调研智谱ZCode套餐与额度接入.md",
+      "title": "调研智谱ZCode套餐与额度接入",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.4.0-DATA-A-000",
@@ -1735,13 +2772,26 @@
         "0.4.0-DATA-A-003",
         "0.4.0-DATA-A-004"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "renamed_from": "issue-0.4.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md",
+      "split_from": "issue/issue-0.4.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.4.0-DATA-A-000",
+      "source_legacy_ids": [
+        "0.4.0-DATA-A-000",
+        "0.4.0-DATA-A-001",
+        "QuotaWindow",
+        "0.4.0-DATA-A-002",
+        "0.4.0-DATA-A-003",
+        "0.4.0-DATA-A-004"
+      ]
     },
     {
       "id": "0.4.0-DATA-B-001",
       "type": "DATA",
-      "file": "issue-0.4.0-DATA-B-001-DATA-desktop-app-versioncontrolid.md",
-      "title": "sub/main: 调研阿里通义千问桌面 App",
+      "file": "issue_确认千问安装位置并接入桌面Provider.md",
+      "title": "确认千问安装位置并接入桌面Provider",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.4.0-DATA-B-000",
@@ -1749,125 +2799,348 @@
         "0.4.0-DATA-B-002",
         "0.4.0-DATA-B-003"
       ],
-      "state": "阻塞（沿用原需求记录）"
+      "state": "阻塞（沿用原需求记录）",
+      "renamed_from": "issue-0.4.0-DATA-B-001-DATA-desktop-app-versioncontrolid.md",
+      "split_from": "issue/issue-0.4.0-DATA-B-001-DATA-desktop-app-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.4.0-DATA-B-001",
+      "source_legacy_ids": [
+        "0.4.0-DATA-B-000",
+        "0.4.0-DATA-B-001",
+        "0.4.0-DATA-B-002",
+        "0.4.0-DATA-B-003"
+      ]
     },
     {
       "id": "0.4.0-DATA-C-000",
       "type": "DATA",
-      "file": "issue-0.4.0-DATA-C-000-DATA-provider-versioncontrolid.md",
-      "title": "sub/main: 沉淀新 Provider 接入流程",
+      "file": "issue_文档化新Provider接入流程.md",
+      "title": "文档化新Provider接入流程",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.4.0-DATA-C-000"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "renamed_from": "issue-0.4.0-DATA-C-000-DATA-provider-versioncontrolid.md",
+      "split_from": "issue/issue-0.4.0-DATA-C-000-DATA-provider-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.4.0-DATA-C-000",
+      "source_legacy_ids": [
+        "0.4.0-DATA-C-000"
+      ]
     },
     {
       "id": "0.4.0-QA-A-001",
       "type": "QA",
-      "file": "issue-0.4.0-QA-A-001-QA-provider-acceptance-versioncontrolid.md",
-      "title": "sub/main: 完成新 Provider 接入验收",
+      "file": "issue_核对ZCode接入的额度与状态展示.md",
+      "title": "核对ZCode接入的额度与状态展示",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.4.0-QA-A-001",
+        "0.4.0-QA-A-003",
+        "0.4.0-QA-A-004"
+      ],
+      "state": "阻塞（沿用原需求记录）",
+      "renamed_from": "issue-0.4.0-QA-A-001-QA-provider-acceptance-versioncontrolid.md",
+      "split_from": "issue/issue-0.4.0-QA-A-001-QA-provider-acceptance-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.4.0-QA-A-001",
+      "source_legacy_ids": [
         "0.4.0-QA-A-001",
         "0.4.0-QA-A-002",
         "0.4.0-DATA-B-000",
         "0.4.0-QA-A-003",
         "0.4.0-QA-A-004"
+      ]
+    },
+    {
+      "id": "0.4.0-QA-A-002",
+      "type": "QA",
+      "file": "issue_核对千问Provider接入结果.md",
+      "title": "核对千问Provider接入结果",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.4.0-QA-A-002"
       ],
-      "state": "阻塞（沿用原需求记录）"
+      "state": "阻塞（沿用原需求记录）",
+      "renamed_from": "issue-0.4.0-QA-A-001-QA-provider-acceptance-versioncontrolid.md",
+      "split_from": "issue/issue-0.4.0-QA-A-001-QA-provider-acceptance-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.4.0-QA-A-001",
+      "source_legacy_ids": [
+        "0.4.0-QA-A-001",
+        "0.4.0-QA-A-002",
+        "0.4.0-DATA-B-000",
+        "0.4.0-QA-A-003",
+        "0.4.0-QA-A-004"
+      ]
     },
     {
       "id": "0.4.0-UI-B-000",
       "type": "UI",
-      "file": "issue-0.4.0-UI-B-000-UI-subscription-versioncontrolid.md",
-      "title": "sub/main: 修正可用订阅计数语义",
+      "file": "issue_按可用订阅组的真实剩余额度统计订阅数.md",
+      "title": "按可用订阅组的真实剩余额度统计订阅数",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.4.0-UI-B-000",
         "0.4.0-UI-B-001"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.4.0-UI-B-000-UI-subscription-versioncontrolid.md",
+      "split_from": "issue/issue-0.4.0-UI-B-000-UI-subscription-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.4.0-UI-B-000",
+      "source_legacy_ids": [
+        "0.4.0-UI-B-000",
+        "0.4.0-UI-B-001"
+      ]
     },
     {
       "id": "0.4.0-DATA-A-001-test",
       "type": "DATA",
-      "file": "issue-0.4.0-DATA-A-001-test-DATA-release-versioncontrolid.md",
-      "title": "Phase - v0.5.0 - 发布自动化与工程卫生",
+      "file": "issue_明确发布自动化与质量门槛的任务边界.md",
+      "title": "明确发布自动化与质量门槛的任务边界",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.4.0-DATA-A-001-test"
       ],
-      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）",
+      "renamed_from": "issue-0.4.0-DATA-A-001-test-DATA-release-versioncontrolid.md",
+      "split_from": "issue/issue-0.4.0-DATA-A-001-test-DATA-release-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.4.0-DATA-A-001-test",
+      "source_legacy_ids": [
+        "0.4.0-DATA-A-001-test"
+      ]
     },
     {
       "id": "0.5.0-CI-A-000",
       "type": "CI",
-      "file": "issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md",
-      "title": "sub/main: 提供发布自动化与 PR 验证",
+      "file": "issue_自动发布macOS应用并构建官网.md",
+      "title": "自动发布macOS应用并构建官网",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.5.0-CI-A-000",
+        "0.5.0-CI-A-001"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md",
+      "split_from": "issue/issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.5.0-CI-A-000",
+      "source_legacy_ids": [
+        "0.5.0-CI-A-000",
         "0.5.0-CI-A-001",
         "0.5.0-CI-A-002"
+      ]
+    },
+    {
+      "id": "0.5.0-CI-A-002",
+      "type": "CI",
+      "file": "issue_在PR合并前自动编译验证.md",
+      "title": "在PR合并前自动编译验证",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.5.0-CI-A-002"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md",
+      "split_from": "issue/issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.5.0-CI-A-000",
+      "source_legacy_ids": [
+        "0.5.0-CI-A-000",
+        "0.5.0-CI-A-001",
+        "0.5.0-CI-A-002"
+      ]
     },
     {
       "id": "0.5.0-ENG-A-000",
       "type": "PM",
-      "file": "issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
-      "title": "sub/main: 提供统一开发入口与测试基建",
+      "file": "issue_清理既有Swift未使用变量警告.md",
+      "title": "清理既有Swift未使用变量警告",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.5.0-ENG-A-000"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
+      "split_from": "issue/issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.5.0-ENG-A-000",
+      "source_legacy_ids": [
         "0.5.0-ENG-A-000",
         "0.5.0-ENG-A-001",
         "0.5.0-ENG-A-002",
         "0.5.0-ENG-A-003"
+      ]
+    },
+    {
+      "id": "0.5.0-ENG-A-001",
+      "type": "PM",
+      "file": "issue_统一应用与官网的开发命令入口.md",
+      "title": "统一应用与官网的开发命令入口",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.5.0-ENG-A-001"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
+      "split_from": "issue/issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.5.0-ENG-A-000",
+      "source_legacy_ids": [
+        "0.5.0-ENG-A-000",
+        "0.5.0-ENG-A-001",
+        "0.5.0-ENG-A-002",
+        "0.5.0-ENG-A-003"
+      ]
+    },
+    {
+      "id": "0.5.0-ENG-A-002",
+      "type": "PM",
+      "file": "issue_在根忽略规则中排除站点生成目录.md",
+      "title": "在根忽略规则中排除站点生成目录",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.5.0-ENG-A-002"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
+      "split_from": "issue/issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.5.0-ENG-A-000",
+      "source_legacy_ids": [
+        "0.5.0-ENG-A-000",
+        "0.5.0-ENG-A-001",
+        "0.5.0-ENG-A-002",
+        "0.5.0-ENG-A-003"
+      ]
+    },
+    {
+      "id": "0.5.0-ENG-A-003",
+      "type": "PM",
+      "file": "issue_建立QuotaBar单元测试目标.md",
+      "title": "建立QuotaBar单元测试目标",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.5.0-ENG-A-003"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
+      "split_from": "issue/issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.5.0-ENG-A-000",
+      "source_legacy_ids": [
+        "0.5.0-ENG-A-000",
+        "0.5.0-ENG-A-001",
+        "0.5.0-ENG-A-002",
+        "0.5.0-ENG-A-003"
+      ]
     },
     {
       "id": "0.5.0-DOC-A-000",
       "type": "DOC",
-      "file": "issue-0.5.0-DOC-A-000-DOC-documentation-versioncontrolid.md",
-      "title": "sub/main: 完善用户可见文档入口",
+      "file": "issue_在README快速开始中补充官网开发入口.md",
+      "title": "在README快速开始中补充官网开发入口",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.5.0-DOC-A-000"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.5.0-DOC-A-000-DOC-documentation-versioncontrolid.md",
+      "split_from": "issue/issue-0.5.0-DOC-A-000-DOC-documentation-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.5.0-DOC-A-000",
+      "source_legacy_ids": [
+        "0.5.0-DOC-A-000"
+      ]
     },
     {
       "id": "migration-8065bbb47a9d",
       "type": "QA",
-      "file": "issue-migration-8065bbb47a9d-QA-subscription-headless-versioncontrolid.md",
-      "title": "Phase - v0.6.0 - 真实订阅到期日（headless 抓取订阅页）",
+      "file": "issue_以真实订阅来源替代额度重置时间推断到期日.md",
+      "title": "以真实订阅来源替代额度重置时间推断到期日",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [],
-      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）",
+      "renamed_from": "issue-migration-8065bbb47a9d-QA-subscription-headless-versioncontrolid.md",
+      "split_from": "issue/issue-migration-8065bbb47a9d-QA-subscription-headless-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-8065bbb47a9d",
+      "source_legacy_ids": []
     },
     {
       "id": "0.6.0-ARCH-A-000",
       "type": "ARCH",
-      "file": "issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md",
-      "title": "feat/subscription-expiry: 建立订阅日期抓取基础架构",
+      "file": "issue_建立订阅日期抓取协议与Headless加载器.md",
+      "title": "建立订阅日期抓取协议与Headless加载器",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.6.0-ARCH-A-000",
+        "0.6.0-ARCH-A-001",
+        "0.6.0-ARCH-A-003",
+        "0.6.0-ARCH-A-003-test",
+        "0.6.0-ARCH-A-001-test"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md",
+      "split_from": "issue/issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.6.0-ARCH-A-000",
+      "source_legacy_ids": [
         "0.6.0-ARCH-A-000",
         "0.6.0-ARCH-A-001",
         "0.6.0-ARCH-A-002",
         "0.6.0-ARCH-A-003",
         "0.6.0-ARCH-A-003-test",
         "0.6.0-ARCH-A-001-test"
+      ]
+    },
+    {
+      "id": "0.6.0-ARCH-A-002",
+      "type": "ARCH",
+      "file": "issue_禁止以额度重置时间推断订阅到期日.md",
+      "title": "禁止以额度重置时间推断订阅到期日",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.6.0-ARCH-A-002"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md",
+      "split_from": "issue/issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.6.0-ARCH-A-000",
+      "source_legacy_ids": [
+        "0.6.0-ARCH-A-000",
+        "0.6.0-ARCH-A-001",
+        "0.6.0-ARCH-A-002",
+        "0.6.0-ARCH-A-003",
+        "0.6.0-ARCH-A-003-test",
+        "0.6.0-ARCH-A-001-test"
+      ]
     },
     {
       "id": "0.6.0-DATA-A-000",
       "type": "DATA",
-      "file": "issue-0.6.0-DATA-A-000-DATA-kimi-subscription-versioncontrolid.md",
-      "title": "feat/subscription-expiry: 接入 Kimi 真实订阅到期日",
+      "file": "issue_区分Kimi订阅续费日与额度窗口重置时间.md",
+      "title": "区分Kimi订阅续费日与额度窗口重置时间",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.6.0-DATA-A-000",
@@ -1875,99 +3148,175 @@
         "0.6.0-DATA-A-002",
         "0.6.0-DATA-A-002-test"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.6.0-DATA-A-000-DATA-kimi-subscription-versioncontrolid.md",
+      "split_from": "issue/issue-0.6.0-DATA-A-000-DATA-kimi-subscription-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.6.0-DATA-A-000",
+      "source_legacy_ids": [
+        "0.6.0-DATA-A-000",
+        "0.6.0-DATA-A-001",
+        "0.6.0-DATA-A-002",
+        "0.6.0-DATA-A-002-test"
+      ]
     },
     {
       "id": "0.6.0-DATA-B-000",
       "type": "DATA",
-      "file": "issue-0.6.0-DATA-B-000-DATA-codex-subscription-versioncontrolid.md",
-      "title": "feat/subscription-expiry: 接入 Codex 真实订阅到期日",
+      "file": "issue_抓取Codex真实订阅到期日.md",
+      "title": "抓取Codex真实订阅到期日",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.6.0-DATA-B-000",
         "0.6.0-DATA-B-001",
         "0.6.0-DATA-B-001-test"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "renamed_from": "issue-0.6.0-DATA-B-000-DATA-codex-subscription-versioncontrolid.md",
+      "split_from": "issue/issue-0.6.0-DATA-B-000-DATA-codex-subscription-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.6.0-DATA-B-000",
+      "source_legacy_ids": [
+        "0.6.0-DATA-B-000",
+        "0.6.0-DATA-B-001",
+        "0.6.0-DATA-B-001-test"
+      ]
     },
     {
       "id": "0.6.0-DATA-C-000",
       "type": "DATA",
-      "file": "issue-0.6.0-DATA-C-000-DATA-claude-subscription-versioncontrolid.md",
-      "title": "feat/subscription-expiry: 接入 Claude 真实订阅到期日",
+      "file": "issue_抓取Claude真实订阅到期日.md",
+      "title": "抓取Claude真实订阅到期日",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.6.0-DATA-C-000",
         "0.6.0-DATA-C-001",
         "0.6.0-DATA-C-001-test"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "renamed_from": "issue-0.6.0-DATA-C-000-DATA-claude-subscription-versioncontrolid.md",
+      "split_from": "issue/issue-0.6.0-DATA-C-000-DATA-claude-subscription-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.6.0-DATA-C-000",
+      "source_legacy_ids": [
+        "0.6.0-DATA-C-000",
+        "0.6.0-DATA-C-001",
+        "0.6.0-DATA-C-001-test"
+      ]
     },
     {
       "id": "0.6.0-DATA-D-000",
       "type": "DATA",
-      "file": "issue-0.6.0-DATA-D-000-DATA-cursor-subscription-versioncontrolid.md",
-      "title": "feat/subscription-expiry: 接入 Cursor 真实订阅到期日",
+      "file": "issue_抓取Cursor真实订阅到期日.md",
+      "title": "抓取Cursor真实订阅到期日",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.6.0-DATA-D-000",
         "0.6.0-DATA-D-001",
         "0.6.0-DATA-D-001-test"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "renamed_from": "issue-0.6.0-DATA-D-000-DATA-cursor-subscription-versioncontrolid.md",
+      "split_from": "issue/issue-0.6.0-DATA-D-000-DATA-cursor-subscription-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.6.0-DATA-D-000",
+      "source_legacy_ids": [
+        "0.6.0-DATA-D-000",
+        "0.6.0-DATA-D-001",
+        "0.6.0-DATA-D-001-test"
+      ]
     },
     {
       "id": "0.6.0-DATA-E-000",
       "type": "DATA",
-      "file": "issue-0.6.0-DATA-E-000-DATA-minimax-subscription-versioncontrolid.md",
-      "title": "feat/subscription-expiry: 接入 MiniMax 真实订阅到期日",
+      "file": "issue_抓取MiniMax真实订阅到期日.md",
+      "title": "抓取MiniMax真实订阅到期日",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.6.0-DATA-E-000",
         "0.6.0-DATA-E-001",
         "0.6.0-DATA-E-001-test"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "renamed_from": "issue-0.6.0-DATA-E-000-DATA-minimax-subscription-versioncontrolid.md",
+      "split_from": "issue/issue-0.6.0-DATA-E-000-DATA-minimax-subscription-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.6.0-DATA-E-000",
+      "source_legacy_ids": [
+        "0.6.0-DATA-E-000",
+        "0.6.0-DATA-E-001",
+        "0.6.0-DATA-E-001-test"
+      ]
     },
     {
       "id": "0.6.0-DATA-F-000",
       "type": "DATA",
-      "file": "issue-0.6.0-DATA-F-000-DATA-antigravity-subscription-versioncontrolid.md",
-      "title": "feat/subscription-expiry: 接入 Antigravity 真实订阅到期日",
+      "file": "issue_抓取Antigravity真实订阅到期日.md",
+      "title": "抓取Antigravity真实订阅到期日",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.6.0-DATA-F-000",
         "0.6.0-DATA-F-001",
         "0.6.0-DATA-F-001-test"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "renamed_from": "issue-0.6.0-DATA-F-000-DATA-antigravity-subscription-versioncontrolid.md",
+      "split_from": "issue/issue-0.6.0-DATA-F-000-DATA-antigravity-subscription-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.6.0-DATA-F-000",
+      "source_legacy_ids": [
+        "0.6.0-DATA-F-000",
+        "0.6.0-DATA-F-001",
+        "0.6.0-DATA-F-001-test"
+      ]
     },
     {
       "id": "0.6.0-UI-A-000",
       "type": "UI",
-      "file": "issue-0.6.0-UI-A-000-UI-subscription-rules-versioncontrolid.md",
-      "title": "feat/subscription-expiry: 调整订阅到期日展示规则",
+      "file": "issue_隐藏未知订阅日期并提供精确日期提示.md",
+      "title": "隐藏未知订阅日期并提供精确日期提示",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.6.0-UI-A-000",
         "0.6.0-UI-A-001"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.6.0-UI-A-000-UI-subscription-rules-versioncontrolid.md",
+      "split_from": "issue/issue-0.6.0-UI-A-000-UI-subscription-rules-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.6.0-UI-A-000",
+      "source_legacy_ids": [
+        "0.6.0-UI-A-000",
+        "0.6.0-UI-A-001"
+      ]
     },
     {
       "id": "migration-fe17d65c8460",
       "type": "PM",
-      "file": "issue-migration-fe17d65c8460-PM-glm-provider-feat-versioncontrolid.md",
-      "title": "Phase - v0.7.0 - 智谱 GLM Provider 接入（feat/glm-provider）",
+      "file": "issue_明确将ZCode调研结果转为正式Provider接入的范围.md",
+      "title": "明确将ZCode调研结果转为正式Provider接入的范围",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [],
-      "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+      "state": "已确认约束 / 状态待核对（原文未单列完成状态）",
+      "renamed_from": "issue-migration-fe17d65c8460-PM-glm-provider-feat-versioncontrolid.md",
+      "split_from": "issue/issue-migration-fe17d65c8460-PM-glm-provider-feat-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-fe17d65c8460",
+      "source_legacy_ids": []
     },
     {
       "id": "0.7.0-DATA-A-000",
       "type": "DATA",
-      "file": "issue-0.7.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md",
-      "title": "feat/glm-provider: 调研智谱 BigModel Z Code Provider 接入",
+      "file": "issue_接入智谱ZCode套餐与额度获取.md",
+      "title": "接入智谱ZCode套餐与额度获取",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.7.0-DATA-A-000",
@@ -1978,38 +3327,81 @@
         "0.7.0-DATA-A-004",
         "0.7.0-DATA-A-005"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "renamed_from": "issue-0.7.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md",
+      "split_from": "issue/issue-0.7.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.7.0-DATA-A-000",
+      "source_legacy_ids": [
+        "0.7.0-DATA-A-000",
+        "0.7.0-DATA-A-001",
+        "QuotaWindow",
+        "0.7.0-DATA-A-002",
+        "0.7.0-DATA-A-003",
+        "0.7.0-DATA-A-004",
+        "0.7.0-DATA-A-005"
+      ]
     },
     {
       "id": "0.7.0-FE-A-000",
       "type": "FE",
-      "file": "issue-0.7.0-FE-A-000-FE-code-menu-state-versioncontrolid.md",
-      "title": "feat/glm-provider: 集成 Z Code 菜单栏状态",
+      "file": "issue_为ZCode展示菜单栏bar与品牌状态灯.md",
+      "title": "为ZCode展示菜单栏bar与品牌状态灯",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.7.0-FE-A-000",
         "0.7.0-FE-A-001"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "renamed_from": "issue-0.7.0-FE-A-000-FE-code-menu-state-versioncontrolid.md",
+      "split_from": "issue/issue-0.7.0-FE-A-000-FE-code-menu-state-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.7.0-FE-A-000",
+      "source_legacy_ids": [
+        "0.7.0-FE-A-000",
+        "0.7.0-FE-A-001"
+      ]
     },
     {
       "id": "0.7.0-DOC-A-000",
       "type": "DOC",
-      "file": "issue-0.7.0-DOC-A-000-DOC-code-documentation-versioncontrolid.md",
-      "title": "feat/glm-provider: 更新 Z Code 用户可见文档",
+      "file": "issue_在README说明ZCode套餐与安装路径.md",
+      "title": "在README说明ZCode套餐与安装路径",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
         "0.7.0-DOC-A-000"
       ],
-      "state": "待处理（原文未完成项保持未勾选）"
+      "state": "待处理（原文未完成项保持未勾选）",
+      "renamed_from": "issue-0.7.0-DOC-A-000-DOC-code-documentation-versioncontrolid.md",
+      "split_from": "issue/issue-0.7.0-DOC-A-000-DOC-code-documentation-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.7.0-DOC-A-000",
+      "source_legacy_ids": [
+        "0.7.0-DOC-A-000"
+      ]
     },
     {
       "id": "0.8.0-DOC-A-000",
       "type": "DOC",
-      "file": "issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md",
-      "title": "sub/main: 按交付物职责重命名顶层目录",
+      "file": "issue_同步协作模板与需求标题规范.md",
+      "title": "同步协作模板与需求标题规范",
       "source": "REQUIREMENTS.md",
       "legacy_ids": [
+        "0.8.0-DOC-A-000",
+        "0.8.0-DOC-A-004",
+        "0.8.0-DOC-A-005",
+        "0.8.0-DOC-A-011"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md",
+      "split_from": "issue/issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.8.0-DOC-A-000",
+      "source_legacy_ids": [
         "0.8.0-DOC-A-000",
         "0.8.0-DOC-A-001",
         "0.8.0-DOC-A-002",
@@ -2022,14 +3414,108 @@
         "0.8.0-DOC-A-010",
         "0.8.0-DOC-A-009",
         "0.8.0-DOC-A-011"
+      ]
+    },
+    {
+      "id": "0.8.0-DOC-A-001",
+      "type": "DOC",
+      "file": "issue_将macOS交付目录迁移为macos.md",
+      "title": "将macOS交付目录迁移为macos",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.8.0-DOC-A-001"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md",
+      "split_from": "issue/issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.8.0-DOC-A-000",
+      "source_legacy_ids": [
+        "0.8.0-DOC-A-000",
+        "0.8.0-DOC-A-001",
+        "0.8.0-DOC-A-002",
+        "0.8.0-DOC-A-003",
+        "0.8.0-DOC-A-004",
+        "0.8.0-DOC-A-005",
+        "0.8.0-DOC-A-006",
+        "0.8.0-DOC-A-007",
+        "0.8.0-DOC-A-008",
+        "0.8.0-DOC-A-010",
+        "0.8.0-DOC-A-009",
+        "0.8.0-DOC-A-011"
+      ]
+    },
+    {
+      "id": "0.8.0-DOC-A-002",
+      "type": "DOC",
+      "file": "issue_将营销主页目录迁移为site.md",
+      "title": "将营销主页目录迁移为site",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.8.0-DOC-A-002"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md",
+      "split_from": "issue/issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.8.0-DOC-A-000",
+      "source_legacy_ids": [
+        "0.8.0-DOC-A-000",
+        "0.8.0-DOC-A-001",
+        "0.8.0-DOC-A-002",
+        "0.8.0-DOC-A-003",
+        "0.8.0-DOC-A-004",
+        "0.8.0-DOC-A-005",
+        "0.8.0-DOC-A-006",
+        "0.8.0-DOC-A-007",
+        "0.8.0-DOC-A-008",
+        "0.8.0-DOC-A-010",
+        "0.8.0-DOC-A-009",
+        "0.8.0-DOC-A-011"
+      ]
+    },
+    {
+      "id": "0.8.0-DOC-A-003",
+      "type": "DOC",
+      "file": "issue_调整main与其他工作副本的容器布局.md",
+      "title": "调整main与其他工作副本的容器布局",
+      "source": "REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.8.0-DOC-A-003",
+        "0.8.0-DOC-A-006",
+        "0.8.0-DOC-A-007",
+        "0.8.0-DOC-A-008",
+        "0.8.0-DOC-A-009",
+        "0.8.0-DOC-A-010"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md",
+      "split_from": "issue/issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.8.0-DOC-A-000",
+      "source_legacy_ids": [
+        "0.8.0-DOC-A-000",
+        "0.8.0-DOC-A-001",
+        "0.8.0-DOC-A-002",
+        "0.8.0-DOC-A-003",
+        "0.8.0-DOC-A-004",
+        "0.8.0-DOC-A-005",
+        "0.8.0-DOC-A-006",
+        "0.8.0-DOC-A-007",
+        "0.8.0-DOC-A-008",
+        "0.8.0-DOC-A-010",
+        "0.8.0-DOC-A-009",
+        "0.8.0-DOC-A-011"
+      ]
     },
     {
       "id": "0.1.0-PM-A-000",
       "type": "PM",
-      "file": "issue-0.1.0-PM-A-000-PM-landing-scope-versioncontrolid.md",
-      "title": "website/main: 定义主页范围与信息架构",
+      "file": "issue_确定官网技术方案与首屏卖点.md",
+      "title": "确定官网技术方案与首屏卖点",
       "source": "site/REQUIREMENTS.md",
       "legacy_ids": [
         "0.1.0-PM-A-000",
@@ -2038,13 +3524,25 @@
         "0.1.0-PM-A-003",
         "0.1.0-PM-A-004"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.1.0-PM-A-000-PM-landing-scope-versioncontrolid.md",
+      "split_from": "issue/issue-0.1.0-PM-A-000-PM-landing-scope-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.1.0-PM-A-000",
+      "source_legacy_ids": [
+        "0.1.0-PM-A-000",
+        "0.1.0-PM-A-001",
+        "0.1.0-PM-A-002",
+        "0.1.0-PM-A-003",
+        "0.1.0-PM-A-004"
+      ]
     },
     {
       "id": "0.1.0-FE-A-000",
       "type": "FE",
-      "file": "issue-0.1.0-FE-A-000-FE-astro-versioncontrolid.md",
-      "title": "website/main: 建立 Astro 站点骨架",
+      "file": "issue_建立Astro静态官网骨架.md",
+      "title": "建立Astro静态官网骨架",
       "source": "site/REQUIREMENTS.md",
       "legacy_ids": [
         "0.1.0-FE-A-000",
@@ -2054,13 +3552,26 @@
         "0.1.0-FE-A-004",
         "0.1.0-FE-A-005"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.1.0-FE-A-000-FE-astro-versioncontrolid.md",
+      "split_from": "issue/issue-0.1.0-FE-A-000-FE-astro-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.1.0-FE-A-000",
+      "source_legacy_ids": [
+        "0.1.0-FE-A-000",
+        "0.1.0-FE-A-001",
+        "0.1.0-FE-A-002",
+        "0.1.0-FE-A-003",
+        "0.1.0-FE-A-004",
+        "0.1.0-FE-A-005"
+      ]
     },
     {
       "id": "migration-331bbfea42d3",
       "type": "UI",
-      "file": "issue-migration-331bbfea42d3-UI-landing-design-tokens-layout-versioncontrolid.md",
-      "title": "website/main: 建立主页 Design Tokens 与布局",
+      "file": "issue_建立官网DesignTokens与通用布局.md",
+      "title": "建立官网DesignTokens与通用布局",
       "source": "site/REQUIREMENTS.md",
       "legacy_ids": [
         "0.1.0-UI-A-000",
@@ -2068,15 +3579,38 @@
         "0.1.0-UI-A-002",
         "0.1.0-UI-A-003"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-migration-331bbfea42d3-UI-landing-design-tokens-layout-versioncontrolid.md",
+      "split_from": "issue/issue-migration-331bbfea42d3-UI-landing-design-tokens-layout-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-331bbfea42d3",
+      "source_legacy_ids": [
+        "0.1.0-UI-A-000",
+        "0.1.0-UI-A-001",
+        "0.1.0-UI-A-002",
+        "0.1.0-UI-A-003"
+      ]
     },
     {
-      "id": "migration-3e0fea30f1dd",
+      "id": "0.1.0-UI-B-000",
       "type": "UI",
-      "file": "issue-migration-3e0fea30f1dd-UI-landing-versioncontrolid.md",
-      "title": "website/main: 实现主页核心组件",
+      "file": "issue_用CSS与HTML展示菜单栏及额度面板.md",
+      "title": "用CSS与HTML展示菜单栏及额度面板",
       "source": "site/REQUIREMENTS.md",
       "legacy_ids": [
+        "0.1.0-UI-B-000",
+        "0.1.0-UI-B-001",
+        "0.1.0-UI-B-002",
+        "0.1.0-UI-B-003"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-migration-3e0fea30f1dd-UI-landing-versioncontrolid.md",
+      "split_from": "issue/issue-migration-3e0fea30f1dd-UI-landing-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-3e0fea30f1dd",
+      "source_legacy_ids": [
         "0.1.0-UI-B-000",
         "0.1.0-UI-B-001",
         "0.1.0-UI-B-002",
@@ -2087,42 +3621,138 @@
         "0.1.0-UI-B-007",
         "0.1.0-UI-B-008",
         "0.1.0-UI-B-009"
+      ]
+    },
+    {
+      "id": "0.1.0-UI-B-004",
+      "type": "UI",
+      "file": "issue_实现官网导航与产品介绍区块.md",
+      "title": "实现官网导航与产品介绍区块",
+      "source": "site/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-UI-B-004",
+        "0.1.0-UI-B-005",
+        "0.1.0-UI-B-006",
+        "0.1.0-UI-B-007",
+        "0.1.0-UI-B-008",
+        "0.1.0-UI-B-009"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-migration-3e0fea30f1dd-UI-landing-versioncontrolid.md",
+      "split_from": "issue/issue-migration-3e0fea30f1dd-UI-landing-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-3e0fea30f1dd",
+      "source_legacy_ids": [
+        "0.1.0-UI-B-000",
+        "0.1.0-UI-B-001",
+        "0.1.0-UI-B-002",
+        "0.1.0-UI-B-003",
+        "0.1.0-UI-B-004",
+        "0.1.0-UI-B-005",
+        "0.1.0-UI-B-006",
+        "0.1.0-UI-B-007",
+        "0.1.0-UI-B-008",
+        "0.1.0-UI-B-009"
+      ]
     },
     {
       "id": "0.1.0-FE-B-000",
       "type": "FE",
-      "file": "issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md",
-      "title": "website/main: 组装主页并接入下载链接",
+      "file": "issue_按产品介绍顺序组装官网首页.md",
+      "title": "按产品介绍顺序组装官网首页",
       "source": "site/REQUIREMENTS.md",
       "legacy_ids": [
+        "0.1.0-FE-B-000"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md",
+      "split_from": "issue/issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.1.0-FE-B-000",
+      "source_legacy_ids": [
         "0.1.0-FE-B-000",
         "0.1.0-FE-B-001",
         "0.1.0-FE-B-002"
+      ]
+    },
+    {
+      "id": "0.1.0-FE-B-001",
+      "type": "FE",
+      "file": "issue_通过GitHubRelease解析统一下载入口.md",
+      "title": "通过GitHubRelease解析统一下载入口",
+      "source": "site/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-FE-B-001",
+        "0.1.0-FE-B-002"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md",
+      "split_from": "issue/issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.1.0-FE-B-000",
+      "source_legacy_ids": [
+        "0.1.0-FE-B-000",
+        "0.1.0-FE-B-001",
+        "0.1.0-FE-B-002"
+      ]
     },
     {
       "id": "0.1.0-UI-C-000",
       "type": "UI",
-      "file": "issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md",
-      "title": "website/main: 完成响应式与可访问性",
+      "file": "issue_适配官网移动端与响应式布局.md",
+      "title": "适配官网移动端与响应式布局",
       "source": "site/REQUIREMENTS.md",
       "legacy_ids": [
+        "0.1.0-UI-C-000",
+        "0.1.0-UI-C-001",
+        "0.1.0-UI-C-002"
+      ],
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md",
+      "split_from": "issue/issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.1.0-UI-C-000",
+      "source_legacy_ids": [
         "0.1.0-UI-C-000",
         "0.1.0-UI-C-001",
         "0.1.0-UI-C-002",
         "0.1.0-UI-C-003",
         "0.1.0-UI-C-004"
+      ]
+    },
+    {
+      "id": "0.1.0-UI-C-003",
+      "type": "UI",
+      "file": "issue_提供官网无障碍语义与减少动效支持.md",
+      "title": "提供官网无障碍语义与减少动效支持",
+      "source": "site/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.1.0-UI-C-003",
+        "0.1.0-UI-C-004"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md",
+      "split_from": "issue/issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.1.0-UI-C-000",
+      "source_legacy_ids": [
+        "0.1.0-UI-C-000",
+        "0.1.0-UI-C-001",
+        "0.1.0-UI-C-002",
+        "0.1.0-UI-C-003",
+        "0.1.0-UI-C-004"
+      ]
     },
     {
       "id": "0.1.0-DOC-A-000",
       "type": "DOC",
-      "file": "issue-0.1.0-DOC-A-000-DOC-sync-landing-project-documentation-versioncontrolid.md",
-      "title": "website/main: 同步主页子项目文档",
+      "file": "issue_同步官网子项目文档与根目录索引.md",
+      "title": "同步官网子项目文档与根目录索引",
       "source": "site/REQUIREMENTS.md",
       "legacy_ids": [
         "0.1.0-DOC-A-000",
@@ -2133,13 +3763,27 @@
         "0.1.0-DOC-A-005",
         "0.1.0-DOC-A-006"
       ],
-      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+      "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）",
+      "renamed_from": "issue-0.1.0-DOC-A-000-DOC-sync-landing-project-documentation-versioncontrolid.md",
+      "split_from": "issue/issue-0.1.0-DOC-A-000-DOC-sync-landing-project-documentation-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.1.0-DOC-A-000",
+      "source_legacy_ids": [
+        "0.1.0-DOC-A-000",
+        "0.1.0-DOC-A-001",
+        "0.1.0-DOC-A-002",
+        "0.1.0-DOC-A-003",
+        "0.1.0-DOC-A-004",
+        "0.1.0-DOC-A-005",
+        "0.1.0-DOC-A-006"
+      ]
     },
     {
       "id": "0.1.0-QA-A-000",
       "type": "QA",
-      "file": "issue-0.1.0-QA-A-000-QA-landing-acceptance-versioncontrolid.md",
-      "title": "website/main: 完成主页首版验收",
+      "file": "issue_核对官网首版构建与部署交付.md",
+      "title": "核对官网首版构建与部署交付",
       "source": "site/REQUIREMENTS.md",
       "legacy_ids": [
         "0.1.0-QA-A-000",
@@ -2148,34 +3792,1213 @@
         "0.1.0-QA-A-003",
         "0.1.0-QA-A-004"
       ],
-      "state": "进行中（原文同时包含已完成与未完成项）"
+      "state": "进行中（原文同时包含已完成与未完成项）",
+      "renamed_from": "issue-0.1.0-QA-A-000-QA-landing-acceptance-versioncontrolid.md",
+      "split_from": "issue/issue-0.1.0-QA-A-000-QA-landing-acceptance-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "0.1.0-QA-A-000",
+      "source_legacy_ids": [
+        "0.1.0-QA-A-000",
+        "0.1.0-QA-A-001",
+        "0.1.0-QA-A-002",
+        "0.1.0-QA-A-003",
+        "0.1.0-QA-A-004"
+      ]
     },
     {
       "id": "migration-2ccfda47ccb4",
       "type": "UI",
-      "file": "issue-migration-2ccfda47ccb4-UI-landing-visual-versioncontrolid.md",
-      "title": "website/main: 升级主页真实视觉素材",
+      "file": "issue_以真实截图和品牌素材替换官网视觉占位.md",
+      "title": "以真实截图和品牌素材替换官网视觉占位",
       "source": "site/REQUIREMENTS.md",
       "legacy_ids": [
         "0.2.0-UI-A-000",
         "0.2.0-UI-A-001",
         "0.2.0-UI-A-002"
       ],
-      "state": "待定 / 延后（沿用原需求记录）"
+      "state": "待定 / 延后（沿用原需求记录）",
+      "renamed_from": "issue-migration-2ccfda47ccb4-UI-landing-visual-versioncontrolid.md",
+      "split_from": "issue/issue-migration-2ccfda47ccb4-UI-landing-visual-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-2ccfda47ccb4",
+      "source_legacy_ids": [
+        "0.2.0-UI-A-000",
+        "0.2.0-UI-A-001",
+        "0.2.0-UI-A-002"
+      ]
     },
     {
-      "id": "migration-68a147730638",
+      "id": "0.2.0-FE-A-000",
       "type": "FE",
-      "file": "issue-migration-68a147730638-FE-seo-languages-versioncontrolid.md",
-      "title": "website/main: 增强站点 SEO 与多语言能力",
+      "file": "issue_为官网提供站点地图与结构化数据.md",
+      "title": "为官网提供站点地图与结构化数据",
       "source": "site/REQUIREMENTS.md",
       "legacy_ids": [
         "0.2.0-FE-A-000",
+        "0.2.0-FE-A-001"
+      ],
+      "state": "待定 / 延后（沿用原需求记录）",
+      "renamed_from": "issue-migration-68a147730638-FE-seo-languages-versioncontrolid.md",
+      "split_from": "issue/issue-migration-68a147730638-FE-seo-languages-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-68a147730638",
+      "source_legacy_ids": [
+        "0.2.0-FE-A-000",
         "0.2.0-FE-A-001",
         "0.2.0-FE-A-002"
+      ]
+    },
+    {
+      "id": "0.2.0-FE-A-002",
+      "type": "FE",
+      "file": "issue_为QuotaBar介绍站提供中英双语切换.md",
+      "title": "为QuotaBar介绍站提供中英双语切换",
+      "source": "site/REQUIREMENTS.md",
+      "legacy_ids": [
+        "0.2.0-FE-A-002"
       ],
-      "state": "待定 / 延后（沿用原需求记录）"
+      "state": "待定 / 延后（沿用原需求记录）",
+      "renamed_from": "issue-migration-68a147730638-FE-seo-languages-versioncontrolid.md",
+      "split_from": "issue/issue-migration-68a147730638-FE-seo-languages-versioncontrolid.md",
+      "implementation_version": null,
+      "implementation_status": "unverified",
+      "original_record_id": "migration-68a147730638",
+      "source_legacy_ids": [
+        "0.2.0-FE-A-000",
+        "0.2.0-FE-A-001",
+        "0.2.0-FE-A-002"
+      ]
     }
   ],
-  "note": "Original states retained; historical log evidence does not complete current tasks."
+  "note": "Original states retained; historical log evidence does not complete current tasks.",
+  "versioncontrolid_status": "recorded per issue; unverified implementation versions omitted from filenames",
+  "naming_corrections": [
+    {
+      "time": "2026-10-24 06:07:34 UTC",
+      "old_to_current_files": {
+        "issue/issue-template.md": "issue/issue_template.md"
+      },
+      "new_format": "issue-specific-task-description[-verified-implementation-version].md",
+      "batch": "final-underscore-rules"
+    },
+    {
+      "time": "2026-10-24 06:30:10 UTC",
+      "old_to_current_files": {
+        "issue/issue-DOC-migration-20261023-DOC-migrate-project-workflow-versioncontrolid.md": "issue/issue_迁移项目任务与协作记录_2e57e2cb.md"
+      },
+      "new_format": "issue-specific-task-description[-verified-implementation-version].md",
+      "batch": "native-document-records"
+    },
+    {
+      "time": "2026-10-24 07:04:08 UTC",
+      "batch": "semantic-native-group-a-3",
+      "new_format": "issue_任务描述[_真实实施版本].md",
+      "old_to_current_files": {
+        "issue/issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md": [
+          "issue/issue_建立项目协作基础.md"
+        ],
+        "issue/issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md": [
+          "issue/issue_打磨macOS26风格下拉面板.md",
+          "issue/issue_启动后仅显示菜单栏图标并按点击打开面板.md"
+        ],
+        "issue/issue-migration-dbe5fd0c2f62-UI-macos-native-menu-versioncontrolid.md": [
+          "issue/issue_将下拉面板切换为macOS原生菜单.md"
+        ],
+        "issue/issue-migration-e033f2eb8b83-QA-dropdown-visual-acceptance-versioncontrolid.md": [
+          "issue/issue_核对Dropdown视觉原型交付.md"
+        ],
+        "issue/issue-migration-380a479e8fcc-PM-quota-bar-versioncontrolid.md": [
+          "issue/issue_将静态界面升级为真实AI订阅额度展示.md"
+        ],
+        "issue/issue-0.2.0-DATA-A-000-DATA-local-ai-service-versioncontrolid.md": [
+          "issue/issue_自动探测本地AI服务及认证状态.md"
+        ],
+        "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md": [
+          "issue/issue_建立真实订阅额度的多来源获取与失败降级.md",
+          "issue/issue_仅按真实订阅档位映射价格.md",
+          "issue/issue_按系统地区换算订阅价格币种.md",
+          "issue/issue_通过OAuth与Web接口获取Kimi额度.md",
+          "issue/issue_展示已安装但尚未接入Dashboard的应用.md",
+          "issue/issue_接入Claude组织与usage接口解析额度.md",
+          "issue/issue_由Antigravity接替Gemini主动额度采集.md",
+          "issue/issue_支持选择Cookie来源浏览器.md",
+          "issue/issue_通过Web接口获取MiniMax额度与套餐费用.md",
+          "issue/issue_通过本地服务获取Antigravity额度.md",
+          "issue/issue_支持同一服务的多身份订阅.md",
+          "issue/issue_凭证缺失时继续尝试后续额度来源.md",
+          "issue/issue_调研TraeWork独立Provider接入.md"
+        ],
+        "issue/issue-0.2.0-FE-A-003-FE-quota-refresh-versioncontrolid.md": [
+          "issue/issue_提供手动与自动额度刷新.md",
+          "issue/issue_按真实订阅额度绘制菜单栏多bar图标.md"
+        ],
+        "issue/issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md": [
+          "issue/issue_以真实额度驱动面板并展示加载与失败状态.md",
+          "issue/issue_统一额度日期与紧凑倒计时文案.md",
+          "issue/issue_区分Provider品牌色与额度健康色.md"
+        ],
+        "issue/issue-0.2.0-QA-A-001-QA-acceptance-versioncontrolid.md": [
+          "issue/issue_核对真实额度核心功能的交付与隐私边界.md"
+        ],
+        "issue/issue-migration-b7fdab420084-FE-ui-subscription-dropdown-refresh-versioncontrolid.md": [
+          "issue/issue_明确订阅组排序与面板流式刷新的范围.md"
+        ],
+        "issue/issue-0.3.0-DATA-A-000-DATA-subscription-versioncontrolid.md": [
+          "issue/issue_建立独立计费订阅组及排序语义.md",
+          "issue/issue_恢复KimiWork已验证的浏览器额度路径.md"
+        ],
+        "issue/issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md": [
+          "issue/issue_拖拽排序Provider与订阅组并联动状态.md",
+          "issue/issue_在菜单打开期间实时更新Dropdown内容.md",
+          "issue/issue_在计划头部显示订阅最后有效日期.md"
+        ],
+        "issue/issue-0.3.0-FE-A-000-FE-provider-refresh-versioncontrolid.md": [
+          "issue/issue_按Provider流式刷新并原位替换加载占位.md",
+          "issue/issue_订阅组重排后立即更新菜单栏与状态灯.md"
+        ],
+        "issue/issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md": [
+          "issue/issue_提供Provider开关与刷新等偏好配置.md",
+          "issue/issue_支持手动添加与移除Provider.md",
+          "issue/issue_监控Provider服务事故状态.md",
+          "issue/issue_提供WidgetKit桌面小组件.md",
+          "issue/issue_提供quotabar状态命令行工具.md"
+        ],
+        "issue/issue-migration-1813617627ae-SEC-provider-zcode-versioncontrolid.md": [
+          "issue/issue_核对ZCode与千问的本地安装及接入前提.md"
+        ],
+        "issue/issue-0.4.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md": [
+          "issue/issue_调研智谱ZCode套餐与额度接入.md"
+        ],
+        "issue/issue-0.4.0-DATA-B-001-DATA-desktop-app-versioncontrolid.md": [
+          "issue/issue_确认千问安装位置并接入桌面Provider.md"
+        ],
+        "issue/issue-0.4.0-DATA-C-000-DATA-provider-versioncontrolid.md": [
+          "issue/issue_文档化新Provider接入流程.md"
+        ],
+        "issue/issue-0.4.0-QA-A-001-QA-provider-acceptance-versioncontrolid.md": [
+          "issue/issue_核对ZCode接入的额度与状态展示.md",
+          "issue/issue_核对千问Provider接入结果.md"
+        ],
+        "issue/issue-0.4.0-UI-B-000-UI-subscription-versioncontrolid.md": [
+          "issue/issue_按可用订阅组的真实剩余额度统计订阅数.md"
+        ],
+        "issue/issue-0.4.0-DATA-A-001-test-DATA-release-versioncontrolid.md": [
+          "issue/issue_明确发布自动化与质量门槛的任务边界.md"
+        ],
+        "issue/issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md": [
+          "issue/issue_自动发布macOS应用并构建官网.md",
+          "issue/issue_在PR合并前自动编译验证.md"
+        ],
+        "issue/issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md": [
+          "issue/issue_清理既有Swift未使用变量警告.md",
+          "issue/issue_统一应用与官网的开发命令入口.md",
+          "issue/issue_在根忽略规则中排除站点生成目录.md",
+          "issue/issue_建立QuotaBar单元测试目标.md"
+        ],
+        "issue/issue-0.5.0-DOC-A-000-DOC-documentation-versioncontrolid.md": [
+          "issue/issue_在README快速开始中补充官网开发入口.md"
+        ],
+        "issue/issue-migration-8065bbb47a9d-QA-subscription-headless-versioncontrolid.md": [
+          "issue/issue_以真实订阅来源替代额度重置时间推断到期日.md"
+        ],
+        "issue/issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md": [
+          "issue/issue_建立订阅日期抓取协议与Headless加载器.md",
+          "issue/issue_禁止以额度重置时间推断订阅到期日.md"
+        ],
+        "issue/issue-0.6.0-DATA-A-000-DATA-kimi-subscription-versioncontrolid.md": [
+          "issue/issue_区分Kimi订阅续费日与额度窗口重置时间.md"
+        ],
+        "issue/issue-0.6.0-DATA-B-000-DATA-codex-subscription-versioncontrolid.md": [
+          "issue/issue_抓取Codex真实订阅到期日.md"
+        ],
+        "issue/issue-0.6.0-DATA-C-000-DATA-claude-subscription-versioncontrolid.md": [
+          "issue/issue_抓取Claude真实订阅到期日.md"
+        ],
+        "issue/issue-0.6.0-DATA-D-000-DATA-cursor-subscription-versioncontrolid.md": [
+          "issue/issue_抓取Cursor真实订阅到期日.md"
+        ],
+        "issue/issue-0.6.0-DATA-E-000-DATA-minimax-subscription-versioncontrolid.md": [
+          "issue/issue_抓取MiniMax真实订阅到期日.md"
+        ],
+        "issue/issue-0.6.0-DATA-F-000-DATA-antigravity-subscription-versioncontrolid.md": [
+          "issue/issue_抓取Antigravity真实订阅到期日.md"
+        ],
+        "issue/issue-0.6.0-UI-A-000-UI-subscription-rules-versioncontrolid.md": [
+          "issue/issue_隐藏未知订阅日期并提供精确日期提示.md"
+        ],
+        "issue/issue-migration-fe17d65c8460-PM-glm-provider-feat-versioncontrolid.md": [
+          "issue/issue_明确将ZCode调研结果转为正式Provider接入的范围.md"
+        ],
+        "issue/issue-0.7.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md": [
+          "issue/issue_接入智谱ZCode套餐与额度获取.md"
+        ],
+        "issue/issue-0.7.0-FE-A-000-FE-code-menu-state-versioncontrolid.md": [
+          "issue/issue_为ZCode展示菜单栏bar与品牌状态灯.md"
+        ],
+        "issue/issue-0.7.0-DOC-A-000-DOC-code-documentation-versioncontrolid.md": [
+          "issue/issue_在README说明ZCode套餐与安装路径.md"
+        ],
+        "issue/issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md": [
+          "issue/issue_同步协作模板与需求标题规范.md",
+          "issue/issue_将macOS交付目录迁移为macos.md",
+          "issue/issue_将营销主页目录迁移为site.md",
+          "issue/issue_调整main与其他工作副本的容器布局.md"
+        ],
+        "issue/issue-0.1.0-PM-A-000-PM-landing-scope-versioncontrolid.md": [
+          "issue/issue_确定官网技术方案与首屏卖点.md"
+        ],
+        "issue/issue-0.1.0-FE-A-000-FE-astro-versioncontrolid.md": [
+          "issue/issue_建立Astro静态官网骨架.md"
+        ],
+        "issue/issue-migration-331bbfea42d3-UI-landing-design-tokens-layout-versioncontrolid.md": [
+          "issue/issue_建立官网DesignTokens与通用布局.md"
+        ],
+        "issue/issue-migration-3e0fea30f1dd-UI-landing-versioncontrolid.md": [
+          "issue/issue_用CSS与HTML展示菜单栏及额度面板.md",
+          "issue/issue_实现官网导航与产品介绍区块.md"
+        ],
+        "issue/issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md": [
+          "issue/issue_按产品介绍顺序组装官网首页.md",
+          "issue/issue_通过GitHubRelease解析统一下载入口.md"
+        ],
+        "issue/issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md": [
+          "issue/issue_适配官网移动端与响应式布局.md",
+          "issue/issue_提供官网无障碍语义与减少动效支持.md"
+        ],
+        "issue/issue-0.1.0-DOC-A-000-DOC-sync-landing-project-documentation-versioncontrolid.md": [
+          "issue/issue_同步官网子项目文档与根目录索引.md"
+        ],
+        "issue/issue-0.1.0-QA-A-000-QA-landing-acceptance-versioncontrolid.md": [
+          "issue/issue_核对官网首版构建与部署交付.md"
+        ],
+        "issue/issue-migration-2ccfda47ccb4-UI-landing-visual-versioncontrolid.md": [
+          "issue/issue_以真实截图和品牌素材替换官网视觉占位.md"
+        ],
+        "issue/issue-migration-68a147730638-FE-seo-languages-versioncontrolid.md": [
+          "issue/issue_为官网提供站点地图与结构化数据.md",
+          "issue/issue_为QuotaBar介绍站提供中英双语切换.md"
+        ]
+      },
+      "original_issue_records": [
+        {
+          "id": "0.0.0-DOC-A-000",
+          "type": "DOC",
+          "file": "issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md",
+          "title": "sub/main: 建立项目协作基础",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.0.0-DOC-A-000",
+            "0.0.0-DOC-A-001",
+            "0.0.0-DOC-A-002",
+            "0.0.0-DOC-A-003",
+            "0.0.0-DOC-A-004",
+            "0.0.0-DOC-A-005"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.1.0-UI-A-004",
+          "type": "UI",
+          "file": "issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md",
+          "title": "sub/main: 打磨 macOS 26 风格下拉面板",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-UI-A-000",
+            "0.1.0-UI-A-001",
+            "0.1.0-UI-A-002",
+            "0.1.0-UI-A-003",
+            "0.1.0-UI-A-004",
+            "0.1.0-UI-A-005",
+            "0.1.0-UI-A-006",
+            "0.1.0-UI-A-007",
+            "0.1.0-UI-A-008",
+            "0.1.0-UI-A-009",
+            "0.1.0-UI-A-010"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "migration-dbe5fd0c2f62",
+          "type": "UI",
+          "file": "issue-migration-dbe5fd0c2f62-UI-macos-native-menu-versioncontrolid.md",
+          "title": "sub/main: 切换为传统 macOS 原生菜单",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-UI-B-000",
+            "0.1.0-UI-B-001",
+            "0.1.0-UI-B-002",
+            "0.1.0-UI-B-003",
+            "0.1.0-UI-B-004",
+            "0.1.0-UI-B-005",
+            "0.1.0-UI-B-006",
+            "0.1.0-UI-B-007",
+            "0.1.0-UI-B-008",
+            "0.1.0-UI-B-009"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "migration-e033f2eb8b83",
+          "type": "QA",
+          "file": "issue-migration-e033f2eb8b83-QA-dropdown-visual-acceptance-versioncontrolid.md",
+          "title": "sub/main: 完成 Dropdown 视觉原型验收",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-QA-A-001",
+            "0.1.0-QA-A-002"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "migration-380a479e8fcc",
+          "type": "PM",
+          "file": "issue-migration-380a479e8fcc-PM-quota-bar-versioncontrolid.md",
+          "title": "Phase - v0.2.0 - Quota Bar 核心功能",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [],
+          "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+        },
+        {
+          "id": "0.2.0-DATA-A-000",
+          "type": "DATA",
+          "file": "issue-0.2.0-DATA-A-000-DATA-local-ai-service-versioncontrolid.md",
+          "title": "sub/main: 自动探测本地 AI 服务",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.2.0-DATA-A-000",
+            "0.2.0-DATA-A-001",
+            "0.2.0-DATA-A-002",
+            "0.2.0-DATA-A-003",
+            "0.2.0-DATA-A-004",
+            "0.2.0-DATA-A-005"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.2.0-DATA-B-000",
+          "type": "DATA",
+          "file": "issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md",
+          "title": "sub/main: 获取真实订阅与额度数据",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.2.0-DATA-B-000",
+            "0.2.0-DATA-B-001",
+            "0.2.0-DATA-B-002",
+            "0.2.0-DATA-B-003",
+            "0.2.0-DATA-B-004",
+            "0.2.0-DATA-B-005",
+            "0.2.0-DATA-B-009",
+            "0.2.0-DATA-B-010",
+            "0.2.0-DATA-B-011",
+            "0.2.0-DATA-B-012",
+            "0.2.0-DATA-B-013",
+            "0.2.0-DATA-B-006",
+            "0.2.0-DATA-B-007",
+            "0.2.0-DATA-B-008",
+            "0.2.0-DATA-B-014",
+            "0.2.0-DATA-B-015",
+            "0.2.0-DATA-B-016",
+            "0.2.0-DATA-B-017",
+            "0.2.0-DATA-B-018",
+            "0.2.0-DATA-B-019",
+            "0.2.0-DATA-B-020",
+            "0.2.0-DATA-B-021"
+          ],
+          "state": "进行中（原文同时包含已完成与未完成项）"
+        },
+        {
+          "id": "0.2.0-FE-A-003",
+          "type": "FE",
+          "file": "issue-0.2.0-FE-A-003-FE-quota-refresh-versioncontrolid.md",
+          "title": "sub/main: 提供额度刷新机制",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.2.0-FE-A-000",
+            "0.2.0-FE-A-001",
+            "0.2.0-FE-A-002",
+            "0.2.0-FE-A-003",
+            "0.2.0-FE-A-004",
+            "0.2.0-FE-A-005",
+            "0.2.0-FE-A-006",
+            "0.2.0-FE-A-007",
+            "0.2.0-FE-A-008",
+            "0.2.0-FE-A-009"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.2.0-UI-A-003",
+          "type": "UI",
+          "file": "issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md",
+          "title": "sub/main: 动态展示真实额度数据",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.2.0-UI-A-000",
+            "0.2.0-UI-A-001",
+            "0.2.0-UI-A-002",
+            "0.2.0-UI-A-003",
+            "0.2.0-UI-A-004",
+            "0.2.0-UI-A-005",
+            "0.2.0-UI-A-006",
+            "0.2.0-UI-A-007",
+            "0.2.0-UI-A-008",
+            "0.2.0-UI-A-009"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.2.0-QA-A-001",
+          "type": "QA",
+          "file": "issue-0.2.0-QA-A-001-QA-acceptance-versioncontrolid.md",
+          "title": "sub/main: 完成核心功能验收",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.2.0-QA-A-001",
+            "0.2.0-QA-A-002",
+            "0.2.0-QA-A-003",
+            "0.2.0-QA-A-004",
+            "0.2.0-QA-A-005",
+            "0.2.0-QA-A-006",
+            "0.2.0-QA-A-007"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "migration-b7fdab420084",
+          "type": "FE",
+          "file": "issue-migration-b7fdab420084-FE-ui-subscription-dropdown-refresh-versioncontrolid.md",
+          "title": "Phase - v0.3.0 - UI 拖拽、订阅组语义与 dropdown 实时刷新",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [],
+          "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+        },
+        {
+          "id": "0.3.0-DATA-A-000",
+          "type": "DATA",
+          "file": "issue-0.3.0-DATA-A-000-DATA-subscription-versioncontrolid.md",
+          "title": "sub/main: 建立订阅组语义",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.3.0-DATA-A-000",
+            "0.3.0-DATA-A-001",
+            "0.3.0-DATA-A-002",
+            "String",
+            "0.3.0-DATA-A-003",
+            "0.3.0-DATA-A-004",
+            "0.3.0-DATA-A-005"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.3.0-UI-A-000",
+          "type": "UI",
+          "file": "issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md",
+          "title": "sub/main: 支持订阅组拖拽排序与状态联动",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.3.0-UI-A-000",
+            "0.3.0-UI-A-001",
+            "0.3.0-UI-A-002",
+            "0.3.0-UI-A-003",
+            "0.3.0-UI-A-004",
+            "0.3.0-UI-A-005",
+            "0.3.0-UI-A-006",
+            "0.3.0-UI-A-007",
+            "0.3.0-UI-A-009",
+            "0.3.0-UI-A-010"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.3.0-FE-A-000",
+          "type": "FE",
+          "file": "issue-0.3.0-FE-A-000-FE-provider-refresh-versioncontrolid.md",
+          "title": "sub/main: 支持 Provider 增量刷新",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.3.0-FE-A-000",
+            "0.3.0-FE-A-001",
+            "0.3.0-FE-A-002",
+            "0.3.0-FE-A-003",
+            "0.3.0-FE-A-004",
+            "0.3.0-FE-A-005",
+            "0.3.0-FE-A-006",
+            "0.3.0-UI-A-008"
+          ],
+          "state": "进行中（原文同时包含已完成与未完成项）"
+        },
+        {
+          "id": "0.3.0-PM-A-000",
+          "type": "PM",
+          "file": "issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md",
+          "title": "sub/main: 规划偏好设置与后续能力",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.3.0-PM-A-000",
+            "0.3.0-PM-A-001",
+            "0.3.0-PM-A-002",
+            "0.3.0-PM-A-003",
+            "0.3.0-PM-A-004",
+            "0.3.0-PM-A-005",
+            "0.3.0-PM-A-006"
+          ],
+          "state": "待定 / 延后（沿用原需求记录）"
+        },
+        {
+          "id": "migration-1813617627ae",
+          "type": "SEC",
+          "file": "issue-migration-1813617627ae-SEC-provider-zcode-versioncontrolid.md",
+          "title": "Phase - v0.4.0 - 新 Provider 接入（zcode / 千问 / 其他）",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [],
+          "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+        },
+        {
+          "id": "0.4.0-DATA-A-000",
+          "type": "DATA",
+          "file": "issue-0.4.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md",
+          "title": "feat/glm-provider: 调研智谱 BigModel Z Code Provider",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.4.0-DATA-A-000",
+            "0.4.0-DATA-A-001",
+            "QuotaWindow",
+            "0.4.0-DATA-A-002",
+            "0.4.0-DATA-A-003",
+            "0.4.0-DATA-A-004"
+          ],
+          "state": "待处理（原文未完成项保持未勾选）"
+        },
+        {
+          "id": "0.4.0-DATA-B-001",
+          "type": "DATA",
+          "file": "issue-0.4.0-DATA-B-001-DATA-desktop-app-versioncontrolid.md",
+          "title": "sub/main: 调研阿里通义千问桌面 App",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.4.0-DATA-B-000",
+            "0.4.0-DATA-B-001",
+            "0.4.0-DATA-B-002",
+            "0.4.0-DATA-B-003"
+          ],
+          "state": "阻塞（沿用原需求记录）"
+        },
+        {
+          "id": "0.4.0-DATA-C-000",
+          "type": "DATA",
+          "file": "issue-0.4.0-DATA-C-000-DATA-provider-versioncontrolid.md",
+          "title": "sub/main: 沉淀新 Provider 接入流程",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.4.0-DATA-C-000"
+          ],
+          "state": "待处理（原文未完成项保持未勾选）"
+        },
+        {
+          "id": "0.4.0-QA-A-001",
+          "type": "QA",
+          "file": "issue-0.4.0-QA-A-001-QA-provider-acceptance-versioncontrolid.md",
+          "title": "sub/main: 完成新 Provider 接入验收",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.4.0-QA-A-001",
+            "0.4.0-QA-A-002",
+            "0.4.0-DATA-B-000",
+            "0.4.0-QA-A-003",
+            "0.4.0-QA-A-004"
+          ],
+          "state": "阻塞（沿用原需求记录）"
+        },
+        {
+          "id": "0.4.0-UI-B-000",
+          "type": "UI",
+          "file": "issue-0.4.0-UI-B-000-UI-subscription-versioncontrolid.md",
+          "title": "sub/main: 修正可用订阅计数语义",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.4.0-UI-B-000",
+            "0.4.0-UI-B-001"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.4.0-DATA-A-001-test",
+          "type": "DATA",
+          "file": "issue-0.4.0-DATA-A-001-test-DATA-release-versioncontrolid.md",
+          "title": "Phase - v0.5.0 - 发布自动化与工程卫生",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.4.0-DATA-A-001-test"
+          ],
+          "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+        },
+        {
+          "id": "0.5.0-CI-A-000",
+          "type": "CI",
+          "file": "issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md",
+          "title": "sub/main: 提供发布自动化与 PR 验证",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.5.0-CI-A-000",
+            "0.5.0-CI-A-001",
+            "0.5.0-CI-A-002"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.5.0-ENG-A-000",
+          "type": "PM",
+          "file": "issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md",
+          "title": "sub/main: 提供统一开发入口与测试基建",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.5.0-ENG-A-000",
+            "0.5.0-ENG-A-001",
+            "0.5.0-ENG-A-002",
+            "0.5.0-ENG-A-003"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.5.0-DOC-A-000",
+          "type": "DOC",
+          "file": "issue-0.5.0-DOC-A-000-DOC-documentation-versioncontrolid.md",
+          "title": "sub/main: 完善用户可见文档入口",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.5.0-DOC-A-000"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "migration-8065bbb47a9d",
+          "type": "QA",
+          "file": "issue-migration-8065bbb47a9d-QA-subscription-headless-versioncontrolid.md",
+          "title": "Phase - v0.6.0 - 真实订阅到期日（headless 抓取订阅页）",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [],
+          "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+        },
+        {
+          "id": "0.6.0-ARCH-A-000",
+          "type": "ARCH",
+          "file": "issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md",
+          "title": "feat/subscription-expiry: 建立订阅日期抓取基础架构",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.6.0-ARCH-A-000",
+            "0.6.0-ARCH-A-001",
+            "0.6.0-ARCH-A-002",
+            "0.6.0-ARCH-A-003",
+            "0.6.0-ARCH-A-003-test",
+            "0.6.0-ARCH-A-001-test"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.6.0-DATA-A-000",
+          "type": "DATA",
+          "file": "issue-0.6.0-DATA-A-000-DATA-kimi-subscription-versioncontrolid.md",
+          "title": "feat/subscription-expiry: 接入 Kimi 真实订阅到期日",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.6.0-DATA-A-000",
+            "0.6.0-DATA-A-001",
+            "0.6.0-DATA-A-002",
+            "0.6.0-DATA-A-002-test"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.6.0-DATA-B-000",
+          "type": "DATA",
+          "file": "issue-0.6.0-DATA-B-000-DATA-codex-subscription-versioncontrolid.md",
+          "title": "feat/subscription-expiry: 接入 Codex 真实订阅到期日",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.6.0-DATA-B-000",
+            "0.6.0-DATA-B-001",
+            "0.6.0-DATA-B-001-test"
+          ],
+          "state": "待处理（原文未完成项保持未勾选）"
+        },
+        {
+          "id": "0.6.0-DATA-C-000",
+          "type": "DATA",
+          "file": "issue-0.6.0-DATA-C-000-DATA-claude-subscription-versioncontrolid.md",
+          "title": "feat/subscription-expiry: 接入 Claude 真实订阅到期日",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.6.0-DATA-C-000",
+            "0.6.0-DATA-C-001",
+            "0.6.0-DATA-C-001-test"
+          ],
+          "state": "待处理（原文未完成项保持未勾选）"
+        },
+        {
+          "id": "0.6.0-DATA-D-000",
+          "type": "DATA",
+          "file": "issue-0.6.0-DATA-D-000-DATA-cursor-subscription-versioncontrolid.md",
+          "title": "feat/subscription-expiry: 接入 Cursor 真实订阅到期日",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.6.0-DATA-D-000",
+            "0.6.0-DATA-D-001",
+            "0.6.0-DATA-D-001-test"
+          ],
+          "state": "待处理（原文未完成项保持未勾选）"
+        },
+        {
+          "id": "0.6.0-DATA-E-000",
+          "type": "DATA",
+          "file": "issue-0.6.0-DATA-E-000-DATA-minimax-subscription-versioncontrolid.md",
+          "title": "feat/subscription-expiry: 接入 MiniMax 真实订阅到期日",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.6.0-DATA-E-000",
+            "0.6.0-DATA-E-001",
+            "0.6.0-DATA-E-001-test"
+          ],
+          "state": "待处理（原文未完成项保持未勾选）"
+        },
+        {
+          "id": "0.6.0-DATA-F-000",
+          "type": "DATA",
+          "file": "issue-0.6.0-DATA-F-000-DATA-antigravity-subscription-versioncontrolid.md",
+          "title": "feat/subscription-expiry: 接入 Antigravity 真实订阅到期日",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.6.0-DATA-F-000",
+            "0.6.0-DATA-F-001",
+            "0.6.0-DATA-F-001-test"
+          ],
+          "state": "待处理（原文未完成项保持未勾选）"
+        },
+        {
+          "id": "0.6.0-UI-A-000",
+          "type": "UI",
+          "file": "issue-0.6.0-UI-A-000-UI-subscription-rules-versioncontrolid.md",
+          "title": "feat/subscription-expiry: 调整订阅到期日展示规则",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.6.0-UI-A-000",
+            "0.6.0-UI-A-001"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "migration-fe17d65c8460",
+          "type": "PM",
+          "file": "issue-migration-fe17d65c8460-PM-glm-provider-feat-versioncontrolid.md",
+          "title": "Phase - v0.7.0 - 智谱 GLM Provider 接入（feat/glm-provider）",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [],
+          "state": "已确认约束 / 状态待核对（原文未单列完成状态）"
+        },
+        {
+          "id": "0.7.0-DATA-A-000",
+          "type": "DATA",
+          "file": "issue-0.7.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md",
+          "title": "feat/glm-provider: 调研智谱 BigModel Z Code Provider 接入",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.7.0-DATA-A-000",
+            "0.7.0-DATA-A-001",
+            "QuotaWindow",
+            "0.7.0-DATA-A-002",
+            "0.7.0-DATA-A-003",
+            "0.7.0-DATA-A-004",
+            "0.7.0-DATA-A-005"
+          ],
+          "state": "待处理（原文未完成项保持未勾选）"
+        },
+        {
+          "id": "0.7.0-FE-A-000",
+          "type": "FE",
+          "file": "issue-0.7.0-FE-A-000-FE-code-menu-state-versioncontrolid.md",
+          "title": "feat/glm-provider: 集成 Z Code 菜单栏状态",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.7.0-FE-A-000",
+            "0.7.0-FE-A-001"
+          ],
+          "state": "待处理（原文未完成项保持未勾选）"
+        },
+        {
+          "id": "0.7.0-DOC-A-000",
+          "type": "DOC",
+          "file": "issue-0.7.0-DOC-A-000-DOC-code-documentation-versioncontrolid.md",
+          "title": "feat/glm-provider: 更新 Z Code 用户可见文档",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.7.0-DOC-A-000"
+          ],
+          "state": "待处理（原文未完成项保持未勾选）"
+        },
+        {
+          "id": "0.8.0-DOC-A-000",
+          "type": "DOC",
+          "file": "issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md",
+          "title": "sub/main: 按交付物职责重命名顶层目录",
+          "source": "REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.8.0-DOC-A-000",
+            "0.8.0-DOC-A-001",
+            "0.8.0-DOC-A-002",
+            "0.8.0-DOC-A-003",
+            "0.8.0-DOC-A-004",
+            "0.8.0-DOC-A-005",
+            "0.8.0-DOC-A-006",
+            "0.8.0-DOC-A-007",
+            "0.8.0-DOC-A-008",
+            "0.8.0-DOC-A-010",
+            "0.8.0-DOC-A-009",
+            "0.8.0-DOC-A-011"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.1.0-PM-A-000",
+          "type": "PM",
+          "file": "issue-0.1.0-PM-A-000-PM-landing-scope-versioncontrolid.md",
+          "title": "website/main: 定义主页范围与信息架构",
+          "source": "site/REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-PM-A-000",
+            "0.1.0-PM-A-001",
+            "0.1.0-PM-A-002",
+            "0.1.0-PM-A-003",
+            "0.1.0-PM-A-004"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.1.0-FE-A-000",
+          "type": "FE",
+          "file": "issue-0.1.0-FE-A-000-FE-astro-versioncontrolid.md",
+          "title": "website/main: 建立 Astro 站点骨架",
+          "source": "site/REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-FE-A-000",
+            "0.1.0-FE-A-001",
+            "0.1.0-FE-A-002",
+            "0.1.0-FE-A-003",
+            "0.1.0-FE-A-004",
+            "0.1.0-FE-A-005"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "migration-331bbfea42d3",
+          "type": "UI",
+          "file": "issue-migration-331bbfea42d3-UI-landing-design-tokens-layout-versioncontrolid.md",
+          "title": "website/main: 建立主页 Design Tokens 与布局",
+          "source": "site/REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-UI-A-000",
+            "0.1.0-UI-A-001",
+            "0.1.0-UI-A-002",
+            "0.1.0-UI-A-003"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "migration-3e0fea30f1dd",
+          "type": "UI",
+          "file": "issue-migration-3e0fea30f1dd-UI-landing-versioncontrolid.md",
+          "title": "website/main: 实现主页核心组件",
+          "source": "site/REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-UI-B-000",
+            "0.1.0-UI-B-001",
+            "0.1.0-UI-B-002",
+            "0.1.0-UI-B-003",
+            "0.1.0-UI-B-004",
+            "0.1.0-UI-B-005",
+            "0.1.0-UI-B-006",
+            "0.1.0-UI-B-007",
+            "0.1.0-UI-B-008",
+            "0.1.0-UI-B-009"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.1.0-FE-B-000",
+          "type": "FE",
+          "file": "issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md",
+          "title": "website/main: 组装主页并接入下载链接",
+          "source": "site/REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-FE-B-000",
+            "0.1.0-FE-B-001",
+            "0.1.0-FE-B-002"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.1.0-UI-C-000",
+          "type": "UI",
+          "file": "issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md",
+          "title": "website/main: 完成响应式与可访问性",
+          "source": "site/REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-UI-C-000",
+            "0.1.0-UI-C-001",
+            "0.1.0-UI-C-002",
+            "0.1.0-UI-C-003",
+            "0.1.0-UI-C-004"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.1.0-DOC-A-000",
+          "type": "DOC",
+          "file": "issue-0.1.0-DOC-A-000-DOC-sync-landing-project-documentation-versioncontrolid.md",
+          "title": "website/main: 同步主页子项目文档",
+          "source": "site/REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-DOC-A-000",
+            "0.1.0-DOC-A-001",
+            "0.1.0-DOC-A-002",
+            "0.1.0-DOC-A-003",
+            "0.1.0-DOC-A-004",
+            "0.1.0-DOC-A-005",
+            "0.1.0-DOC-A-006"
+          ],
+          "state": "已完成（沿用原需求记录；本轮未重新执行产品验收）"
+        },
+        {
+          "id": "0.1.0-QA-A-000",
+          "type": "QA",
+          "file": "issue-0.1.0-QA-A-000-QA-landing-acceptance-versioncontrolid.md",
+          "title": "website/main: 完成主页首版验收",
+          "source": "site/REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.1.0-QA-A-000",
+            "0.1.0-QA-A-001",
+            "0.1.0-QA-A-002",
+            "0.1.0-QA-A-003",
+            "0.1.0-QA-A-004"
+          ],
+          "state": "进行中（原文同时包含已完成与未完成项）"
+        },
+        {
+          "id": "migration-2ccfda47ccb4",
+          "type": "UI",
+          "file": "issue-migration-2ccfda47ccb4-UI-landing-visual-versioncontrolid.md",
+          "title": "website/main: 升级主页真实视觉素材",
+          "source": "site/REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.2.0-UI-A-000",
+            "0.2.0-UI-A-001",
+            "0.2.0-UI-A-002"
+          ],
+          "state": "待定 / 延后（沿用原需求记录）"
+        },
+        {
+          "id": "migration-68a147730638",
+          "type": "FE",
+          "file": "issue-migration-68a147730638-FE-seo-languages-versioncontrolid.md",
+          "title": "website/main: 增强站点 SEO 与多语言能力",
+          "source": "site/REQUIREMENTS.md",
+          "legacy_ids": [
+            "0.2.0-FE-A-000",
+            "0.2.0-FE-A-001",
+            "0.2.0-FE-A-002"
+          ],
+          "state": "待定 / 延后（沿用原需求记录）"
+        }
+      ],
+      "implementation_versions": "unverified; no HEAD, snapshot or migration commit substituted"
+    }
+  ],
+  "current_files_by_previous_file": {
+    "issue/issue-0.0.0-DOC-A-000-DOC-project-collaboration-foundation-versioncontrolid.md": [
+      "issue/issue_建立项目协作基础.md"
+    ],
+    "issue/issue-0.1.0-UI-A-004-UI-macos-panel-versioncontrolid.md": [
+      "issue/issue_打磨macOS26风格下拉面板.md",
+      "issue/issue_启动后仅显示菜单栏图标并按点击打开面板.md"
+    ],
+    "issue/issue-migration-dbe5fd0c2f62-UI-macos-native-menu-versioncontrolid.md": [
+      "issue/issue_将下拉面板切换为macOS原生菜单.md"
+    ],
+    "issue/issue-migration-e033f2eb8b83-QA-dropdown-visual-acceptance-versioncontrolid.md": [
+      "issue/issue_核对Dropdown视觉原型交付.md"
+    ],
+    "issue/issue-migration-380a479e8fcc-PM-quota-bar-versioncontrolid.md": [
+      "issue/issue_将静态界面升级为真实AI订阅额度展示.md"
+    ],
+    "issue/issue-0.2.0-DATA-A-000-DATA-local-ai-service-versioncontrolid.md": [
+      "issue/issue_自动探测本地AI服务及认证状态.md"
+    ],
+    "issue/issue-0.2.0-DATA-B-000-DATA-subscription-quota-data-versioncontrolid.md": [
+      "issue/issue_建立真实订阅额度的多来源获取与失败降级.md",
+      "issue/issue_仅按真实订阅档位映射价格.md",
+      "issue/issue_按系统地区换算订阅价格币种.md",
+      "issue/issue_通过OAuth与Web接口获取Kimi额度.md",
+      "issue/issue_展示已安装但尚未接入Dashboard的应用.md",
+      "issue/issue_接入Claude组织与usage接口解析额度.md",
+      "issue/issue_由Antigravity接替Gemini主动额度采集.md",
+      "issue/issue_支持选择Cookie来源浏览器.md",
+      "issue/issue_通过Web接口获取MiniMax额度与套餐费用.md",
+      "issue/issue_通过本地服务获取Antigravity额度.md",
+      "issue/issue_支持同一服务的多身份订阅.md",
+      "issue/issue_凭证缺失时继续尝试后续额度来源.md",
+      "issue/issue_调研TraeWork独立Provider接入.md"
+    ],
+    "issue/issue-0.2.0-FE-A-003-FE-quota-refresh-versioncontrolid.md": [
+      "issue/issue_提供手动与自动额度刷新.md",
+      "issue/issue_按真实订阅额度绘制菜单栏多bar图标.md"
+    ],
+    "issue/issue-0.2.0-UI-A-003-UI-quota-data-versioncontrolid.md": [
+      "issue/issue_以真实额度驱动面板并展示加载与失败状态.md",
+      "issue/issue_统一额度日期与紧凑倒计时文案.md",
+      "issue/issue_区分Provider品牌色与额度健康色.md"
+    ],
+    "issue/issue-0.2.0-QA-A-001-QA-acceptance-versioncontrolid.md": [
+      "issue/issue_核对真实额度核心功能的交付与隐私边界.md"
+    ],
+    "issue/issue-migration-b7fdab420084-FE-ui-subscription-dropdown-refresh-versioncontrolid.md": [
+      "issue/issue_明确订阅组排序与面板流式刷新的范围.md"
+    ],
+    "issue/issue-0.3.0-DATA-A-000-DATA-subscription-versioncontrolid.md": [
+      "issue/issue_建立独立计费订阅组及排序语义.md",
+      "issue/issue_恢复KimiWork已验证的浏览器额度路径.md"
+    ],
+    "issue/issue-0.3.0-UI-A-000-UI-subscription-sorting-state-versioncontrolid.md": [
+      "issue/issue_拖拽排序Provider与订阅组并联动状态.md",
+      "issue/issue_在菜单打开期间实时更新Dropdown内容.md",
+      "issue/issue_在计划头部显示订阅最后有效日期.md"
+    ],
+    "issue/issue-0.3.0-FE-A-000-FE-provider-refresh-versioncontrolid.md": [
+      "issue/issue_按Provider流式刷新并原位替换加载占位.md",
+      "issue/issue_订阅组重排后立即更新菜单栏与状态灯.md"
+    ],
+    "issue/issue-0.3.0-PM-A-000-PM-project-goal-versioncontrolid.md": [
+      "issue/issue_提供Provider开关与刷新等偏好配置.md",
+      "issue/issue_支持手动添加与移除Provider.md",
+      "issue/issue_监控Provider服务事故状态.md",
+      "issue/issue_提供WidgetKit桌面小组件.md",
+      "issue/issue_提供quotabar状态命令行工具.md"
+    ],
+    "issue/issue-migration-1813617627ae-SEC-provider-zcode-versioncontrolid.md": [
+      "issue/issue_核对ZCode与千问的本地安装及接入前提.md"
+    ],
+    "issue/issue-0.4.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md": [
+      "issue/issue_调研智谱ZCode套餐与额度接入.md"
+    ],
+    "issue/issue-0.4.0-DATA-B-001-DATA-desktop-app-versioncontrolid.md": [
+      "issue/issue_确认千问安装位置并接入桌面Provider.md"
+    ],
+    "issue/issue-0.4.0-DATA-C-000-DATA-provider-versioncontrolid.md": [
+      "issue/issue_文档化新Provider接入流程.md"
+    ],
+    "issue/issue-0.4.0-QA-A-001-QA-provider-acceptance-versioncontrolid.md": [
+      "issue/issue_核对ZCode接入的额度与状态展示.md",
+      "issue/issue_核对千问Provider接入结果.md"
+    ],
+    "issue/issue-0.4.0-UI-B-000-UI-subscription-versioncontrolid.md": [
+      "issue/issue_按可用订阅组的真实剩余额度统计订阅数.md"
+    ],
+    "issue/issue-0.4.0-DATA-A-001-test-DATA-release-versioncontrolid.md": [
+      "issue/issue_明确发布自动化与质量门槛的任务边界.md"
+    ],
+    "issue/issue-0.5.0-CI-A-000-CI-release-pr-verification-versioncontrolid.md": [
+      "issue/issue_自动发布macOS应用并构建官网.md",
+      "issue/issue_在PR合并前自动编译验证.md"
+    ],
+    "issue/issue-0.5.0-ENG-A-000-PM-tests-versioncontrolid.md": [
+      "issue/issue_清理既有Swift未使用变量警告.md",
+      "issue/issue_统一应用与官网的开发命令入口.md",
+      "issue/issue_在根忽略规则中排除站点生成目录.md",
+      "issue/issue_建立QuotaBar单元测试目标.md"
+    ],
+    "issue/issue-0.5.0-DOC-A-000-DOC-documentation-versioncontrolid.md": [
+      "issue/issue_在README快速开始中补充官网开发入口.md"
+    ],
+    "issue/issue-migration-8065bbb47a9d-QA-subscription-headless-versioncontrolid.md": [
+      "issue/issue_以真实订阅来源替代额度重置时间推断到期日.md"
+    ],
+    "issue/issue-0.6.0-ARCH-A-000-ARCH-subscription-foundation-versioncontrolid.md": [
+      "issue/issue_建立订阅日期抓取协议与Headless加载器.md",
+      "issue/issue_禁止以额度重置时间推断订阅到期日.md"
+    ],
+    "issue/issue-0.6.0-DATA-A-000-DATA-kimi-subscription-versioncontrolid.md": [
+      "issue/issue_区分Kimi订阅续费日与额度窗口重置时间.md"
+    ],
+    "issue/issue-0.6.0-DATA-B-000-DATA-codex-subscription-versioncontrolid.md": [
+      "issue/issue_抓取Codex真实订阅到期日.md"
+    ],
+    "issue/issue-0.6.0-DATA-C-000-DATA-claude-subscription-versioncontrolid.md": [
+      "issue/issue_抓取Claude真实订阅到期日.md"
+    ],
+    "issue/issue-0.6.0-DATA-D-000-DATA-cursor-subscription-versioncontrolid.md": [
+      "issue/issue_抓取Cursor真实订阅到期日.md"
+    ],
+    "issue/issue-0.6.0-DATA-E-000-DATA-minimax-subscription-versioncontrolid.md": [
+      "issue/issue_抓取MiniMax真实订阅到期日.md"
+    ],
+    "issue/issue-0.6.0-DATA-F-000-DATA-antigravity-subscription-versioncontrolid.md": [
+      "issue/issue_抓取Antigravity真实订阅到期日.md"
+    ],
+    "issue/issue-0.6.0-UI-A-000-UI-subscription-rules-versioncontrolid.md": [
+      "issue/issue_隐藏未知订阅日期并提供精确日期提示.md"
+    ],
+    "issue/issue-migration-fe17d65c8460-PM-glm-provider-feat-versioncontrolid.md": [
+      "issue/issue_明确将ZCode调研结果转为正式Provider接入的范围.md"
+    ],
+    "issue/issue-0.7.0-DATA-A-000-DATA-bigmodel-code-provider-versioncontrolid.md": [
+      "issue/issue_接入智谱ZCode套餐与额度获取.md"
+    ],
+    "issue/issue-0.7.0-FE-A-000-FE-code-menu-state-versioncontrolid.md": [
+      "issue/issue_为ZCode展示菜单栏bar与品牌状态灯.md"
+    ],
+    "issue/issue-0.7.0-DOC-A-000-DOC-code-documentation-versioncontrolid.md": [
+      "issue/issue_在README说明ZCode套餐与安装路径.md"
+    ],
+    "issue/issue-0.8.0-DOC-A-000-DOC-directories-versioncontrolid.md": [
+      "issue/issue_同步协作模板与需求标题规范.md",
+      "issue/issue_将macOS交付目录迁移为macos.md",
+      "issue/issue_将营销主页目录迁移为site.md",
+      "issue/issue_调整main与其他工作副本的容器布局.md"
+    ],
+    "issue/issue-0.1.0-PM-A-000-PM-landing-scope-versioncontrolid.md": [
+      "issue/issue_确定官网技术方案与首屏卖点.md"
+    ],
+    "issue/issue-0.1.0-FE-A-000-FE-astro-versioncontrolid.md": [
+      "issue/issue_建立Astro静态官网骨架.md"
+    ],
+    "issue/issue-migration-331bbfea42d3-UI-landing-design-tokens-layout-versioncontrolid.md": [
+      "issue/issue_建立官网DesignTokens与通用布局.md"
+    ],
+    "issue/issue-migration-3e0fea30f1dd-UI-landing-versioncontrolid.md": [
+      "issue/issue_用CSS与HTML展示菜单栏及额度面板.md",
+      "issue/issue_实现官网导航与产品介绍区块.md"
+    ],
+    "issue/issue-0.1.0-FE-B-000-FE-landing-versioncontrolid.md": [
+      "issue/issue_按产品介绍顺序组装官网首页.md",
+      "issue/issue_通过GitHubRelease解析统一下载入口.md"
+    ],
+    "issue/issue-0.1.0-UI-C-000-UI-project-goal-versioncontrolid.md": [
+      "issue/issue_适配官网移动端与响应式布局.md",
+      "issue/issue_提供官网无障碍语义与减少动效支持.md"
+    ],
+    "issue/issue-0.1.0-DOC-A-000-DOC-sync-landing-project-documentation-versioncontrolid.md": [
+      "issue/issue_同步官网子项目文档与根目录索引.md"
+    ],
+    "issue/issue-0.1.0-QA-A-000-QA-landing-acceptance-versioncontrolid.md": [
+      "issue/issue_核对官网首版构建与部署交付.md"
+    ],
+    "issue/issue-migration-2ccfda47ccb4-UI-landing-visual-versioncontrolid.md": [
+      "issue/issue_以真实截图和品牌素材替换官网视觉占位.md"
+    ],
+    "issue/issue-migration-68a147730638-FE-seo-languages-versioncontrolid.md": [
+      "issue/issue_为官网提供站点地图与结构化数据.md",
+      "issue/issue_为QuotaBar介绍站提供中英双语切换.md"
+    ]
+  }
 }
