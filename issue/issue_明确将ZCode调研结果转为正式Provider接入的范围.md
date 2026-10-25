@@ -1,11 +1,14 @@
-# 明确将ZCode调研结果转为正式Provider接入的范围
+---
+title: 明确将ZCode调研结果转为正式Provider接入的范围
+id: migration-fe17d65c8460
+type: PM
+status: 已确认约束 / 状态待核对（原文未单列完成状态）。
+版本管理: Git。
+来源: '`REQUIREMENTS.md` @ `b550269a253e390d19ec221949fb30c44adf9e9e`；标题路径：任务清单 / Phase - v0.7.0 - 智谱 GLM Provider 接入（feat/glm-provider）。'
+updated-time: '2026-10-24T16:22:34+00:00'
+---
 
-- ID：`migration-fe17d65c8460`。
-- 类型：`PM`。
-- 状态：已确认约束 / 状态待核对（原文未单列完成状态）。
-- 版本管理：Git。
-- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
-- 来源：`REQUIREMENTS.md` @ `b550269a253e390d19ec221949fb30c44adf9e9e`；标题路径：任务清单 / Phase - v0.7.0 - 智谱 GLM Provider 接入（feat/glm-provider）。
+# Description
 
 ## 当前需求与范围
 
@@ -21,13 +24,19 @@
 
 以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
 
-## Comments
+# Comments
 
-### 2026-10-23 17:44:33 UTC — Agent（文档迁移）
+## 20261023-174433_Agent
+
+原记录标题：2026-10-23 17:44:33 UTC — Agent（文档迁移）
 
 按原有功能 / 工作目标标题拆分需求，保留原 ID、勾选、依赖、最新补充及来源。没有稳定根 ID或旧 ID 在不同上下文重用时，采用由来源路径和标题确定的迁移 Issue ID，原 ID 仍在正文保留。完整旧内容可从来源版本读取；独有未提交内容的版本化副本见迁移映射。
 
-### 20260618112258-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618112258-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260618112258-utcp8-mavis.md` @ `b550269a253e390d19ec221949fb30c44adf9e9e`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -65,7 +74,11 @@
 - 本日志仅记录 worktree 创建动作；UI-C 实际实现的对话、决策与勾选会落在后续日志中
 - 下一步建议：进入 `.worktrees/ui-c` 目录，`git pull` 拉 `feature/ref-a` 的刷新机制 API（如已合入），再开始 UI-C 编码
 
-### 20260628002800-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260628002800-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260628002800-utcp8-mavis.md` @ `b550269a253e390d19ec221949fb30c44adf9e9e`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -109,7 +122,11 @@ git branch -a | grep hide-preferences
 - 后续 feat/preferences 上的实质工作（v0.3.0-PM-A-000 偏好设置面板实现）会在该 branch 上独立 commit。
 - 工作目录已切到 `.worktrees/feat-preferences`，下次进入直接 `cd .worktrees/feat-preferences` 即可。
 
-### 20260618174200-utcp8-minimax-m3.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618174200-utcp8-minimax-m3.md — 历史证据迁移
 
 来源：`agent-log/20260618174200-utcp8-minimax-m3.md` @ `b550269a253e390d19ec221949fb30c44adf9e9e`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -151,7 +168,11 @@ git branch -a | grep hide-preferences
 - 主 worktree 上 MenuView.swift 还有 5 个死代码 legacy 常量（`summarySpacing: 2`、`sectionSpacing: 8`、`quotaRowsSpacing: 6`、`quotaRowSpacing: 2`、`contentBlockSpacing: 6`），是 feat 分支带过来的；上一轮曾在 main 的工作副本中清理过，merge 后被恢复。本回合未再次清理，等用户决定
 - 沙箱限制导致 `swift build` 无法在本环境执行；如需验证构建，请退出沙箱后运行
 
-### feat-preferences.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：feat-preferences.md — 历史证据迁移
 
 来源：`agent-log/branches/feat-preferences.md` @ `b550269a253e390d19ec221949fb30c44adf9e9e`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -161,6 +182,23 @@ git branch -a | grep hide-preferences
 - 实现 PreferencesView：建议 SwiftUI Form + Settings 风格（macOS 13+ `Settings` scene）
 - 把 Provider 开关 / 刷新间隔 / 高级选项落到 PreferencesView
 
-### 2026-10-24 07:04:08 UTC — Agent（任务命名与语义整理）
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 20261024-070408_Agent
+
+原记录标题：2026-10-24 07:04:08 UTC — Agent（任务命名与语义整理）
 
 按具体原语言任务命名；类型与原ID保留在properties。原目标、实施与验收步骤及完整历史保持在同一文件。实施版本未核实，省略文件名版本后缀；本次未执行产品或代码验收。
+
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 20261024-162234_Codex
+
+按用户最新手写模板迁移属性和正文结构，保留任务语义、来源、原始状态及历史内容；本次未重新执行业务验收。
+
+原版本关联记录（照录来源，不将本次文档迁移提交当作业务实施提交）：
+- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
+
+本次执行环境未提供具体模型标识，未补造 Model-Detail。
+
+[本次文档迁移对话](codex://threads/01a157b3-610c-73b4-ae06-163c0f8490d3)
