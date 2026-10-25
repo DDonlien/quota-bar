@@ -277,7 +277,7 @@ Codex / Claude 的 TUI 在无 TTY 时会拒绝交互。`TTYCommandRunner` 通过
 - [ ] 通知：额度低于阈值时提醒
 - [ ] 多账号切换
 
-完整需求追踪见 [`issue/issue-0.0.0-DOC-A-000-DOC-agent-collaboration-foundation-versioncontrolid.md`](issue/issue-0.0.0-DOC-A-000-DOC-agent-collaboration-foundation-versioncontrolid.md)。
+完整需求追踪见 [`issue/issue_建立项目协作基础.md`](issue/issue_%E5%BB%BA%E7%AB%8B%E9%A1%B9%E7%9B%AE%E5%8D%8F%E4%BD%9C%E5%9F%BA%E7%A1%80.md)。
 
 ---
 
