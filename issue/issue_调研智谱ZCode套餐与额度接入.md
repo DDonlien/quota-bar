@@ -1,12 +1,15 @@
-# 调研智谱ZCode套餐与额度接入
+---
+title: 调研智谱ZCode套餐与额度接入
+id: 0.4.0-DATA-A-000
+type: DATA
+status: 待处理（原文未完成项保持未勾选）。
+版本管理: Git。
+来源: '`REQUIREMENTS.md` @ `211555173930360a07f45b8f9662463ed7519dba`；标题路径：任务清单 / Phase - v0.4.0 - 新 Provider 接入（zcode / 千问 / 其他） / feat/glm-provider: 调研智谱 BigModel Z Code Provider。'
+原稳定 ID: '`0.4.0-DATA-A-000`, `0.4.0-DATA-A-001`, `QuotaWindow`, `0.4.0-DATA-A-002`, `0.4.0-DATA-A-003`, `0.4.0-DATA-A-004`；不改写或重编号这些既有 ID。'
+updated-time: '2026-10-24T16:22:34+00:00'
+---
 
-- ID：`0.4.0-DATA-A-000`。
-- 类型：`DATA`。
-- 状态：待处理（原文未完成项保持未勾选）。
-- 版本管理：Git。
-- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
-- 来源：`REQUIREMENTS.md` @ `211555173930360a07f45b8f9662463ed7519dba`；标题路径：任务清单 / Phase - v0.4.0 - 新 Provider 接入（zcode / 千问 / 其他） / feat/glm-provider: 调研智谱 BigModel Z Code Provider。
-- 原稳定 ID：`0.4.0-DATA-A-000`, `0.4.0-DATA-A-001`, `QuotaWindow`, `0.4.0-DATA-A-002`, `0.4.0-DATA-A-003`, `0.4.0-DATA-A-004`；不改写或重编号这些既有 ID。
+# Description
 
 ## 当前需求与范围
 
@@ -20,13 +23,19 @@
 
 以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
 
-## Comments
+# Comments
 
-### 2026-10-23 17:44:33 UTC — Agent（文档迁移）
+## 20261023-174433_Agent
+
+原记录标题：2026-10-23 17:44:33 UTC — Agent（文档迁移）
 
 按原有功能 / 工作目标标题拆分需求，保留原 ID、勾选、依赖、最新补充及来源。没有稳定根 ID或旧 ID 在不同上下文重用时，采用由来源路径和标题确定的迁移 Issue ID，原 ID 仍在正文保留。完整旧内容可从来源版本读取；独有未提交内容的版本化副本见迁移映射。
 
-### 20260627224800-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260627224800-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260627224800-utcp8-mavis.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -70,7 +79,11 @@
 - 主 worktree (`/Users/taobe/Projects/GitHub/Personal/quota-bar`) 仍保持 main，可随时 `git merge --ff-only` 收 4 条线成果
 - 如果某个 worktree 工作结束合回 main 后，可以 `git worktree remove .worktrees/feat-xxx` + `git branch -d feat/xxx` 清理
 
-### 20260625221500-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260625221500-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260625221500-utcp8-mavis.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -125,7 +138,11 @@
 - v0.6.0-data-f-antigravity — Antigravity
 - v0.6.0-ui-a — UI 收尾（hide 时 layout 不跳动 + tooltip）
 
-### 20260627162000-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260627162000-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260627162000-utcp8-mavis.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -162,7 +179,11 @@
 - 4 个 feat/ branch 都基于 main `8d69017`（Step 1 收尾后），互不依赖、互不阻塞，可以并行推进
 - 后续每个 branch 推进完成后用 fast-forward merge 合回 main：先 `git merge --ff-only <feat-branch>`，合并时确保 main 没新改动
 
-### 20260618112258-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618112258-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260618112258-utcp8-mavis.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -200,7 +221,11 @@
 - 本日志仅记录 worktree 创建动作；UI-C 实际实现的对话、决策与勾选会落在后续日志中
 - 下一步建议：进入 `.worktrees/ui-c` 目录，`git pull` 拉 `feature/ref-a` 的刷新机制 API（如已合入），再开始 UI-C 编码
 
-### 20260628002800-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260628002800-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260628002800-utcp8-mavis.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -244,7 +269,11 @@ git branch -a | grep hide-preferences
 - 后续 feat/preferences 上的实质工作（v0.3.0-PM-A-000 偏好设置面板实现）会在该 branch 上独立 commit。
 - 工作目录已切到 `.worktrees/feat-preferences`，下次进入直接 `cd .worktrees/feat-preferences` 即可。
 
-### feat-glm-provider.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：feat-glm-provider.md — 历史证据迁移
 
 来源：`agent-log/branches/feat-glm-provider.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -264,7 +293,11 @@ git branch -a | grep hide-preferences
 
 每步完成后跑 `swift build` + 现有测试，确保不破坏其他 provider。
 
-### feat-preferences.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：feat-preferences.md — 历史证据迁移
 
 来源：`agent-log/branches/feat-preferences.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -274,7 +307,11 @@ git branch -a | grep hide-preferences
 - 实现 PreferencesView：建议 SwiftUI Form + Settings 风格（macOS 13+ `Settings` scene）
 - 把 Provider 开关 / 刷新间隔 / 高级选项落到 PreferencesView
 
-### feat-website.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：feat-website.md — 历史证据迁移
 
 来源：`agent-log/branches/feat-website.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -295,6 +332,23 @@ git branch -a | grep hide-preferences
 4. **Dark mode 适配** — 主页目前只跟随系统，需要验证 macOS 26 Liquid Glass
    风格的暗色视觉。
 
-### 2026-10-24 07:04:08 UTC — Agent（任务命名与语义整理）
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 20261024-070408_Agent
+
+原记录标题：2026-10-24 07:04:08 UTC — Agent（任务命名与语义整理）
 
 按具体原语言任务命名；类型与原ID保留在properties。原目标、实施与验收步骤及完整历史保持在同一文件。实施版本未核实，省略文件名版本后缀；本次未执行产品或代码验收。
+
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 20261024-162234_Codex
+
+按用户最新手写模板迁移属性和正文结构，保留任务语义、来源、原始状态及历史内容；本次未重新执行业务验收。
+
+原版本关联记录（照录来源，不将本次文档迁移提交当作业务实施提交）：
+- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
+
+本次执行环境未提供具体模型标识，未补造 Model-Detail。
+
+[本次文档迁移对话](codex://threads/01a157b3-610c-73b4-ae06-163c0f8490d3)

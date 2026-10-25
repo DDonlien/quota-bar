@@ -1,10 +1,13 @@
-# 迁移项目任务与协作记录
+---
+title: 迁移项目任务与协作记录
+id: DOC-migration-20261023
+type: DOC
+status: 文档迁移已完成；产品验证与用户验收未在本轮重做。
+版本管理: Git。
+updated-time: '2026-10-24T16:22:34+00:00'
+---
 
-- ID：`DOC-migration-20261023`。
-- 类型：`DOC`。
-- 状态：文档迁移已完成；产品验证与用户验收未在本轮重做。
-- 版本管理：Git。
-- 实施提交：`83dc1756e52d7a850bedf5ec5a90b9dfe755d41e`（本文件所述文档任务的实际提交；不代表业务功能实现）。
+# Description
 
 ## 本轮范围
 
@@ -17,19 +20,28 @@
 - [x] 删除旧活动需求 / 日志文件前，确认历史或独有来源副本可追溯。
 - [x] Issue 结构、来源映射、相关引用与限定 diff 检查通过。
 
-## Comments
+# Comments
 
+## 20261023-174433_Agent
 
-### 2026-10-23 17:44:33 UTC — Agent
+原记录标题：2026-10-23 17:44:33 UTC — Agent
 
 用户已明确授权实际迁移、处理相关冲突和本地提交。本轮不 push、不新建 branch / worktree；不把未重新执行的测试、GUI 或用户验收标成通过。
 
-### 原需求上下文：REQUIREMENTS.md
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：原需求上下文：REQUIREMENTS.md
 
 > **子功能索引**
 > - [`site/REQUIREMENTS.md`](issue_%E7%A1%AE%E5%AE%9A%E5%AE%98%E7%BD%91%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88%E4%B8%8E%E9%A6%96%E5%B1%8F%E5%8D%96%E7%82%B9.md) — 营销主页（Astro 静态站，部署到 `quotabar.ddonlien.com`）。v0.1.0 主页首版已落地：纯 CSS/HTML mockup 还原菜单栏 + dropdown，6 家 provider 卡片，4 个卖点，下载按钮动态取最新 nightly DMG。
 
-### 20260619143156-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260619143156-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260619143156-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -61,7 +73,11 @@
 - 「立即刷新」恢复原生后，点击时会回到 macOS 原生菜单项行为，即菜单会关闭。
 - `.build/` 和 `.DS_Store` 仍是构建产物 dirty，未回滚。
 
-### 20260620212356-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260620212356-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260620212356-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -96,7 +112,11 @@
 - 未执行提交。
 - `quota-bar/build/latest` 因本次按用户指令执行打包脚本而更新。
 
-### 20260620145028-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260620145028-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260620145028-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -143,7 +163,11 @@
 - 当前本机未用真实 Claude/Kimi/MiniMax 浏览器会话验证 endpoint 响应；若服务端 Cloudflare、签名或 schema 变化导致失败，现有 pipeline 会以 `QuotaFetchError` 安全降级。
 - Gemini 仍缺少可验证的 Google Cloud 项目 / Vertex AI API key / quota endpoint，不能安全猜测真实额度 API。
 
-### 20260625115908-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260625115908-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260625115908-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -182,7 +206,11 @@
 - `git pull` 未完成，原因是远端请求卡住；本次构建基于当前本地工作区。
 - Kimi Work 的 OAuth 补充请求是否成功依赖 Kimi 服务端是否接受 CLI OAuth token 调用 `www.kimi.com` 的 membership endpoint；若仍无 Work，需要从浏览器 cookie 路径或另一个 Kimi endpoint 继续追。
 
-### 20260620151200-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260620151200-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260620151200-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -211,7 +239,11 @@ Start by running `multica issue get 4a47a0c0-4dff-47bc-8005-6bbeaf541755 --outpu
 - 本次没有代码变更，不运行 `swift build`。
 - `TB-42` 是同主题的独立 issue，本次也已纳入版本标签分配范围。
 
-### 20260628005000-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260628005000-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260628005000-utcp8-mavis.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -241,7 +273,11 @@ Start by running `multica issue get 4a47a0c0-4dff-47bc-8005-6bbeaf541755 --outpu
 - 打包 .app 后验证 SMAppService.register() 真实生效
 - 在 PR description / README 加「如何打开偏好设置：`⌘,` 或菜单 → 偏好设置…」入口说明
 
-### 20260629101500-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260629101500-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260629101500-utcp8-mavis.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -280,7 +316,11 @@ Start by running `multica issue get 4a47a0c0-4dff-47bc-8005-6bbeaf541755 --outpu
   偏好设置窗口的 bugfix，逻辑上属于「Preferences 第一版上线」的一部分，
   建议连同上一轮的 PreferencesScene 一起合回 main 后再开新 phase
 
-### 20260620151337-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260620151337-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260620151337-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -310,7 +350,11 @@ Start by running `multica issue get 4a47a0c0-4dff-47bc-8005-6bbeaf541755 --outpu
 - 未运行 `swift run`，本次用户明确要求生成 build 文件夹里的 app 以便手动验证。
 - 工作树中存在多处本次运行前已存在或其他 agent 产生的未提交改动，本次未回滚。
 
-### 20260620214313-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260620214313-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260620214313-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -352,7 +396,11 @@ Start by running `multica issue get 4a47a0c0-4dff-47bc-8005-6bbeaf541755 --outpu
 - 未执行提交。
 - `quota-bar/build/latest` 因执行打包脚本而更新。
 
-### 20260706-183410-utcp8-taobe-claude-sonnet-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260706-183410-utcp8-taobe-claude-sonnet-5.md — 历史证据迁移
 
 来源：`agent-log/20260706-183410-utcp8-taobe-claude-sonnet-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -411,7 +459,11 @@ Start by running `multica issue get 4a47a0c0-4dff-47bc-8005-6bbeaf541755 --outpu
 - Keychain 里真正读取 Claude 凭证内容（而不仅是判断 KeychainProvider 现在能否匹配到条目）没有实现——CodexBar 为此写了十几个文件处理多候选/legacy 条目/prompt 冷却等复杂度，评估后判断这部分超出本次验证需求的范围，只做了「让查询语句本身能匹配到真实条目」这一步修正。
 - Claude Max（5x/20x）价格未映射，需要真实 Max 账号确认 `subscriptionType` 的准确字符串值后才能安全映射，不能靠猜。
 
-### 20260702151951-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260702151951-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260702151951-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -436,7 +488,11 @@ Start by running `multica issue get 4a47a0c0-4dff-47bc-8005-6bbeaf541755 --outpu
 
 - 工作区仍有多个未跟踪 agent-log 文件和既有 `REQUIREMENTS.md` 改动，未执行 git add/commit。
 
-### 20260630104434-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260630104434-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260630104434-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -472,7 +528,11 @@ Start by running `multica issue get 4a47a0c0-4dff-47bc-8005-6bbeaf541755 --outpu
 
 - 如果当前 macOS 26 build 仍强制显示 SwiftUI 原生 sidebar toggle，应继续优先保留原生 sidebar 视觉，再寻找更底层的窗口/toolbar 定制方案，而不是回退到自绘 sidebar。
 
-### 20260622233205-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260622233205-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260622233205-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -586,7 +646,11 @@ Start by running `multica issue get 4a47a0c0-4dff-47bc-8005-6bbeaf541755 --outpu
 - `swift build`：通过 ✅
 - `./scripts/build-app.sh`：通过 ✅，产物 `build/latest/QuotaBar.app`
 
-### 20260620193629-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260620193629-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260620193629-utcp8-mavis.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -618,7 +682,11 @@ Start by running `multica issue get 4a47a0c0-4dff-47bc-8005-6bbeaf541755 --outpu
 - 工作树中存在本次任务前已存在的未提交源码改动，本次未回滚。
 - 构建产物目录已加入 `.gitignore`，不会被提交。
 
-### 20260618101312-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618101312-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260618101312-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -666,7 +734,11 @@ hiddenbar：[dwarvesf/hidden](https://github.com/dwarvesf/hidden)
 - `立即刷新` 与 `偏好设置` 仍是静态原型占位；实际功能待后续需求定义。
 - 当前仓库仍有 `.build/` 产物被 Git 跟踪，构建会产生大量工作区变更，后续建议单独清理。
 
-### 20260618111226-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618111226-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260618111226-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -718,7 +790,11 @@ hiddenbar：[dwarvesf/hidden](https://github.com/dwarvesf/hidden)
 - 参考 CodexBar 的核心思路：本地探测 + Cookie 复用 + 隐私优先，但不直接复刻其全部 40+ 提供商架构，先从用户明确提到的 agent（Codex、MiniMax、Kimi 等）开始
 - 下一步建议：用户确认需求后，可从 DA-A（Agent 自动探测）开始逐步实现，优先实现浏览器 Cookie 和本地 CLI 的探测机制
 
-### 20260620213518-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260620213518-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260620213518-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -754,7 +830,11 @@ hiddenbar：[dwarvesf/hidden](https://github.com/dwarvesf/hidden)
 - `quota-bar/build/latest` 因执行打包脚本而更新。
 - 若仍看到系统蓝色宽背景，那是 `NSStatusItem` 菜单打开/选中态自身背景；本次已移除应用绘制的蓝色胶囊底。
 
-### 20260630123525-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260630123525-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260630123525-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -782,7 +862,11 @@ hiddenbar：[dwarvesf/hidden](https://github.com/dwarvesf/hidden)
 - 已知限制来自 `agent-log/20260628004500-utcp8-mavis.md`：五个 headless provider 的 DOM 匹配基于预期订阅页文案和 mock HTML，尚未用真实登录态页面逐一验证。
 - 当前 `sub/expiry` 分支领先 `origin/sub/expiry` 1 个提交：`14945f6 chore(kimi): v0.7.0 PROBE-* 日志包到 #if DEBUG`。
 
-### 20260701002155-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260701002155-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260701002155-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -822,7 +906,11 @@ hiddenbar：[dwarvesf/hidden](https://github.com/dwarvesf/hidden)
 
 - 当前选择是优先保证原生 sidebar 正确渲染；不再使用会影响 SwiftUI 初始布局的 AppKit 递归隐藏方案。
 
-### 20260706-205929-utcp8-taobe-claude-sonnet-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260706-205929-utcp8-taobe-claude-sonnet-5.md — 历史证据迁移
 
 来源：`agent-log/20260706-205929-utcp8-taobe-claude-sonnet-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -864,7 +952,11 @@ hiddenbar：[dwarvesf/hidden](https://github.com/dwarvesf/hidden)
 - `CLICommandLocator` 的登录 shell 解析路径未在真实 nvm/asdf/pnpm 环境下端到端验证过（本机没有这些环境）——设计上是标准做法（VSCode 等主流 app 处理"GUI app PATH 不全"问题时用的同一套思路），但真实生效情况建议后续在装了这些工具链的机器上验证一次。
 - KeychainProvider 的"取最近条目"逻辑没有写自动化测试——写入/读取真实 Keychain 条目的测试容易 flaky 且会污染开发者本机 Keychain，与现有代码库里"KeychainProvider 完全没有单元测试"的既有边界一致，选择不引入这类测试。
 
-### 20260619141258-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260619141258-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260619141258-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -886,7 +978,11 @@ hiddenbar：[dwarvesf/hidden](https://github.com/dwarvesf/hidden)
 
 - `.build/` 和 `.DS_Store` 仍是构建产物 dirty，未回滚。
 
-### 20260702153123-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260702153123-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260702153123-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -912,7 +1008,11 @@ hiddenbar：[dwarvesf/hidden](https://github.com/dwarvesf/hidden)
 
 - 工作区已有未提交的 README、REQUIREMENTS 改动和多条未跟踪 agent-log 文件。
 
-### 20260618104613-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618104613-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260618104613-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -943,7 +1043,11 @@ much better但是字样对齐有些问题：
 
 - 当前仓库仍有 `.build/` 产物被 Git 跟踪，构建会产生大量工作区变更，后续建议单独清理。
 
-### 20260618113600-utcp8-minimax-m3.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618113600-utcp8-minimax-m3.md — 历史证据迁移
 
 来源：`agent-log/20260618113600-utcp8-minimax-m3.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -972,7 +1076,11 @@ much better但是字样对齐有些问题：
 - 视觉上因为 `SummaryView.padding(.top, 4)` 的存在，header 间距在 Dashboard 渲染时与 CSV 等价，但若未来在 SummaryView 之上插入新元素（例如 header 提示条）会暴露对齐问题
 - 建议：把 `topPadding` / `bottomPadding` / `planSectionSpacing` / `contentBlockSpacing` 改为与 CSV 对齐的值，并去掉 `SummaryView.padding(.top, 4)`，避免重复设置
 
-### 20260620213150-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260620213150-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260620213150-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1010,7 +1118,11 @@ much better但是字样对齐有些问题：
 - `quota-bar/build/latest` 因执行打包脚本而更新。
 - 如果仍观察到 hover 蓝色区域宽于胶囊，该部分可能来自 macOS `NSStatusBarButton` 系统点击区域；本次已移除应用自身 image 与 length 的额外宽度来源。
 
-### 20260702152629-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260702152629-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260702152629-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1035,7 +1147,11 @@ much better但是字样对齐有些问题：
 
 - 工作区已有未提交的 `README.md`、`REQUIREMENTS.md` 改动和多条未跟踪 agent-log 文件。
 
-### 20260707-112132-utcp8-taobe-claude-sonnet-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260707-112132-utcp8-taobe-claude-sonnet-5.md — 历史证据迁移
 
 来源：`agent-log/20260707-112132-utcp8-taobe-claude-sonnet-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1085,7 +1201,11 @@ much better但是字样对齐有些问题：
 - 诊断日志的格式化逻辑（`logAttempt`/`logSourceOrdering`/expiry resolver 里的日志调用）目前没有针对性的自动化测试——`ProviderCheckLog.shared` 是硬编码单例，pipeline 内部的日志埋点也没有做成可单独注入 mock store 的形式，本次只做了代码走读 + 手动推演验证，这是已知的验证缺口，如实记录。
 - Claude Keychain 排查这件事上，最终没能给出一个"已修复"的结论——诚实地说，这次调查更多是排除了"我们自己代码写错了"这个假设，把问题范围收窄到了"很可能是签名/权限持久化的系统层面限制"，但没有在当前工具条件下验证到底。
 
-### 20260703-213056-utcp8-taobe-gpt-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260703-213056-utcp8-taobe-gpt-5.md — 历史证据迁移
 
 来源：`agent-log/20260703-213056-utcp8-taobe-gpt-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1115,7 +1235,11 @@ much better但是字样对齐有些问题：
 - 本次按用户要求保留 Git merge 记录，不再用普通移植提交替代。
 - SwiftPM 输出了用户级 cache 不可写 warning，但构建和测试均完成通过。
 
-### 20260630124434-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260630124434-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260630124434-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1143,7 +1267,11 @@ much better但是字样对齐有些问题：
 
 - 这意味着 Codex 的 `~/.codex/auth.json` 只用于额度 wham/usage；过期日仍需 headless 访问 ChatGPT 订阅管理页。
 
-### 20260618110245-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618110245-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260618110245-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1175,7 +1303,11 @@ much better但是字样对齐有些问题：
 
 - 当前仓库仍有 `.build/` 产物被 Git 跟踪，构建会产生大量工作区变更，后续建议单独清理。
 
-### 20260620150136-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260620150136-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260620150136-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1223,7 +1355,11 @@ much better但是字样对齐有些问题：
 - 未读取或记录任何 token、cookie、API key。
 - 工作区开始时已有未提交/未跟踪改动，本次未提交、未开 PR，避免把既有改动混入提交。
 
-### 20260713-093928-utcp8-taobe-gpt-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260713-093928-utcp8-taobe-gpt-5.md — 历史证据迁移
 
 来源：`agent-log/20260713-093928-utcp8-taobe-gpt-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1249,7 +1385,11 @@ much better但是字样对齐有些问题：
 
 - 已创建提交 `chore: consolidate main workspace updates`；最终 commit hash 以 `git log` 为准。
 
-### 20260705-215117-utcp8-taobe-claude-fable-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260705-215117-utcp8-taobe-claude-fable-5.md — 历史证据迁移
 
 来源：`agent-log/20260705-215117-utcp8-taobe-claude-fable-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1306,7 +1446,11 @@ much better但是字样对齐有些问题：
 - 本机 `provider-sources.json` / `snapshots.json` 未清理；新逻辑会在下次刷新时自然覆盖 kimi 缓存。
 - 更新功能的 E2E（真实 GitHub release 下载替换）需要 main 推送产出新 nightly 后在真机验证（v0.11.0-QA-A-000/001 未勾选）。
 
-### 20260618171000-utcp8-minimax-m3.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618171000-utcp8-minimax-m3.md — 历史证据迁移
 
 来源：`agent-log/20260618171000-utcp8-minimax-m3.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1346,7 +1490,11 @@ much better但是字样对齐有些问题：
 - `swift build` 失败的根因是 macOS sandbox 限制（无法写入 `~/Library/org.swift.swiftpm/` 缓存），不是代码本身；如需构建验证请在非沙箱环境运行 `cd drop-down-test/CodingPlanMenu && swift build`
 - 若用户希望进一步把"汇总区上下两行之间的间距"等内部间距也拆为更细的常量（如 `summaryRow1Bottom` 与 `summaryRow2Top` 各自独立），可继续；目前 `summaryRowSpacing` 仍以 VStack spacing 实现，属于 SwiftUI 容器级"共享"，但与"padding"概念略有不同，已在备注中说明
 
-### 20260625104258-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260625104258-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260625104258-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1381,7 +1529,11 @@ much better但是字样对齐有些问题：
 - 未执行 `./scripts/build-app.sh`，避免在另一个模型并行修改时继续更新 `quota-bar/build/latest`。
 - 工作区已有大量未提交改动，本次只在相关文件上小范围补丁，没有回滚或覆盖其他模型改动。
 
-### 20260623014203-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260623014203-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260623014203-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1423,7 +1575,11 @@ much better但是字样对齐有些问题：
 - 关于日志命名中的模型名 `gpt5`：是从之前日志沿袭的，未确认当前实际模型。请用户指正正确的模型名。
 - 关于日志拆分：本次任务从旧日志中拆分，创建为独立日志文件，符合 AGENTS.md 规范。
 
-### 20260619131237-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260619131237-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260619131237-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1451,7 +1607,11 @@ much better但是字样对齐有些问题：
 - 若汇率服务不可用，应用使用本地 fallback 汇率，避免刷新被外部网络阻塞。
 - `.build/` 和 `.DS_Store` 仍是构建产物 dirty，未回滚。
 
-### 20260618092446-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618092446-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260618092446-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1478,7 +1638,11 @@ much better但是字样对齐有些问题：
 - 菜单栏应用没有 Dock 图标是由 `LSUIElement=true` 决定的，不是启动失败。
 - 当前仓库仍有 `.build/` 产物被 Git 跟踪，后续建议单独清理。
 
-### 20260625105744-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260625105744-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260625105744-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1510,7 +1674,11 @@ much better但是字样对齐有些问题：
 - 工作区仍有大量未提交改动，且用户提示另一个模型正在并行修改；本次仅运行打包脚本并新增本日志。
 - 远端同步未完成，原因是 GitHub 网络错误/连接卡住；本次打包基于当前本地工作区。
 
-### 20260702161817-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260702161817-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260702161817-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1539,7 +1707,11 @@ much better但是字样对齐有些问题：
 
 - 最终包为 ad-hoc 签名，identifier 为 `com.taobe.quotabar`，适合本机实际测试。
 
-### 20260630234710-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260630234710-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260630234710-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1571,7 +1743,11 @@ much better但是字样对齐有些问题：
 
 - macOS 系统 bundle 字段保持严格格式；用户可见 build 元信息放自定义 plist key，避免 LaunchServices 拒绝或异常处理应用包。
 
-### 20260704-005328-utcp8-taobe-gpt-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260704-005328-utcp8-taobe-gpt-5.md — 历史证据迁移
 
 来源：`agent-log/20260704-005328-utcp8-taobe-gpt-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1600,7 +1776,11 @@ much better但是字样对齐有些问题：
 
 - 本次打包更新了 `macos/build/latest` 软链目标，因此任务结束时 Git 状态包含该 tracked symlink 改动。
 
-### 20260630-013000-utcp8-taobe-gpt-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260630-013000-utcp8-taobe-gpt-5.md — 历史证据迁移
 
 来源：`agent-log/20260630-013000-utcp8-taobe-gpt-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1637,7 +1817,11 @@ much better但是字样对齐有些问题：
 - 本次没有提交。
 - `macos/build/latest` 是实际打包验证导致的软链目标更新。
 
-### 20260619022530-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260619022530-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260619022530-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1667,7 +1851,11 @@ much better但是字样对齐有些问题：
 - `.build/` 和 `.DS_Store` 仍是构建产物 dirty，未回滚。
 - MiniMax/Kimi/Gemini/Claude 目前没有可用的真实 dashboard parser，因此不会在菜单里显示订阅占位。后续要显示它们，需要先接入对应真实 usage/plan API。
 
-### 20260621014158-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260621014158-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260621014158-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1723,7 +1911,11 @@ much better但是字样对齐有些问题：
 
 ---
 
-### 20260618173144-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618173144-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260618173144-utcp8-mavis.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1744,7 +1936,11 @@ much better但是字样对齐有些问题：
 - 没动 main 工作区（除本次 stash 取了 SUB-A 文件）；主仓库另起 chore 清 .build/
 - PR target：建议 merge 到 main → 推到 origin → tag v0.2.0 → GitHub Release 发包
 
-### 20260618000923-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618000923-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260618000923-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1786,7 +1982,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - Figma MCP 已确认可用，但当前 Figma 账号命中 Starter plan 调用上限，错误为：`You've reached the Figma MCP tool call limit on the Starter plan.`
 - 如果额度恢复，可重新调用 `_get_design_context` 获取 `68:12080` 的真实节点上下文，再对 SwiftUI 参数做像素级精修。
 
-### 20260702161208-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260702161208-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260702161208-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1813,7 +2013,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 
 - 所有凭证、cookie、token、API key 均只做脱敏结构检查，不写入日志。
 
-### 20260706-093058-utcp8-taobe-claude-opus-4-8.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260706-093058-utcp8-taobe-claude-opus-4-8.md — 历史证据迁移
 
 来源：`agent-log/20260706-093058-utcp8-taobe-claude-opus-4-8.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1877,7 +2081,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - 架构现状与目标的差距（用户已认可）：分层解耦 + 按序退级已由 `FetchPipeline.runSequential` 分层合并 + 独立 expiry resolver 落地；每层对每个 AI 的具体端点/命令仍 hardcode（用户明确「本来就很少改，没关系」）。
 - MiniMax 订阅当前已到期，`mmx` 输出 error 包裹 → UI 应显示「未订阅/已到期」而非待配置；续费后 CLI 成功输出的真实形状若与 remains 不同，`MiniMaxCommandProvider.parseCommandOutput` 会以 transient 退级到配置→API 层，不会误报。
 
-### 20260618105916-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618105916-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260618105916-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1909,7 +2117,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 
 - 当前仓库仍有 `.build/` 产物被 Git 跟踪，构建会产生大量工作区变更，后续建议单独清理。
 
-### 20260618094811-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618094811-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260618094811-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1946,7 +2158,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - 本次未生成新的 UI 截图；视觉判断依据为用户附件截图与本地 SwiftUI/AppKit 实现。
 - 当前仓库仍有 `.build/` 产物被 Git 跟踪，构建会产生大量工作区变更，后续建议单独清理。
 
-### 20260618004923-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618004923-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260618004923-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -1976,7 +2192,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - 当前仓库无提交历史，且 `.build/` 目录已有大量文件被 Git 跟踪，后续建议单独清理仓库结构并添加合适的 `.gitignore`。
 - 本次没有重新调用 Figma MCP；判断依据为用户截图、现有日志和本地 SwiftUI 实现。
 
-### 20260707-170853-utcp8-taobe-claude-sonnet-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260707-170853-utcp8-taobe-claude-sonnet-5.md — 历史证据迁移
 
 来源：`agent-log/20260707-170853-utcp8-taobe-claude-sonnet-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2013,7 +2233,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - 未提交 git commit——按照"只在用户明确要求时才提交"的原则，这次没有像上一轮那样直接创建 commit，等用户看完这轮修复后再决定是否需要提交/推送。
 - 这是本次多轮会话里第二次由"用户直接使用真实产物（打包后的 app / 网页 / 更新检查）"而不是靠我自己测试发现的真实 bug——第一次是 Claude Keychain 读取问题，这次是时区解析问题。两次都印证了"真实使用场景暴露的 bug，往往比代码走读更容易发现"这一点。
 
-### 20260905-143110-utcp8-taobe-gpt-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260905-143110-utcp8-taobe-gpt-5.md — 历史证据迁移
 
 来源：`agent-log/20260905-143110-utcp8-taobe-gpt-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2070,7 +2294,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - 当前 ChatGPT 会话不公开下一次扣费日期，因此本机此刻 Codex 行会留空；未来接口返回 `renews_at` 时会直接显示该真实日期。
 - 未提交、未推送。
 
-### 20260629-203001-utcp8-taobe-gpt-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260629-203001-utcp8-taobe-gpt-5.md — 历史证据迁移
 
 来源：`agent-log/20260629-203001-utcp8-taobe-gpt-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2108,7 +2336,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - `agent-template/AGENTS.md` 与 `agent-template/REQUIREMENTS.md` 在任务开始前已经是 modified 状态，本次没有回滚这些用户既有改动。
 - 目录迁移尚未提交；`git status` 会把 `quota-bar/` 到 `macos/`、`web/` 到 `site/` 展示为删除 + 新增，提交时 Git 通常会识别为 rename。
 
-### 20260618171600-utcp8-minimax-m3.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260618171600-utcp8-minimax-m3.md — 历史证据迁移
 
 来源：`agent-log/20260618171600-utcp8-minimax-m3.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2130,7 +2362,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - 仅 1 处常量值变化、1 处 CSV 值变化；属于最小修改
 - 若用户希望对更多行做同样微调，告诉我行号即可
 
-### 20260701-175800-utcp8-taobe-minimax-m3.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260701-175800-utcp8-taobe-minimax-m3.md — 历史证据迁移
 
 来源：`site/agent-log/20260701-175800-utcp8-taobe-minimax-m3.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2178,7 +2414,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - **git 状态**：working tree dirty（uncommitted），等用户 review 后再决定 commit / push
 - **未做**：3 个视频自动循环 + 切换 fade 的协调（现状 OK，3 个 video 都 loop=true，aria-hidden 切换时只 fade 容器 opacity）
 
-### 20260630-004800-utcp8-taobe-minimax-m3.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260630-004800-utcp8-taobe-minimax-m3.md — 历史证据迁移
 
 来源：`site/agent-log/20260630-004800-utcp8-taobe-minimax-m3.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2240,7 +2480,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - glow-effect 全局光晕颜色从白色改为暖橙 0.07 透明，更 vibeisland 风。
 - commit message: `style(site): redesign with JetBrains Mono + Maple Mono NL per vibeisland rhythm`
 
-### 20260629113000-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260629113000-utcp8-gpt5.md — 历史证据迁移
 
 来源：`site/agent-log/20260629113000-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2288,7 +2532,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - 当前所有正文和标题默认 JetBrains Mono（NL）；未来如果中英要分字体样式（比如标题用 sans），需要再细分 `@font-face` 的 `unicode-range` 或新加字体
 - Features 卡 hover 颜色 (#f59e0b) 跟打字机高亮橙色保持一致
 
-### 20260701-150000-utcp8-taobe-minimax-m3.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260701-150000-utcp8-taobe-minimax-m3.md — 历史证据迁移
 
 来源：`site/agent-log/20260701-150000-utcp8-taobe-minimax-m3.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2352,7 +2600,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - **worktree 状态**：`site/main` 已 working tree dirty，未 commit。日志结束时用户尚未表态是否要提交
 - **遗留**：detail tab (approve) 仍是 5 行 chip 骨架 mockup，本次只做了 adjust tab；如要 3 tab 全部对齐，需类似替换 detail 层
 
-### 20260630-234500-utcp8-taobe-minimax-m3.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260630-234500-utcp8-taobe-minimax-m3.md — 历史证据迁移
 
 来源：`site/agent-log/20260630-234500-utcp8-taobe-minimax-m3.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2411,7 +2663,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - `lastTickAt` 必须放在 tick() 末尾、scheduleNext() 之前 — 这是这次踩到的隐性 bug：初版忘了更新 lastTickAt，导致 visibility 触发的 tick 后 scheduleNext 算出 delay=0，连续 fire 一圈直到 lastTickAt 涨起来。
 - Chromium headless 模式下 `document.hidden` 不会被真实多 tab 切换改变，所以测试里用 Object.defineProperty 模拟 + 真实 setTimeout 行为混合验证逻辑。生产环境的真实 visibilitychange（用户切桌面/最小化）走的是同一条路径。
 
-### 20260629013500-utcp8-gemini-3.5-flash.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260629013500-utcp8-gemini-3.5-flash.md — 历史证据迁移
 
 来源：`site/agent-log/20260629013500-utcp8-gemini-3.5-flash.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2444,7 +2700,11 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - 动态获取 GitHub DMG 下载包链接的 `UPDATE_DOWNLOAD` 逻辑已被平移到新 Hero & Nav 下载按钮中，保持动态拉取机制正常工作。
 - 删除了被废弃的 `MenuBarMockup.astro`、`ProviderGrid.astro`、`Showcase.astro` 文件。
 
-### 20260629111600-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260629111600-utcp8-gpt5.md — 历史证据迁移
 
 来源：`site/agent-log/20260629111600-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -2480,6 +2740,23 @@ https://www.figma.com/design/zAky4WvzPYWbQSjOE7hrE1/%E5%8E%9F%E5%88%9B%E5%BA%94%
 - dev server 仍在跑（PID 19572，http://localhost:4321/，HMR 已生效）
 - 本次只动了 1 个文件（Layout.astro 第 36 行附近），未提交
 
-### 2026-10-24 06:30:10 UTC — Agent（纠正迁移命名）
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 20261024-063010_Agent
+
+原记录标题：2026-10-24 06:30:10 UTC — Agent（纠正迁移命名）
 
 依据用户最新确认，保留源任务中文名称并采用 issue_任务描述[_实际版本编号].md，类型与旧 ID 留在 properties。此处关联的是本文件所述文档任务的实际提交，不作为业务代码实施提交。历史原文保持不变；本轮修正未暂存、未提交。
+
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 20261024-162234_Codex
+
+按用户最新手写模板迁移属性和正文结构，保留任务语义、来源、原始状态及历史内容；本次未重新执行业务验收。
+
+原版本关联记录（照录来源，不将本次文档迁移提交当作业务实施提交）：
+- 实施提交：`83dc1756e52d7a850bedf5ec5a90b9dfe755d41e`（本文件所述文档任务的实际提交；不代表业务功能实现）。
+
+本次执行环境未提供具体模型标识，未补造 Model-Detail。
+
+[本次文档迁移对话](codex://threads/01a157b3-610c-73b4-ae06-163c0f8490d3)

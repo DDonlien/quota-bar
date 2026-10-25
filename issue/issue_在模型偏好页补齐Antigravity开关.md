@@ -1,18 +1,21 @@
-# 在模型偏好页补齐Antigravity开关
+---
+title: 在模型偏好页补齐Antigravity开关
+id: 0.10.0-BUG-A-000
+type: ARCH
+status: 已完成（沿用原需求记录；本轮未重新执行产品验收）。
+版本管理: Git。
+来源: '`REQUIREMENTS.md` @ `211555173930360a07f45b8f9662463ed7519dba`；标题路径：任务清单 / Phase - v0.10.0 - 订阅过期识别与免费额度误判修正 / sub/main: Preferences provider 列表遗漏 + dropdown Claude 消失架构 bug + 分层诊断日志 + dropdown 显示规则重写。'
+原稳定 ID: '`0.10.0-BUG-A-000`, `0.10.0-BUG-A-001`, `0.10.0-ARCH-E-000`, `0.10.0-ARCH-E-001`, `0.10.0-ARCH-E-002`, `0.10.0-PM-A-014`, `0.10.0-UI-B-000`, `0.10.0-UI-B-001`, `0.10.0-CLEAN-A-000`；不改写或重编号这些既有 ID。'
+拆分前ID: '`0.10.0-BUG-A-000`（沿用旧ID，不新增编号）。'
+本任务原稳定ID: '`0.10.0-BUG-A-000`。'
+状态范围: 上方状态保留迁移前汇总；本任务逐项勾选、撤销标记和阻塞说明以本文件原文为准，未重新验收。
+迁移前文件: '`issue/issue-0.10.0-BUG-A-000-ARCH-preferences-provider-list-dropdown-claude-versioncontrolid.md`（历史来源路径；原始来源版本见既有来源property）。'
+迁移前标题: 'sub/main: Preferences provider 列表遗漏 + dropdown Claude 消失架构 bug + 分层诊断日志 + dropdown 显示规则重写。'
+同源任务: '[按真实档位与额度完善Dropdown显示](issue_%E6%8C%89%E7%9C%9F%E5%AE%9E%E6%A1%A3%E4%BD%8D%E4%B8%8E%E9%A2%9D%E5%BA%A6%E5%AE%8C%E5%96%84Dropdown%E6%98%BE%E7%A4%BA.md)、[记录并展示Provider分层获取诊断日志](issue_%E8%AE%B0%E5%BD%95%E5%B9%B6%E5%B1%95%E7%A4%BAProvider%E5%88%86%E5%B1%82%E8%8E%B7%E5%8F%96%E8%AF%8A%E6%96%AD%E6%97%A5%E5%BF%97.md)。'
+updated-time: '2026-10-24T16:22:34+00:00'
+---
 
-- ID：`0.10.0-BUG-A-000`。
-- 类型：`ARCH`。
-- 状态：已完成（沿用原需求记录；本轮未重新执行产品验收）。
-- 版本管理：Git。
-- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
-- 来源：`REQUIREMENTS.md` @ `211555173930360a07f45b8f9662463ed7519dba`；标题路径：任务清单 / Phase - v0.10.0 - 订阅过期识别与免费额度误判修正 / sub/main: Preferences provider 列表遗漏 + dropdown Claude 消失架构 bug + 分层诊断日志 + dropdown 显示规则重写。
-- 原稳定 ID：`0.10.0-BUG-A-000`, `0.10.0-BUG-A-001`, `0.10.0-ARCH-E-000`, `0.10.0-ARCH-E-001`, `0.10.0-ARCH-E-002`, `0.10.0-PM-A-014`, `0.10.0-UI-B-000`, `0.10.0-UI-B-001`, `0.10.0-CLEAN-A-000`；不改写或重编号这些既有 ID。
-- 拆分前ID：`0.10.0-BUG-A-000`（沿用旧ID，不新增编号）。
-- 本任务原稳定ID：`0.10.0-BUG-A-000`。
-- 状态范围：上方状态保留迁移前汇总；本任务逐项勾选、撤销标记和阻塞说明以本文件原文为准，未重新验收。
-- 迁移前文件：`issue/issue-0.10.0-BUG-A-000-ARCH-preferences-provider-list-dropdown-claude-versioncontrolid.md`（历史来源路径；原始来源版本见既有来源property）。
-- 迁移前标题：sub/main: Preferences provider 列表遗漏 + dropdown Claude 消失架构 bug + 分层诊断日志 + dropdown 显示规则重写。
-- 同源任务：[按真实档位与额度完善Dropdown显示](issue_%E6%8C%89%E7%9C%9F%E5%AE%9E%E6%A1%A3%E4%BD%8D%E4%B8%8E%E9%A2%9D%E5%BA%A6%E5%AE%8C%E5%96%84Dropdown%E6%98%BE%E7%A4%BA.md)、[记录并展示Provider分层获取诊断日志](issue_%E8%AE%B0%E5%BD%95%E5%B9%B6%E5%B1%95%E7%A4%BAProvider%E5%88%86%E5%B1%82%E8%8E%B7%E5%8F%96%E8%AF%8A%E6%96%AD%E6%97%A5%E5%BF%97.md)。
+# Description
 
 ## 当前需求与范围
 
@@ -24,13 +27,19 @@
 
 以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
 
-## Comments
+# Comments
 
-### 2026-10-23 17:44:33 UTC — Agent（文档迁移）
+## 20261023-174433_Agent
+
+原记录标题：2026-10-23 17:44:33 UTC — Agent（文档迁移）
 
 按原有功能 / 工作目标标题拆分需求，保留原 ID、勾选、依赖、最新补充及来源。没有稳定根 ID或旧 ID 在不同上下文重用时，采用由来源路径和标题确定的迁移 Issue ID，原 ID 仍在正文保留。完整旧内容可从来源版本读取；独有未提交内容的版本化副本见迁移映射。
 
-### 20260630004130-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260630004130-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260630004130-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -65,7 +74,11 @@
 
 - 继续制作 Preferences 页面前，建议先决定是否把 `origin/main` 的 `quota-bar/` -> `macos/` 路径重构合入当前 worktree。若不先对齐，后续 Preferences 文件仍会继续落在旧路径，最终合并时需要手动迁移到 `macos/Sources/QuotaBar/Preferences/`。
 
-### 20260630004524-utcp8-gpt5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260630004524-utcp8-gpt5.md — 历史证据迁移
 
 来源：`agent-log/20260630004524-utcp8-gpt5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -100,7 +113,11 @@
 
 - 如果用户双击新包仍看不到 Preferences，优先怀疑旧 QuotaBar 进程仍在运行。菜单栏应用双击新 `.app` 时，macOS 可能只激活已有实例，不会自动替换成新二进制；应先从菜单里退出旧 Quota Bar，或用 Activity Monitor 结束旧进程，再打开最新 build。
 
-### 20260707-100236-utcp8-taobe-claude-sonnet-5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260707-100236-utcp8-taobe-claude-sonnet-5.md — 历史证据迁移
 
 来源：`agent-log/20260707-100236-utcp8-taobe-claude-sonnet-5.md` @ `211555173930360a07f45b8f9662463ed7519dba`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -158,6 +175,23 @@
 - `ProviderCheckLogStore.append`/`clear` 从 `queue.async` 改成了 `queue.sync`：写测试时发现异步落盘会导致 `flush` 之后立刻 `readRecentLines()` 读不到数据（真实的竞态，不是测试脏），因为日志本身调用频率很低（每 provider 每刷新周期一次），改成同步换取"flush 完成即可读"的正确性是合理的取舍。
 - Claude tier-only 幽灵 available 这个 bug 的教训：`.available` 状态原本被 UI 层隐含假设为"一定有额度"，加入 tier-only 兜底层（上一次会话新增的 `ClaudeAuthStatusCLIProvider`）之后这个假设不再成立，但当时没有同步检查 `RefreshCoordinator` 的过滤逻辑——这次是靠用户实测反馈才发现，说明"分层合并"类的架构改动需要连带检查所有下游对 availability 语义的隐含假设。
 
-### 2026-10-24 07:04:08 UTC — Agent（任务命名与语义整理）
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 20261024-070408_Agent
+
+原记录标题：2026-10-24 07:04:08 UTC — Agent（任务命名与语义整理）
 
 按具体原语言任务命名；类型与原ID保留在properties。将独立目标分开，实施与验收子步骤保持同组；历史Comments保留一次并链接共享。实施版本未核实，省略文件名版本后缀；本次未执行产品或代码验收。
+
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 20261024-162234_Codex
+
+按用户最新手写模板迁移属性和正文结构，保留任务语义、来源、原始状态及历史内容；本次未重新执行业务验收。
+
+原版本关联记录（照录来源，不将本次文档迁移提交当作业务实施提交）：
+- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
+
+本次执行环境未提供具体模型标识，未补造 Model-Detail。
+
+[本次文档迁移对话](codex://threads/01a157b3-610c-73b4-ae06-163c0f8490d3)
