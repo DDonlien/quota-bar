@@ -1,12 +1,15 @@
-# 建立项目协作基础
+---
+title: 建立项目协作基础
+id: 0.0.0-DOC-A-000
+type: DOC
+status: 已完成（沿用原需求记录；本轮未重新执行产品验收）。
+版本管理: Git。
+来源: '`REQUIREMENTS.md` @ `9ecb46e90cc74ea0e4dc899cc913e3a44e37b1c3`；标题路径：任务清单 / Phase - v0.0.0 - 项目初始化 / DOC-A：Agent 协作基础。'
+原稳定 ID: '`0.0.0-DOC-A-000`, `0.0.0-DOC-A-001`, `0.0.0-DOC-A-002`, `0.0.0-DOC-A-003`, `0.0.0-DOC-A-004`, `0.0.0-DOC-A-005`；不改写或重编号这些既有 ID。'
+updated-time: '2026-10-24T16:22:34+00:00'
+---
 
-- ID：`0.0.0-DOC-A-000`。
-- 类型：`DOC`。
-- 状态：已完成（沿用原需求记录；本轮未重新执行产品验收）。
-- 版本管理：Git。
-- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
-- 来源：`REQUIREMENTS.md` @ `9ecb46e90cc74ea0e4dc899cc913e3a44e37b1c3`；标题路径：任务清单 / Phase - v0.0.0 - 项目初始化 / DOC-A：Agent 协作基础。
-- 原稳定 ID：`0.0.0-DOC-A-000`, `0.0.0-DOC-A-001`, `0.0.0-DOC-A-002`, `0.0.0-DOC-A-003`, `0.0.0-DOC-A-004`, `0.0.0-DOC-A-005`；不改写或重编号这些既有 ID。
+# Description
 
 ## 当前需求与范围
 
@@ -21,13 +24,19 @@
 
 以上勾选与结果沿用迁移前的当前需求文档；历史记录中的实现、测试、编译、视觉与用户验收彼此独立。本次只迁移文档并检查结构 / 引用，没有重新执行产品构建或用户验收，也没有凭历史日志新增完成勾选。
 
-## Comments
+# Comments
 
-### 2026-10-23 17:44:33 UTC — Agent（文档迁移）
+## 20261023-174433_Agent
+
+原记录标题：2026-10-23 17:44:33 UTC — Agent（文档迁移）
 
 按原有功能 / 工作目标标题拆分需求，保留原 ID、勾选、依赖、最新补充及来源。没有稳定根 ID或旧 ID 在不同上下文重用时，采用由来源路径和标题确定的迁移 Issue ID，原 ID 仍在正文保留。完整旧内容可从来源版本读取；独有未提交内容的版本化副本见迁移映射。
 
-### 20260619160000-utcp8-mavis.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260619160000-utcp8-mavis.md — 历史证据迁移
 
 来源：`agent-log/20260619160000-utcp8-mavis.md` @ `9ecb46e90cc74ea0e4dc899cc913e3a44e37b1c3`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -66,7 +75,11 @@ QB: claude ok av=notInstalled q=0 tier=-
 2. **截图验证没成功**：AppleScript 没点中 status bar item 的菜单，但日志已证 dashboard 数据正确。
 3. **Kimi CLI token 不直接可用**：401 时 KimiAuthProvider 转 missingCredentials 让 pipeline fallback 到 Cookie/Keychain/App 兜底，是合理的。
 
-### 20260625113500-utcp8-glm5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260625113500-utcp8-glm5.md — 历史证据迁移
 
 来源：`agent-log/20260625113500-utcp8-glm5.md` @ `9ecb46e90cc74ea0e4dc899cc913e3a44e37b1c3`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -116,7 +129,11 @@ QB: claude ok av=notInstalled q=0 tier=-
   3. Vercel 后台 → Settings → Domains → 添加 `quotabar.ddonlien.com`，按提示配置 DNS。
 - **后续可替换项**：Hero / Showcase 的 MenuBarMockup 可换真实截图（放进 `web/public/`）；ProviderGrid 的品牌色方块可换真实 SVG logo。
 
-### 20260625113500-utcp8-glm5.md — 历史证据迁移
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 历史记录-时间未记录
+
+原记录标题：20260625113500-utcp8-glm5.md — 历史证据迁移
 
 来源：`web/agent-log/20260625113500-utcp8-glm5.md` @ `9ecb46e90cc74ea0e4dc899cc913e3a44e37b1c3`。日期 / 时区沿用原记录；以下摘录不自动改变当前完成状态。
 
@@ -166,6 +183,23 @@ QB: claude ok av=notInstalled q=0 tier=-
   3. Vercel 后台 → Settings → Domains → 添加 `quotabar.ddonlien.com`，按提示配置 DNS。
 - **后续可替换项**：Hero / Showcase 的 MenuBarMockup 可换真实截图（放进 `web/public/`）；ProviderGrid 的品牌色方块可换真实 SVG logo。
 
-### 2026-10-24 07:04:08 UTC — Agent（任务命名与语义整理）
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 20261024-070408_Agent
+
+原记录标题：2026-10-24 07:04:08 UTC — Agent（任务命名与语义整理）
 
 按具体原语言任务命名；类型与原ID保留在properties。原目标、实施与验收步骤及完整历史保持在同一文件。实施版本未核实，省略文件名版本后缀；本次未执行产品或代码验收。
+
+原记录未提供完整 Agent / 模型详情及原执行会话链接，未补造。
+
+## 20261024-162234_Codex
+
+按用户最新手写模板迁移属性和正文结构，保留任务语义、来源、原始状态及历史内容；本次未重新执行业务验收。
+
+原版本关联记录（照录来源，不将本次文档迁移提交当作业务实施提交）：
+- 实施提交：未核实（当前仅核对迁移文档；来源快照、当前HEAD和文档迁移提交均不替代业务实施提交）。
+
+本次执行环境未提供具体模型标识，未补造 Model-Detail。
+
+[本次文档迁移对话](codex://threads/01a157b3-610c-73b4-ae06-163c0f8490d3)
