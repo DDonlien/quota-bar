@@ -376,7 +376,7 @@ short sha，打一个 `v<VERSION>-<sha>` tag 并发布同名 GitHub Release（�
 - [ ] 通知：额度低于阈值时提醒
 - [ ] 多账号切换
 
-完整需求追踪见 [`issue/issue_建立项目协作基础.md`](issue/issue_%E5%BB%BA%E7%AB%8B%E9%A1%B9%E7%9B%AE%E5%8D%8F%E4%BD%9C%E5%9F%BA%E7%A1%80.md)。
+完整需求追踪见 [`issue/issue-00093_建立项目协作基础.md`](issue/issue-00093_%E5%BB%BA%E7%AB%8B%E9%A1%B9%E7%9B%AE%E5%8D%8F%E4%BD%9C%E5%9F%BA%E7%A1%80.md)。
 
 ---
 
