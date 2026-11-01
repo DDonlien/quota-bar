@@ -37,7 +37,7 @@
 - 视觉规范：`site/DESIGN.md`
 - 需求追踪：`../issue/README.md`
 - 执行日志：`../issue/README.md`
-- 全局父级文档：`../AGENTS.md`、`../README.md`、`../issue/issue_建立项目协作基础.md`、`../DESIGN.md`
+- 全局父级文档：`../AGENTS.md`、`../README.md`、`../issue/issue-00093_建立项目协作基础.md`、`../DESIGN.md`
 
 ### 目录索引
 
